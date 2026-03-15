@@ -97,7 +97,7 @@ COPY --from=frontend --chown=appuser:appuser /build/public/build/ public/build/
 COPY --from=frontend --chown=appuser:appuser /build/public/build/ /opt/build-assets/build/
 
 # Create required directories and clear stale dev caches
-RUN mkdir -p storage/framework/{sessions,views,cache} \
+RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache \
     storage/logs \
     bootstrap/cache \
     && rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
@@ -105,8 +105,10 @@ RUN mkdir -p storage/framework/{sessions,views,cache} \
     && chown -R appuser:appuser storage bootstrap/cache .env \
     && chmod -R 775 storage bootstrap/cache
 
-USER appuser
+# Install su-exec for dropping from root to appuser in entrypoint
+RUN apk add --no-cache su-exec
 
+# Entrypoint runs as root (reads Docker secrets), then exec's CMD as appuser
 EXPOSE 9000
 
 ENTRYPOINT ["docker-entrypoint.sh"]

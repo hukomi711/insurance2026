@@ -22,6 +22,14 @@ if [ -f "$DB_PASSWORD_FILE" ]; then
     rm -f /var/www/html/.env.production
 fi
 
+# Ensure storage directories exist (named volume may be empty on first boot)
+mkdir -p /var/www/html/storage/framework/sessions \
+         /var/www/html/storage/framework/views \
+         /var/www/html/storage/framework/cache \
+         /var/www/html/storage/logs
+chown -R appuser:appuser /var/www/html/storage
+chmod -R 775 /var/www/html/storage
+
 # Discover packages if cache is missing (cleared during build to remove dev deps)
 if [ ! -f /var/www/html/bootstrap/cache/packages.php ]; then
     php artisan package:discover --ansi 2>/dev/null || true
@@ -36,5 +44,11 @@ if [ -d /opt/build-assets/build ]; then
     # Clear stale font preload cache so Laravel picks up new hashed filenames
     php artisan vite:clear-fonts 2>/dev/null || true
 fi
+
+# Build Laravel caches (after .env is patched and dirs exist)
+php artisan config:cache 2>/dev/null || true
+php artisan route:cache 2>/dev/null || true
+php artisan view:cache 2>/dev/null || true
+php artisan event:cache 2>/dev/null || true
 
 exec "$@"

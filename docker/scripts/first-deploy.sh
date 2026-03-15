@@ -72,6 +72,9 @@ sed -i "s|__CHANGE_ME_POLL_SECRET__|${POLL_SECRET}|" .env
 sed -i "s|__CHANGE_ME_ADMIN_PASSWORD__|${ADMIN_PASS}|" .env
 sed -i "s|__CHANGE_ME_YOUR_IP__|${MY_IP}|" .env
 
+# Fill DB_PASSWORD in .env (env_file in docker-compose loads host .env into container)
+sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=${DB_PASS}|" .env
+
 # Also fill .env.production for Docker build (Vite reads VITE_* from it)
 cp .env .env.production
 
