@@ -59,7 +59,8 @@ cp .env.production .env
 echo "[3/4] Generating secure values..."
 
 APP_KEY="base64:$(openssl rand -base64 32)"
-REVERB_KEY=$(openssl rand -base64 24)
+# Use URL-safe characters for Reverb key (appears in WebSocket URL path)
+REVERB_KEY=$(openssl rand -hex 16)
 REVERB_SECRET=$(openssl rand -base64 32)
 POLL_SECRET=$(openssl rand -base64 48)
 ADMIN_PASS=$(openssl rand -base64 16)
