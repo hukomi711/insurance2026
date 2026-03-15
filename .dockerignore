@@ -1,0 +1,53 @@
+# ── Version control ───────────────────────────────────────────
+.git
+.gitignore
+.gitattributes
+
+# ── Dependencies (rebuilt inside image) ──────────────────────
+node_modules
+vendor
+
+# ── IDE / Editor ─────────────────────────────────────────────
+.idea
+.vscode
+*.swp
+*.swo
+_ide_helper*.php
+.phpstorm.meta.php
+
+# ── Docker (prevent recursive copy) ─────────────────────────
+docker-compose*.yml
+Dockerfile
+.dockerignore
+docker/secrets/
+
+# ── Environment ──────────────────────────────────────────────
+.env
+.env.*
+!.env.production
+
+# ── Tests / CI ───────────────────────────────────────────────
+tests
+
+# ── Stale caches (will be regenerated at runtime) ────────────
+bootstrap/cache/*.php
+phpunit.xml
+.phpunit.result.cache
+coverage
+
+# ── Documentation ────────────────────────────────────────────
+README.md
+*.md
+docs
+
+# ── Build artefacts ──────────────────────────────────────────
+public/build
+public/hot
+storage/logs/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/cache/*
+
+# ── OS junk ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

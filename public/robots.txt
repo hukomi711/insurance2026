@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /dashboard
+Disallow: /login
+Disallow: /insurance/
+Disallow: /api/
+
+Sitemap: http://localhost:8000/sitemap.xml

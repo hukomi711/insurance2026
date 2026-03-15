@@ -1,0 +1,1162 @@
+@import "tailwindcss";
+@import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
+@import "@fortawesome/fontawesome-free/css/solid.min.css";
+@import "./admin-tokens.css";
+
+/* ── Self-hosted Google Fonts (subset-optimized, no CDN dependency) ──
+   Only Arabic + Latin subsets are loaded — drops Cyrillic, Greek,
+   Vietnamese, Math, and Symbols subsets (56 → 16 @font-face rules). */
+/* Noto Kufi Arabic — Arabic + Latin subsets */
+@import "@fontsource/noto-kufi-arabic/arabic-400.css";
+@import "@fontsource/noto-kufi-arabic/arabic-500.css";
+@import "@fontsource/noto-kufi-arabic/arabic-600.css";
+@import "@fontsource/noto-kufi-arabic/arabic-700.css";
+@import "@fontsource/noto-kufi-arabic/latin-400.css";
+/* Roboto — Latin + Latin-Ext subsets */
+@import "@fontsource/roboto/latin-400.css";
+@import "@fontsource/roboto/latin-500.css";
+@import "@fontsource/roboto/latin-600.css";
+@import "@fontsource/roboto/latin-700.css";
+@import "@fontsource/roboto/latin-ext-400.css";
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../**/*.blade.php';
+@source '../**/*.vue';
+@source '../**/*.js';
+
+/* ── Reduce CLS from web font swap ──
+   Use size-adjust on fallback so system font closely matches the
+   web font metrics — eliminates layout shift when woff2 loads. */
+@font-face {
+    font-family: "Noto Kufi Arabic Fallback";
+    src: local("Arial");
+    size-adjust: 100%;
+    ascent-override: 100%;
+    descent-override: 20%;
+    line-gap-override: 0%;
+}
+@font-face {
+    font-family: "Roboto Fallback";
+    src: local("Arial");
+    size-adjust: 100.3%;
+    ascent-override: 92%;
+    descent-override: 24%;
+    line-gap-override: 0%;
+}
+
+/* ============================================================
+   THEME — Taminkom Design Token System (Tailwind v4)
+   ============================================================ */
+@theme {
+    /* ---- Fonts ---- */
+    --font-sans:
+        "Roboto", "Roboto Fallback", "Noto Kufi Arabic",
+        "Noto Kufi Arabic Fallback", ui-sans-serif, system-ui, sans-serif,
+        "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+    --font-heading:
+        "Noto Kufi Arabic", "Noto Kufi Arabic Fallback", "Roboto",
+        "Roboto Fallback", ui-sans-serif, system-ui, sans-serif;
+
+    /* ---- Core Semantic Colors ---- */
+    --color-primary: #0088eb;
+    --color-primary-dark: #006bbf;
+    --color-primary-light: #f7fbfe;
+    --color-secondary: #1db97d;
+    --color-secondary-dark: #189e6b;
+    --color-accent: #6da73b;
+    --color-accent-light: #f0fdf4;
+    --color-background: white;
+    --color-foreground: #0f172a;
+    --color-muted: #475569;
+    --color-muted-foreground: #cbd5e1;
+    --color-border: #cbd5e1;
+    --color-destructive: #ef4444;
+    --color-destructive-foreground: #fef2f2;
+
+    /* Legacy aliases (keep existing var(--color-*) refs working) */
+    --color-bg: #f5f7fa;
+    --color-bg-white: #ffffff;
+    --color-text: #0f172a;
+    --color-text-muted: #475569;
+    --color-text-light: #94a3b8;
+    --color-danger: #ef4444;
+    --color-danger-light: #fef2f2;
+
+    /* ---- Blue Scale ---- */
+    --color-blue: #0088eb;
+    --color-blue-50: #f7fbfe;
+    --color-blue-100: #f1f9ff;
+    --color-blue-200: #dbeefc;
+    --color-blue-300: #b0daf9;
+    --color-blue-500: #33a0ef;
+    --color-blue-600: #0088eb;
+    --color-blue-700: #007cd6;
+    --color-blue-800: #0061a7;
+
+    /* ---- Green Scale ---- */
+    --color-green: #1db97d;
+    --color-green-100: #baefda;
+    --color-green-200: #98e7c9;
+    --color-green-300: #6adcb0;
+    --color-green-400: #4dd5a1;
+    --color-green-500: #20cb89;
+    --color-green-600: #1db97d;
+    --color-green-700: #179061;
+    --color-green-800: #12704b;
+
+    /* ---- Orange Scale ---- */
+    --color-orange-100: #fee8c4;
+    --color-orange-200: #fedda8;
+    --color-orange-300: #fecd80;
+    --color-orange-500: #fdb541;
+    --color-orange-600: #e6a53b;
+    --color-orange-700: #b4812e;
+
+    /* ---- Red Scale ---- */
+    --color-red: #ef4444;
+    --color-red-100: #fee2e2;
+    --color-red-200: #fecaca;
+    --color-red-300: #fca5a5;
+    --color-red-500: #ef4444;
+    --color-red-600: #dc2626;
+    --color-red-700: #b91c1c;
+
+    /* ---- Slate Scale ---- */
+    --color-slate-50: #f8fafc;
+    --color-slate-100: #f1f5f9;
+    --color-slate-200: #e2e8f0;
+    --color-slate-300: #cbd5e1;
+    --color-slate-400: #94a3b8;
+    --color-slate-500: #64748b;
+    --color-slate-600: #475569;
+    --color-slate-700: #334155;
+    --color-slate-800: #1e293b;
+    --color-slate-900: #151515;
+
+    /* ---- Warm Green Scale ---- */
+    --color-warmGreen: #6da73b;
+    --color-warmGreen-100: #d5e9c4;
+    --color-warmGreen-200: #c1dea8;
+    --color-warmGreen-300: #a5cf80;
+    --color-warmGreen-500: #78b841;
+    --color-warmGreen-600: #6da73b;
+    --color-warmGreen-700: #55832e;
+
+    /* ---- Shadows ---- */
+    --shadow-xs: 0px 2px 4px 4px rgba(15, 23, 42, 0.08);
+    --shadow-sm: 0px 4px 8px 4px rgba(15, 23, 42, 0.1);
+    --shadow-md: 0px 8px 16px 8px rgba(15, 23, 42, 0.1);
+    --shadow-lg: 0px 12px 24px 12px rgba(15, 23, 42, 0.15);
+    --shadow-xl: 0px 16px 32px 16px rgba(15, 23, 42, 0.2);
+
+    /* ---- Drop Shadow ---- */
+    --drop-shadow-md: 0px 8px 16px rgba(15, 23, 42, 0.1);
+
+    /* ---- Border Radius ---- */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 10px;
+    --radius-DEFAULT: 12px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 24px;
+    --radius-3xl: 32px;
+    --radius-4xl: 40px;
+
+    /* ---- Breakpoints ---- */
+    --breakpoint-sm: 575px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1400px;
+}
+
+/* ============================================================
+   ROOT — Typography Scale & Container Tokens
+   ============================================================ */
+:root {
+    --container-padding: 16px;
+    --radius: 0.75rem;
+
+    /* ---- Safe Area Tokens (for notched devices) ---- */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+
+    /* ---- Spacing Design Tokens (non-Tailwind, for var() references only) ---- */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 0.625rem;
+    --spacing-lg: 0.75rem;
+    --spacing-xl: 1rem;
+    --spacing-2xl: 1.5rem;
+    --spacing-3xl: 2rem;
+    --spacing-4xl: 2.5rem;
+    --spacing-5xl: 3.5rem;
+
+    /* ---- Size Tokens ---- */
+    --size-xs: 0.25rem;
+    --size-sm: 0.5rem;
+    --size-md: 0.625rem;
+    --size-lg: 0.75rem;
+    --size-xl: 1rem;
+    --size-2xl: 1.5rem;
+    --size-3xl: 2rem;
+    --size-4xl: 2.5rem;
+    --size-5xl: 3.5rem;
+
+    /* ---- Shadcn / Radix Semantic Tokens ---- */
+    --color-lightTextSub: #94a3b8;
+    --color-defaultText: #0f172a;
+    --background: white;
+    --foreground: var(--color-defaultText);
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: #0088eb;
+    --primary-foreground: white;
+    --secondary: #1db97d;
+    --secondary-foreground: white;
+    --muted: #475569;
+    --muted-foreground: #cbd5e1;
+    --accent: #6da73b;
+    --accent-foreground: #f0fdf4;
+    --destructive: #ef4444;
+    --destructive-foreground: #fef2f2;
+    --border: #cbd5e1;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+
+    /* Display */
+    --d1-font-size: 3rem;
+    --d1-line-height: 150%;
+    --d1-letter-spacing: 0.05em;
+    --d2-font-size: 2.25rem;
+    --d2-line-height: 140%;
+    --d2-letter-spacing: 0.05em;
+
+    /* Headings */
+    --h1-font-size: 1.875rem;
+    --h1-line-height: 130%;
+    --h2-font-size: 1.5rem;
+    --h2-line-height: 130%;
+    --h3-font-size: 1.25rem;
+    --h3-line-height: 130%;
+    --h4-font-size: 1.25rem;
+    --h4-line-height: 130%;
+
+    /* Titles */
+    --t1-font-size: 1.125rem;
+    --t1-line-height: 130%;
+    --t2-font-size: 1rem;
+    --t2-line-height: 140%;
+    --t3-font-size: 0.875rem;
+    --t3-line-height: 145%;
+    --t4-font-size: 0.75rem;
+    --t4-line-height: 150%;
+
+    /* Subtitles */
+    --s1-font-size: 1rem;
+    --s1-line-height: 150%;
+    --s1-font-weight: 500;
+    --s2-font-size: 0.875rem;
+    --s2-line-height: 150%;
+    --s2-font-weight: 500;
+    --s3-font-size: 0.75rem;
+    --s3-line-height: 150%;
+    --s3-font-weight: 500;
+
+    /* Body */
+    --b1-font-size: 1rem;
+    --b1-line-height: 150%;
+    --b2-font-size: 0.875rem;
+    --b2-line-height: 150%;
+    --b3-font-size: 0.75rem;
+    --b3-line-height: 150%;
+
+    /* Caption */
+    --c1-font-size: 0.625rem;
+    --c1-line-height: 150%;
+    --c2-font-size: 0.5625rem;
+    --c2-line-height: 150%;
+}
+
+/* ---- RTL Typography Overrides ---- */
+:dir(rtl) {
+    --d1-font-size: 2.8125rem;
+    --d1-line-height: 150%;
+    --d1-letter-spacing: 0;
+    --d2-font-size: 2.5rem;
+    --d2-line-height: 150%;
+    --d2-letter-spacing: 0;
+
+    --h1-font-size: 1.75rem;
+    --h1-line-height: 150%;
+    --h2-font-size: 1.25rem;
+    --h2-line-height: 155%;
+    --h3-font-size: 1.0625rem;
+    --h3-line-height: 150%;
+    --h4-font-size: 1.25rem;
+    --h4-line-height: 130%;
+
+    --t1-font-size: 1rem;
+    --t1-line-height: 150%;
+    --t2-font-size: 0.875rem;
+    --t2-line-height: 160%;
+    --t3-font-size: 0.75rem;
+    --t3-line-height: 165%;
+    --t4-font-size: 0.625rem;
+    --t4-line-height: 175%;
+
+    --s1-font-size: 0.875rem;
+    --s1-font-weight: 600;
+    --s2-font-size: 0.75rem;
+    --s2-font-weight: 600;
+    --s3-font-size: 0.625rem;
+    --s3-line-height: 175%;
+    --s3-font-weight: 600;
+
+    --b1-font-size: 0.9375rem;
+    --b1-line-height: 160%;
+    --b2-font-size: 0.8125rem;
+    --b2-line-height: 165%;
+    --b3-font-size: 0.6875rem;
+    --b3-line-height: 165%;
+
+    --c1-font-size: 0.5625rem;
+    --c1-line-height: 170%;
+    --c2-font-size: 0.5rem;
+    --c2-line-height: 170%;
+}
+
+/* ---- Responsive Container Padding ---- */
+@media (min-width: 992px) {
+    :root {
+        --container-padding: 68px;
+    }
+}
+
+/* ============================================================
+   TYPOGRAPHY UTILITIES — @utility (Tailwind v4)
+   ============================================================ */
+
+/* Display */
+@utility typ-d1 {
+    font-size: var(--d1-font-size);
+    line-height: var(--d1-line-height);
+    letter-spacing: var(--d1-letter-spacing);
+    font-weight: 800;
+}
+
+@utility typ-d2 {
+    font-size: var(--d2-font-size);
+    line-height: var(--d2-line-height);
+    letter-spacing: var(--d2-letter-spacing);
+    font-weight: 800;
+}
+
+/* Headings */
+@utility typ-h1 {
+    font-size: var(--h1-font-size);
+    line-height: var(--h1-line-height);
+    font-weight: 700;
+}
+
+@utility typ-h2 {
+    font-size: var(--h2-font-size);
+    line-height: var(--h2-line-height);
+    font-weight: 700;
+}
+
+@utility typ-h3 {
+    font-size: var(--h3-font-size);
+    line-height: var(--h3-line-height);
+    font-weight: 700;
+}
+
+@utility typ-h4 {
+    font-size: var(--h4-font-size);
+    line-height: var(--h4-line-height);
+    font-weight: 400;
+}
+
+/* Titles */
+@utility typ-t1 {
+    font-size: var(--t1-font-size);
+    line-height: var(--t1-line-height);
+    font-weight: 700;
+}
+
+@utility typ-t2 {
+    font-size: var(--t2-font-size);
+    line-height: var(--t2-line-height);
+    font-weight: 700;
+}
+
+@utility typ-t3 {
+    font-size: var(--t3-font-size);
+    line-height: var(--t3-line-height);
+    font-weight: 700;
+}
+
+@utility typ-t4 {
+    font-size: var(--t4-font-size);
+    line-height: var(--t4-line-height);
+    font-weight: 700;
+}
+
+/* Subtitles */
+@utility typ-s1 {
+    font-size: var(--s1-font-size);
+    line-height: var(--s1-line-height);
+    font-weight: var(--s1-font-weight);
+}
+
+@utility typ-s2 {
+    font-size: var(--s2-font-size);
+    line-height: var(--s2-line-height);
+    font-weight: var(--s2-font-weight);
+}
+
+@utility typ-s3 {
+    font-size: var(--s3-font-size);
+    line-height: var(--s3-line-height);
+    font-weight: var(--s3-font-weight);
+}
+
+/* Body */
+@utility typ-b1 {
+    font-size: var(--b1-font-size);
+    line-height: var(--b1-line-height);
+    font-weight: 400;
+}
+
+@utility typ-b2 {
+    font-size: var(--b2-font-size);
+    line-height: var(--b2-line-height);
+    font-weight: 400;
+}
+
+@utility typ-b3 {
+    font-size: var(--b3-font-size);
+    line-height: var(--b3-line-height);
+    font-weight: 400;
+}
+
+/* Captions */
+@utility typ-c1 {
+    font-size: var(--c1-font-size);
+    line-height: var(--c1-line-height);
+    font-weight: 400;
+}
+
+@utility typ-c2 {
+    font-size: var(--c2-font-size);
+    line-height: var(--c2-line-height);
+    font-weight: 400;
+}
+
+/* ============================================================
+   GRADIENT UTILITIES
+   ============================================================ */
+@utility bg-gradient-main {
+    background-image: linear-gradient(
+        0.402turn,
+        #149ade -7.43%,
+        #0eb158 118.33%
+    );
+}
+
+@utility bg-gradient-main-light {
+    background-image: linear-gradient(
+        152.03deg,
+        #e8f5fc -3.47%,
+        #e7f7ee 101.39%
+    );
+}
+
+@utility bg-gradient-golden {
+    background-image: linear-gradient(
+        116.75deg,
+        #ffc874 9.35%,
+        #ffeb37 104.57%
+    );
+}
+
+@utility bg-gradient-golden-light {
+    background-image: linear-gradient(
+        116.75deg,
+        #fffbf5 9.35%,
+        #fffef1 104.57%
+    );
+}
+
+@utility bg-gradient-light-blue {
+    background-image: linear-gradient(
+        151.65deg,
+        #e0f1fd 9.99%,
+        #d6f3ff 51.15%,
+        #e4f9f1 91.66%
+    );
+}
+
+@utility bg-gradient-light-blue-green {
+    background-image: linear-gradient(152deg, #e8f5fc -3.47%, #e7f7ee 101.39%);
+}
+
+@utility bg-gradient-secondary {
+    background-image: linear-gradient(117.99deg, #ffd5c2 13.44%, #b2a6ff 116%);
+}
+
+@utility bg-gradient-secondary-light {
+    background-image: linear-gradient(117.99deg, #fff5f0 13.44%, #f0edff 116%);
+}
+
+@utility bg-gradient-warning {
+    background-image: linear-gradient(90deg, #fbecc5, #fde2e2);
+}
+
+/* ============================================================
+   HELPER UTILITIES
+   ============================================================ */
+@utility center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@utility box {
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    max-width: 80rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+@utility avoid-container-padding {
+    margin-left: calc(-1 * var(--container-padding));
+    margin-right: calc(-1 * var(--container-padding));
+}
+
+@utility avoid-container-padding-start {
+    margin-inline-start: calc(-1 * var(--container-padding));
+}
+
+@utility avoid-container-padding-end {
+    margin-inline-end: calc(-1 * var(--container-padding));
+}
+
+@utility safe-area-bottom {
+    padding-bottom: max(0.75rem, var(--safe-bottom));
+}
+
+@utility safe-area-top {
+    padding-top: max(0px, var(--safe-top));
+}
+
+/* ============================================================
+   GLOBAL STYLES
+   ============================================================ */
+html {
+    font-size: 100%;
+    font-weight: 400;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 576px) and (max-width: 768px) {
+    html {
+        font-size: 93.75%;
+    }
+}
+
+html:lang(ar) {
+    font-family: "Noto Kufi Arabic", "Roboto", sans-serif;
+}
+
+* {
+    border-color: var(--border);
+    outline: 0;
+}
+
+main {
+    min-height: calc(100vh - 398px);
+}
+
+@media (min-width: 992px) {
+    main {
+        min-height: calc(100vh - 295px);
+    }
+}
+
+body {
+    font-family: "Roboto", "Noto Kufi Arabic", sans-serif;
+    font-weight: 400;
+    direction: rtl;
+    text-align: right;
+    line-height: 1.8;
+    color: var(--foreground);
+    background-color: var(--background);
+    font-feature-settings: "lnum";
+    font-variant-numeric: lining-nums;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: "Noto Kufi Arabic", "Roboto", sans-serif;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+/* Numbers should remain LTR */
+.ltr-nums {
+    direction: ltr;
+    unicode-bidi: embed;
+    display: inline-block;
+}
+
+.rtl {
+    direction: rtl;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-text-light);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+}
+
+/* Form styling */
+input,
+select,
+textarea {
+    text-align: right;
+}
+
+/* Autofill styling */
+input:-webkit-autofill {
+    background-color: transparent !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--background) inset !important;
+    box-shadow: 0 0 0 1000px var(--background) inset !important;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--color-defaultText) !important;
+}
+
+/* Radix scroll area — style native scrollbar */
+[data-radix-scroll-area-viewport] {
+    scrollbar-width: thin;
+    scrollbar-color: #94a3b8 transparent;
+    -webkit-overflow-scrolling: touch;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar {
+    width: 6px;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+[data-radix-scroll-area-viewport]::-webkit-scrollbar-thumb {
+    background-color: #94a3b8;
+    border-radius: 9999px;
+}
+
+/* Radix Select dropdown — show thin scrollbar (overrides radix-vue inline styles) */
+[data-radix-select-viewport] {
+    scrollbar-width: thin !important;
+    scrollbar-color: #cbd5e1 transparent !important;
+    -ms-overflow-style: auto !important;
+}
+
+[data-radix-select-viewport]::-webkit-scrollbar {
+    display: block !important;
+    width: 5px !important;
+}
+
+[data-radix-select-viewport]::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+[data-radix-select-viewport]::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 9999px;
+}
+
+[data-radix-select-viewport]::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+}
+
+/* No-scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* ============================================================
+   CUSTOM ANIMATIONS
+   ============================================================ */
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.2s ease-out;
+}
+
+@keyframes float {
+    0%,
+    to {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes scale-in {
+    0% {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.animate-scale-in {
+    animation: scale-in 0.2s ease-out;
+}
+
+@keyframes collapse-down {
+    0% {
+        height: 0;
+        opacity: 0;
+    }
+
+    to {
+        height: var(--radix-collapsible-content-height);
+        opacity: 1;
+    }
+}
+
+@keyframes collapse-up {
+    0% {
+        height: var(--radix-collapsible-content-height);
+        opacity: 1;
+    }
+
+    to {
+        height: 0;
+        opacity: 0;
+    }
+}
+
+/* Transition classes */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+/* Slide-in-left animation (sheet panels) */
+@keyframes slide-in-left {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes slide-out-left {
+    0% {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-100%);
+    }
+}
+
+.animate-slide-in-left {
+    animation: slide-in-left 0.5s ease-in-out both;
+}
+
+.animate-slide-out-left {
+    animation: slide-out-left 0.3s ease-in-out both;
+}
+
+/* Slide-in-right animation (trust badge section) */
+@keyframes slide-in-right {
+    0% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-in-right {
+    animation: slide-in-right 0.5s ease-out both;
+}
+
+/* Infinite marquee scroll */
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-marquee {
+    animation: marquee 30s linear infinite;
+    will-change: transform;
+}
+
+.animate-marquee:hover {
+    animation-play-state: paused;
+}
+
+/* ============================================================
+   Vue Toastification — تأمينكم Premium Theme
+   ============================================================ */
+
+/* Container — RTL: top-right is the natural position */
+.Vue-Toastification__container.top-right {
+    top: 1.25rem;
+    right: 1.25rem;
+    z-index: 99999;
+}
+
+/* ---- Custom slide-blur transition ---- */
+.Vue-Toastification__slideBlurred-enter-active {
+    animation: toastSlideIn 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+}
+
+.Vue-Toastification__slideBlurred-leave-active {
+    animation: toastSlideOut 0.35s cubic-bezier(0.06, 0.71, 0.55, 1) forwards;
+}
+
+.Vue-Toastification__slideBlurred-move {
+    transition: transform 0.4s cubic-bezier(0.21, 1.02, 0.73, 1);
+}
+
+@keyframes toastSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateX(30px) scale(0.95);
+        filter: blur(4px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+@keyframes toastSlideOut {
+    0% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        filter: blur(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(40px) scale(0.92);
+        filter: blur(6px);
+    }
+}
+
+/* Toast base */
+.Vue-Toastification__toast {
+    font-family: "Noto Kufi Arabic", "Roboto", sans-serif !important;
+    border-radius: 16px !important;
+    padding: 16px 20px !important;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.08),
+        0 10px 25px -3px rgba(0, 0, 0, 0.12),
+        0 0 0 1px rgba(0, 0, 0, 0.03) !important;
+    backdrop-filter: blur(12px) saturate(1.6);
+    -webkit-backdrop-filter: blur(12px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    min-height: auto !important;
+    max-width: 400px !important;
+    min-width: 280px !important;
+    gap: 12px;
+    display: flex !important;
+    align-items: center !important;
+    transition:
+        box-shadow 0.3s ease,
+        transform 0.2s ease !important;
+}
+
+.Vue-Toastification__toast:hover {
+    box-shadow:
+        0 6px 12px -2px rgba(0, 0, 0, 0.1),
+        0 14px 32px -4px rgba(0, 0, 0, 0.16),
+        0 0 0 1px rgba(0, 0, 0, 0.04) !important;
+    transform: translateY(-1px);
+}
+
+/* Toast body text */
+.Vue-Toastification__toast-body {
+    font-size: 0.9rem !important;
+    line-height: 1.65 !important;
+    font-weight: 500 !important;
+    margin: 0 !important;
+    padding: 0 6px !important;
+    letter-spacing: -0.01em;
+    flex: 1;
+}
+
+/* Icon — pill-shape background */
+.Vue-Toastification__icon {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    margin-inline-end: 0 !important;
+    border-radius: 10px;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 5px !important;
+    flex-shrink: 0;
+}
+
+/* Close button — appears on hover */
+.Vue-Toastification__close-button {
+    color: currentColor !important;
+    opacity: 0 !important;
+    font-size: 16px !important;
+    font-weight: 400 !important;
+    padding: 2px !important;
+    margin: 0 !important;
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+    transition: all 0.2s ease;
+    background: transparent;
+}
+
+.Vue-Toastification__toast:hover .Vue-Toastification__close-button {
+    opacity: 0.5 !important;
+}
+
+.Vue-Toastification__close-button:hover {
+    opacity: 1 !important;
+    background: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Progress bar */
+.Vue-Toastification__progress-bar {
+    height: 3px !important;
+    border-radius: 0 0 16px 16px !important;
+    bottom: 0 !important;
+    opacity: 0.6 !important;
+    transition: width 0.1s linear !important;
+}
+
+/* ---- Success ---- */
+.Vue-Toastification__toast--success {
+    background: linear-gradient(
+        135deg,
+        rgba(236, 253, 245, 0.95) 0%,
+        rgba(209, 250, 229, 0.95) 100%
+    ) !important;
+    color: #065f46 !important;
+    border-color: rgba(167, 243, 208, 0.6) !important;
+}
+
+.Vue-Toastification__toast--success .Vue-Toastification__icon {
+    background: rgba(16, 185, 129, 0.15);
+}
+
+.Vue-Toastification__toast--success .Vue-Toastification__progress-bar {
+    background: linear-gradient(90deg, #10b981, #34d399) !important;
+}
+
+/* ---- Error ---- */
+.Vue-Toastification__toast--error {
+    background: linear-gradient(
+        135deg,
+        rgba(254, 242, 242, 0.95) 0%,
+        rgba(254, 226, 226, 0.95) 100%
+    ) !important;
+    color: #991b1b !important;
+    border-color: rgba(254, 202, 202, 0.6) !important;
+}
+
+.Vue-Toastification__toast--error .Vue-Toastification__icon {
+    background: rgba(239, 68, 68, 0.12);
+}
+
+.Vue-Toastification__toast--error .Vue-Toastification__progress-bar {
+    background: linear-gradient(90deg, #ef4444, #f87171) !important;
+}
+
+/* ---- Warning ---- */
+.Vue-Toastification__toast--warning {
+    background: linear-gradient(
+        135deg,
+        rgba(255, 251, 235, 0.95) 0%,
+        rgba(254, 243, 199, 0.95) 100%
+    ) !important;
+    color: #92400e !important;
+    border-color: rgba(253, 230, 138, 0.6) !important;
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__icon {
+    background: rgba(245, 158, 11, 0.15);
+}
+
+.Vue-Toastification__toast--warning .Vue-Toastification__progress-bar {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24) !important;
+}
+
+/* ---- Info ---- */
+.Vue-Toastification__toast--info {
+    background: linear-gradient(
+        135deg,
+        rgba(240, 249, 255, 0.95) 0%,
+        rgba(219, 234, 254, 0.95) 100%
+    ) !important;
+    color: #1e40af !important;
+    border-color: rgba(191, 219, 254, 0.6) !important;
+}
+
+.Vue-Toastification__toast--info .Vue-Toastification__icon {
+    background: rgba(0, 136, 235, 0.12);
+}
+
+.Vue-Toastification__toast--info .Vue-Toastification__progress-bar {
+    background: linear-gradient(90deg, #0088eb, #3b82f6) !important;
+}
+
+/* ---- Default ---- */
+.Vue-Toastification__toast--default {
+    background: linear-gradient(
+        135deg,
+        rgba(248, 250, 252, 0.95) 0%,
+        rgba(241, 245, 249, 0.95) 100%
+    ) !important;
+    color: #334155 !important;
+    border-color: rgba(226, 232, 240, 0.6) !important;
+}
+
+.Vue-Toastification__toast--default .Vue-Toastification__icon {
+    background: rgba(100, 116, 139, 0.12);
+}
+
+.Vue-Toastification__toast--default .Vue-Toastification__progress-bar {
+    background: linear-gradient(90deg, #64748b, #94a3b8) !important;
+}
+
+/* ---- RTL adjustments ---- */
+.Vue-Toastification__toast--rtl {
+    direction: rtl;
+    text-align: right;
+}
+
+.Vue-Toastification__toast--rtl .Vue-Toastification__toast-body {
+    text-align: right;
+}
+
+/* ---- iOS Safari auto-zoom fix ---- */
+/* iOS zooms in when focusing inputs with font-size < 16px */
+@media screen and (max-width: 767px) {
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="password"],
+    input[type="url"],
+    input[type="search"],
+    input:not([type]),
+    textarea,
+    select {
+        font-size: 16px !important;
+    }
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 480px) {
+    .Vue-Toastification__container.top-right {
+        top: 0.75rem;
+        right: 0.75rem;
+        left: 0.75rem;
+    }
+
+    .Vue-Toastification__toast {
+        max-width: 100% !important;
+        min-width: auto !important;
+        border-radius: 14px !important;
+        padding: 14px 16px !important;
+    }
+
+    .Vue-Toastification__toast-body {
+        font-size: 0.85rem !important;
+    }
+}

@@ -1,0 +1,23 @@
+# ── Pre-commit hooks for secret detection ─────────────────────────
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # ── Built-in checks ────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: detect-private-key
+      - id: check-merge-conflict
+
+  # ── Gitleaks: detect hardcoded secrets (uses system binary) ─────
+  - repo: local
+    hooks:
+      - id: gitleaks
+        name: gitleaks
+        description: Detect hardcoded secrets using gitleaks
+        entry: gitleaks git --pre-commit --redact --staged --verbose
+        language: system
+        pass_filenames: false

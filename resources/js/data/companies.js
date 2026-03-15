@@ -1,0 +1,20 @@
+// شركات التأمين
+export const companies = [
+    { id: 1, nameAr: 'التعاونية للتأمين', logo: '', rating: 4.5, color: '#00539C', image: 'tawuniya.png' },
+    { id: 2, nameAr: 'تأمين الراجحي', logo: '', rating: 4.6, color: '#006633', image: 'alrajhi.png' },
+    { id: 3, nameAr: 'ولاء للتأمين', logo: '', rating: 4.4, color: '#1B6B3A', image: 'walaa.png' },
+    { id: 4, nameAr: 'ميدغلف', logo: '', rating: 4.3, color: '#0072CE', image: 'medgulf.png' },
+    { id: 5, nameAr: 'ملاذ للتأمين', logo: '', rating: 4.2, color: '#C41E3A', image: 'malath.png' },
+    { id: 6, nameAr: 'GIG', logo: '', rating: 4.4, color: '#1B3A5C', image: 'GIG.png' },
+    { id: 7, nameAr: 'سلامة للتأمين', logo: '', rating: 4.1, color: '#B8860B', image: 'salama.png' },
+    { id: 8, nameAr: 'الجزيرة تكافل', logo: '', rating: 4.0, color: '#003366', image: 'ALJAZIRA.png' },
+    { id: 9, nameAr: 'أسيج', logo: '', rating: 4.2, color: '#2E3192', image: 'ACIG.png' },
+    { id: 10, nameAr: 'أمانة للتأمين', logo: '', rating: 4.0, color: '#004C8E', image: 'amana.png' },
+    { id: 11, nameAr: 'الدرع العربي', logo: '', rating: 4.1, color: '#1A5276', image: 'arabian_shield.png' },
+    { id: 12, nameAr: 'الصقر للتأمين', logo: '', rating: 4.3, color: '#8B0000', image: 'Alsagr.png' },
+    { id: 13, nameAr: 'الخليجية العامة', logo: '', rating: 4.0, color: '#0D4F8B', image: 'gulf_general.png' },
+    { id: 14, nameAr: 'اتحاد الخليج الأهلية', logo: '', rating: 3.9, color: '#1C4E80', image: 'Gulf_union.png' },
+    { id: 15, nameAr: 'الاتحاد للتأمين', logo: '', rating: 4.1, color: '#2C3E50', image: 'al_etihad.png' },
+    { id: 16, nameAr: 'متكاملة', logo: '', rating: 4.0, color: '#FF6B00', image: 'Mutakamela.png' },
+    { id: 17, nameAr: 'الإنماء طوكيو مارين', logo: '', rating: 4.2, color: '#003A70', image: 'Alinma_Tokio.png' },
+];

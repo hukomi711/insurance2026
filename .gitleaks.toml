@@ -1,0 +1,35 @@
+# ── Gitleaks configuration ─────────────────────────────────────────
+# Custom rules for this project in addition to gitleaks built-in rules.
+
+title = "Insurance2026 Gitleaks Config"
+
+[allowlist]
+  # Paths that are safe to skip
+  paths = [
+    '''vendor/''',
+    '''node_modules/''',
+    '''.venv/''',
+    '''public/build/''',
+    '''storage/''',
+  ]
+
+# ── Custom rules ──────────────────────────────────────────────────
+
+[[rules]]
+  id = "ssh-password-inline"
+  description = "Hardcoded SSH password in paramiko or ssh connect"
+  regex = '''(?i)(password|passwd)\s*[=:]\s*['"][^'"]{8,}['"]'''
+  keywords = ["password", "passwd"]
+
+[[rules]]
+  id = "server-ip-with-credentials"
+  description = "Server IP combined with credentials"
+  regex = '''(?i)ssh\.connect\s*\([^)]*password\s*='''
+  keywords = ["ssh.connect"]
+
+[[rules]]
+  id = "laravel-env-secrets"
+  description = "Laravel secrets that should not be committed"
+  regex = '''(?i)(APP_KEY|DB_PASSWORD|MAIL_PASSWORD|REDIS_PASSWORD|STATUS_POLL_SECRET)\s*=\s*\S{8,}'''
+  path = '''\.env'''
+  keywords = ["APP_KEY", "DB_PASSWORD", "MAIL_PASSWORD"]

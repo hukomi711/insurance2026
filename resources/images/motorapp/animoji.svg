@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+    <!-- Head circle -->
+    <circle cx="32" cy="28" r="18" fill="#FBBF24"/>
+    <!-- Face -->
+    <circle cx="24" cy="24" r="2.5" fill="#1E293B"/>
+    <circle cx="40" cy="24" r="2.5" fill="#1E293B"/>
+    <!-- Smile -->
+    <path d="M24 34c2 4 12 4 16 0" stroke="#1E293B" stroke-width="2" stroke-linecap="round"/>
+    <!-- Body silhouette -->
+    <path d="M16 56c0-8 7-14 16-14s16 6 16 14" fill="#0088EB" opacity="0.8"/>
+    <!-- Headset -->
+    <path d="M14 26a18 18 0 0136 0" stroke="#64748B" stroke-width="2" fill="none"/>
+    <rect x="10" y="22" width="6" height="10" rx="3" fill="#64748B"/>
+    <rect x="48" y="22" width="6" height="10" rx="3" fill="#64748B"/>
+</svg>

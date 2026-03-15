@@ -1,0 +1,307 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "pricing-payload-schema",
+    "title": "Quote Calculation Request",
+    "description": "POST /api/quotes/calculate — batch pricing for insurance plans. Field names match the JS pricing engine (camelCase, string codes).",
+    "type": "object",
+    "required": [
+        "plans",
+        "vehicle",
+        "driver",
+        "policy"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "plans": {
+            "type": "array",
+            "minItems": 1,
+            "description": "Insurance plans to calculate pricing for (batch).",
+            "items": {
+                "type": "object",
+                "required": [
+                    "companyId",
+                    "subType",
+                    "deductible"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "companyId": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 17,
+                        "description": "Insurance company ID from COMPANY_PRICING_FACTORS."
+                    },
+                    "subType": {
+                        "type": "string",
+                        "enum": [
+                            "thirdParty",
+                            "thirdPartyPlus",
+                            "vehicleDamagePlus",
+                            "comprehensive"
+                        ],
+                        "description": "Insurance plan sub-type. Maps to BASE_PREMIUMS key."
+                    },
+                    "deductible": {
+                        "type": "integer",
+                        "enum": [
+                            0,
+                            500,
+                            1000,
+                            1500,
+                            2000,
+                            2500,
+                            3000,
+                            5000
+                        ],
+                        "description": "Plan's default deductible (SAR). Maps to DEDUCTIBLE_FACTORS."
+                    }
+                }
+            }
+        },
+        "vehicle": {
+            "type": "object",
+            "required": [
+                "year",
+                "make",
+                "estimatedValue",
+                "purposeOfUse",
+                "carModification",
+                "hasTrailer",
+                "transmissionType"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "year": {
+                    "type": "integer",
+                    "minimum": 2000,
+                    "maximum": 2027,
+                    "description": "Manufacturing year. Used to compute vehicle age → VEHICLE_AGE_FACTORS."
+                },
+                "make": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "Manufacturer ID from vehicleMakes. Maps to MANUFACTURER_FACTORS."
+                },
+                "estimatedValue": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Estimated vehicle value in SAR. Maps to VEHICLE_VALUE_FACTORS."
+                },
+                "purposeOfUse": {
+                    "type": "string",
+                    "enum": [
+                        "personal",
+                        "commercial",
+                        "rental",
+                        "rideshare",
+                        "cargo",
+                        "petroleum"
+                    ],
+                    "description": "Vehicle usage purpose. Maps to PURPOSE_FACTORS."
+                },
+                "carModification": {
+                    "type": "string",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "description": "Whether vehicle has modifications. 'yes' → MODIFICATION_FACTOR (1.15)."
+                },
+                "hasTrailer": {
+                    "type": "string",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "description": "Whether vehicle has a trailer. 'yes' → TRAILER_FACTOR (1.10)."
+                },
+                "transmissionType": {
+                    "type": "string",
+                    "enum": [
+                        "1",
+                        "2"
+                    ],
+                    "description": "Transmission type: '1' = automatic, '2' = manual. Maps to TRANSMISSION_FACTORS."
+                }
+            }
+        },
+        "driver": {
+            "type": "object",
+            "required": [
+                "accidentCounts",
+                "trafficViolations",
+                "education",
+                "foreignLicense",
+                "healthConditions",
+                "city",
+                "nightParking",
+                "expectedKM"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "dateOfBirth": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "date",
+                    "description": "Driver date of birth (ISO 8601). Used to compute age → DRIVER_AGE_FACTORS. Nullable."
+                },
+                "drivingExperience": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "enum": [
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        null
+                    ],
+                    "description": "Driving experience band: 1=<1yr, 2=1-3yr, 3=3-5yr, 4=5-10yr, 5=10+yr. Maps to EXPERIENCE_FACTORS. Nullable (no UI field yet → neutral 1.0)."
+                },
+                "accidentCounts": {
+                    "type": "string",
+                    "enum": [
+                        "0",
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5"
+                    ],
+                    "description": "Number of past accidents. Maps to ACCIDENT_FACTORS."
+                },
+                "trafficViolations": {
+                    "type": "string",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "description": "Has traffic violations. Maps to VIOLATION_FACTORS."
+                },
+                "education": {
+                    "type": "string",
+                    "enum": [
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7"
+                    ],
+                    "description": "Education level: 1=primary..7=PhD. Maps to EDUCATION_FACTORS."
+                },
+                "foreignLicense": {
+                    "type": "string",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "description": "Has foreign driving license. 'yes' → FOREIGN_LICENSE_FACTOR (1.08)."
+                },
+                "healthConditions": {
+                    "type": "string",
+                    "enum": [
+                        "yes",
+                        "no"
+                    ],
+                    "description": "Has health conditions. 'yes' → HEALTH_CONDITION_FACTOR (1.10)."
+                },
+                "ncdYears": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "enum": [
+                        "0",
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        null
+                    ],
+                    "description": "No Claims Discount years. Maps to NCD_FACTORS. Nullable (no UI field yet → neutral 1.0)."
+                },
+                "city": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "City name in Arabic (e.g. 'الرياض'). Maps to CITY_FACTORS. Unknown → _default (0.95)."
+                },
+                "nightParking": {
+                    "type": "string",
+                    "enum": [
+                        "1",
+                        "2",
+                        "3"
+                    ],
+                    "description": "Night parking location: 1=street, 2=driveway, 3=garage. Maps to PARKING_FACTORS."
+                },
+                "expectedKM": {
+                    "type": "string",
+                    "enum": [
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5"
+                    ],
+                    "description": "Expected annual KM band: 1=<5k, 2=5-10k, 3=10-20k, 4=20-30k, 5=30k+. Maps to MILEAGE_FACTORS."
+                },
+                "additionalDrivers": {
+                    "type": [
+                        "array",
+                        "null"
+                    ],
+                    "description": "Additional drivers. Engine uses array.length → ADDITIONAL_DRIVER_FACTOR^n. Items can be empty objects.",
+                    "items": {
+                        "type": "object"
+                    }
+                }
+            }
+        },
+        "policy": {
+            "type": "object",
+            "required": [
+                "repairMethod"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "repairMethod": {
+                    "type": "string",
+                    "enum": [
+                        "workshop",
+                        "authorized",
+                        "agency"
+                    ],
+                    "description": "Repair method. Maps to REPAIR_METHOD_FACTORS."
+                },
+                "deductible": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
+                    "enum": [
+                        0,
+                        500,
+                        1000,
+                        1500,
+                        2000,
+                        2500,
+                        3000,
+                        5000,
+                        null
+                    ],
+                    "description": "Optional deductible override. If present, overrides plan[].deductible for pricing. Maps to DEDUCTIBLE_FACTORS."
+                }
+            }
+        }
+    }
+}

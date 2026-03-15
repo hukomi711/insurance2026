@@ -1,0 +1,176 @@
+/* ============================================================
+   ADMIN DASHBOARD — Design Tokens (Dual Theme)
+   Scoped under [data-admin-theme] so they never leak into
+   the public site.
+   ============================================================ */
+
+/* ── Light Theme (default) ── */
+[data-admin-theme="light"] {
+    /* Surfaces */
+    --admin-bg: #f9fafb; /* gray-50  */
+    --admin-surface: #ffffff;
+    --admin-surface-2: #f3f4f6; /* gray-100 */
+    --admin-surface-3: #e5e7eb; /* gray-200 */
+    --admin-surface-4: #f9fafb; /* gray-50  */
+
+    /* Sidebar / Navbar */
+    --admin-sidebar-bg: #111827; /* gray-900 — keep dark sidebar in light mode */
+    --admin-sidebar-text: #d1d5db;
+    --admin-sidebar-hover: #1f2937;
+    --admin-sidebar-border: #374151;
+    --admin-navbar-bg: #ffffff;
+    --admin-navbar-border: #e5e7eb;
+    --admin-navbar-text: #374151;
+
+    /* Borders */
+    --admin-border: #e5e7eb;
+    --admin-border-solid: #d1d5db;
+
+    /* Text */
+    --admin-text: #111827; /* gray-900 */
+    --admin-text-secondary: #374151; /* gray-700 */
+    --admin-text-muted: #6b7280; /* gray-500 */
+    --admin-text-dim: #9ca3af; /* gray-400 */
+
+    /* Accent Colors */
+    --admin-accent-emerald: #059669;
+    --admin-accent-amber: #d97706;
+    --admin-accent-sky: #0284c7;
+    --admin-accent-pink: #db2777;
+    --admin-accent-cyan: #0891b2;
+    --admin-accent-purple: #7c3aed;
+    --admin-accent-blue: #2563eb;
+    --admin-accent-yellow: #ca8a04;
+    --admin-accent-red: #dc2626;
+    --admin-accent-green: #16a34a;
+    --admin-accent-orange: #ea580c;
+    --admin-accent-indigo: #4f46e5;
+
+    /* Status Colors */
+    --admin-status-success-bg: #ecfdf5;
+    --admin-status-success-text: #059669;
+    --admin-status-error-bg: #fef2f2;
+    --admin-status-error-text: #dc2626;
+    --admin-status-warning-bg: #fffbeb;
+    --admin-status-warning-text: #d97706;
+    --admin-status-info-bg: #eff6ff;
+    --admin-status-info-text: #2563eb;
+    --admin-status-neutral-bg: #f3f4f6;
+    --admin-status-neutral-text: #6b7280;
+
+    /* Card */
+    --admin-card-bg: #ffffff;
+    --admin-card-border: #e5e7eb;
+    --admin-card-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+
+    /* Input */
+    --admin-input-bg: #ffffff;
+    --admin-input-border: #d1d5db;
+    --admin-input-text: #111827;
+    --admin-input-placeholder: #9ca3af;
+
+    /* Radii */
+    --admin-radius-sm: 0.5rem;
+    --admin-radius-md: 0.75rem;
+    --admin-radius-lg: 1rem;
+
+    /* Transitions */
+    --admin-transition: 200ms ease;
+}
+
+/* ── Dark Theme ── */
+[data-admin-theme="dark"] {
+    /* Surfaces */
+    --admin-bg: #0f1117;
+    --admin-surface: #1a1f2e;
+    --admin-surface-2: #232936;
+    --admin-surface-3: #111827;
+    --admin-surface-4: #1f2937;
+
+    /* Sidebar / Navbar */
+    --admin-sidebar-bg: #0d1017;
+    --admin-sidebar-text: #d1d5db;
+    --admin-sidebar-hover: #1f2937;
+    --admin-sidebar-border: #1f2937;
+    --admin-navbar-bg: #1a1f2e;
+    --admin-navbar-border: #2d3548;
+    --admin-navbar-text: #d1d5db;
+
+    /* Borders */
+    --admin-border: rgba(55, 65, 81, 0.5);
+    --admin-border-solid: #374151;
+
+    /* Text */
+    --admin-text: #f9fafb;
+    --admin-text-secondary: #d1d5db;
+    --admin-text-muted: #9ca3af;
+    --admin-text-dim: #8b95a5;
+
+    /* Accent Colors */
+    --admin-accent-emerald: #34d399;
+    --admin-accent-amber: #fbbf24;
+    --admin-accent-sky: #38bdf8;
+    --admin-accent-pink: #f472b6;
+    --admin-accent-cyan: #22d3ee;
+    --admin-accent-purple: #a78bfa;
+    --admin-accent-blue: #60a5fa;
+    --admin-accent-yellow: #facc15;
+    --admin-accent-red: #f87171;
+    --admin-accent-green: #4ade80;
+    --admin-accent-orange: #fb923c;
+    --admin-accent-indigo: #818cf8;
+
+    /* Status Colors */
+    --admin-status-success-bg: rgba(16, 185, 129, 0.2);
+    --admin-status-success-text: #34d399;
+    --admin-status-error-bg: rgba(239, 68, 68, 0.2);
+    --admin-status-error-text: #f87171;
+    --admin-status-warning-bg: rgba(245, 158, 11, 0.2);
+    --admin-status-warning-text: #fbbf24;
+    --admin-status-info-bg: rgba(59, 130, 246, 0.2);
+    --admin-status-info-text: #60a5fa;
+    --admin-status-neutral-bg: rgba(107, 114, 128, 0.2);
+    --admin-status-neutral-text: #9ca3af;
+
+    /* Card */
+    --admin-card-bg: #1a1f2e;
+    --admin-card-border: rgba(55, 65, 81, 0.5);
+    --admin-card-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+
+    /* Input */
+    --admin-input-bg: #232936;
+    --admin-input-border: #374151;
+    --admin-input-text: #f9fafb;
+    --admin-input-placeholder: #6b7280;
+
+    /* Radii */
+    --admin-radius-sm: 0.5rem;
+    --admin-radius-md: 0.75rem;
+    --admin-radius-lg: 1rem;
+
+    /* Transitions */
+    --admin-transition: 200ms ease;
+}
+
+/* ── Smooth theme transition ── */
+[data-admin-theme] {
+    transition:
+        background-color var(--admin-transition),
+        color var(--admin-transition),
+        border-color var(--admin-transition);
+}
+
+/* Legacy compat: .admin-dark → maps to dark tokens */
+.admin-dark {
+    --admin-surface: #1a1f2e;
+    --admin-surface-2: #232936;
+    --admin-surface-3: #111827;
+    --admin-surface-4: #1f2937;
+    --admin-border: rgba(55, 65, 81, 0.5);
+    --admin-border-solid: #374151;
+    --admin-text: #ffffff;
+    --admin-text-muted: #9ca3af;
+    --admin-text-dim: #8b95a5;
+}
