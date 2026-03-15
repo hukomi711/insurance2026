@@ -9,6 +9,8 @@ set -e
 
 # Read DB password from Docker secret if the file exists
 if [ -f "$DB_PASSWORD_FILE" ]; then
+    # Ensure readable (Docker Compose bind-mounts may preserve host permissions)
+    chmod 444 "$DB_PASSWORD_FILE" 2>/dev/null || true
     export DB_PASSWORD="$(cat "$DB_PASSWORD_FILE")"
     # Patch .env so Laravel reads the real password
     if [ -f /var/www/html/.env ]; then
