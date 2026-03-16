@@ -60,8 +60,9 @@
                         :method="form.paymentMethod"
                         :form="cardForm"
                         :errors="errors"
+                        :rejection-reason="cardRejectionReason"
                         @update:method="form.paymentMethod = $event"
-                        @update:form="Object.assign(form, $event)"
+                        @update:form="onCardFormUpdate($event)"
                     />
 
                     <!-- Terms & Conditions -->
@@ -179,7 +180,7 @@
 
                     <!-- Discount Image -->
                     <div class="w-full">
-                        <img :src="cashBackImg" alt="خصم 30%" class="w-full h-auto object-cover" />
+                        <img :src="cashBackImg" alt="خصم 30%" class="w-full h-auto object-cover" width="1071" height="1280" />
                     </div>
 
                     <!-- Content -->
@@ -228,14 +229,17 @@ import { useInsuranceStore } from '@/store';
 import { usePricingEngine } from '@/utils/pricingEngine';
 import { usePayment } from '@/composables/usePayment';
 import { submitQuote } from '@/api/quotes';
+import { getReasonLabel } from '@/constants/rejectionReasons';
+import { useI18n } from 'vue-i18n';
 import logger from '@/utils/logger';
 import SarIcon from '@/components/SarIcon.vue';
 import PaymentMethodCard from '../components/checkout/PaymentMethodCard.vue';
 import PriceSummaryCard from '../components/checkout/PriceSummaryCard.vue';
 import cashBackImg from '@/../../resources/images/logo/summary_logo/cash_back.jpeg';
 
-const _route = useRoute();
+const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 const { trackStep, completeSession } = useQuoteTracking();
 const insuranceStore = useInsuranceStore();
 const { calculatePremium } = usePricingEngine();
@@ -357,6 +361,18 @@ const errors = reactive( {} );
 const isSubmitting = ref( false );
 const paymentError = ref( '' );
 
+// ── Card rejection reason (from PaymentWaitingPage redirect) ────────
+const cardRejectionReason = ref( '' );
+{
+    const reasonKey = route.query.rejectionReason;
+    if ( reasonKey && typeof reasonKey === 'string' && reasonKey.length >= 3 )
+    {
+        cardRejectionReason.value = getReasonLabel( reasonKey, t ) || reasonKey;
+        // Clean up URL without triggering navigation
+        router.replace( { ...route, query: { ...route.query, rejectionReason: undefined } } );
+    }
+}
+
 // ═══ Discount Popup ═══
 const showDiscountPopup = ref( false );
 const discountTimeLeft = ref( 30 * 60 );
@@ -395,6 +411,12 @@ function validate() {
 //
 
 //
+function onCardFormUpdate ( data ) {
+    Object.assign( form, data );
+    // Dismiss rejection alert when user starts editing card fields
+    if ( cardRejectionReason.value ) cardRejectionReason.value = '';
+}
+
 async function handleSubmit() {
     if ( isSubmitting.value ) return;
     paymentError.value = '';

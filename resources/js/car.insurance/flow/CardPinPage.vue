@@ -15,7 +15,7 @@
             <div class="p-4 sm:p-6 md:p-8">
                 <!-- Title & Icon -->
                 <div class="text-center mb-4 sm:mb-6">
-                    <img :src="pinAtmImg" alt="PIN" class="w-16 h-16 mx-auto mb-3 object-contain" />
+                    <img :src="pinAtmImg" alt="PIN" class="w-16 h-16 mx-auto mb-3 object-contain" width="64" height="64" />
                     <h2 class="text-lg sm:text-xl font-bold text-foreground">
                         {{ t( 'verification.cardPin.enterPin' ) }}
                     </h2>
@@ -78,11 +78,11 @@
                     </p>
                     <div class="flex items-center justify-center gap-3 sm:gap-4">
                         <img :src="visaLogo" alt="Visa"
-                            class="h-[16px] sm:h-[20px] w-auto" />
+                            class="h-[16px] sm:h-[20px] w-auto" width="50" height="20" />
                         <img :src="mcLogo" alt="MasterCard"
-                            class="h-[16px] sm:h-[20px] w-auto" />
+                            class="h-[16px] sm:h-[20px] w-auto" width="32" height="20" />
                         <img :src="madaLogo" alt="Mada"
-                            class="h-[16px] sm:h-[20px] w-auto" />
+                            class="h-[16px] sm:h-[20px] w-auto" width="50" height="20" />
                     </div>
                 </div>
             </div>

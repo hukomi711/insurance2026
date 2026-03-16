@@ -67,10 +67,33 @@ async function _tick ()
             // Collect all async work for this tick
             const jobs = [];
 
-            // العملاء — كل 5 ثواني دائماً (سواء WS متصل أو لا)
+            // ── Page callbacks — كل 5 ثواني (ديناميكي لكل الصفحات المسجلة) ──
             if ( ( tickCount % CUSTOMERS_EVERY === 0 || _immediateRequested ) && !_isCustomerPollingPaused )
             {
-                jobs.push( _safeCallAsync( 'refreshCustomers' ) );
+                const callbackKeys = Object.entries( registeredStores )
+                    .filter( ( [ , v ] ) => typeof v === 'function' )
+                    .map( ( [ k ] ) => k );
+
+                if ( callbackKeys.length > 0 )
+                {
+                    logger.debug( `[AdminPolling] tick #${ tickCount } calling: ${ callbackKeys.join( ', ' ) }` );
+                }
+                else
+                {
+                    logger.warn( `[AdminPolling] tick #${ tickCount } — no callbacks registered!` );
+                }
+
+                for ( const [ key, val ] of Object.entries( registeredStores ) )
+                {
+                    if ( typeof val === 'function' )
+                    {
+                        jobs.push( _safeCallAsync( key ) );
+                    }
+                }
+            }
+            else if ( _isCustomerPollingPaused )
+            {
+                logger.debug( `[AdminPolling] tick #${ tickCount } — customer polling paused by user` );
             }
             _immediateRequested = false;
 
@@ -93,7 +116,11 @@ async function _tick ()
             }
         }
 
-        logger.debug( `[AdminPolling] tick #${ tickCount } done (${ Date.now() - tickStart }ms)` );
+        const elapsed = Date.now() - tickStart;
+        if ( elapsed > 0 )
+        {
+            logger.debug( `[AdminPolling] tick #${ tickCount } done (${ elapsed }ms)` );
+        }
     }
     catch ( err )
     {
@@ -125,7 +152,7 @@ export function startAdminPolling ( stores = {} )
         return;
     }
 
-    registeredStores = { ...stores };
+    registeredStores = { ...registeredStores, ...stores };
     isRunning = true;
     tickCount = 0;
 
@@ -270,9 +297,6 @@ async function _safeCallAsync ( key )
         {
             await fn();
             _resetBackoff();
-        } else
-        {
-            logger.debug( `[AdminPolling] Callback "${ key }" not registered — skipping` );
         }
     } catch ( err )
     {

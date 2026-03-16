@@ -127,12 +127,12 @@
                         <!-- Sequence Number Help Card -->
                         <div class="border-2 border-primary rounded-xl p-4">
                             <div class="flex items-center justify-center gap-2">
-                                <img :src="infoIconSrc" alt="Info" class="w-6 h-6" loading="lazy" />
+                                <img :src="infoIconSrc" alt="Info" class="w-6 h-6" loading="lazy" width="24" height="24" />
                                 <span class="text-sm font-medium text-primary">أين أجد الرقم التسلسلي؟</span>
                             </div>
                             <div class="flex justify-center">
                                 <img :src="sequenceNumberSrc" alt="الرقم التسلسلي" class="max-w-full mt-4 rounded-lg"
-                                    loading="lazy" />
+                                    loading="lazy" width="600" height="400" />
                             </div>
                         </div>
 

@@ -43,7 +43,7 @@
                 <div
                     class="size-12 shrink-0 rounded-lg border border-slate-200 overflow-hidden flex items-center justify-center bg-white">
                     <img :src="getCompanyLogo( plan.companyId )" :alt="plan.company.nameAr"
-                        class="max-w-full w-full h-full object-contain" />
+                        class="max-w-full w-full h-full object-contain" width="48" height="48" />
                 </div>
                 <!-- Company Name & Type -->
                 <div class="min-w-0">

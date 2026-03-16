@@ -81,7 +81,7 @@
       <div class="mb-3 sm:mb-4">
         <div class="bg-blue-50 rounded-lg p-2.5 sm:p-3 flex items-center gap-2.5 sm:gap-3 border border-blue-200">
           <div class="w-12 h-12 sm:w-14 sm:h-14 shrink-0 flex items-center justify-center">
-            <img :src="ehsanCharitySrc" alt="إحسان" class="w-8 h-8 sm:w-10 sm:h-10 object-contain" />
+            <img :src="ehsanCharitySrc" alt="إحسان" class="w-8 h-8 sm:w-10 sm:h-10 object-contain" width="40" height="40" />
           </div>
           <div class="flex-1">
             <p class="text-blue-900 text-xs sm:text-sm font-medium mb-0.5">

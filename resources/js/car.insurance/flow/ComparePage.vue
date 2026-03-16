@@ -80,7 +80,7 @@
                                         <div class="flex items-center gap-2.5 mb-2.5">
                                             <img :src="getCompanyLogo(recommendedPlan.companyId)"
                                                 :alt="recommendedPlan.company.nameAr"
-                                                class="size-10 rounded-lg object-contain bg-white p-1 border border-slate-100" />
+                                                class="size-10 rounded-lg object-contain bg-white p-1 border border-slate-100" width="40" height="40" />
                                             <div class="min-w-0">
                                                 <p class="typ-t3 text-foreground truncate">
                                                     {{ recommendedPlan.company.nameAr }}
@@ -113,7 +113,7 @@
                                         <div class="flex items-center gap-2.5 mb-2.5">
                                             <img :src="getCompanyLogo(cheapestPlan.companyId)"
                                                 :alt="cheapestPlan.company.nameAr"
-                                                class="size-10 rounded-lg object-contain bg-white p-1 border border-slate-100" />
+                                                class="size-10 rounded-lg object-contain bg-white p-1 border border-slate-100" width="40" height="40" />
                                             <div class="min-w-0">
                                                 <p class="typ-t3 text-foreground truncate">
                                                     {{ cheapestPlan.company.nameAr }}
@@ -274,6 +274,7 @@
                 <CompareSidebar :vehicle-info="vehicleInfo" :has-ncd-discount="hasNcdDiscount"
                     :ncd-discount-percent="ncdDiscountPercent" :sort-options="sortOptions" :sort-by="sortBy"
                     :filters="filters" :companies="companies" @update:sort-by="sortBy = $event"
+                    @update:filters="Object.assign(filters, $event)"
                     @reset-filters="resetFilters" @show-hero="showHeroModal = true" />
             </div>
         </div>
@@ -318,7 +319,7 @@
         <!-- Mobile Filters Sheet -->
         <MobileFiltersSheet v-model:open="showMobileFilters" :sort-options="sortOptions" :companies="companies"
             :filters="filters" :sort-by="sortBy" @update:sort-by="sortBy = $event"
-            @reset-filters="resetFilters" />
+            @apply-filters="Object.assign(filters, $event)" @reset-filters="resetFilters" />
 
         <!-- Bottom padding for fixed bar on mobile -->
         <div class="h-16 xl:hidden"></div>
@@ -349,7 +350,7 @@
                         </svg>
                     </button>
                     <div class="w-full">
-                        <img :src="cashBackImg" alt="خصم 30%" class="w-full h-auto object-cover" />
+                        <img :src="cashBackImg" alt="خصم 30%" class="w-full h-auto object-cover" width="1071" height="1280" />
                     </div>
                     <div class="p-5 text-center">
                         <div class="inline-flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-4 py-1.5 mb-3">
@@ -379,7 +380,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { TabsRoot, TabsList, TabsTrigger } from 'radix-vue';
 import { SwitchRoot, SwitchThumb } from 'radix-vue';
@@ -392,13 +393,13 @@ import { formatNumber } from '@/utils/formatters';
 import { getCompanyLogo } from '@/utils/companyLogos';
 import SarIcon from '@/components/SarIcon.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
-import OfferDetailsSheet from '@/components/OfferDetailsSheet.vue';
 import QuotesLoading from '@/components/ui/QuotesLoading.vue';
 import AppError from '@/components/ui/AppError.vue';
-import TaminkomHeroModal from '@/components/TaminkomHeroModal.vue';
 import QuoteCard from '@/car.insurance/components/compare/QuoteCard.vue';
-import CompareModal from '@/car.insurance/components/compare/CompareModal.vue';
-import MobileFiltersSheet from '@/car.insurance/components/compare/MobileFiltersSheet.vue';
+const OfferDetailsSheet = defineAsyncComponent( () => import( '@/components/OfferDetailsSheet.vue' ) );
+const TaminkomHeroModal = defineAsyncComponent( () => import( '@/components/TaminkomHeroModal.vue' ) );
+const CompareModal = defineAsyncComponent( () => import( '@/car.insurance/components/compare/CompareModal.vue' ) );
+const MobileFiltersSheet = defineAsyncComponent( () => import( '@/car.insurance/components/compare/MobileFiltersSheet.vue' ) );
 import CompareSidebar from '@/car.insurance/components/compare/CompareSidebar.vue';
 import logger from '@/utils/logger';
 import cashBackImg from '@/../../resources/images/logo/summary_logo/cash_back.jpeg';
@@ -481,7 +482,7 @@ onMounted( () => {
     startLoadingQuotes();
 
     // مزامنة التبويب النشط مع نوع التغطية المختار
-    insuranceStore.hydrateFromSession();
+    // hydrateFromSession already called inside startLoadingQuotes before await
     const ct = insuranceStore.policy.coverageType;
     if ( ct === 'comprehensive' ) {
         activeTab.value = 'comprehensive';
@@ -582,9 +583,11 @@ const repairMethodOptions = [
 ];
 
 // تحديث تلقائي عند تغيير طريقة الإصلاح أو حد التغطية
+let _quoteDebounce = null;
 watch( () => [ quoteOptions.repairMethod, quoteOptions.coverageLimit ], () => {
     if ( quotesData.value.length > 0 ) {
-        updateQuoteOptions();
+        clearTimeout( _quoteDebounce );
+        _quoteDebounce = setTimeout( updateQuoteOptions, 200 );
     }
 } );
 

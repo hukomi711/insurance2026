@@ -229,7 +229,7 @@ onUnmounted( () =>
                         <div class="aspect-video bg-gradient-to-br from-blue-400 to-blue-600 relative overflow-hidden">
                             <img v-if="article.image" :src="article.image" :alt="article.title"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                loading="lazy" decoding="async"
+                                loading="lazy" decoding="async" width="800" height="450"
                                 @error="$event.target.style.display = 'none'" />
                             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                             <span

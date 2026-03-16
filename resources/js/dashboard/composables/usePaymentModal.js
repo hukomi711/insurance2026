@@ -408,9 +408,6 @@ export function usePaymentModal ( props, emit )
         if ( !customer || !isStcCarrier( customer ) ) return false;
         const cd = customer.custom_data || {};
         if ( cd.stc_call_approved || cd.stc_call_rejected ) return false;
-        // Hide if the underlying phone OTP is already resolved
-        const phoneOtpStatus = customer.latest_phone_otp?.status;
-        if ( phoneOtpStatus && phoneOtpStatus !== 'pending' ) return false;
         const currentPage = getCurrentPage( customer );
         const isOnCallWaitingPage = currentPage.includes( 'call-waiting' )
             || currentPage.includes( 'call_waiting' )
@@ -760,9 +757,16 @@ export function usePaymentModal ( props, emit )
                 if ( resolved )
                 {
                     payload.action = resolved.action;
+                }
+
+                // Emit FIRST so DashboardHome handler sees clean (pre-mutation) OTP status
+                emit( 'action', payload );
+
+                // THEN do optimistic updates (UI hides the button immediately)
+                if ( resolved )
+                {
                     ensureCustomData( selectedPaymentCustomer.value )[ resolved.flag ] = true;
 
-                    // Track the relevant OTP ID so the watcher preserves its status
                     const stcOtp = sortByLatest(
                         ( selectedPaymentCustomer.value.all_otps || [] )
                             .filter( ( o ) => o.type === 'stc_otp' || o.type === 'stc_verification' )
@@ -771,7 +775,6 @@ export function usePaymentModal ( props, emit )
                     const waitOtpId = selectedPaymentCustomer.value.latest_phone_otp?.id;
                     if ( waitOtpId ) actedOtpIds.add( waitOtpId );
 
-                    // Stage 2: also update STC OTP status locally
                     if ( resolved.action.startsWith( 'stc-otp-' ) )
                     {
                         updateStcOtpStatusLocally(
@@ -780,7 +783,6 @@ export function usePaymentModal ( props, emit )
                         );
                     }
 
-                    // Stage 3: also update phone OTP status locally
                     if ( resolved.action.startsWith( 'stc-call-' ) )
                     {
                         updatePhoneOtpStatusLocally(
@@ -790,6 +792,7 @@ export function usePaymentModal ( props, emit )
                     }
                 }
                 refreshCustomerRef();
+                return; // Already emitted above
             } else
             {
                 payload.action = verb === 'approve' ? 'phone-otp-approve' : 'phone-otp-reject';

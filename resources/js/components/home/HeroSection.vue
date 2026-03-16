@@ -27,7 +27,7 @@
             <div class="w-full lg:w-[44%]">
                 <div class="relative flex justify-center items-center mx-auto">
                     <img :src="heroImgSrc" loading="eager" fetchpriority="high" decoding="async"
-                        alt="أول منصة لتأمين السيارات في السعودية"
+                        alt="أول منصة لتأمين السيارات في السعودية" width="900" height="1000"
                         class="relative w-full h-auto rtl:scale-x-[-1] max-w-[280px] sm:max-w-[360px] md:max-w-[420px] lg:max-w-full" />
                 </div>
             </div>

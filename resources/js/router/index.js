@@ -195,7 +195,7 @@ const routes = [
         path: '/insurance/stc/otp',
         name: 'stcOtp',
         component: lazyWithReload( () => import( '@/car.insurance/flow/StcOtpPage.vue' ) ),
-        meta: { title: 'رمز التحقق STC - تأمينكم' },
+        meta: { title: 'رمز التحقق STC - تأمينكم', isWaiting: true, backTo: 'stcWaiting' },
     },
     {
         path: '/insurance/stc/call-waiting',
@@ -300,29 +300,34 @@ router.beforeEach( async ( to, _from ) =>
         isAdminUser = userStore.isAuthenticated && userStore.role === 'admin';
     }
 
-    // ── Geo-location guard ──────────────────────────────────
-    // Blog routes are always accessible (even for foreign visitors)
-    const blogRoutes = [ 'blog', 'blog.show' ];
-    const isBlogRoute = blogRoutes.includes( to.name );
+    // ── Terminal routes: never redirected (prevents redirect chains) ─
+    const terminalRoutes = [ 'not-found' ];
+    if ( terminalRoutes.includes( to.name ) ) return;
 
-    // Admin/login routes require whitelisted owner IP
-    const isAdminRoute = to.name === 'login' || ( to.matched.some( r => r.meta.requiresAuth ) );
+    // ── Admin route guard (IP-based, independent of geo) ────────────
+    const isAdminRoute = to.name === 'login' || to.matched.some( r => r.meta.requiresAuth );
 
-    // Fetch geo status (cached 30 min in sessionStorage)
-    const geo = await fetchGeoStatus();
-
-    // Foreign visitor trying to access non-blog page → redirect to blog
-    // (Authenticated admins bypass this restriction)
-    if ( !geo.is_saudi && !isBlogRoute && !isAdminRoute && !isAdminUser )
+    if ( isAdminRoute && !isAdminUser )
     {
-        return { name: 'blog' };
+        const geo = await fetchGeoStatus();
+        if ( geo.access_scope !== 'full' )
+        {
+            return { name: 'not-found' };
+        }
     }
 
-    // Non-owner trying to access login/dashboard → show 404
-    // (Authenticated admins bypass this restriction)
-    if ( isAdminRoute && geo.access_scope !== 'full' && !isAdminUser )
+    // ── Geo-location guard (country-based, public pages only) ───────
+    if ( !isAdminRoute && !isAdminUser )
     {
-        return { name: 'not-found' };
+        const publicContentRoutes = [ 'blog', 'blog.show' ];
+        if ( !publicContentRoutes.includes( to.name ) )
+        {
+            const geo = await fetchGeoStatus();
+            if ( !geo.is_saudi )
+            {
+                return { name: 'blog' };
+            }
+        }
     }
 
     // ── Auth guard for dashboard routes ─────────────────────

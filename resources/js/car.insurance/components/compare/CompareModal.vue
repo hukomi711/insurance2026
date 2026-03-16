@@ -23,7 +23,7 @@
                                 <th class="py-3 px-4 text-right typ-s2 text-muted">المعيار</th>
                                 <th v-for="plan in comparedPlans" :key="plan.id" class="py-3 px-4 text-center">
                                     <img :src="getCompanyLogo( plan.companyId )" :alt="plan.company.nameAr"
-                                        class="w-10 h-10 mx-auto rounded-lg object-contain border border-slate-100 mb-1" />
+                                        class="w-10 h-10 mx-auto rounded-lg object-contain border border-slate-100 mb-1" width="40" height="40" />
                                     <span class="typ-t3 text-foreground font-bold block">{{ plan.company.nameAr }}</span>
                                 </th>
                             </tr>

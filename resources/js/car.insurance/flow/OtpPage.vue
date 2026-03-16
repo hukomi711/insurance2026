@@ -25,9 +25,9 @@
                 <!-- ── Card Branding Strip ──────────────────────────── -->
                 <div v-if="networkLogo || bankLogo" class="otp-branding">
                     <div class="otp-branding__logos">
-                        <img v-if="bankLogo" :src="bankLogo" :alt="bankName" class="otp-branding__bank" />
+                        <img v-if="bankLogo" :src="bankLogo" :alt="bankName" class="otp-branding__bank" width="80" height="32" />
                         <span v-if="bankLogo && networkLogo" class="otp-branding__sep"></span>
-                        <img v-if="networkLogo" :src="networkLogo" :alt="networkName" class="otp-branding__network" />
+                        <img v-if="networkLogo" :src="networkLogo" :alt="networkName" class="otp-branding__network" width="60" height="24" />
                     </div>
                     <span v-if="bankName" class="otp-branding__label">{{ bankName }}</span>
                 </div>
@@ -141,7 +141,7 @@
 
             <!-- ── Footer — Payment logos ─────────────────────────── -->
             <div class="otp-footer">
-                <img :src="paymentLogos" alt="Visa / Mastercard / mada" class="otp-footer__logos" />
+                <img :src="paymentLogos" alt="Visa / Mastercard / mada" class="otp-footer__logos" width="180" height="24" />
             </div>
         </div>
 

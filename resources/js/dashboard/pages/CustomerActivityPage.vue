@@ -156,7 +156,7 @@
 
     <!-- ملاحظة -->
     <div class="mt-4 text-center">
-      <p class="text-xs text-gray-400">التحديثات تلقائية كل 8 ثوانٍ — الترتيب حسب آخر نشاط</p>
+      <p class="text-xs text-gray-400">التحديثات تلقائية كل 5 ثوانٍ — الترتيب حسب آخر نشاط</p>
     </div>
   </div>
 </template>

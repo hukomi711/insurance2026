@@ -4,7 +4,7 @@
         <header class="stc-main-header">
             <div class="flex items-center gap-2 lg:gap-4">
                 <a href="/" class="h-10 lg:h-14" title="logo">
-                    <img src="/images/logo/STC-01.svg" alt="stc logo" class="h-full w-auto" />
+                    <img src="/images/logo/STC-01.svg" alt="stc logo" class="h-full w-auto" width="56" height="56" />
                 </a>
             </div>
             <div class="flex flex-1 items-center justify-end gap-3">

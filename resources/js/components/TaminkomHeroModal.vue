@@ -20,7 +20,7 @@
                     <DialogDescription class="sr-only">تفاصيل خدمة تأمينكم هيرو المجانية</DialogDescription>
 
                     <!-- Banner Image -->
-                    <img :src="heroBanner" alt="تأمينكم هيرو" class="w-full rounded-xl" loading="lazy" />
+                    <img :src="heroBanner" alt="تأمينكم هيرو" class="w-full rounded-xl" loading="lazy" width="2064" height="433" />
 
                     <!-- Content -->
                     <section class="text-start mt-8 md:px-4 flex flex-col gap-4">

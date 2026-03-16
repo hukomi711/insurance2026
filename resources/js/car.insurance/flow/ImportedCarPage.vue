@@ -141,12 +141,12 @@
                         <div class="block lg:hidden w-fit mx-auto">
                             <div class="border-2 border-primary rounded-lg p-4">
                                 <div class="flex items-center justify-center gap-2">
-                                    <img :src="infoIconSrc" alt="Info" class="w-6 h-6" loading="lazy" />
+                                    <img :src="infoIconSrc" alt="Info" class="w-6 h-6" loading="lazy" width="24" height="24" />
                                     <span class="text-sm font-medium text-primary">أين أجد رقم البطاقة الجمركية؟</span>
                                 </div>
                                 <div class="flex justify-center">
                                     <img :src="customsCardSrc" alt="البطاقة الجمركية" class="max-w-full mt-4"
-                                        loading="lazy" />
+                                        loading="lazy" width="600" height="400" />
                                 </div>
                             </div>
                         </div>
@@ -199,12 +199,12 @@
                         <!-- Customs Card Help Card -->
                         <div class="border-2 border-primary rounded-lg p-4">
                             <div class="flex items-center justify-center gap-2">
-                                <img :src="infoIconSrc" alt="Info" class="w-6 h-6" loading="lazy" />
+                                <img :src="infoIconSrc" alt="Info" class="w-6 h-6" loading="lazy" width="24" height="24" />
                                 <span class="text-sm font-medium text-primary">أين أجد رقم البطاقة الجمركية؟</span>
                             </div>
                             <div class="flex justify-center">
                                 <img :src="customsCardSrc" alt="البطاقة الجمركية" class="max-w-full mt-4 rounded-lg"
-                                    loading="lazy" />
+                                    loading="lazy" width="600" height="400" />
                             </div>
                         </div>
                     </div>

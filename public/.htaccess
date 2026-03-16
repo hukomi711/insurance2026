@@ -82,7 +82,7 @@ DirectoryIndex index.php index.html
     # Basic permissions policy
     Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(self)"
     # Content Security Policy
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' http://localhost:5173; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com http://localhost:5173; font-src 'self' https://fonts.gstatic.com http://localhost:5173 data:; img-src 'self' data: blob: https: http://localhost:5173; connect-src 'self' ws://localhost:8080 wss://localhost:8080 ws://localhost:5173 http://localhost:5173; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' wss: ws:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'"
 </IfModule>
 
 # Long cache for Vite hashed assets (filenames change on rebuild)

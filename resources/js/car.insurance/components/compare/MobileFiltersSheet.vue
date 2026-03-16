@@ -34,9 +34,9 @@
                 <div class="mb-5">
                     <label for="maxPrice" class="typ-s2 text-muted block mb-2">
                         الحد الأقصى للسعر:
-                        <span class="text-primary font-bold ltr-nums">{{ formatNumber( filters.maxPrice ) }}</span>
+                        <span class="text-primary font-bold ltr-nums">{{ formatNumber( localFilters.maxPrice ) }}</span>
                     </label>
-                    <input id="maxPrice" v-model.number="filters.maxPrice" type="range" :min="500" :max="8000"
+                    <input id="maxPrice" v-model.number="localFilters.maxPrice" type="range" :min="500" :max="8000"
                         step="100" name="maxPrice" class="w-full accent-primary" />
                 </div>
 
@@ -46,11 +46,11 @@
                     <div class="space-y-1.5">
                         <label v-for="company in companies" :key="company.id" :for="`company-${company.id}`"
                             class="flex items-center gap-2 cursor-pointer py-1.5 px-2 rounded-lg hover:bg-slate-50">
-                            <input :id="`company-${company.id}`" v-model="filters.companies" type="checkbox"
+                            <input :id="`company-${company.id}`" v-model="localFilters.companies" type="checkbox"
                                 :value="company.id" :name="`company-${company.id}`"
                                 class="w-3.5 h-3.5 text-primary rounded border-slate-300" />
                             <img :src="getCompanyLogo( company.id )" :alt="company.nameAr"
-                                class="w-5 h-5 rounded object-contain" />
+                                class="w-5 h-5 rounded object-contain" width="20" height="20" />
                             <span class="typ-c1 text-foreground">{{ company.nameAr }}</span>
                         </label>
                     </div>
@@ -59,11 +59,11 @@
                 <!-- Actions -->
                 <div class="flex gap-3 mt-6">
                     <button class="flex-1 typ-s2 text-primary font-bold py-2.5 border border-primary rounded-xl"
-                        @click="emit( 'reset-filters' )">
+                        @click="resetLocal">
                         إعادة تعيين
                     </button>
                     <button class="flex-1 typ-s2 text-white font-bold py-2.5 bg-primary rounded-xl"
-                        @click="open = false">
+                        @click="applyFilters">
                         تطبيق
                     </button>
                 </div>
@@ -73,6 +73,7 @@
 </template>
 
 <script setup>
+import { ref, watch } from 'vue';
 import {
     DialogRoot, DialogPortal, DialogOverlay, DialogContent,
     DialogTitle, DialogDescription, DialogClose,
@@ -80,7 +81,7 @@ import {
 import { formatNumber } from '@/utils/formatters';
 import { getCompanyLogo } from '@/utils/companyLogos';
 
-defineProps( {
+const props = defineProps( {
     sortOptions: { type: Array, required: true },
     companies: { type: Array, required: true },
     filters: { type: Object, required: true },
@@ -89,5 +90,20 @@ defineProps( {
 
 const open = defineModel( 'open', { type: Boolean, default: false } );
 
-const emit = defineEmits( [ 'update:sortBy', 'reset-filters' ] );
+const emit = defineEmits( [ 'update:sortBy', 'apply-filters', 'reset-filters' ] );
+
+const localFilters = ref( structuredClone( props.filters ) );
+
+watch( () => props.filters, ( v ) => {
+    localFilters.value = structuredClone( v );
+}, { deep: true } );
+
+function applyFilters() {
+    emit( 'apply-filters', structuredClone( localFilters.value ) );
+    open.value = false;
+}
+
+function resetLocal() {
+    localFilters.value = { type: 'all', maxPrice: 8000, maxDeductible: 5000, companies: [] };
+}
 </script>

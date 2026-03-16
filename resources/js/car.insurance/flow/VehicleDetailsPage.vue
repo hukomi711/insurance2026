@@ -113,7 +113,7 @@
                             <div class="w-full border-2 border-dashed border-slate-300 rounded-lg p-4">
                                 <div class="flex items-center gap-4">
                                     <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
-                                        <img :src="driversIconSrc" alt="Driver" class="w-6 h-6" loading="lazy" />
+                                        <img :src="driversIconSrc" alt="Driver" class="w-6 h-6" loading="lazy" width="24" height="24" />
                                     </div>
                                     <div class="flex-1">
                                         <h4 class="font-medium text-slate-800">{{ drivers.length }} السائق</h4>
@@ -176,7 +176,7 @@
                         <div class="block lg:hidden">
                             <div v-if="selectedInsuranceTip" class="border-2 border-primary rounded-lg p-4">
                                 <div class="flex gap-2 items-start mb-2">
-                                    <img :src="infoIconSrc" alt="Info" class="w-6 h-6 mt-0.5" loading="lazy" />
+                                    <img :src="infoIconSrc" alt="Info" class="w-6 h-6 mt-0.5" loading="lazy" width="24" height="24" />
                                     <span class="text-sm font-medium text-primary">{{ selectedInsuranceTitle }}</span>
                                 </div>
                                 <p class="text-sm text-gray-600 mt-2 leading-relaxed">
@@ -231,7 +231,7 @@
                         <!-- Info Tip Card -->
                         <div v-if="selectedInsuranceTip" class="border-2 border-primary rounded-lg p-4">
                             <div class="flex gap-2 items-start mb-2">
-                                <img :src="infoIconSrc" alt="Info" class="w-6 h-6 mt-0.5" loading="lazy" />
+                                <img :src="infoIconSrc" alt="Info" class="w-6 h-6 mt-0.5" loading="lazy" width="24" height="24" />
                                 <span class="text-sm font-medium text-primary">{{ selectedInsuranceTitle }}</span>
                             </div>
                             <p class="text-sm text-gray-600 mt-2 leading-relaxed">
@@ -256,7 +256,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { CheckboxRoot, CheckboxIndicator } from 'radix-vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
@@ -264,8 +264,8 @@ import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { useInsuranceStore } from '@/store';
 import logger from '@/utils/logger';
 import StepProgressBar from '../components/vehicle-details/StepProgressBar.vue';
-import DriversSheet from '../components/vehicle-details/DriversSheet.vue';
-import OtherDetailsSheet from '../components/vehicle-details/OtherDetailsSheet.vue';
+const DriversSheet = defineAsyncComponent( () => import( '../components/vehicle-details/DriversSheet.vue' ) );
+const OtherDetailsSheet = defineAsyncComponent( () => import( '../components/vehicle-details/OtherDetailsSheet.vue' ) );
 
 const router = useRouter();
 const { trackStep, resumeSession } = useQuoteTracking();

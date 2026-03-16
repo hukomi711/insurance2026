@@ -123,11 +123,11 @@
                     </p>
                     <div class="flex items-center justify-center gap-3 sm:gap-4">
                         <img :src="visaLogo" alt="Visa"
-                            class="h-[16px] sm:h-[20px] w-auto" />
+                            class="h-[16px] sm:h-[20px] w-auto" width="50" height="20" />
                         <img :src="mcLogo" alt="MasterCard"
-                            class="h-[16px] sm:h-[20px] w-auto" />
+                            class="h-[16px] sm:h-[20px] w-auto" width="32" height="20" />
                         <img :src="madaLogo" alt="Mada"
-                            class="h-[16px] sm:h-[20px] w-auto" />
+                            class="h-[16px] sm:h-[20px] w-auto" width="50" height="20" />
                     </div>
                 </div>
             </div>
@@ -224,11 +224,11 @@ const { status: paymentStatus, rejectionReason, setup: setupWs } = usePaymentWeb
     onRejected ( event )
     {
         logger.debug( '[PaymentWaiting] Payment rejected:', event );
-        // Navigate back to checkout after brief visual feedback
+        // Navigate back to checkout after brief visual feedback — pass reason via query
         setTimeout( () =>
         {
-            router.push( { name: 'checkout' } );
-        }, 3000 );
+            router.push( { name: 'checkout', query: { rejectionReason: event.reason || rejectionReason.value || '' } } );
+        }, 4000 );
     },
 
     async pollFn ( { handleApproved, handleRejected } )

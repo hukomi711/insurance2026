@@ -70,7 +70,7 @@
                     <div class="aspect-video bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl overflow-hidden mb-8">
                         <img v-if="article.image" :src="article.image" :alt="article.title"
                             class="w-full h-full object-cover" loading="lazy" decoding="async"
-                            @error="$event.target.style.display = 'none'" />
+                            width="800" height="450" @error="$event.target.style.display = 'none'" />
                     </div>
 
                     <!-- Content -->
@@ -118,7 +118,8 @@
                             class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
                             <div class="aspect-video bg-gradient-to-br from-blue-400 to-blue-600">
                                 <img v-if="related.image" :src="related.image" :alt="related.title"
-                                    class="w-full h-full object-cover" @error="$event.target.style.display = 'none'" />
+                                    class="w-full h-full object-cover" width="400" height="225"
+                                    @error="$event.target.style.display = 'none'" />
                             </div>
                             <div class="p-4">
                                 <h3 class="font-semibold text-gray-800 mb-2 line-clamp-2">{{ related.title }}</h3>

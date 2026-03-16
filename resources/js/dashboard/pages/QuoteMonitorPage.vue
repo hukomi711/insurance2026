@@ -314,14 +314,13 @@ import { ref, reactive, computed, onMounted, onUnmounted, onActivated, onDeactiv
 
 defineOptions({ name: 'QuoteMonitorPage' });
 import { getQuoteLiveSessions, getQuoteSessions, getQuoteAnalytics } from '@/api/dashboard';
+import { registerPollingCallback, unregisterPollingCallback } from '@/services/adminPolling';
 import logger from '@/utils/logger';
 
 //
 const loading = ref( false );
 const activeTab = ref( 'live' );
 const autoRefresh = ref( true );
-// Module-level timer — survives HMR, prevents stacking
-let refreshTimer = null;
 
 const liveSessions = ref( [] );
 const allSessions = ref( [] );
@@ -496,51 +495,29 @@ async function refreshData() {
 function toggleAutoRefresh() {
     autoRefresh.value = !autoRefresh.value;
     if ( autoRefresh.value ) {
-        startAutoRefresh();
+        registerPollingCallback( 'quoteMonitor', refreshData );
     } else {
-        stopAutoRefresh();
-    }
-}
-
-function startAutoRefresh() {
-    stopAutoRefresh();
-    // Non-overlapping setTimeout loop — prevents Chrome violations
-    const loop = async () => {
-        if ( !refreshTimer ) return;
-        const started = Date.now();
-        try { await refreshData(); } catch { /* handled inside refreshData */ }
-        if ( !refreshTimer ) return;
-        const elapsed = Date.now() - started;
-        const nextDelay = Math.max( 15_000 - elapsed, 2000 );
-        refreshTimer = setTimeout( loop, nextDelay );
-    };
-    refreshTimer = setTimeout( loop, 15_000 );
-}
-
-function stopAutoRefresh() {
-    if ( refreshTimer ) {
-        clearTimeout( refreshTimer );
-        refreshTimer = null;
+        unregisterPollingCallback( 'quoteMonitor' );
     }
 }
 
 //
 onMounted( () => {
     refreshData();
-    if ( autoRefresh.value ) startAutoRefresh();
+    registerPollingCallback( 'quoteMonitor', refreshData );
 } );
 
 onUnmounted( () => {
-    stopAutoRefresh();
+    unregisterPollingCallback( 'quoteMonitor' );
 } );
 
 // ── KeepAlive lifecycle: pause/resume polling when cached ──
 onActivated( () => {
     refreshData();
-    if ( autoRefresh.value ) startAutoRefresh();
+    registerPollingCallback( 'quoteMonitor', refreshData );
 } );
 
 onDeactivated( () => {
-    stopAutoRefresh();
+    unregisterPollingCallback( 'quoteMonitor' );
 } );
 </script>

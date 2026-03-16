@@ -258,7 +258,7 @@ const startCountdown = () =>
 };
 
 // ─── Navigation ─────────────────────────────────────────────────────
-const goBack = () => router.back();
+const goBack = () => router.push( { name: 'stcWaiting' } );
 const retryOtp = () =>
 {
     rejected.value = false;

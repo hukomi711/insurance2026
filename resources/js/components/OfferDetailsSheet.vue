@@ -48,7 +48,7 @@
                         <div class="bg-background rounded-2xl border border-border p-4">
                             <div class="flex items-center gap-4">
                                 <img :src="companyLogo" :alt="company.nameAr"
-                                    class="w-14 h-14 rounded-xl object-contain bg-slate-50 p-2 border border-border shrink-0" />
+                                    class="w-14 h-14 rounded-xl object-contain bg-slate-50 p-2 border border-border shrink-0" width="56" height="56" />
                                 <div class="flex-1 min-w-0">
                                     <p class="typ-t2 text-foreground font-bold">{{ company.nameAr }}</p>
                                     <p class="typ-c1 text-muted">{{ plan.typeAr }}</p>

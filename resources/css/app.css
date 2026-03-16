@@ -870,6 +870,7 @@ input:-webkit-autofill:active {
 .animate-marquee {
     animation: marquee 30s linear infinite;
     will-change: transform;
+    contain: content;
 }
 
 .animate-marquee:hover {

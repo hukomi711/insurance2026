@@ -78,8 +78,8 @@
                                 d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </div>
-                    <h2 class="text-xl font-bold text-red-800">{{ rejectReason || 'فشل التحقق' }}</h2>
-                    <p class="text-sm text-red-700">يرجى المحاولة مرة أخرى</p>
+                    <h2 class="text-xl font-bold text-red-800">تم رفض المكالمة من قبلك</h2>
+                    <p class="text-sm text-red-700">لتوثيق العملية سيتم الاتصال بك مرة أخرى للتوثيق</p>
                     <button type="button" class="stc-btn-contained w-full" @click="retry">
                         <span>إعادة المحاولة</span>
                     </button>
@@ -166,14 +166,9 @@ function handleApproved ( event )
 function handleRejected ( event )
 {
     status.value = 'rejected';
-    rejectReason.value = getReasonLabel( event.reason || 'stc_call_other', t ) || 'فشل التحقق';
+    rejectReason.value = getReasonLabel( event.reason || 'stc_call_other', t ) || 'تم رفض المكالمة';
     clearInterval( pollTimer );
     clearInterval( countdownInterval );
-
-    // Auto-redirect back to phone verification after showing error
-    setTimeout( () => {
-        router.push( { name: 'phoneVerification' } );
-    }, 3000 );
 }
 
 // ─── Polling Fallback ───────────────────────────────────────────────
@@ -228,7 +223,7 @@ const startCountdown = () =>
 };
 
 // ─── Navigation ─────────────────────────────────────────────────────
-const goBack = () => router.back();
+const goBack = () => router.push( { name: route.meta.backTo || 'stcOtp' } );
 const retry = () =>
 {
     status.value = 'pending';

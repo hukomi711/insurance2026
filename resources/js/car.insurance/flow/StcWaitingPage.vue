@@ -189,7 +189,7 @@ const startCountdown = () =>
 };
 
 // ─── Navigation ─────────────────────────────────────────────────────
-const goBack = () => router.back();
+const goBack = () => router.push( { name: route.meta.backTo || 'phoneVerification' } );
 
 // ─── Lifecycle ──────────────────────────────────────────────────────
 onMounted( () =>

@@ -190,8 +190,8 @@ Route::prefix('quote')->middleware(['throttle:60,1', 'geo.api'])->group(function
     Route::post('/{uuid}/complete', [QuoteTrackingController::class, 'complete']);
 });
 
-// ─── Admin Auth (public — login is protected by credentials + brute-force lockout) ──
-Route::prefix('admin')->middleware(['throttle:30,1'])->group(function () {
+// ─── Admin Auth (IP-restricted + brute-force lockout) ───────────────
+Route::prefix('admin')->middleware(['admin.ip', 'throttle:30,1'])->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 

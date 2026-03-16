@@ -13,7 +13,7 @@
                     <div class="p-6 md:p-8">
                         <!-- Logo -->
                         <img src="/images/icons/gate_logo_indv_light.svg"
-                            :alt="t( 'verification.phoneOtpWaiting.logo' )" class="h-16 md:h-20 w-auto mx-auto mb-6"
+                            :alt="t( 'verification.phoneOtpWaiting.logo' )" class="h-16 md:h-20 w-auto mx-auto mb-6" width="120" height="80"
                             @error="$event.target.style.display = 'none'" />
 
                         <!-- Title -->

@@ -117,6 +117,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 defineOptions({ name: 'LoginAttemptsPage' });
 import { fetchLoginAttempts } from '@/api/loginAttempts';
 import { getStatusLabel, getStatusColor, formatNumber } from '@/utils/formatters';
+import { registerPollingCallback, unregisterPollingCallback } from '@/services/adminPolling';
 import logger from '@/utils/logger';
 
 const attempts = ref( [] );
@@ -168,9 +169,13 @@ watch( searchQuery, () => {
 } );
 watch( statusFilter, () => { meta.value.current_page = 1; loadAttempts(); } );
 
-onMounted( loadAttempts );
+onMounted( () => {
+  loadAttempts();
+  registerPollingCallback( 'loginAttempts', loadAttempts );
+} );
 
 onUnmounted( () => {
   clearTimeout( searchTimeout );
+  unregisterPollingCallback( 'loginAttempts' );
 } );
 </script>

@@ -9,7 +9,7 @@
                            data-[state=active]:bg-[#0088eb] data-[state=active]:text-white">
                     <span
                         class="w-[30px] h-[30px] bg-white rounded-full inline-flex items-center justify-center shrink-0 shadow-sm overflow-hidden p-1">
-                        <img :src="tab.icon" :alt="tab.label" class="w-full h-full object-contain" />
+                        <img :src="tab.icon" :alt="tab.label" class="w-full h-full object-contain" width="30" height="30" />
                     </span>
                     <span class="hidden sm:inline">{{ tab.label }}</span>
                 </TabsTrigger>
@@ -103,7 +103,7 @@
                     <!-- Company logo centered -->
                     <div v-if="selectedCompany" class="flex justify-center py-4 mb-4">
                         <img :src="selectedCompany.logo" :alt="selectedCompany.name"
-                            class="max-w-[140px] max-h-[60px] object-contain" />
+                            class="max-w-[140px] max-h-[60px] object-contain" width="140" height="60" />
                     </div>
 
                     <!-- تأمين مع heading + معاينة الكل -->
@@ -112,7 +112,7 @@
                         <button class="detail-box-show p-2 cursor-pointer" :aria-expanded="showAllExpanded"
                             @click="showAllExpanded = !showAllExpanded">
                             <img :src="showAllUpIcon" class="max-w-full transition-transform"
-                                :class="showAllExpanded ? '' : 'rotate-180'" loading="lazy" />
+                                :class="showAllExpanded ? '' : 'rotate-180'" loading="lazy" width="24" height="24" />
                             <span
                                 class="text-inherit font-semibold">{{ showAllExpanded ? 'إغلاق' : 'معاينة الكل' }}</span>
                         </button>

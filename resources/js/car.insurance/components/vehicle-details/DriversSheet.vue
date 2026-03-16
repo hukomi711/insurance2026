@@ -45,7 +45,7 @@
                         <!-- Empty state -->
                         <div v-if="drivers.length === 0" class="flex justify-center items-center h-[100%]">
                             <div class="flex flex-col items-center justify-center">
-                                <img :src="noDriversSrc" alt="no drivers" class="max-w-full mb-4" loading="lazy" />
+                                <img :src="noDriversSrc" alt="no drivers" class="max-w-full mb-4" loading="lazy" width="200" height="200" />
                                 <span class="font-bold text-xs">لا يوجد سائقين</span>
                                 <span class="text-xs text-slate-500 mt-2">يجب إضافة سائق واحد على الأقل.</span>
                             </div>
@@ -112,7 +112,7 @@
                         <!-- Checkbox: add policy holder as driver -->
                         <div class="flex w-full flex-wrap items-center gap-2 mb-4 mt-3">
                             <div class="flex items-center gap-2 group min-w-fit">
-                                <CheckboxRoot id="addPolicyHolderAsdriverBTN"
+                                <CheckboxRoot id="addPolicyHolderAsdriverBTN" name="addPolicyHolderAsDriver"
                                     :checked="addPolicyHolderAsDriver"
                                     aria-label="checkbox" class="peer rounded-xs shrink-0 transition-all duration-100
                                            border border-solid border-slate-300 size-6 cursor-pointer

@@ -12,15 +12,8 @@ class SecurityHeaders
     {
         $response = $next($request);
 
-        $response->headers->set('X-Content-Type-Options', 'nosniff');
-        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
-        $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
-
-        if (app()->environment('production')) {
-            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-            $response->headers->set('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' wss: ws:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'");
-        }
+        // Security headers handled by nginx for all responses (including static files).
+        // Only set headers here that are specific to PHP responses or need dynamic values.
 
         return $response;
     }

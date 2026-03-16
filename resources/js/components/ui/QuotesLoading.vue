@@ -16,7 +16,7 @@
                         class="border bg-white rounded-lg center gap-8 flex-col my-4 min-h-[300px] max-h-[80vh] shadow-xs overflow-hidden @container">
 
                         <!-- Animated Car Image -->
-                        <img class="animate-pulse max-w-[249px]" :src="carInsuranceLogo" alt="جاري التحميل" />
+                        <img class="animate-pulse max-w-[249px]" :src="carInsuranceLogo" alt="جاري التحميل" width="249" height="249" />
 
                         <!-- Waiting Text -->
                         <section class="text-center">

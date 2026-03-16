@@ -1,5 +1,15 @@
 <template>
     <section class="why-section">
+        <!-- Shared SVG defs (rendered once) -->
+        <svg width="0" height="0" class="absolute" aria-hidden="true">
+            <defs>
+                <linearGradient id="why-grad" x1="3.86395" y1="45.004" x2="18.0264" y2="24.1474" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#94BFFF" />
+                    <stop offset="1" stop-color="#4C94FE" />
+                </linearGradient>
+            </defs>
+        </svg>
+
         <div class="why-header">
             <div class="why-header__anim">
                 <h1 class="why-header__title">لماذا تأمينكم؟</h1>
@@ -19,20 +29,13 @@
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path opacity="0.1"
                                     d="M6.20703 32.3583C8.83424 32.048 11.2156 33.9262 11.5259 36.5534C11.8362 39.1806 9.95801 41.562 7.3308 41.8723C4.70358 42.1826 2.32224 40.3044 2.01192 37.6772C1.7016 35.05 3.57981 32.6686 6.20703 32.3583Z"
-                                    fill="#0088EB" stroke="url(#paint0_linear_0_1)" stroke-width="2.61276" />
+                                    fill="#0088EB" stroke="url(#why-grad)" stroke-width="2.61276" />
                                 <path opacity="0.1"
                                     d="M59.4072 18.0325C57.2286 17.7713 56.8727 14.7584 58.9305 13.9968L65.8565 11.4338C66.5919 11.1616 67.1131 10.5008 67.2064 9.72224L68.0853 2.3897C68.3464 0.21106 71.3594 -0.14483 72.1209 1.91302L74.684 8.839C74.9561 9.57439 75.617 10.0956 76.3955 10.1889L83.7281 11.0678C85.9067 11.3289 86.2626 14.3419 84.2047 15.1034L77.2788 17.6665C76.5434 17.9386 76.0222 18.5995 75.9288 19.378L75.05 26.7106C74.7888 28.8892 71.7759 29.2451 71.0143 27.1872L68.4513 20.2613C68.1791 19.5259 67.5183 19.0047 66.7397 18.9113L59.4072 18.0325Z"
                                     fill="#1DB97D" :class="{ 'why-card__shape--hidden': idx % 2 !== 0 && idx !== 0 }" />
                                 <path opacity="0.1"
                                     d="M139.807 11.3992C139.441 10.1092 140.609 8.90692 141.909 9.23506L150.685 11.45C151.985 11.7781 152.442 13.3906 151.508 14.3525L145.202 20.8449C144.268 21.8068 142.643 21.3966 142.277 20.1066L139.807 11.3992Z"
                                     fill="#1DB97D" :class="{ 'why-card__shape--hidden': idx % 2 === 0 && idx !== 0 }" />
-                                <defs>
-                                    <linearGradient id="paint0_linear_0_1" x1="3.86395" y1="45.004" x2="18.0264"
-                                        y2="24.1474" gradientUnits="userSpaceOnUse">
-                                        <stop stop-color="#94BFFF" />
-                                        <stop offset="1" stop-color="#4C94FE" />
-                                    </linearGradient>
-                                </defs>
                             </svg>
                         </div>
 

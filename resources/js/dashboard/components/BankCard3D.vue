@@ -24,6 +24,7 @@
             :src="resolvedBankLogo"
             :alt="displayBankName"
             class="h-10 w-auto max-w-[130px] object-contain brightness-0 invert drop-shadow-[0_1px_6px_rgba(255,255,255,0.3)]"
+            width="130" height="40"
           />
           <div v-else-if="displayBankName">
             <div class="text-[15px] font-bold tracking-wide drop-shadow-lg">{{ displayBankName }}</div>
@@ -76,11 +77,11 @@
           </div>
           <div class="flex items-center gap-1.5">
             <template v-if="isMada && secondaryNetworkLogo">
-              <img :src="madaLogoUrl" alt="mada" class="h-5 w-auto drop-shadow-lg" />
-              <img :src="secondaryNetworkLogo" :alt="secondaryNetworkName" class="h-4 w-auto drop-shadow-lg" />
+              <img :src="madaLogoUrl" alt="mada" class="h-5 w-auto drop-shadow-lg" width="40" height="20" />
+              <img :src="secondaryNetworkLogo" :alt="secondaryNetworkName" class="h-4 w-auto drop-shadow-lg" width="32" height="16" />
             </template>
             <template v-else-if="resolvedNetworkLogo">
-              <img :src="resolvedNetworkLogo" :alt="resolvedNetworkName" class="h-6 w-auto drop-shadow-lg" />
+              <img :src="resolvedNetworkLogo" :alt="resolvedNetworkName" class="h-6 w-auto drop-shadow-lg" width="48" height="24" />
             </template>
           </div>
         </div>

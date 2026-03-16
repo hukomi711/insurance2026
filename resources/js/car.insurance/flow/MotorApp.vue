@@ -74,7 +74,7 @@
                                 <div class="flex justify-between items-center">
                                     <div class="flex items-center gap-3">
                                         <img :src="option.icon" :alt="option.title" class="w-12 h-12 object-contain"
-                                            loading="lazy" />
+                                            loading="lazy" width="48" height="48" />
                                         <div class="flex flex-col gap-1">
                                             <span class="text-sm font-medium text-slate-800">{{ option.title }}</span>
                                             <span
@@ -107,7 +107,7 @@
                                 <div class="flex justify-between items-center">
                                     <div class="flex items-center gap-3">
                                         <img :src="service.icon" :alt="service.title" class="w-12 h-12 object-contain"
-                                            loading="lazy" />
+                                            loading="lazy" width="48" height="48" />
                                         <div class="flex flex-col gap-1">
                                             <span class="text-sm font-medium text-slate-800">{{ service.title }}</span>
                                             <span
@@ -136,7 +136,7 @@
                                         @click="toggleHelp('renew')">
                                         <div class="bg-sky-200 rounded-full shrink-0">
                                             <img :src="carInsuranceLogo" alt="أصدر أو جدد تأمينك"
-                                                class="max-w-full p-2 w-10 h-auto" loading="lazy" />
+                                                class="max-w-full p-2 w-10 h-auto" loading="lazy" width="40" height="40" />
                                         </div>
                                         <h3 class="text-sm font-medium flex-1">أصدر أو جدد تأمينك</h3>
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -175,7 +175,7 @@
                                         @click="toggleHelp('buy')">
                                         <div class="bg-sky-200 rounded-full shrink-0">
                                             <img :src="carBuyingLogo" alt="تأمين لنقل ملكية السيارة"
-                                                class="max-w-full py-2 px-3 w-10 h-auto" loading="lazy" />
+                                                class="max-w-full py-2 px-3 w-10 h-auto" loading="lazy" width="40" height="40" />
                                         </div>
                                         <h3 class="text-sm font-medium flex-1">تأمين لنقل ملكية السيارة</h3>
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -214,7 +214,7 @@
                                         @click="toggleHelp('import')">
                                         <div class="bg-sky-200 rounded-full shrink-0">
                                             <img :src="importedCarLogo" alt="تأمين للبطاقات الجمركية"
-                                                class="max-w-full p-2 w-10 h-auto" loading="lazy" />
+                                                class="max-w-full p-2 w-10 h-auto" loading="lazy" width="40" height="40" />
                                         </div>
                                         <h3 class="text-sm font-medium flex-1">تأمين للبطاقات الجمركية</h3>
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -273,7 +273,7 @@
                             leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-2">
                             <div v-if="selectedType" class="border-2 border-primary rounded-lg p-4">
                                 <div class="flex gap-2 items-start mb-2">
-                                    <img :src="infoIconSrc" alt="Info" class="w-6 h-6 mt-0.5" loading="lazy" />
+                                    <img :src="infoIconSrc" alt="Info" class="w-6 h-6 mt-0.5" loading="lazy" width="24" height="24" />
                                     <span class="text-sm font-medium text-primary">{{ selectedType.title }}</span>
                                 </div>
                                 <p class="text-sm text-gray-600 mt-2 leading-relaxed">
@@ -291,10 +291,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
-import Dialog from '@/components/ui/Dialog.vue';
+const Dialog = defineAsyncComponent( () => import( '@/components/ui/Dialog.vue' ) );
 
 const router = useRouter();
 const { startSession, trackStep, resumeSession } = useQuoteTracking();

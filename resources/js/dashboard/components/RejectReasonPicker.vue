@@ -1,7 +1,9 @@
 <template>
   <div class="reject-picker">
     <select
+      id="reject-reason"
       v-model="selected"
+      name="reject-reason"
       class="reject-picker__select"
       :disabled="disabled"
     >

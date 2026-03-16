@@ -85,8 +85,9 @@
                     الحد الأقصى للسعر:
                     <span class="text-primary font-bold ltr-nums">{{ formatNumber(filters.maxPrice) }}</span>
                 </label>
-                <input id="maxPriceDesktop" v-model.number="filters.maxPrice" type="range" :min="500" :max="8000"
-                    step="100" name="maxPriceDesktop" class="w-full accent-primary" />
+                <input id="maxPriceDesktop" :value="filters.maxPrice" type="range" :min="500" :max="8000"
+                    step="100" name="maxPriceDesktop" class="w-full accent-primary"
+                    @input="emit('update:filters', { ...filters, maxPrice: +$event.target.value })" />
             </div>
 
             <!-- Company Filter -->
@@ -96,11 +97,18 @@
                     <label v-for="company in companies" :key="company.id"
                         :for="`company-desktop-${company.id}`"
                         class="flex items-center gap-2 cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-50">
-                        <input :id="`company-desktop-${company.id}`" v-model="filters.companies" type="checkbox"
-                            :value="company.id" :name="`company-desktop-${company.id}`"
-                            class="w-3.5 h-3.5 text-primary rounded border-slate-300" />
+                        <input :id="`company-desktop-${company.id}`" type="checkbox"
+                            :checked="filters.companies.includes(company.id)"
+                            :name="`company-desktop-${company.id}`"
+                            class="w-3.5 h-3.5 text-primary rounded border-slate-300"
+                            @change="emit('update:filters', {
+                                ...filters,
+                                companies: $event.target.checked
+                                    ? [...filters.companies, company.id]
+                                    : filters.companies.filter(id => id !== company.id),
+                            })" />
                         <img :src="getCompanyLogo(company.id)" :alt="company.nameAr"
-                            class="size-5 rounded object-contain" />
+                            class="size-5 rounded object-contain" width="20" height="20" />
                         <span class="typ-c1 text-foreground">{{ company.nameAr }}</span>
                     </label>
                 </div>
@@ -146,5 +154,5 @@ defineProps({
     companies: { type: Array, required: true },
 });
 
-defineEmits(['update:sortBy', 'reset-filters', 'show-hero']);
+const emit = defineEmits(['update:sortBy', 'update:filters', 'reset-filters', 'show-hero']);
 </script>

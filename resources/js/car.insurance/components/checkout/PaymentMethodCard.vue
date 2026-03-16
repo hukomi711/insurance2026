@@ -29,7 +29,7 @@
                 <span class="font-bold text-sm sm:text-[0.85rem]">بطاقة الإئتمانية</span>
               </span>
               <i class="w-16 sm:w-20 flex items-center justify-center shrink-0">
-                <img :src="cardLogoSrc" alt="بطاقة" class="max-w-full object-contain" loading="lazy" height="36" />
+                <img :src="cardLogoSrc" alt="بطاقة" class="max-w-full object-contain" loading="lazy" width="80" height="36" />
               </i>
             </span>
           </div>
@@ -49,12 +49,28 @@
                 <span class="text-[0.65rem] sm:text-[0.7rem] text-red-500 font-medium whitespace-nowrap">غير متوفر حالياً</span>
               </span>
               <i class="w-16 sm:w-20 flex items-center justify-center shrink-0">
-                <img :src="applePayLogoSrc" alt="Apple Pay" class="max-w-full object-contain h-5 sm:h-6" loading="lazy" />
+                <img :src="applePayLogoSrc" alt="Apple Pay" class="max-w-full object-contain h-5 sm:h-6" loading="lazy" width="60" height="24" />
               </i>
             </span>
           </div>
         </div>
       </div>
+
+      <!-- Card Rejection Alert -->
+      <transition name="fade">
+        <div v-if="rejectionReason && method === 'card'"
+          class="flex items-start gap-3 p-3.5 bg-red-50 border border-red-200 rounded-xl" role="alert">
+          <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd" />
+          </svg>
+          <div class="flex-1">
+            <p class="text-sm font-bold text-red-700">{{ rejectionReason }}</p>
+            <p class="text-xs text-red-500 mt-1">يرجى التحقق من بيانات البطاقة والمحاولة مرة أخرى</p>
+          </div>
+        </div>
+      </transition>
 
       <!-- Card Form (shown for card) -->
       <form v-if="method === 'card'" class="space-y-3 sm:space-y-4" @submit.prevent>
@@ -142,7 +158,7 @@
         v-if="method === 'applepay'"
         class="bg-slate-50 rounded-xl p-4 text-center text-sm text-muted border border-slate-100"
       >
-        <img :src="applePayLogoSrc" alt="Apple Pay" class="h-8 mx-auto mb-2" />
+        <img :src="applePayLogoSrc" alt="Apple Pay" class="h-8 mx-auto mb-2" width="60" height="32" />
         <p>سيتم الدفع عبر Apple Pay</p>
       </div>
 
@@ -167,12 +183,13 @@
 <script setup>
 import { formatCardNumber, formatExpiry } from '@/utils/cardValidation';
 import cardLogoSrc from '@/../../resources/images/logo/master-visa-mada.webp';
-import applePayLogoSrc from '@/../../resources/images/logo/apple-pay-logo.png';
+import applePayLogoSrc from '@/../../resources/images/logo/apple-pay-logo.webp';
 
 const props = defineProps({
   method: { type: String, default: 'card' },
   form: { type: Object, required: true },
   errors: { type: Object, default: () => ({}) },
+  rejectionReason: { type: String, default: '' },
 });
 
 const emit = defineEmits(['update:method', 'update:form']);

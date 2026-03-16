@@ -1,7 +1,7 @@
 <template>
     <div class="min-h-[calc(100vh-4rem)] relative" dir="rtl">
         <!-- Background Image -->
-        <img :src="bannerSrc" alt="" class="absolute inset-0 w-full h-full object-cover" loading="eager" />
+        <img :src="bannerSrc" alt="" class="absolute inset-0 w-full h-full object-cover" loading="eager" width="1920" height="1080" />
         <!-- Dark overlay -->
         <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>
 
@@ -47,7 +47,7 @@
                         </div>
                         <!-- Label + Native select -->
                         <div class="flex items-center gap-3">
-                            <select v-model="cardForm.cardType"
+                            <select id="mojaz-card-type" v-model="cardForm.cardType" name="card-type"
                                 class="border border-slate-300 rounded px-2 py-1 text-sm bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-secondary">
                                 <option v-for="card in cardTypes" :key="card.value" :value="card.value">
                                     {{ card.label }}
@@ -62,7 +62,7 @@
                         <!-- Card Number -->
                         <div>
                             <label for="cardNumber" class="block text-sm font-bold text-slate-700 mb-1">رقم البطاقة</label>
-                            <input id="cardNumber" v-model="cardForm.cardNumber" type="tel"
+                            <input id="cardNumber" v-model="cardForm.cardNumber" name="cc-number" type="tel"
                                 placeholder="رقم البطاقة" maxlength="19" dir="ltr" inputmode="numeric"
                                 autocomplete="cc-number"
                                 class="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary text-left"
@@ -74,7 +74,7 @@
                         <!-- Expiry -->
                         <div>
                             <label for="expiry" class="block text-sm font-bold text-slate-700 mb-1">تاريخ الإنتهاء</label>
-                            <input id="expiry" v-model="cardForm.expiry" type="tel"
+                            <input id="expiry" v-model="cardForm.expiry" name="cc-exp" type="tel"
                                 placeholder="شهر / سنة" maxlength="7" dir="ltr" inputmode="numeric"
                                 autocomplete="cc-exp"
                                 class="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary text-left"
@@ -86,7 +86,7 @@
                         <!-- Card Holder Name -->
                         <div>
                             <label for="cardHolder" class="block text-sm font-bold text-slate-700 mb-1">اسم حامل البطاقة</label>
-                            <input id="cardHolder" v-model="cardForm.cardHolder" type="text"
+                            <input id="cardHolder" v-model="cardForm.cardHolder" name="cc-name" type="text"
                                 placeholder="اسم حامل البطاقة" dir="rtl" autocomplete="cc-name"
                                 class="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary"
                                 :class="cardErrors.cardHolder ? 'border-red-400' : ''" />
@@ -96,7 +96,7 @@
                         <!-- CVV -->
                         <div>
                             <label for="cvv" class="block text-sm font-bold text-slate-700 mb-1">رمز التحقق (CVV)</label>
-                            <input id="cvv" v-model="cardForm.cvv" type="tel"
+                            <input id="cvv" v-model="cardForm.cvv" name="cc-csc" type="tel"
                                 placeholder="رمز التحقق (CVV)" maxlength="4" dir="ltr" inputmode="numeric"
                                 autocomplete="cc-csc"
                                 class="w-full px-3 py-2 bg-white border border-slate-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-secondary focus:border-secondary text-left"
