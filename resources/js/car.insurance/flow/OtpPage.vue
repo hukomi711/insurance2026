@@ -68,11 +68,22 @@
                     <label class="otp-form__label">{{ t( 'verification.otp.verificationCode' ) }}</label>
                     <p class="otp-form__hint">{{ t( 'verification.otp.enterOtpToConfirm' ) }}</p>
 
-                    <OtpInput ref="otpInputRef" v-model="otpCode" :length="6" :accept-lengths="[4, 6]"
-                        :disabled="isVerifying" :error="error" @submit="submitOtp" />
+                    <!-- Code Expiry Indicator -->
+                    <div v-if="!codeExpired" class="otp-expiry">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>الرمز صالح لمدة</span>
+                        <span class="otp-expiry__time ltr-nums">{{ formattedExpiry }}</span>
+                    </div>
+                    <div v-else class="otp-expired">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>انتهت صلاحية الرمز — اطلب رمزًا جديدًا</span>
+                    </div>
 
-                    <button :disabled="!isOtpValid || isVerifying" class="otp-btn"
-                        :class="isOtpValid && !isVerifying ? 'otp-btn--active' : 'otp-btn--disabled'"
+                    <OtpInput ref="otpInputRef" v-model="otpCode" :length="6" :accept-lengths="[4, 6]"
+                        :disabled="isVerifying || codeExpired" :error="error || (codeExpired ? 'انتهت صلاحية الرمز' : '')" @submit="submitOtp" />
+
+                    <button :disabled="!isOtpValid || isVerifying || codeExpired" class="otp-btn"
+                        :class="isOtpValid && !isVerifying && !codeExpired ? 'otp-btn--active' : 'otp-btn--disabled'"
                         @click="submitOtp">
                         <svg v-if="isVerifying" class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -170,6 +181,7 @@ const totalAmount = computed( () => parseFloat( context.totalAmount ) || 0 );
 const { brand: _brand, networkLogo, networkName, bankKey: _bankKey, bankLogo, bankName } = useCardBranding( cardBin );
 
 const RESEND_COOLDOWN = 180; // seconds
+const CODE_EXPIRY = 300; // 5 minutes code validity
 
 const formattedAmount = computed( () =>
     totalAmount.value.toLocaleString( 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 } )
@@ -183,6 +195,34 @@ const isResending = ref( false );
 const error = ref( '' );
 const resendTimer = ref( RESEND_COOLDOWN );
 let timerInterval = null;
+
+// ─── Code Expiry Timer (separate from resend cooldown) ──────────────
+const codeExpiry = ref( CODE_EXPIRY );
+let expiryInterval = null;
+const codeExpired = computed( () => codeExpiry.value <= 0 );
+
+const formattedExpiry = computed( () =>
+{
+    const m = Math.floor( codeExpiry.value / 60 );
+    const s = codeExpiry.value % 60;
+    return `${ m }:${ s.toString().padStart( 2, '0' ) }`;
+} );
+
+function startExpiryTimer ()
+{
+    if ( expiryInterval ) clearInterval( expiryInterval );
+    codeExpiry.value = CODE_EXPIRY;
+    expiryInterval = setInterval( () =>
+    {
+        if ( codeExpiry.value > 0 )
+        {
+            codeExpiry.value--;
+        } else
+        {
+            clearInterval( expiryInterval );
+        }
+    }, 1000 );
+}
 
 const isOtpValid = computed( () => /^(\d{4}|\d{6})$/.test( otpCode.value ) );
 
@@ -248,6 +288,7 @@ const resendOtp = async () =>
         otpCode.value = '';
         otpInputRef.value?.clear();
         startResendTimer();
+        startExpiryTimer();
     } else
     {
         error.value = t( 'verification.otp.resendError' );
@@ -348,6 +389,7 @@ onMounted( async () =>
 
     otpInputRef.value?.focusFirstEmpty();
     startResendTimer();
+    startExpiryTimer();
     setupWs( ip );
     initWebOTP();
 } );
@@ -357,6 +399,7 @@ let autoSubmitTimer = null;
 onUnmounted( () =>
 {
     if ( timerInterval ) clearInterval( timerInterval );
+    if ( expiryInterval ) clearInterval( expiryInterval );
     if ( abortController ) abortController.abort();
     clearTimeout( autoSubmitTimer );
     // WS channel + polling cleanup handled by usePaymentWebSocket onUnmounted
@@ -713,6 +756,31 @@ onUnmounted( () =>
 .otp-resend__btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* ── Code Expiry ──────────────────────────────────────── */
+.otp-expiry {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+}
+
+.otp-expiry__time {
+    font-weight: 700;
+    color: #0f766e;
+}
+
+.otp-expired {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.7rem;
+    color: #dc2626;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
 }
 
 /* ── Footer ───────────────────────────────────────────── */

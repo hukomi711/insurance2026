@@ -10,22 +10,9 @@
                     </svg>
                     العودة للعروض
                 </button>
-                <!-- Steps indicator -->
-                <div class="hidden sm:flex items-center gap-2 typ-s2 text-muted">
-                    <span class="text-primary font-bold">الدفع</span>
-                    <svg class="w-4 h-4 text-slate-300 rotate-180" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                    <span class="text-muted">المقارنة</span>
-                    <svg class="w-4 h-4 text-slate-300 rotate-180" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                    <span class="text-muted">بيانات الوثيقة</span>
-                </div>
             </div>
         </div>
+        <FunnelProgress :current="1" />
 
         <!-- Main Content -->
         <div v-if="plan" class="box py-4 sm:py-6">
@@ -238,6 +225,7 @@ import { getReasonLabel } from '@/constants/rejectionReasons';
 import { useI18n } from 'vue-i18n';
 import logger from '@/utils/logger';
 import SarIcon from '@/components/SarIcon.vue';
+import FunnelProgress from '@/car.insurance/components/FunnelProgress.vue';
 import PaymentMethodCard from '../components/checkout/PaymentMethodCard.vue';
 import PriceSummaryCard from '../components/checkout/PriceSummaryCard.vue';
 import cashBackImg from '@/../../resources/images/logo/summary_logo/cash_back.jpeg';

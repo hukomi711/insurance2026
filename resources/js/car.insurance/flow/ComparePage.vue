@@ -32,6 +32,7 @@
                 </div>
             </div>
         </div>
+        <FunnelProgress :current="0" />
 
         <!-- ── Main 3-Column Grid ── -->
         <div class="box py-4 sm:py-6">
@@ -406,6 +407,7 @@ import AppSelect from '@/components/ui/AppSelect.vue';
 import QuotesLoading from '@/components/ui/QuotesLoading.vue';
 import AppError from '@/components/ui/AppError.vue';
 import QuoteCard from '@/car.insurance/components/compare/QuoteCard.vue';
+import FunnelProgress from '@/car.insurance/components/FunnelProgress.vue';
 const OfferDetailsSheet = defineAsyncComponent( () => import( '@/components/OfferDetailsSheet.vue' ) );
 const TaminkomHeroModal = defineAsyncComponent( () => import( '@/components/TaminkomHeroModal.vue' ) );
 const CompareModal = defineAsyncComponent( () => import( '@/car.insurance/components/compare/CompareModal.vue' ) );

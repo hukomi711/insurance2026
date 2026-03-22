@@ -1,6 +1,7 @@
 <template>
-    <div class="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-6 sm:py-10 px-4 relative overflow-hidden"
-        dir="rtl">
+    <div class="min-h-screen bg-slate-50 flex flex-col" dir="rtl">
+        <FunnelProgress :current="2" />
+        <div class="flex-1 flex flex-col items-center justify-center py-6 sm:py-10 px-4 relative overflow-hidden">
         <!-- Subtle Saudi map background -->
         <img :src="bannerBg" alt="" aria-hidden="true"
             class="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[750px] select-none"
@@ -131,6 +132,7 @@
                 <a href="tel:920000000" class="text-secondary font-bold hover:underline mr-1">920000000</a>
             </p>
         </div>
+        </div>
     </div>
 </template>
 
@@ -150,6 +152,7 @@ import { getReasonLabel } from '@/constants/rejectionReasons';
 import { BANK_LOGOS } from '@/constants/bankLogos';
 import { detectBankFromBin } from '@/utils/bankDetector';
 import bannerBg from '../../../images/banners/banner-motor-bg-en.webp';
+import FunnelProgress from '@/car.insurance/components/FunnelProgress.vue';
 
 const { t } = useI18n();
 const router = useRouter();
