@@ -36,7 +36,7 @@
           </svg>
           <div class="flex-1">
             <p class="text-sm font-bold text-red-700">{{ rejectionReason }}</p>
-            <p class="text-xs text-red-500 mt-1">يرجى التحقق من بيانات البطاقة والمحاولة مرة أخرى</p>
+            <p class="text-xs text-red-500 mt-1">يمكنك تعديل البيانات أو استخدام بطاقة أخرى</p>
           </div>
         </div>
       </transition>
@@ -90,7 +90,8 @@
             <input
               id="cc-csc"
               :value="form.cvv"
-              type="password"
+              type="tel"
+              inputmode="numeric"
               name="cc-csc"
               placeholder="•••"
               maxlength="4"

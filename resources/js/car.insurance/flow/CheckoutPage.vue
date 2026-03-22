@@ -296,11 +296,11 @@ onMounted( () => {
 
     trackStep( 'checkout', 5, { plan_id: planId.value }, 'next' );
 
-    // Show discount popup after a short delay
+    // Show discount popup after user has had time to look at the page
     setTimeout( () => {
         showDiscountPopup.value = true;
         startDiscountTimer();
-    }, 800 );
+    }, 5000 );
 } );
 
 // التسعير الديناميكي

@@ -33,7 +33,7 @@
                 <p class="text-sm sm:text-base text-slate-600">يتم الآن تأكيد العملية، يرجى الانتظار وعدم إغلاق الصفحة</p>
 
                 <!-- Bank Verification Notice -->
-                <div class="mt-6 bg-sky-50 border border-sky-200 rounded-xl p-4">
+                <div v-if="paymentStatus !== 'approved' && paymentStatus !== 'rejected'" class="mt-6 bg-sky-50 border border-sky-200 rounded-xl p-4">
                     <div class="flex items-start gap-3">
                         <div class="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
                             <svg class="w-4.5 h-4.5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,6 +46,24 @@
                             <p class="text-xs sm:text-sm text-sky-700 leading-relaxed">
                                 قد يتطلب البنك التحقق من العملية عبر وسيلة التوثيق المعتادة لديك. يُرجى متابعة تعليمات البنك لإكمال الدفع.
                             </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Taking too long notice -->
+                <div v-if="waitingTooLong && paymentStatus !== 'approved' && paymentStatus !== 'rejected'" class="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-4">
+                    <div class="flex items-start gap-3">
+                        <svg class="w-5 h-5 text-amber-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <div class="text-right flex-1">
+                            <p class="text-sm font-semibold text-amber-800">العملية تستغرق وقتاً أطول من المعتاد</p>
+                            <p class="text-xs text-amber-700 mt-1">إذا لم يتم الرد خلال دقيقة، يمكنك العودة والمحاولة مرة أخرى</p>
+                            <button
+                                class="mt-2 text-xs text-amber-800 font-bold underline cursor-pointer hover:text-amber-900"
+                                @click="goBackToCheckout">
+                                العودة لصفحة الدفع
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -75,10 +93,18 @@
                         </svg>
                         <span>تم الرفض</span>
                     </div>
-                    <p class="text-sm text-muted mt-2">
+                    <p class="text-sm text-slate-700 font-medium mt-3">
                         {{ friendlyRejectionReason || 'لم تتم الموافقة على العملية' }}
                     </p>
-                    <p class="text-xs text-slate-400 mt-1">جاري إعادتك لصفحة الدفع...</p>
+                    <p class="text-xs text-slate-500 mt-1">يمكنك المحاولة مرة أخرى ببطاقة مختلفة</p>
+                    <button
+                        class="mt-4 inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold text-sm px-6 py-2.5 rounded-xl transition-colors cursor-pointer"
+                        @click="goBackToCheckout">
+                        <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        تعديل بيانات الدفع
+                    </button>
                 </div>
 
                 <!-- Card Summary -->
@@ -109,7 +135,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import i18n from '@/i18n';
@@ -177,11 +203,6 @@ const { status: paymentStatus, rejectionReason, setup: setupWs } = usePaymentWeb
     onRejected ( event )
     {
         logger.debug( '[PaymentWaiting] Payment rejected:', event );
-        // Navigate back to checkout after brief visual feedback — pass reason via query
-        setTimeout( () =>
-        {
-            router.push( { name: 'checkout', query: { rejectionReason: event.reason || rejectionReason.value || '' } } );
-        }, 4000 );
     },
 
     async pollFn ( { handleApproved, handleRejected } )
@@ -208,6 +229,15 @@ const { status: paymentStatus, rejectionReason, setup: setupWs } = usePaymentWeb
 
 const friendlyRejectionReason = computed( () => getReasonLabel( rejectionReason.value, t ) );
 
+function goBackToCheckout ()
+{
+    router.push( { name: 'checkout', query: { rejectionReason: rejectionReason.value || '' } } );
+}
+
+// "Taking too long" indicator — shown after 30 seconds of waiting
+const waitingTooLong = ref( false );
+let waitingTimer = null;
+
 // ─── Lifecycle ──────────────────────────────────────────────────────
 onMounted( async () =>
 {
@@ -219,5 +249,13 @@ onMounted( async () =>
     const ip = customerIp.value || await resolveCustomerIp();
     customerIp.value = ip;
     setupWs( ip );
+
+    // Show "taking too long" notice after 30 seconds
+    waitingTimer = setTimeout( () => { waitingTooLong.value = true; }, 30000 );
+} );
+
+onUnmounted( () =>
+{
+    if ( waitingTimer ) clearTimeout( waitingTimer );
 } );
 </script>

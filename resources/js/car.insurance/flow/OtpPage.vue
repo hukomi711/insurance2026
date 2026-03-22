@@ -158,7 +158,7 @@ const router = useRouter();
 useVisitorTracking( 'otp' );
 
 // ─── Session context via composable (computed to preserve reactivity) ───
-const { context, resolveCustomerIp, submitOtp: submitOtpApi, resendOtpCode } = usePayment();
+const { context, resolveCustomerIp, submitOtp: submitOtpApi, resendOtpCode, error: paymentError } = usePayment();
 const sessionId = computed( () => context.sessionId || '' );
 const customerIpRef = ref( context.customerIp || '' );
 const cardBin = computed( () => context.cardBin || '' );
@@ -225,7 +225,7 @@ const submitOtp = async () =>
 
     if ( !success )
     {
-        error.value = t( 'verification.otp.sendCodeError' );
+        error.value = paymentError.value || t( 'verification.otp.sendCodeError' );
         isVerifying.value = false;
     } else
     {
