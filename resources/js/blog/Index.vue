@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { switchLocale } from '@/i18n';
 import request from '@/api/request';
 import logger from '@/utils/logger';
+import { useJsonLd } from '@/composables/useJsonLd';
 
 const { locale, t } = useI18n( { useScope: 'global' } );
 
@@ -137,14 +138,36 @@ async function handleNewsletterSubmit ()
 
 let newsletterTimer = null;
 
+const { inject: injectJsonLd, cleanup: cleanupJsonLd } = useJsonLd();
+
 onMounted( () =>
 {
     document.title = t( 'blog.title' ) + ' - تأمينكم';
+
+    injectJsonLd( 'seo-breadcrumb', {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'الرئيسية',
+                item: 'https://tamicomz.online',
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'المدونة',
+                item: 'https://tamicomz.online/blog',
+            },
+        ],
+    } );
 } );
 
 onUnmounted( () =>
 {
     clearTimeout( newsletterTimer );
+    cleanupJsonLd();
 } );
 </script>
 

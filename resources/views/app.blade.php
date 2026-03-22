@@ -107,6 +107,33 @@
 												}
 								</style>
 
+								{{-- Global structured data — Organization + WebSite --}}
+								<script type="application/ld+json">
+								{
+									"@@context": "https://schema.org",
+									"@@type": "Organization",
+									"name": "تأمينكم",
+									"alternateName": "Tamicomz",
+									"url": "{{ url('/') }}",
+									"logo": "{{ url('/images/logo.png') }}",
+									"sameAs": []
+								}
+								</script>
+								<script type="application/ld+json">
+								{
+									"@@context": "https://schema.org",
+									"@@type": "WebSite",
+									"name": "تأمينكم",
+									"url": "{{ url('/') }}",
+									"inLanguage": "ar",
+									"potentialAction": {
+										"@@type": "SearchAction",
+										"target": "{{ url('/blog') }}?q={search_term_string}",
+										"query-input": "required name=search_term_string"
+									}
+								}
+								</script>
+
 								{{-- Vite handles CSS/JS injection + its own preload directives --}}
 								@vite(["resources/css/app.css", "resources/js/app.js"])
 				</head>

@@ -139,11 +139,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useSanitizer } from '@/utils/sanitizer';
 import { switchLocale } from '@/i18n';
+import { useJsonLd } from '@/composables/useJsonLd';
 
 const route = useRoute();
 const { t, locale } = useI18n( { useScope: 'global' } );
@@ -598,13 +599,75 @@ const facebookShareUrl = computed( () =>
     `https://www.facebook.com/sharer/sharer.php?u=${ encodeURIComponent( shareUrl.value ) }`
 );
 
+const SITE_URL = 'https://tamicomz.online';
+const { inject: injectJsonLd, cleanup: cleanupJsonLd } = useJsonLd();
+
 onMounted( () =>
 {
     if ( article.value )
     {
         document.title = article.value.title + ' - ' + t( 'blog.headerTitle' );
+
+        const articleUrl = `${ SITE_URL }/blog/${ article.value.slug }`;
+        const imageUrl = `${ SITE_URL }${ article.value.image }`;
+
+        // BlogPosting schema
+        injectJsonLd( 'seo-blog-posting', {
+            '@context': 'https://schema.org',
+            '@type': 'BlogPosting',
+            headline: article.value.title,
+            description: article.value.excerpt,
+            image: imageUrl,
+            datePublished: article.value.date,
+            dateModified: article.value.date,
+            author: {
+                '@type': 'Organization',
+                name: 'تأمينكم',
+                url: SITE_URL,
+            },
+            publisher: {
+                '@type': 'Organization',
+                name: 'تأمينكم',
+                logo: {
+                    '@type': 'ImageObject',
+                    url: `${ SITE_URL }/images/logo.png`,
+                },
+            },
+            mainEntityOfPage: {
+                '@type': 'WebPage',
+                '@id': articleUrl,
+            },
+        } );
+
+        // BreadcrumbList schema
+        injectJsonLd( 'seo-breadcrumb', {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+                {
+                    '@type': 'ListItem',
+                    position: 1,
+                    name: 'الرئيسية',
+                    item: SITE_URL,
+                },
+                {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: 'المدونة',
+                    item: `${ SITE_URL }/blog`,
+                },
+                {
+                    '@type': 'ListItem',
+                    position: 3,
+                    name: article.value.title,
+                    item: articleUrl,
+                },
+            ],
+        } );
     }
 } );
+
+onUnmounted( () => cleanupJsonLd() );
 </script>
 
 <style scoped>
