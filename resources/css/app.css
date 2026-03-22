@@ -19,13 +19,13 @@
 /* Noto Kufi Arabic — Arabic + Latin subsets */
 @import "@fontsource/noto-kufi-arabic/arabic-400.css";
 @import "@fontsource/noto-kufi-arabic/arabic-500.css";
-@import "@fontsource/noto-kufi-arabic/arabic-600.css";
+/* weight 600 removed — browser falls back to 700 for font-semibold */
 @import "@fontsource/noto-kufi-arabic/arabic-700.css";
 @import "@fontsource/noto-kufi-arabic/latin-400.css";
 /* Roboto — Latin subset only (Latin-Ext dropped — no Turkish/Vietnamese needed) */
 @import "@fontsource/roboto/latin-400.css";
 @import "@fontsource/roboto/latin-500.css";
-@import "@fontsource/roboto/latin-600.css";
+/* weight 600 removed — browser falls back to 700 for font-semibold */
 @import "@fontsource/roboto/latin-700.css";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
