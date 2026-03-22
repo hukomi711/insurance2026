@@ -105,9 +105,15 @@ Route::prefix('status')->middleware(['status.sig', 'throttle:status-poll', 'geo.
             ->latest()
             ->first();
 
+        // Surface expiry to frontend if OTP is still pending but time has passed
+        $status = $otp?->status ?? 'not_found';
+        if ($status === 'pending' && $otp?->isExpired()) {
+            $status = 'expired';
+        }
+
         return response()->json([
             'success' => true,
-            'status' => $otp?->status ?? 'not_found',
+            'status' => $status,
             'otp_id' => $otp?->id,
             'reason' => $otp?->rejection_reason,
         ]);
