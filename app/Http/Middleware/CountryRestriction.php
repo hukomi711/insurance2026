@@ -41,9 +41,12 @@ class CountryRestriction
     ];
 
     /**
-     * المسارات المسموح بها للزوار من خارج السعودية (المدونة فقط)
+     * المسارات المسموح بها للزوار من خارج السعودية
+     * الصفحة الرئيسية مسموحة لتحميل SPA shell بدون 302 redirect
+     * (Vue Router geo guard يتكفل بالتحويل للمدونة client-side)
      */
     protected array $allowedForForeigners = [
+        '/',
         'blog',
         'blog/*',
         'ar/blog',
