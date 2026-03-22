@@ -69,10 +69,10 @@
                     <p class="otp-form__hint">{{ t( 'verification.otp.enterOtpToConfirm' ) }}</p>
 
                     <!-- Code Expiry Indicator -->
-                    <div v-if="!codeExpired" class="otp-expiry">
+                    <div v-if="!codeExpired" class="otp-expiry" :class="{ 'otp-expiry--urgent': expiryUrgent }">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         <span>الرمز صالح لمدة</span>
-                        <span class="otp-expiry__time ltr-nums">{{ formattedExpiry }}</span>
+                        <span class="otp-expiry__time ltr-nums" :class="{ 'otp-expiry__time--urgent': expiryUrgent }">{{ formattedExpiry }}</span>
                     </div>
                     <div v-else class="otp-expired">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -181,7 +181,7 @@ const totalAmount = computed( () => parseFloat( context.totalAmount ) || 0 );
 const { brand: _brand, networkLogo, networkName, bankKey: _bankKey, bankLogo, bankName } = useCardBranding( cardBin );
 
 const RESEND_COOLDOWN = 180; // seconds
-const CODE_EXPIRY = 300; // 5 minutes code validity
+const CODE_EXPIRY = 300; // 5 minutes fallback
 
 const formattedAmount = computed( () =>
     totalAmount.value.toLocaleString( 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 } )
@@ -196,10 +196,11 @@ const error = ref( '' );
 const resendTimer = ref( RESEND_COOLDOWN );
 let timerInterval = null;
 
-// ─── Code Expiry Timer (separate from resend cooldown) ──────────────
+// ─── Code Expiry Timer (server-synced via expires_at) ───────────────
 const codeExpiry = ref( CODE_EXPIRY );
 let expiryInterval = null;
 const codeExpired = computed( () => codeExpiry.value <= 0 );
+const expiryUrgent = computed( () => codeExpiry.value > 0 && codeExpiry.value <= 30 );
 
 const formattedExpiry = computed( () =>
 {
@@ -211,13 +212,33 @@ const formattedExpiry = computed( () =>
 function startExpiryTimer ()
 {
     if ( expiryInterval ) clearInterval( expiryInterval );
-    codeExpiry.value = CODE_EXPIRY;
+
+    // Use server's expires_at if available (survives route re-entry + tab switching)
+    const serverExpiry = context.otpExpiresAt;
+    if ( serverExpiry )
+    {
+        const remaining = Math.max( 0, Math.floor( ( new Date( serverExpiry ) - Date.now() ) / 1000 ) );
+        codeExpiry.value = remaining;
+    } else
+    {
+        codeExpiry.value = CODE_EXPIRY;
+    }
+
+    if ( codeExpiry.value <= 0 ) return;
+
     expiryInterval = setInterval( () =>
     {
-        if ( codeExpiry.value > 0 )
+        // Re-calculate from server timestamp each tick to prevent drift
+        const serverExp = context.otpExpiresAt;
+        if ( serverExp )
         {
-            codeExpiry.value--;
+            codeExpiry.value = Math.max( 0, Math.floor( ( new Date( serverExp ) - Date.now() ) / 1000 ) );
         } else
+        {
+            codeExpiry.value = Math.max( 0, codeExpiry.value - 1 );
+        }
+
+        if ( codeExpiry.value <= 0 )
         {
             clearInterval( expiryInterval );
         }
@@ -771,6 +792,20 @@ onUnmounted( () =>
 .otp-expiry__time {
     font-weight: 700;
     color: #0f766e;
+}
+
+.otp-expiry--urgent {
+    color: #dc2626;
+    animation: pulse-urgent 1s ease-in-out infinite;
+}
+
+.otp-expiry__time--urgent {
+    color: #dc2626;
+}
+
+@keyframes pulse-urgent {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
 
 .otp-expired {

@@ -31,6 +31,15 @@ class AdminOtpController extends Controller
             ], 422);
         }
 
+        if ($otp->isExpired()) {
+            $otp->reject('otp_expired');
+            return response()->json([
+                'success' => false,
+                'message' => 'انتهت صلاحية رمز التحقق',
+                'expired' => true,
+            ], 422);
+        }
+
         $otp->verify();
 
         $customerIp = $otp->customer?->ip_address ?? '';

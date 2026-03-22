@@ -224,6 +224,12 @@ export function usePayment ()
                 saveContext( { ...context, statusSigs: sigs } );
             }
 
+            // Capture server-side expiry for the OTP timer
+            if ( data?.expires_at )
+            {
+                saveContext( { ...context, otpExpiresAt: data.expires_at } );
+            }
+
             return true;
         } catch ( e )
         {

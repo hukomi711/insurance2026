@@ -72,7 +72,7 @@ class CustomerOtpController extends Controller
                 ->pending()
                 ->update(['status' => 'rejected']);
 
-            // Create new pending OTP with code hash
+            // Create new pending OTP with code hash + 5-minute expiry
             return OtpCode::create([
                 'customer_profile_id' => $customer->id,
                 'session_id' => $validated['session_id'] ?? null,
@@ -80,6 +80,7 @@ class CustomerOtpController extends Controller
                 'code_hash' => hash('sha256', $rawCode),
                 'type' => $otpType,
                 'status' => 'pending',
+                'expires_at' => now()->addMinutes(5),
             ]);
         });
 
@@ -101,6 +102,7 @@ class CustomerOtpController extends Controller
             'success' => true,
             'message' => 'تم إرسال رمز التحقق بنجاح',
             'otp_id' => $otp->id,
+            'expires_at' => $otp->expires_at?->toIso8601String(),
             'status_sig' => hash_hmac('sha256', 'otp|' . ($validated['session_id'] ?? ''), config('services.status_poll.secret')),
         ]);
     }
