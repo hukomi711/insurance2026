@@ -51,3 +51,4 @@ docker/certbot/www/
 # ── Orphan / temp files ──────────────────────────────────────────
 base
 CountryRestriction_server.php
+deploy.tar.gz

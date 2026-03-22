@@ -145,3 +145,39 @@ export function getTimeSinceActivity( lastActivity ) {
     const diffDays = Math.floor( diffHours / 24 );
     return `منذ ${ diffDays } يوم`;
 }
+
+/**
+ * حساب معلومات الخصم لعرض السعر قبل وبعد الخصم
+ *
+ * الأسعار الحالية (annualPrice) هي أسعار بعد الخصم بالفعل.
+ * هذه الدالة تحسب السعر الأصلي (قبل الخصم) للعرض فقط.
+ * لا تغيّر أي أسعار فعلية — عرض بصري فقط.
+ *
+ * النسب الثابتة لكل نوع:
+ *   ضد الغير:           15%
+ *   ضد الغير بلس:       20%
+ *   أضرار المركبة بلس:  25%
+ *   الشامل:             30%
+ *
+ * @param {Object} plan - الباقة { subType, annualPrice }
+ * @returns {{ discountPercent: number, originalPrice: number, hasDiscount: boolean }}
+ */
+export function getDiscountInfo( plan ) {
+    if ( !plan || !plan.annualPrice || plan.annualPrice <= 0 ) {
+        return { discountPercent: 0, originalPrice: 0, hasDiscount: false };
+    }
+
+    const discounts = {
+        thirdParty:        15,
+        thirdPartyPlus:    20,
+        vehicleDamagePlus: 25,
+        comprehensive:     30,
+    };
+
+    const discountPercent = discounts[ plan.subType ];
+    if ( !discountPercent ) {
+        return { discountPercent: 0, originalPrice: 0, hasDiscount: false };
+    }
+    const originalPrice = Math.round( plan.annualPrice / ( 1 - discountPercent / 100 ) / 10 ) * 10;
+    return { discountPercent, originalPrice, hasDiscount: true };
+}

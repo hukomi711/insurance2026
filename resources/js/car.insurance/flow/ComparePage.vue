@@ -34,26 +34,40 @@
         </div>
 
         <!-- ── Main 3-Column Grid ── -->
-        <div class="box py-6">
+        <div class="box py-4 sm:py-6">
             <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
                 <!-- ═══ Quotes Area (2 cols on xl) ═══ -->
                 <div class="xl:col-span-2 min-w-0">
 
+                    <!-- Category Tabs (primary navigation — shown first on mobile) -->
+                    <TabsRoot v-model="activeTab" class="mb-4">
+                        <TabsList
+                            class="flex w-full items-center p-1 overflow-x-auto no-scrollbar bg-slate-100 rounded-xl gap-1">
+                            <TabsTrigger v-for="tab in categoryTabs" :key="tab.value" :value="tab.value"
+                                class="inline-flex items-center justify-center whitespace-nowrap transition-all focus-visible:outline-none typ-s2 font-bold text-slate-500 py-2 sm:py-2.5 px-2.5 sm:px-3 flex-col flex-none sm:flex-1 min-w-fit sm:min-w-0 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:rounded-lg data-[state=active]:text-primary">
+                                <span class="flex flex-col items-center gap-0.5">
+                                    <span>{{ tab.label }}</span>
+                                    <span class="typ-c1 !text-slate-400 ltr-nums">{{ tab.priceLabel }}</span>
+                                </span>
+                            </TabsTrigger>
+                        </TabsList>
+                    </TabsRoot>
+
                     <!-- AI Recommendation Accordion -->
-                    <div v-if="recommendedPlan || cheapestPlan" class="mb-5">
-                        <button class="w-full flex items-center justify-between bg-gradient-to-l from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl px-4 py-3 cursor-pointer transition-colors hover:border-emerald-300"
+                    <div v-if="recommendedPlan || cheapestPlan" class="mb-4">
+                        <button class="w-full flex items-center justify-between bg-gradient-to-l from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-colors hover:border-emerald-300"
                             @click="aiAccordionOpen = !aiAccordionOpen">
                             <div class="flex items-center gap-2">
                                 <div
-                                    class="size-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-                                    <svg class="size-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    class="size-7 sm:size-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+                                    <svg class="size-3.5 sm:size-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round"
                                             d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
                                     </svg>
                                 </div>
-                                <span class="typ-t2 font-bold text-emerald-900">موصى به من تأمينكم AI</span>
+                                <span class="typ-t3 sm:typ-t2 font-bold text-emerald-900">موصى به من تأمينكم AI</span>
                             </div>
                             <svg class="size-5 text-emerald-600 transition-transform duration-200"
                                 :class="{ 'rotate-180': aiAccordionOpen }" viewBox="0 0 24 24" fill="none"
@@ -67,7 +81,7 @@
                             <div class="flex gap-3" style="min-width: max-content;">
                                 <!-- Recommended Card -->
                                 <div v-if="recommendedPlan"
-                                    class="w-[280px] shrink-0 bg-white rounded-xl border border-orange-200 shadow-sm overflow-hidden">
+                                    class="w-[240px] sm:w-[280px] shrink-0 bg-white rounded-xl border border-orange-200 shadow-sm overflow-hidden">
                                     <div
                                         class="bg-gradient-to-l from-orange-50 to-amber-50 px-3 py-1.5 flex items-center gap-1.5">
                                         <svg class="size-3.5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
@@ -88,11 +102,16 @@
                                                 <p class="typ-c1 text-muted">{{ recommendedPlan.typeAr }}</p>
                                             </div>
                                         </div>
-                                        <div class="flex items-baseline gap-1 mb-3">
-                                            <span
-                                                class="typ-t1 text-foreground font-extrabold ltr-nums">{{ formatNumber(recommendedPlan.annualPrice) }}</span>
-                                            <SarIcon className="size-3 text-foreground" />
-                                            <span class="typ-c1 text-muted">/ سنوياً</span>
+                                        <div class="mb-3">
+                                            <div v-if="getDiscountInfo(recommendedPlan).hasDiscount" class="flex items-center gap-1.5 mb-0.5">
+                                                <span class="inline-flex items-center bg-red-100 text-red-700 typ-c2 font-bold px-1.5 py-0.5 rounded-full ltr-nums">وفّر {{ getDiscountInfo(recommendedPlan).discountPercent }}%</span>
+                                                <span class="text-slate-400 typ-c2 line-through ltr-nums">{{ formatNumber(getDiscountInfo(recommendedPlan).originalPrice) }}</span>
+                                            </div>
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="typ-t1 text-primary font-extrabold ltr-nums">{{ formatNumber(recommendedPlan.annualPrice) }}</span>
+                                                <SarIcon className="size-3 text-primary" />
+                                                <span class="typ-c1 text-muted">/ سنوياً</span>
+                                            </div>
                                         </div>
                                         <button class="w-full bg-primary text-white typ-c1 font-bold py-2 rounded-lg hover:bg-primary-dark transition-colors"
                                             @click="selectPlan(recommendedPlan)">
@@ -103,7 +122,7 @@
 
                                 <!-- Cheapest Card -->
                                 <div v-if="cheapestPlan"
-                                    class="w-[280px] shrink-0 bg-white rounded-xl border border-green-200 shadow-sm overflow-hidden">
+                                    class="w-[240px] sm:w-[280px] shrink-0 bg-white rounded-xl border border-green-200 shadow-sm overflow-hidden">
                                     <div
                                         class="bg-gradient-to-l from-green-50 to-emerald-50 px-3 py-1.5 flex items-center gap-1.5">
                                         <span class="typ-c1">💰</span>
@@ -121,11 +140,16 @@
                                                 <p class="typ-c1 text-muted">{{ cheapestPlan.typeAr }}</p>
                                             </div>
                                         </div>
-                                        <div class="flex items-baseline gap-1 mb-3">
-                                            <span
-                                                class="typ-t1 text-foreground font-extrabold ltr-nums">{{ formatNumber(cheapestPlan.annualPrice) }}</span>
-                                            <SarIcon className="size-3 text-foreground" />
-                                            <span class="typ-c1 text-muted">/ سنوياً</span>
+                                        <div class="mb-3">
+                                            <div v-if="getDiscountInfo(cheapestPlan).hasDiscount" class="flex items-center gap-1.5 mb-0.5">
+                                                <span class="inline-flex items-center bg-red-100 text-red-700 typ-c2 font-bold px-1.5 py-0.5 rounded-full ltr-nums">وفّر {{ getDiscountInfo(cheapestPlan).discountPercent }}%</span>
+                                                <span class="text-slate-400 typ-c2 line-through ltr-nums">{{ formatNumber(getDiscountInfo(cheapestPlan).originalPrice) }}</span>
+                                            </div>
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="typ-t1 text-primary font-extrabold ltr-nums">{{ formatNumber(cheapestPlan.annualPrice) }}</span>
+                                                <SarIcon className="size-3 text-primary" />
+                                                <span class="typ-c1 text-muted">/ سنوياً</span>
+                                            </div>
                                         </div>
                                         <button class="w-full bg-primary text-white typ-c1 font-bold py-2 rounded-lg hover:bg-primary-dark transition-colors"
                                             @click="selectPlan(cheapestPlan)">
@@ -137,9 +161,49 @@
                         </div>
                     </div>
 
+                    <!-- Repair Method & Coverage -->
+                    <div class="flex flex-nowrap w-full gap-1.5 sm:gap-2 mb-4">
+                        <div class="w-[38%] sm:w-1/3">
+                            <AppSelect id="repairMethod" v-model="quoteOptions.repairMethod"
+                                label="طريقة الإصلاح" :options="repairMethodOptions" variant="standard"
+                                name="repairMethod" />
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="group relative flex border border-slate-300 rounded-lg min-h-[3.25rem] sm:min-h-[3.5rem] px-3 sm:px-4 py-2 items-center gap-1.5 sm:gap-2 w-full
+                                        focus-within:border-primary transition">
+                                <input id="coverageLimit" v-model.number="quoteOptions.coverageLimit" type="number" autocomplete="off"
+                                    name="coverageLimit"
+                                    class="bg-transparent block w-full text-sm text-foreground pt-5 pb-1 appearance-none focus:outline-none peer ltr-nums"
+                                    placeholder=" " />
+                                <SarIcon className="size-4 sm:size-5 shrink-0 text-muted self-center" />
+                                <label for="coverageLimit"
+                                    class="absolute text-sm text-slate-500 transition-all top-4 start-3 sm:start-4
+                                              peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary
+                                              peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs">
+                                    حد التغطية لمركبتك
+                                </label>
+                            </div>
+                        </div>
+                        <div class="shrink-0">
+                            <button :disabled="isUpdatingQuotes" class="min-h-[3.25rem] sm:min-h-[3.5rem] px-4 sm:px-6 typ-t3 font-bold rounded-lg bg-primary text-white
+                                       hover:bg-primary-dark active:bg-primary-darker disabled:bg-slate-400
+                                       disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center cursor-pointer"
+                                @click="updateQuoteOptions">
+                                <svg v-if="isUpdatingQuotes" class="animate-spin size-5" viewBox="0 0 24 24"
+                                    fill="none">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4" />
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                </svg>
+                                <span v-else>تحديث</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Mobile Sort/Filter Scrollbar -->
-                    <div class="xl:hidden flex items-center gap-2 overflow-x-auto no-scrollbar mb-4 -mx-1 px-1">
-                        <button class="shrink-0 flex items-center gap-1.5 px-4 py-2 border border-slate-200 bg-white typ-s2 text-foreground font-bold rounded-full shadow-sm"
+                    <div class="xl:hidden flex items-center gap-2 overflow-x-auto no-scrollbar mb-3 -mx-1 px-1">
+                        <button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white typ-s2 text-foreground font-bold rounded-full shadow-sm"
                             @click="showMobileFilters = true">
                             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -155,8 +219,8 @@
                     </div>
 
                     <!-- Offers Count + Compact Toggle -->
-                    <div class="flex items-center justify-between mb-4">
-                        <h1 class="typ-t1 text-foreground">
+                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                        <h1 class="typ-t2 sm:typ-t1 text-foreground">
                             <span class="text-primary font-extrabold ltr-nums">{{ sortedPlans.length }}</span>
                             عرض متاح
                         </h1>
@@ -169,60 +233,6 @@
                                     class="block w-[18px] h-[18px] bg-white rounded-full shadow transition-transform translate-x-[2px] data-[state=checked]:translate-x-[20px]" />
                             </SwitchRoot>
                         </label>
-                    </div>
-
-                    <!-- Category Tabs -->
-                    <TabsRoot v-model="activeTab" class="mb-5">
-                        <TabsList
-                            class="flex w-full items-center p-1 overflow-x-auto no-scrollbar bg-slate-100 rounded-xl gap-1">
-                            <TabsTrigger v-for="tab in categoryTabs" :key="tab.value" :value="tab.value"
-                                class="inline-flex items-center justify-center whitespace-nowrap transition-all focus-visible:outline-none typ-s2 font-bold text-slate-500 py-2.5 px-3 flex-col flex-1 min-w-0 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:rounded-lg data-[state=active]:text-primary">
-                                <span class="flex flex-col items-center gap-0.5">
-                                    <span>{{ tab.label }}</span>
-                                    <span class="typ-c1 !text-slate-400 ltr-nums">{{ tab.priceLabel }}</span>
-                                </span>
-                            </TabsTrigger>
-                        </TabsList>
-                    </TabsRoot>
-
-                    <!-- Repair Method & Coverage -->
-                    <div class="flex flex-wrap sm:flex-nowrap w-full gap-2 mb-5">
-                        <div class="w-1/2 sm:w-1/3">
-                            <AppSelect id="repairMethod" v-model="quoteOptions.repairMethod"
-                                label="طريقة الإصلاح" :options="repairMethodOptions" variant="standard"
-                                name="repairMethod" />
-                        </div>
-                        <div class="w-1/2 sm:w-1/3">
-                            <div class="group relative flex border border-slate-300 rounded-lg min-h-[3.5rem] px-4 py-2 items-center gap-2 w-full
-                                        focus-within:border-primary transition">
-                                <input id="coverageLimit" v-model.number="quoteOptions.coverageLimit" type="number" autocomplete="off"
-                                    name="coverageLimit"
-                                    class="bg-transparent block w-full text-sm text-foreground pt-5 pb-1 appearance-none focus:outline-none peer ltr-nums"
-                                    placeholder=" " />
-                                <SarIcon className="size-5 shrink-0 text-muted self-center" />
-                                <label for="coverageLimit"
-                                    class="absolute text-sm text-slate-500 transition-all top-4 start-4
-                                              peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary
-                                              peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs">
-                                    حد التغطية لمركبتك
-                                </label>
-                            </div>
-                        </div>
-                        <div class="w-full sm:w-1/3">
-                            <button :disabled="isUpdatingQuotes" class="w-full min-h-[3.5rem] px-6 typ-t3 font-bold rounded-lg bg-primary text-white
-                                       hover:bg-primary-dark active:bg-primary-darker disabled:bg-slate-400
-                                       disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center"
-                                @click="updateQuoteOptions">
-                                <svg v-if="isUpdatingQuotes" class="animate-spin size-5" viewBox="0 0 24 24"
-                                    fill="none">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                        stroke-width="4" />
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                </svg>
-                                <span v-else>تحديث</span>
-                            </button>
-                        </div>
                     </div>
 
                     <!-- ═══ Quote Cards ═══ -->
@@ -350,7 +360,7 @@
                         </svg>
                     </button>
                     <div class="w-full">
-                        <img :src="cashBackImg" alt="خصم 30%" class="w-full h-auto object-cover" width="1071" height="1280" />
+                        <img :src="cashBackImg" alt="وفّر على أسعار التأمين" class="w-full h-auto object-cover" width="1071" height="1280" />
                     </div>
                     <div class="p-5 text-center">
                         <div class="inline-flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-4 py-1.5 mb-3">
@@ -389,7 +399,7 @@ import { getQuotes } from '@/api/quotes';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { useInsuranceStore } from '@/store';
 import { usePricingEngine } from '@/utils/pricingEngine';
-import { formatNumber } from '@/utils/formatters';
+import { formatNumber, getDiscountInfo } from '@/utils/formatters';
 import { getCompanyLogo } from '@/utils/companyLogos';
 import SarIcon from '@/components/SarIcon.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';

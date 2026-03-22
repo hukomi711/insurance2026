@@ -96,7 +96,7 @@
                 </div>
 
                 <!-- ═══ Right Column: Price Sidebar ═══ -->
-                <div class="order-first lg:order-last">
+                <div class="order-last">
                     <div class="lg:sticky lg:top-[70px] space-y-4">
 
                         <!-- ── تفاصيل الملخص ── -->
@@ -104,7 +104,6 @@
                             :subtotal="subtotal"
                             :vat-amount="vatAmount"
                             :total-price="totalPrice"
-                            :monthly-total="monthlyTotal"
                             :addons="selectedAddons"
                         />
 
@@ -116,11 +115,16 @@
             <div
                 class="border-0 border-t border-solid border-slate-200 bg-white/95 backdrop-blur-sm px-3 sticky bottom-0 z-[49] shadow-[0_-2px_8px_rgba(0,0,0,0.08)] lg:static lg:bottom-auto lg:bg-transparent lg:backdrop-blur-none lg:shadow-none lg:mt-6 safe-area-bottom">
                 <div class="flex items-center py-3 gap-2 sm:gap-3 justify-between">
-                    <button class="px-4 sm:px-8 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-sm sm:text-base rounded-xl transition-colors cursor-pointer"
+                    <button class="px-3 sm:px-8 py-2.5 sm:py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs sm:text-base rounded-xl transition-colors cursor-pointer shrink-0"
                         @click="goBack">
                         السابق
                     </button>
-                    <button :disabled="isSubmitting" class="disabled:cursor-not-allowed disabled:opacity-60 bg-primary hover:bg-primary-dark text-white py-2 px-4 rounded-lg font-bold text-sm transition-colors cursor-pointer flex items-center justify-center gap-1"
+                    <!-- Mobile: price shown separately -->
+                    <div class="flex sm:hidden items-center gap-1 font-bold text-foreground text-sm ltr-nums">
+                        <span>{{ formatDecimal(totalPrice) }}</span>
+                        <SarIcon className="size-3" />
+                    </div>
+                    <button :disabled="isSubmitting" class="disabled:cursor-not-allowed disabled:opacity-60 bg-primary hover:bg-primary-dark text-white py-3 sm:py-3.5 px-5 sm:px-8 rounded-xl font-bold text-sm sm:text-base transition-colors cursor-pointer flex items-center justify-center gap-2 shrink-0"
                         @click="handleSubmit">
                         <svg v-if="isSubmitting" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -129,9 +133,10 @@
                         </svg>
                         <span v-if="isSubmitting">جاري المعالجة...</span>
                         <template v-else>
-                            <span class="me-1">ادفع</span>
-                            <span class="ltr-nums flex items-center gap-1">{{ formatDecimal(totalPrice) }}
-                                <SarIcon className="size-4" />
+                            <span>إتمام الدفع</span>
+                            <!-- Desktop: price inside button -->
+                            <span class="hidden sm:flex text-white/80 text-sm ltr-nums items-center gap-0.5">{{ formatDecimal(totalPrice) }}
+                                <SarIcon className="size-3" />
                             </span>
                         </template>
                     </button>
@@ -180,7 +185,7 @@
 
                     <!-- Discount Image -->
                     <div class="w-full">
-                        <img :src="cashBackImg" alt="خصم 30%" class="w-full h-auto object-cover" width="1071" height="1280" />
+                        <img :src="cashBackImg" alt="وفّر على أسعار التأمين" class="w-full h-auto object-cover" width="1071" height="1280" />
                     </div>
 
                     <!-- Content -->
@@ -326,7 +331,7 @@ const subtotal = computed( () => {
 const pricingResult = computed( () => calculateTotalWithVAT( dynamicPrice.value.annualPrice || 0, selectedAddons.value.reduce( ( s, a ) => s + a.price, 0 ) ) );
 const vatAmount = computed( () => pricingResult.value.vat );
 const totalPrice = computed( () => pricingResult.value.total );
-const monthlyTotal = computed( () => {
+const _monthlyTotal = computed( () => {
     const base = dynamicPrice.value.monthlyPrice || 0;
     const addonSum = selectedAddons.value.reduce( ( sum, a ) => sum + Math.ceil( a.price / 12 ), 0 );
     return calculateTotalWithVAT( base + addonSum ).total;

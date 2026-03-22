@@ -8,7 +8,9 @@
 								<meta name="theme-color" content="#1a1a2e">
 								<meta name="mobile-web-app-capable" content="yes">
 								<meta name="apple-mobile-web-app-status-bar-style" content="default">
+								<meta name="robots" content="index, follow">
 								<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+								<link rel="manifest" href="/manifest.json">
 								<title>تأمينكم - مقارنة أسعار التأمين في السعودية</title>
 								<meta name="description"
 												content="قارن أسعار تأمين المركبات من أفضل شركات التأمين في المملكة العربية السعودية. احصل على أفضل عرض في دقائق.">
@@ -22,10 +24,15 @@
 								<meta property="og:description"
 												content="قارن أسعار تأمين المركبات من أفضل شركات التأمين في المملكة العربية السعودية. احصل على أفضل عرض في دقائق.">
 								<meta property="og:url" content="{{ url("/") }}">
-								<meta name="twitter:card" content="summary">
+								<meta property="og:image" content="{{ url("/images/og-image.png") }}">
+								<meta property="og:image:width" content="1200">
+								<meta property="og:image:height" content="630">
+								<meta property="og:image:alt" content="تأمينكم - مقارنة أسعار التأمين في السعودية">
+								<meta name="twitter:card" content="summary_large_image">
 								<meta name="twitter:title" content="تأمينكم - مقارنة أسعار التأمين في السعودية">
 								<meta name="twitter:description"
 												content="قارن أسعار تأمين المركبات من أفضل شركات التأمين في المملكة العربية السعودية.">
+								<meta name="twitter:image" content="{{ url("/images/og-image.png") }}">
 								<link rel="canonical" href="{{ url("/") }}">
 								@production
 												@if (!empty($viteFonts["noto-kufi"]))

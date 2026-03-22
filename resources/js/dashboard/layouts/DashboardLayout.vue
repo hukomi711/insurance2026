@@ -20,7 +20,7 @@
 <script setup>
 import { onMounted, onBeforeUnmount, ref, provide } from 'vue';
 import { useAppStore, useBadgeStore, useNotificationsStore } from '@/store';
-import { startAdminPolling, stopAdminPolling } from '@/services/adminPolling';
+import { startAdminPolling, stopAdminPolling, setTabVisible } from '@/services/adminPolling';
 import { OPEN_CHAT_TARGET } from '../dashboardKeys';
 import { useTheme } from '../composables/useTheme';
 import logger from '@/utils/logger';
@@ -46,10 +46,15 @@ function handleResize() {
     }
 }
 
+function handleVisibility () {
+    setTabVisible( document.visibilityState === 'visible' );
+}
+
 onMounted( () => {
     initTheme();
     handleResize();
     window.addEventListener( 'resize', handleResize, { passive: true } );
+    document.addEventListener( 'visibilitychange', handleVisibility );
 
     // 🔊 لوحة التحكم: تفعيل السجلات دائماً
     if ( !logger.isVerbose() ) {
@@ -64,6 +69,7 @@ onMounted( () => {
 
 onBeforeUnmount( () => {
     window.removeEventListener( 'resize', handleResize );
+    document.removeEventListener( 'visibilitychange', handleVisibility );
     stopAdminPolling();
 } );
 </script>

@@ -30,16 +30,16 @@ const networkLogos = {
 
 // ── Saudi banks — metadata + filename keyword ───────────────────────
 const BANKS = {
-    rajhi: { nameAr: 'مصرف الراجحي', keyword: 'الراجحي' },
-    ahli: { nameAr: 'البنك الأهلي', keyword: 'الأهلي التجاري' },
-    inma: { nameAr: 'مصرف الإنماء', keyword: 'الإنماء' },
-    sabb: { nameAr: 'بنك ساب', keyword: 'ساب' },
-    jazira: { nameAr: 'بنك الجزيرة', keyword: 'الجزيرة الجديد' },
-    riyad: { nameAr: 'بنك الرياض', keyword: 'الرياض' },
-    bilad: { nameAr: 'بنك البلاد', keyword: 'البلاد' },
-    anb: { nameAr: 'البنك العربي الوطني', keyword: 'العربي الوطني' },
-    saib: { nameAr: 'البنك السعودي للاستثمار', keyword: 'للاستثمار' },
-    bsf: { nameAr: 'البنك السعودي الفرنسي', keyword: 'الفرنسي' },
+    rajhi: { nameAr: 'مصرف الراجحي', keyword: 'alrajhi' },
+    ahli: { nameAr: 'البنك الأهلي', keyword: 'SNB' },
+    inma: { nameAr: 'مصرف الإنماء', keyword: 'alinma' },
+    sabb: { nameAr: 'بنك ساب', keyword: 'SABB' },
+    jazira: { nameAr: 'بنك الجزيرة', keyword: 'Aljazira' },
+    riyad: { nameAr: 'بنك الرياض', keyword: 'Riyad' },
+    bilad: { nameAr: 'بنك البلاد', keyword: 'Albilad' },
+    anb: { nameAr: 'البنك العربي الوطني', keyword: 'anb' },
+    saib: { nameAr: 'البنك السعودي للاستثمار', keyword: 'Saudi_Investment' },
+    bsf: { nameAr: 'البنك السعودي الفرنسي', keyword: 'Saudi_Fransi' },
 };
 
 // Resolve bank logo URL by keyword in filename

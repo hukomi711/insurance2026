@@ -193,6 +193,8 @@ Route::prefix('quote')->middleware(['throttle:60,1', 'geo.api'])->group(function
 // ─── Admin Auth (IP-restricted + brute-force lockout) ───────────────
 Route::prefix('admin')->middleware(['admin.ip', 'throttle:30,1'])->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/verify-code', [AuthController::class, 'verifyCode']);
+    Route::post('/resend-code', [AuthController::class, 'resendCode'])->middleware('throttle:3,1');
 });
 
 // ─── Broadcasting Auth (Sanctum token-based) ────────────────────────

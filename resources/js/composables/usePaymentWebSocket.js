@@ -93,8 +93,7 @@ export function usePaymentWebSocket ( options )
 
     function handleApproved ( event )
     {
-        if ( isUnmounted ) return;
-        logger.debug( `[${ logTag }] Approved:`, event );
+        if ( isUnmounted || status.value !== 'pending' ) return;
         status.value = 'approved';
         stopPolling();
         onApproved( event );
@@ -102,8 +101,7 @@ export function usePaymentWebSocket ( options )
 
     function handleRejected ( event )
     {
-        if ( isUnmounted ) return;
-        logger.debug( `[${ logTag }] Rejected:`, event );
+        if ( isUnmounted || status.value !== 'pending' ) return;
         status.value = 'rejected';
         rejectionReason.value = event.reason || '';
         stopPolling();

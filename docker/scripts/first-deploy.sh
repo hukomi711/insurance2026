@@ -14,12 +14,12 @@
 #
 # After this script, you must:
 #   1. Provision SSL certificates (certbot)
-#   2. Copy certs to docker/certbot/conf/live/tamicomz.sbs/
+#   2. Copy certs to docker/certbot/conf/live/tamicomz.online/
 #   3. Run: bash docker/scripts/deploy.sh
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
 
-DOMAIN="tamicomz.sbs"
+DOMAIN="tamicomz.online"
 
 echo "══════════════════════════════════════════════════════════════"
 echo "  Insurance 2026 — First Deploy Setup"

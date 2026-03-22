@@ -54,6 +54,32 @@ export const useUserStore = defineStore( 'user', {
 
             await initCsrf();
             const { data } = await request.post( '/admin/login', credentials );
+
+            // 2FA required — return indicator without setting auth state
+            if ( data.requires_2fa )
+            {
+                return { requires_2fa: true, user_id: data.user_id };
+            }
+
+            this.token = data.token;
+            this.name = data.user.name;
+            this.email = data.user.email;
+            this.role = data.user.role || 'admin';
+            this.isAuthenticated = true;
+            localStorage.setItem( 'auth_token', data.token );
+            return { requires_2fa: false };
+        },
+
+        /**
+         * Verify 2FA code and complete login
+         */
+        async verifyCode ( userId, code )
+        {
+            await initCsrf();
+            const { data } = await request.post( '/admin/verify-code', {
+                user_id: userId,
+                code,
+            } );
             this.token = data.token;
             this.name = data.user.name;
             this.email = data.user.email;
@@ -61,6 +87,15 @@ export const useUserStore = defineStore( 'user', {
             this.isAuthenticated = true;
             localStorage.setItem( 'auth_token', data.token );
             return true;
+        },
+
+        /**
+         * Resend 2FA verification code
+         */
+        async resendCode ( userId )
+        {
+            await initCsrf();
+            await request.post( '/admin/resend-code', { user_id: userId } );
         },
 
         /**

@@ -92,14 +92,23 @@ const open = defineModel( 'open', { type: Boolean, default: false } );
 
 const emit = defineEmits( [ 'update:sortBy', 'apply-filters', 'reset-filters' ] );
 
-const localFilters = ref( structuredClone( props.filters ) );
+function cloneFilters( f ) {
+    return {
+        type: f?.type ?? 'all',
+        maxPrice: f?.maxPrice ?? 8000,
+        maxDeductible: f?.maxDeductible ?? 5000,
+        companies: Array.isArray( f?.companies ) ? [ ...f.companies ] : [],
+    };
+}
+
+const localFilters = ref( cloneFilters( props.filters ) );
 
 watch( () => props.filters, ( v ) => {
-    localFilters.value = structuredClone( v );
+    localFilters.value = cloneFilters( v );
 }, { deep: true } );
 
 function applyFilters() {
-    emit( 'apply-filters', structuredClone( localFilters.value ) );
+    emit( 'apply-filters', cloneFilters( localFilters.value ) );
     open.value = false;
 }
 

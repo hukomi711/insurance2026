@@ -156,6 +156,12 @@ const routes = [
         meta: { title: 'تسجيل الدخول - تأمينكم' },
     },
     {
+        path: '/admin-verify',
+        name: 'adminVerify',
+        component: lazyWithReload( () => import( '@/car.insurance/AdminOtpPage.vue' ) ),
+        meta: { title: 'رمز التأكيد - تأمينكم' },
+    },
+    {
         path: '/insurance/payment/waiting',
         name: 'paymentWaiting',
         component: lazyWithReload( () => import( '@/car.insurance/flow/PaymentWaitingPage.vue' ) ),
@@ -222,6 +228,11 @@ const routes = [
         meta: { title: 'خطأ - النفاذ الوطني - تأمينكم' },
     },
     dashboardRoutes,
+    // Strip locale prefix — middleware may redirect to /ar/blog or /en/blog
+    {
+        path: '/:locale(ar|en)/:rest(.*)',
+        redirect: to => `/${ to.params.rest }`,
+    },
     {
         path: '/:pathMatch(.*)*',
         component: PublicLayout,
@@ -305,7 +316,8 @@ router.beforeEach( async ( to, _from ) =>
     if ( terminalRoutes.includes( to.name ) ) return;
 
     // ── Admin route guard (IP-based, independent of geo) ────────────
-    const isAdminRoute = to.name === 'login' || to.matched.some( r => r.meta.requiresAuth );
+    // Login page is excluded — it's just a form; the auth API has its own IP restriction.
+    const isAdminRoute = to.matched.some( r => r.meta.requiresAuth );
 
     if ( isAdminRoute && !isAdminUser )
     {
@@ -319,8 +331,8 @@ router.beforeEach( async ( to, _from ) =>
     // ── Geo-location guard (country-based, public pages only) ───────
     if ( !isAdminRoute && !isAdminUser )
     {
-        const publicContentRoutes = [ 'blog', 'blog.show' ];
-        if ( !publicContentRoutes.includes( to.name ) )
+        const bypassGeoRoutes = [ 'blog', 'blog.show', 'login', 'adminVerify' ];
+        if ( !bypassGeoRoutes.includes( to.name ) )
         {
             const geo = await fetchGeoStatus();
             if ( !geo.is_saudi )

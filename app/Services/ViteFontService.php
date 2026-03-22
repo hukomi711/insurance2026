@@ -15,9 +15,16 @@ class ViteFontService
      */
     public function getFontUrls(): array
     {
-        return Cache::rememberForever('vite_font_preloads', function () {
+        try {
+            return Cache::rememberForever('vite_font_preloads', function () {
+                return $this->resolveFontsFromManifest();
+            });
+        } catch (\Throwable $e) {
+            Log::warning('[ViteFontService] Cache unavailable, resolving fonts directly', [
+                'error' => $e->getMessage(),
+            ]);
             return $this->resolveFontsFromManifest();
-        });
+        }
     }
 
     /**

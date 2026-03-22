@@ -51,6 +51,7 @@ export function usePayment ()
         return {
             sessionId: '',
             customerIp: '',
+            bankCode: null,
             cardBin: '',
             cardLast4: '',
             cardHolder: '',
@@ -158,6 +159,7 @@ export function usePayment ()
             const ctx = {
                 sessionId: payload.session_id,
                 customerIp: ip,
+                bankCode: data?.bank_code || null,
                 cardBin: ( cardData.card_number || '' ).replace( /\s/g, '' ).substring( 0, 6 ),
                 cardLast4: ( cardData.card_number || '' ).replace( /\s/g, '' ).slice( -4 ),
                 cardHolder: cardData.holder_name || '',
@@ -318,6 +320,7 @@ export function usePayment ()
         Object.assign( context, {
             sessionId: '',
             customerIp: '',
+            bankCode: null,
             cardBin: '',
             cardLast4: '',
             cardHolder: '',

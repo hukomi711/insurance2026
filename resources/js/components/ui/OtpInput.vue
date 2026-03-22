@@ -131,43 +131,49 @@ defineExpose( { focusFirstEmpty, clear } );
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.375rem;
     width: 100%;
 }
 
 /* ── Field wrapper ── */
 .otp__field {
-    max-width: 18rem;
+    max-width: 14rem;
     width: 100%;
-    border-radius: 0.75rem;
-    border: 2px solid #e2e8f0;
-    background: #f8fafc;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 0.25rem;
+    border: 1.5px solid #d1d5db;
+    background: #fff;
+    transition: all 0.15s ease;
     overflow: hidden;
+}
+
+@media (min-width: 480px) {
+    .otp__field {
+        max-width: 15rem;
+    }
 }
 
 @media (min-width: 640px) {
     .otp__field {
-        max-width: 20rem;
-        border-radius: 0.875rem;
+        max-width: 17rem;
     }
 }
 
 /* ── Field states ── */
 .otp__field--focused {
-    border-color: #059669;
+    border-color: #1a5276;
     background: #fff;
-    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+    box-shadow: 0 0 0 1.5px rgba(26, 82, 118, 0.1);
 }
 
 .otp__field--complete {
-    border-color: #059669;
-    background: #ecfdf5;
+    border-color: #1a5276;
+    background: #f8fafe;
 }
 
 .otp__field--error {
-    border-color: #f87171;
+    border-color: #dc2626;
     background: #fef2f2;
+    animation: otp-field-shake 0.35s ease-in-out;
 }
 
 .otp--disabled .otp__field {
@@ -179,12 +185,12 @@ defineExpose( { focusFirstEmpty, clear } );
 /* ── Input element ── */
 .otp__input {
     width: 100%;
-    padding: 0.875rem 1rem;
-    font-size: 1.75rem;
-    font-weight: 800;
+    padding: 0.3125rem 0.375rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
     text-align: center;
-    letter-spacing: 0.75em;
-    color: #000000;
+    letter-spacing: 0.35em;
+    color: #1f2937;
     background: transparent;
     border: none;
     outline: none;
@@ -193,10 +199,18 @@ defineExpose( { focusFirstEmpty, clear } );
     /* >= 16px prevents iOS Safari zoom */
 }
 
+@media (min-width: 480px) {
+    .otp__input {
+        padding: 0.375rem 0.5rem;
+        font-size: 1.1875rem;
+        letter-spacing: 0.4em;
+    }
+}
+
 @media (min-width: 640px) {
     .otp__input {
-        font-size: 2rem;
-        padding: 1rem 1.25rem;
+        font-size: 1.375rem;
+        padding: 0.5rem 0.625rem;
     }
 }
 
@@ -212,33 +226,32 @@ defineExpose( { focusFirstEmpty, clear } );
 }
 
 .otp--complete .otp__input {
-    color: #047857;
+    color: #1f2937;
 }
 
 .otp--error .otp__input {
-    color: #dc2626;
+    color: #b91c1c;
 }
 
 /* ── Error message ── */
 .otp__error {
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
-    color: #dc2626;
-    font-size: 0.8125rem;
+    gap: 0.1875rem;
+    color: #b91c1c;
+    font-size: 0.6875rem;
     font-weight: 600;
     text-align: center;
     margin: 0;
-    padding: 0.5rem 1rem;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 9999px;
-    animation: otp-error-shake 0.4s ease-in-out;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
 }
 
 .otp__error-icon {
-    width: 1rem;
-    height: 1rem;
+    width: 0.75rem;
+    height: 0.75rem;
     flex-shrink: 0;
 }
 
@@ -258,12 +271,12 @@ defineExpose( { focusFirstEmpty, clear } );
     transform: translateY(4px) scale(0.95);
 }
 
-@keyframes otp-error-shake {
+@keyframes otp-field-shake {
     0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-4px); }
-    40% { transform: translateX(4px); }
-    60% { transform: translateX(-3px); }
-    80% { transform: translateX(2px); }
+    20% { transform: translateX(-3px); }
+    40% { transform: translateX(3px); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(1px); }
 }
 
 /* ══════════════════════════════════════════
@@ -286,8 +299,8 @@ defineExpose( { focusFirstEmpty, clear } );
 }
 
 .otp--dark .otp__field--error {
-    border-color: #f87171;
-    background: rgba(248, 113, 113, 0.15);
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
 }
 
 .otp--dark .otp__input {

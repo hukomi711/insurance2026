@@ -4,4 +4,4 @@ Disallow: /login
 Disallow: /insurance/
 Disallow: /api/
 
-Sitemap: http://localhost:8000/sitemap.xml
+Sitemap: https://tamicomz.online/sitemap.xml

@@ -65,6 +65,8 @@
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                     <h2 class="text-lg font-bold text-gray-800 font-heading mb-5">الأمان</h2>
                     <form class="space-y-4" @submit.prevent="changePassword">
+                        <input type="text" name="username" autocomplete="username" aria-hidden="true" tabindex="-1"
+                            style="position:absolute;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none" />
                         <div>
                             <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">كلمة
                                 المرور الحالية</label>

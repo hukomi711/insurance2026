@@ -39,10 +39,15 @@
                             <tr class="border-b border-slate-100 bg-blue-50/50">
                                 <td class="py-3 px-4 typ-s2 text-foreground font-bold">السعر السنوي</td>
                                 <td v-for="plan in comparedPlans" :key="plan.id" class="py-3 px-4 text-center">
-                                    <div class="flex items-baseline justify-center gap-1">
-                                        <span
-                                            class="font-extrabold text-primary ltr-nums typ-t1">{{ formatNumber( plan.annualPrice ) }}</span>
-                                        <SarIcon className="size-3 text-primary" />
+                                    <div class="flex flex-col items-center gap-0.5">
+                                        <div v-if="getDiscountInfo(plan).hasDiscount" class="flex items-center gap-1.5">
+                                            <span class="inline-flex items-center bg-red-100 text-red-700 typ-c2 font-bold px-1.5 py-0.5 rounded-full ltr-nums">وفّر {{ getDiscountInfo(plan).discountPercent }}%</span>
+                                            <span class="text-slate-400 typ-c2 line-through ltr-nums">{{ formatNumber(getDiscountInfo(plan).originalPrice) }}</span>
+                                        </div>
+                                        <div class="flex items-baseline justify-center gap-1">
+                                            <span class="font-extrabold text-primary ltr-nums typ-t1">{{ formatNumber( plan.annualPrice ) }}</span>
+                                            <SarIcon className="size-3 text-primary" />
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
@@ -92,7 +97,7 @@ import {
     DialogTitle, DialogDescription, DialogClose,
 } from 'radix-vue';
 import SarIcon from '@/components/SarIcon.vue';
-import { formatNumber } from '@/utils/formatters';
+import { formatNumber, getDiscountInfo } from '@/utils/formatters';
 import { getCompanyLogo } from '@/utils/companyLogos';
 
 defineProps( {

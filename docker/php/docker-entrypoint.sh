@@ -47,6 +47,15 @@ if [ -d /opt/build-assets/build ]; then
     php artisan vite:clear-fonts 2>/dev/null || true
 fi
 
+# Wait for Redis before caching config (max 30s)
+for i in $(seq 1 30); do
+    if php -r "@fsockopen('redis', 6379) ? exit(0) : exit(1);" 2>/dev/null; then
+        break
+    fi
+    echo "Waiting for Redis... ($i/30)"
+    sleep 1
+done
+
 # Build Laravel caches (after .env is patched and dirs exist)
 php artisan config:cache 2>/dev/null || true
 php artisan route:cache 2>/dev/null || true

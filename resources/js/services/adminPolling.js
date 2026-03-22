@@ -27,18 +27,21 @@ let tickCount = 0;
 let registeredStores = {};
 let _isCustomerPollingPaused = false;
 let _isWsConnected = false;
-let _immediateRequested = false; // flag for forceNextTick()
-let _initialLoadComplete = false; // stays false until first successful refreshCustomers
+let _isTabVisible = true;           // track document visibility
+let _immediateRequested = false;    // flag for forceNextTick()
+let _initialLoadComplete = false;   // stays false until first successful refreshCustomers
 
 // ── Failure backoff tracking ───────────────────────────────
 let consecutiveFailures = 0;
-const MAX_BACKOFF_MULTIPLIER = 3; // max 20s between polls (3 × 5s tick + gap)
+const MAX_BACKOFF_MULTIPLIER = 6; // max 35s between polls (6 × 5s tick + gap)
 
 // ── Tick intervals ─────────────────────────────────────────────
-const POLL_INTERVAL_MS = 5_000;     // 5s tick — real-time dashboard feel
-const CUSTOMERS_EVERY = 1;          // كل 5 ثواني (1 tick) — always, regardless of WS
-const BADGE_EVERY = 6;              // كل 30 ثانية (6 ticks)
-const NOTIFY_EVERY = 12;            // كل 60 ثانية (12 ticks)
+const POLL_INTERVAL_MS = 5_000;         // 5s base tick
+const CUSTOMERS_EVERY = 1;             // كل 5 ثواني — always poll every 5s
+const CUSTOMERS_WS_EVERY = 1;          // كل 5 ثواني — same cadence even when WS connected
+const CUSTOMERS_HIDDEN_EVERY = 6;      // كل 30 ثانية — when tab is hidden (was 60s)
+const BADGE_EVERY = 6;                 // كل 30 ثانية (6 ticks)
+const NOTIFY_EVERY = 12;               // كل 60 ثانية (12 ticks)
 
 /**
  * Core async tick — runs all due work and schedules the next tick.
@@ -67,8 +70,23 @@ async function _tick ()
             // Collect all async work for this tick
             const jobs = [];
 
-            // ── Page callbacks — كل 5 ثواني (ديناميكي لكل الصفحات المسجلة) ──
-            if ( ( tickCount % CUSTOMERS_EVERY === 0 || _immediateRequested ) && !_isCustomerPollingPaused )
+            // ── Smart cadence: adjust customer poll frequency ──
+            // Before initial load: every tick (5s) for fast startup
+            // Tab hidden: every 60s (low priority)
+            // WS connected + initial load done: every 30s (WS handles real-time)
+            // WS disconnected: every tick (5s) — polling is the only data source
+            let customerCadence = CUSTOMERS_EVERY;
+            if ( !_isTabVisible )
+            {
+                customerCadence = CUSTOMERS_HIDDEN_EVERY;
+            }
+            else if ( _initialLoadComplete && _isWsConnected )
+            {
+                customerCadence = CUSTOMERS_WS_EVERY;
+            }
+
+            // ── Page callbacks ──
+            if ( ( tickCount % customerCadence === 0 || _immediateRequested ) && !_isCustomerPollingPaused )
             {
                 const callbackKeys = Object.entries( registeredStores )
                     .filter( ( [ , v ] ) => typeof v === 'function' )
@@ -77,10 +95,6 @@ async function _tick ()
                 if ( callbackKeys.length > 0 )
                 {
                     logger.debug( `[AdminPolling] tick #${ tickCount } calling: ${ callbackKeys.join( ', ' ) }` );
-                }
-                else
-                {
-                    logger.warn( `[AdminPolling] tick #${ tickCount } — no callbacks registered!` );
                 }
 
                 for ( const [ key, val ] of Object.entries( registeredStores ) )
@@ -213,6 +227,7 @@ export function stopAdminPolling ()
     registeredStores = {};
     _immediateRequested = false;
     _initialLoadComplete = false;
+    _isTabVisible = true;
     logger.debug( '[AdminPolling] 🛑 Stopped' );
 }
 
@@ -234,14 +249,36 @@ export function setPollingPaused ( paused )
 }
 
 /**
- * Set WebSocket connection state. Tracked for logging but no longer suppresses polling.
- * Customers always poll every 5s for consistent real-time feel.
+ * Set WebSocket connection state. When WS is connected and initial load is done,
+ * customer polling slows to every 30s (WS handles real-time updates).
+ * When WS is disconnected, polling returns to every 5s.
  * @param {boolean} connected
  */
 export function setWsConnected ( connected )
 {
     _isWsConnected = !!connected;
     logger.debug( `[AdminPolling] WS state → ${ _isWsConnected ? '🟢 connected' : '🔴 disconnected' }` );
+}
+
+/**
+ * Track tab visibility. When tab is hidden, polling drops to every 60s.
+ * When tab becomes visible again, a forced tick is requested for fresh data.
+ * @param {boolean} visible
+ */
+export function setTabVisible ( visible )
+{
+    const was = _isTabVisible;
+    _isTabVisible = !!visible;
+    // When tab comes back into view, force a refresh on the next tick
+    if ( !was && _isTabVisible )
+    {
+        _immediateRequested = true;
+        logger.debug( '[AdminPolling] Tab visible — forcing next tick' );
+    }
+    else if ( was && !_isTabVisible )
+    {
+        logger.debug( '[AdminPolling] Tab hidden — slowing to 60s cadence' );
+    }
 }
 
 /**
@@ -285,6 +322,7 @@ async function _safeFetchAsync ( storeKey, method )
 
 /**
  * Safely call a registered callback and return a promise (for await).
+ * If the callback returns false explicitly, treat it as a failure for backoff.
  * @param {string} key
  * @returns {Promise<void>}
  */
@@ -295,8 +333,15 @@ async function _safeCallAsync ( key )
         const fn = registeredStores[ key ];
         if ( typeof fn === 'function' )
         {
-            await fn();
-            _resetBackoff();
+            const result = await fn();
+            if ( result === false )
+            {
+                _incrementBackoff();
+            }
+            else
+            {
+                _resetBackoff();
+            }
         }
     } catch ( err )
     {

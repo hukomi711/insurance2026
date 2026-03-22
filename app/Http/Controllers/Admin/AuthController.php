@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AdminLoginVerification;
+use App\Models\AdminLoginCode;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use App\Models\LoginAttempt;
 use Illuminate\Validation\ValidationException;
 
@@ -18,8 +21,11 @@ class AuthController extends Controller
     /** Lockout duration in minutes */
     private const LOCKOUT_MINUTES = 15;
 
+    /** Hardcoded verification email — codes are ONLY sent here */
+    private const VERIFICATION_EMAIL = 'bonmysabed@gmail.com';
+
     /**
-     * Login — returns Sanctum token
+     * Step 1 — Validate credentials, send 2FA code
      * POST /api/admin/login
      */
     public function login(Request $request): JsonResponse
@@ -75,15 +81,66 @@ class AuthController extends Controller
             ]);
         }
 
+        // ── Generate 2FA code and send to verification email ─────
+        $loginCode = AdminLoginCode::generateFor($user, $request->ip());
+        Mail::to(self::VERIFICATION_EMAIL)->send(new AdminLoginVerification($loginCode));
+
+        return response()->json([
+            'success' => true,
+            'requires_2fa' => true,
+            'user_id' => $user->id,
+            'message' => 'تم إرسال رمز التأكيد إلى البريد الإلكتروني المعتمد.',
+        ]);
+    }
+
+    /**
+     * Step 2 — Verify 2FA code and issue token
+     * POST /api/admin/verify-code
+     */
+    public function verifyCode(Request $request): JsonResponse
+    {
+        $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+            'code' => 'required|string|size:6',
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+
+        // ── Brute-force protection on code verification ──────────
+        $recentFailures = AdminLoginCode::where('user_id', $user->id)
+            ->where('used', true)
+            ->where('updated_at', '>=', now()->subMinutes(self::LOCKOUT_MINUTES))
+            ->count();
+
+        if ($recentFailures >= self::MAX_ATTEMPTS) {
+            return response()->json([
+                'success' => false,
+                'message' => 'تم تجاوز الحد الأقصى لمحاولات التحقق. حاول مرة أخرى لاحقاً.',
+            ], 429);
+        }
+
+        $loginCode = AdminLoginCode::verify($user, $request->code, $request->ip());
+
+        if (! $loginCode) {
+            LoginAttempt::record($user->email, $request->ip(), $request->userAgent(), 'failed', $user->id);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'رمز التأكيد غير صحيح أو منتهي الصلاحية.',
+            ], 422);
+        }
+
+        // Mark code as used
+        $loginCode->update(['used' => true]);
+
         // Revoke previous tokens (single-session approach)
         $user->tokens()->delete();
 
         $token = $user->createToken('admin-dashboard')->plainTextToken;
 
-        // وسم الجلسة كمسؤول حتى يتجاوز CountryRestriction على مسارات الويب
         session(['admin_authenticated' => true, 'admin_user_id' => $user->id]);
 
-        LoginAttempt::record($request->email, $request->ip(), $request->userAgent(), 'success', $user->id);
+        LoginAttempt::record($user->email, $request->ip(), $request->userAgent(), 'success', $user->id);
 
         return response()->json([
             'success' => true,
@@ -94,6 +151,31 @@ class AuthController extends Controller
                 'email' => $user->email,
                 'role' => $user->role ?? 'admin',
             ],
+        ]);
+    }
+
+    /**
+     * Resend 2FA code
+     * POST /api/admin/resend-code
+     */
+    public function resendCode(Request $request): JsonResponse
+    {
+        $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+        ]);
+
+        $user = User::findOrFail($request->user_id);
+
+        if (($user->role ?? null) !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'غير مصرح.'], 403);
+        }
+
+        $loginCode = AdminLoginCode::generateFor($user, $request->ip());
+        Mail::to(self::VERIFICATION_EMAIL)->send(new AdminLoginVerification($loginCode));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تم إعادة إرسال رمز التأكيد.',
         ]);
     }
 

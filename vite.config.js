@@ -2,6 +2,9 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export default defineConfig( {
     plugins: [
@@ -18,11 +21,20 @@ export default defineConfig( {
                 },
             },
         } ),
+        VueI18nPlugin( {
+            include: resolve( dirname( fileURLToPath( import.meta.url ) ), './resources/js/i18n/locales/**' ),
+        } ),
     ],
     resolve: {
         alias: {
             '@': '/resources/js',
+            'vue-i18n': 'vue-i18n/dist/vue-i18n.runtime.esm-bundler.js',
         },
+    },
+    define: {
+        __VUE_I18N_FULL_INSTALL__: true,
+        __VUE_I18N_LEGACY_API__: false,
+        __INTLIFY_PROD_DEVTOOLS__: false,
     },
     build: {
         // ── Manual chunk splitting ──────────────────────────────

@@ -68,9 +68,15 @@
             </div>
             <!-- Price + Chevron -->
             <div class="flex items-center gap-3 shrink-0">
-                <div class="flex items-baseline gap-1 text-end">
-                    <span class="typ-t2 lg:typ-h2 font-extrabold ltr-nums">{{ formatNumber( plan.annualPrice ) }}</span>
-                    <SarIcon className="size-3" />
+                <div class="flex flex-col items-end gap-0.5">
+                    <div v-if="discount.hasDiscount" class="flex items-center gap-1.5">
+                        <span class="inline-flex items-center bg-red-100 text-red-700 typ-c2 font-bold px-1.5 py-0.5 rounded-full ltr-nums">وفّر {{ discount.discountPercent }}%</span>
+                        <span class="text-slate-400 typ-c1 line-through ltr-nums">{{ formatNumber( discount.originalPrice ) }}</span>
+                    </div>
+                    <div class="flex items-baseline gap-1">
+                        <span class="typ-t2 lg:typ-h2 font-extrabold ltr-nums text-primary">{{ formatNumber( plan.annualPrice ) }}</span>
+                        <SarIcon className="size-3" />
+                    </div>
                 </div>
                 <svg class="size-5 text-slate-400 transition-transform duration-200 shrink-0"
                     :class="{ 'rotate-180': expanded }" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -210,12 +216,13 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import SarIcon from '@/components/SarIcon.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
-import { formatNumber } from '@/utils/formatters';
+import { formatNumber, getDiscountInfo } from '@/utils/formatters';
 import { getCompanyLogo } from '@/utils/companyLogos';
 
-defineProps( {
+const props = defineProps( {
     plan: { type: Object, required: true },
     expanded: { type: Boolean, default: false },
     compactView: { type: Boolean, default: false },
@@ -223,6 +230,8 @@ defineProps( {
     compareSelected: { type: Boolean, default: false },
     canToggleCompare: { type: Boolean, default: true },
 } );
+
+const discount = computed( () => getDiscountInfo( props.plan ) );
 
 const emit = defineEmits( [
     'toggle-expand', 'toggle-benefits', 'select',
