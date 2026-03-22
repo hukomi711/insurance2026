@@ -6,6 +6,7 @@ import
     IconLogin,
     IconSettings,
     IconQuoteMonitor,
+    IconFunnel,
 } from '@/icons';
 
 /**
@@ -61,6 +62,12 @@ const dashboardRoutes = {
             name: 'dashboard-login-attempts',
             component: lazyWithReload( () => import( '../pages/LoginAttemptsPage.vue' ) ),
             meta: { title: 'محاولات الدخول', icon: IconLogin, badgeKey: 'login_attempts' },
+        },
+        {
+            path: 'funnel-analytics',
+            name: 'dashboard-funnel-analytics',
+            component: lazyWithReload( () => import( '../pages/FunnelAnalyticsDashboard.vue' ) ),
+            meta: { title: 'تحليل التحويل', icon: IconFunnel },
         },
         {
             path: 'settings',

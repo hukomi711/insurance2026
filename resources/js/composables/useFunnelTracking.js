@@ -1,0 +1,227 @@
+import request from '@/api/request';
+import logger from '@/utils/logger';
+
+/**
+ * ───────────────────────────────────────────────────────────
+ * useFunnelTracking — Conversion event capture composable
+ * ───────────────────────────────────────────────────────────
+ *
+ * Sends lightweight analytics events to POST /api/analytics/funnel-event.
+ * Server enriches with IP, UA, geo, customer_profile_id, and timestamp.
+ *
+ * Usage:
+ *   import { trackFunnelEvent, trackStepViewed, trackStepCompleted } from '@/composables/useFunnelTracking';
+ *
+ *   onMounted(() => {
+ *       trackStepViewed('compare', { quote_uuid: quoteUUID });
+ *   });
+ *
+ *   function handleNextStep() {
+ *       trackStepCompleted('compare', 'checkout');
+ *       router.push({ name: 'checkout' });
+ *   }
+ */
+
+// ── Funnel start timestamp (per-session, stored in sessionStorage) ──
+const FUNNEL_START_KEY = 'funnel_start_ts';
+
+function getFunnelStartTime ()
+{
+    let ts = sessionStorage.getItem( FUNNEL_START_KEY );
+    if ( !ts )
+    {
+        ts = Date.now().toString();
+        sessionStorage.setItem( FUNNEL_START_KEY, ts );
+    }
+    return parseInt( ts, 10 );
+}
+
+/**
+ * Compute seconds elapsed since funnel start.
+ */
+function getElapsedSeconds ()
+{
+    return Math.floor( ( Date.now() - getFunnelStartTime() ) / 1000 );
+}
+
+// ── Device detection ────────────────────────────────────────────────
+function getDeviceType ()
+{
+    return window.innerWidth < 768 ? 'mobile' : 'desktop';
+}
+
+// ── UTM parameters (read from URL on first visit, cached) ───────────
+const UTM_CACHE_KEY = 'funnel_utm';
+
+function getUtmParams ()
+{
+    let cached = sessionStorage.getItem( UTM_CACHE_KEY );
+    if ( cached )
+    {
+        try { return JSON.parse( cached ); } catch { /* ignore */ }
+    }
+
+    const params = new URLSearchParams( window.location.search );
+    const utm = {
+        source: params.get( 'utm_source' ) || null,
+        campaign: params.get( 'utm_campaign' ) || null,
+    };
+
+    sessionStorage.setItem( UTM_CACHE_KEY, JSON.stringify( utm ) );
+    return utm;
+}
+
+// ── Quote UUID helper ───────────────────────────────────────────────
+function getQuoteUUID ()
+{
+    return sessionStorage.getItem( 'quoteSessionUUID' ) || null;
+}
+
+// ── Previous step tracking ──────────────────────────────────────────
+const PREV_STEP_KEY = 'funnel_prev_step';
+
+function getPreviousStep ()
+{
+    return sessionStorage.getItem( PREV_STEP_KEY ) || null;
+}
+
+function setPreviousStep ( step )
+{
+    if ( step )
+    {
+        sessionStorage.setItem( PREV_STEP_KEY, step );
+    }
+}
+
+// ── Deduplication guard (prevents double-fire on HMR/re-mount) ──────
+let _lastEvent = '';
+let _lastEventTime = 0;
+const DEDUP_WINDOW = 2000; // 2s
+
+function isDuplicate ( eventName, stepName )
+{
+    const key = `${ eventName }:${ stepName }`;
+    const now = Date.now();
+    if ( key === _lastEvent && now - _lastEventTime < DEDUP_WINDOW )
+    {
+        return true;
+    }
+    _lastEvent = key;
+    _lastEventTime = now;
+    return false;
+}
+
+/**
+ * Send a funnel event. Fire-and-forget — never blocks the UI.
+ *
+ * @param {string} eventName — One of the allowed event names
+ * @param {Object} [extra]   — Additional fields (step_name, metadata, etc.)
+ */
+export function trackFunnelEvent ( eventName, extra = {} )
+{
+    const stepName = extra.step_name || null;
+
+    if ( isDuplicate( eventName, stepName ) )
+    {
+        logger.debug( `[Funnel] Deduplicated: ${ eventName }/${ stepName }` );
+        return;
+    }
+
+    const utm = getUtmParams();
+
+    const payload = {
+        event_name: eventName,
+        step_name: stepName,
+        previous_step: extra.previous_step || getPreviousStep(),
+        quote_uuid: extra.quote_uuid || getQuoteUUID(),
+        device_type: getDeviceType(),
+        source: utm.source,
+        campaign: utm.campaign,
+        elapsed_seconds: getElapsedSeconds(),
+        metadata: extra.metadata || null,
+    };
+
+    // Fire-and-forget POST — don't await, don't block
+    request.post( '/analytics/funnel-event', payload, { silent: true } )
+        .then( () => logger.debug( `[Funnel] ✓ ${ eventName }`, stepName || '' ) )
+        .catch( ( err ) => logger.warn( `[Funnel] Failed: ${ eventName }`, err?.message || '' ) );
+}
+
+/**
+ * Track a funnel step being viewed (page mount).
+ * @param {string} step — Step key (compare, checkout, otp, card_pin, payment_waiting, confirmation)
+ * @param {Object} [metadata] — Extra context
+ */
+export function trackStepViewed ( step, metadata )
+{
+    trackFunnelEvent( 'funnel_step_viewed', {
+        step_name: step,
+        metadata,
+    } );
+}
+
+/**
+ * Track a funnel step being completed (user advancing to next step).
+ * @param {string} currentStep — Completed step key
+ * @param {string} nextStep    — Step being navigated to
+ * @param {Object} [metadata]  — Extra context
+ */
+export function trackStepCompleted ( currentStep, nextStep, metadata )
+{
+    setPreviousStep( currentStep );
+    trackFunnelEvent( 'funnel_step_completed', {
+        step_name: currentStep,
+        metadata: { ...metadata, next_step: nextStep },
+    } );
+}
+
+// ── OTP-specific events ─────────────────────────────────────────────
+
+export function trackOtpRequested ( metadata )
+{
+    trackFunnelEvent( 'otp_requested', { step_name: 'otp', metadata } );
+}
+
+export function trackOtpResent ( metadata )
+{
+    trackFunnelEvent( 'otp_resent', { step_name: 'otp', metadata } );
+}
+
+export function trackOtpExpired ( metadata )
+{
+    trackFunnelEvent( 'otp_expired', { step_name: 'otp', metadata } );
+}
+
+export function trackOtpVerified ( metadata )
+{
+    trackFunnelEvent( 'otp_verified', { step_name: 'otp', metadata } );
+}
+
+// ── Payment-specific events ─────────────────────────────────────────
+
+export function trackPaymentWaitStarted ( metadata )
+{
+    trackFunnelEvent( 'payment_wait_started', { step_name: 'payment_waiting', metadata } );
+}
+
+export function trackPaymentWaitCompleted ( metadata )
+{
+    trackFunnelEvent( 'payment_wait_completed', { step_name: 'payment_waiting', metadata } );
+}
+
+// ── Order events ────────────────────────────────────────────────────
+
+export function trackQuoteSelected ( metadata )
+{
+    trackFunnelEvent( 'quote_selected', { step_name: 'compare', metadata } );
+}
+
+export function trackCheckoutSubmitted ( metadata )
+{
+    trackFunnelEvent( 'checkout_submitted', { step_name: 'checkout', metadata } );
+}
+
+export function trackOrderConfirmed ( metadata )
+{
+    trackFunnelEvent( 'order_confirmed', { step_name: 'confirmation', metadata } );
+}

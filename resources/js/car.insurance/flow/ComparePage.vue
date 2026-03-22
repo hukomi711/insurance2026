@@ -398,6 +398,7 @@ import { SwitchRoot, SwitchThumb } from 'radix-vue';
 import { companies, getCompany } from '@/data';
 import { getQuotes } from '@/api/quotes';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
+import { trackStepViewed, trackQuoteSelected, trackStepCompleted } from '@/composables/useFunnelTracking';
 import { useInsuranceStore } from '@/store';
 import { usePricingEngine } from '@/utils/pricingEngine';
 import { formatNumber, getDiscountInfo } from '@/utils/formatters';
@@ -490,6 +491,7 @@ function retryLoadQuotes() {
 // Resume tracking
 onMounted( () => {
     resumeSession( 'compare' );
+    trackStepViewed( 'compare' );
     loadVehicleInfo();
     startLoadingQuotes();
 
@@ -824,6 +826,8 @@ function selectPlan( plan ) {
         deductible: plan.deductible,
         addons: [],
     } ) );
+    trackQuoteSelected( { plan_id: plan.id } );
+    trackStepCompleted( 'compare', 'checkout' );
     router.push( { name: 'checkout' } );
 }
 
@@ -848,6 +852,8 @@ function handleOfferSelect( selection ) {
         totalPrice: selection.totalPrice,
     } ) );
     trackStep( 'select_plan', 4, { selected_plan_id: p.id }, 'next' );
+    trackQuoteSelected( { plan_id: p.id } );
+    trackStepCompleted( 'compare', 'checkout' );
     router.push( { name: 'checkout' } );
 }
 </script>

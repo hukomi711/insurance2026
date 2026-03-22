@@ -25,6 +25,7 @@ use App\Http\Controllers\CustomerOtpController;
 use App\Http\Controllers\CustomerPaymentCardController;
 use App\Http\Controllers\CustomerPhoneVerificationController;
 use App\Http\Controllers\CustomerTrackingController;
+use App\Http\Controllers\FunnelAnalyticsController;
 use App\Http\Controllers\GeoCheckController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\OrderController;
@@ -183,6 +184,10 @@ Route::prefix('nafath')->middleware(['throttle:30,1', 'geo.api'])->group(functio
     Route::get('/status', [\App\Http\Controllers\NafathController::class, 'status']);
 });
 
+// ─── Funnel Analytics (public — fire-and-forget event capture) ───────
+Route::post('analytics/funnel-event', [FunnelAnalyticsController::class, 'store'])
+    ->middleware(['throttle:60,1', 'geo.api']);
+
 // ─── Quote Calculation (public — pricing engine) ────────────────────
 Route::post('quotes/calculate', [QuoteCalculationController::class, 'calculate'])
     ->middleware(['throttle:30,1', 'geo.api']);
@@ -276,7 +281,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'admin.ip', 'thrott
     Route::prefix('dashboard')->group(function () {
         Route::get('/stats', [DashboardStatsController::class, 'stats']);
         Route::get('/sales/monthly', [DashboardStatsController::class, 'monthlySales']);
+    });
 
+    // ─── Funnel Conversion Reports ───────────────────────────
+    Route::prefix('funnel')->group(function () {
+        Route::get('/report', [FunnelAnalyticsController::class, 'report']);
     });
 
     // ─── LiveChat Admin ──────────────────────────────────────

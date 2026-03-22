@@ -248,6 +248,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { formatPrice } from '@/data';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
+import { trackStepViewed, trackOrderConfirmed } from '@/composables/useFunnelTracking';
 import FunnelProgress from '@/car.insurance/components/FunnelProgress.vue';
 
 const { trackStep } = useQuoteTracking();
@@ -261,6 +262,8 @@ onMounted( () => {
     }
     if ( order.value ) {
         trackStep( 'confirmation', 7, { order_number: order.value.orderNumber }, 'complete' );
+        trackStepViewed( 'confirmation', { order_number: order.value.orderNumber } );
+        trackOrderConfirmed( { order_number: order.value.orderNumber } );
     }
 } );
 

@@ -62,6 +62,13 @@ request.interceptors.request.use(
         // Inject session token for customer identification
         config.headers[ "X-Session-Token" ] = getSessionToken();
 
+        // Inject Echo socket ID so Laravel can exclude the sender with toOthers()
+        const socketId = window.Echo?.socketId?.();
+        if ( socketId )
+        {
+            config.headers[ "X-Socket-ID" ] = socketId;
+        }
+
         // Laravel CSRF token
         const csrfToken = document.querySelector( 'meta[name="csrf-token"]' );
         if ( csrfToken )

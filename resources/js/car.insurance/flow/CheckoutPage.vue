@@ -217,6 +217,7 @@ import { getPlanWithCompany } from '@/data';
 import { calculateTotalWithVAT } from '@/utils/pricing';
 import { validateCardForm } from '@/utils/cardValidation';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
+import { trackStepViewed, trackCheckoutSubmitted, trackStepCompleted } from '@/composables/useFunnelTracking';
 import { useInsuranceStore } from '@/store';
 import { usePricingEngine } from '@/utils/pricingEngine';
 import { usePayment } from '@/composables/usePayment';
@@ -283,6 +284,7 @@ onMounted( () => {
     }
 
     trackStep( 'checkout', 5, { plan_id: planId.value }, 'next' );
+    trackStepViewed( 'checkout', { plan_id: planId.value } );
 
     // Show discount popup after user has had time to look at the page
     setTimeout( () => {
@@ -520,6 +522,8 @@ async function handleSubmit() {
     } catch { /* storage full — non-critical */ }
 
     try { trackStep( 'payment_completed', 6, { plan_id: plan.value.id, total: totalPrice.value }, 'next' ); } catch { /* tracking — non-critical */ }
+    trackCheckoutSubmitted( { plan_id: plan.value?.id, total: totalPrice.value } );
+    trackStepCompleted( 'checkout', 'payment_waiting' );
 
     // Complete quote session — stops heartbeat so it won't 404 after navigation
     try { await completeSession(); } catch { /* session cleanup — non-critical */ }

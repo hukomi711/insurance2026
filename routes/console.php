@@ -36,3 +36,8 @@ Schedule::command('app:prune-old-records --tier=2')
 Schedule::command('customers:update-locations')
     ->weeklyOn(1, '04:00')
     ->withoutOverlapping();
+
+// Detect abandoned funnel sessions (stalled users) every 5 minutes
+Schedule::command('funnel:detect-abandoned')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();

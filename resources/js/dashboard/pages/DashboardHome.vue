@@ -1174,11 +1174,15 @@ const handleCustomerAction = async ( payload ) => {
         badgeStore.fetch();
 
     } catch ( error ) {
-        // 422 = already processed — just refresh data, don't show as failure
+        // 422 = already processed — refresh data and show a brief notice
         if ( error?.response?.status === 422 ) {
+            const msg = error.response.data?.message || 'تم معالجة هذا الإجراء مسبقاً';
+            notificationsStore.push( { type: 'warning', message: msg } );
             logger.warn( `Action "${ action }" — already processed, refreshing` );
             await refreshCustomers();
         } else {
+            const msg = error?.response?.data?.message || 'فشل تنفيذ الإجراء، يرجى المحاولة مرة أخرى';
+            notificationsStore.push( { type: 'error', message: msg } );
             logger.error( `Action "${ action }" failed:`, error );
         }
     } finally {

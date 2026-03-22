@@ -25,6 +25,7 @@ abstract class BaseRejectionEvent implements ShouldBroadcastNow
     public string $customerIp;
     public ?string $reason;
     public ?string $sessionId;
+    public ?int $customerId;
 
     /** Channel prefix (e.g. 'otp', 'payment'). */
     abstract protected function channelPrefix(): string;
@@ -32,11 +33,12 @@ abstract class BaseRejectionEvent implements ShouldBroadcastNow
     /** Event name for broadcastAs(). */
     abstract protected function eventName(): string;
 
-    public function __construct(string $customerIp, ?string $reason = null, ?string $sessionId = null)
+    public function __construct(string $customerIp, ?string $reason = null, ?string $sessionId = null, ?int $customerId = null)
     {
         $this->customerIp = $customerIp;
         $this->reason = $reason;
         $this->sessionId = $sessionId;
+        $this->customerId = $customerId;
     }
 
     /**
@@ -65,6 +67,7 @@ abstract class BaseRejectionEvent implements ShouldBroadcastNow
     {
         return [
             'customer_ip' => $this->customerIp,
+            'customer_id' => $this->customerId,
             'reason'      => $this->reason,
             'session_id'  => $this->sessionId,
             'status'      => 'rejected',
