@@ -223,13 +223,14 @@ onUnmounted( () =>
 
                 <!-- Articles -->
                 <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <article v-for="article in filteredArticles" :key="article.id"
+                    <article v-for="(article, index) in filteredArticles" :key="article.id"
                         class="bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden group">
                         <!-- Image -->
                         <div class="aspect-video bg-gradient-to-br from-blue-400 to-blue-600 relative overflow-hidden">
                             <img v-if="article.image" :src="article.image" :alt="article.title"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                loading="lazy" decoding="async" width="800" height="450"
+                                :loading="index === 0 ? 'eager' : 'lazy'" decoding="async" width="800" height="450"
+                                :fetchpriority="index === 0 ? 'high' : undefined"
                                 @error="$event.target.style.display = 'none'" />
                             <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                             <span
