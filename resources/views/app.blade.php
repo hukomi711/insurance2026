@@ -44,10 +44,12 @@
 												@endif
 								@endproduction
 
-								{{-- Preload LCP image — first blog card image, discovered early before Vue renders --}}
+								{{-- Preload LCP image — only on homepage where the blog card renders --}}
+								@if (request()->is('/'))
 								<link rel="preload" as="image"
 												href="/images/blog/2026/01/كيف-تضمن-مستقبلك-المالي-من-خلال-التأمين-الادخاري؟-1024x562.png"
 												fetchpriority="high">
+								@endif
 
 								{{-- Inline critical CSS — renders skeleton instantly before any bundle loads --}}
 								<style>
