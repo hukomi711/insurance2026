@@ -31,6 +31,8 @@ jobs:
       QUEUE_CONNECTION: redis
       REDIS_HOST: 127.0.0.1
       REDIS_PORT: 6379
+      BROADCAST_CONNECTION: log
+      BROADCAST_DRIVER: log
 
     steps:
       - name: Checkout
