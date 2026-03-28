@@ -60,10 +60,30 @@ jobs:
 
       - name: Prepare environment
         run: |
-          cp .env.example .env
+          if [ -f .env.example ]; then
+            cp .env.example .env
+          else
+            cat > .env <<'EOF'
+APP_NAME=Laravel
+APP_ENV=testing
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://127.0.0.1:8000
+LOG_CHANNEL=stack
+LOG_STACK=daily
+DB_CONNECTION=sqlite
+DB_DATABASE=database/database.sqlite
+CACHE_STORE=redis
+SESSION_DRIVER=file
+QUEUE_CONNECTION=redis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+BROADCAST_CONNECTION=log
+EOF
+          fi
           mkdir -p database
           touch database/database.sqlite
-          php artisan key:generate --ansi
+          php artisan key:generate --ansi --force
 
       - name: Static analysis
         run: ./vendor/bin/phpstan analyse --memory-limit=512M
