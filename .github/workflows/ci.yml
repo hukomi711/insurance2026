@@ -5,6 +5,9 @@ on:
     branches: ["**"]
   pull_request:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -31,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -42,7 +45,7 @@ jobs:
           extensions: mbstring, intl, pdo_sqlite, sqlite3, redis, fileinfo
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: 'npm'
