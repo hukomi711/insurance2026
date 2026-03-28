@@ -27,6 +27,7 @@ use App\Http\Controllers\CustomerPhoneVerificationController;
 use App\Http\Controllers\CustomerTrackingController;
 use App\Http\Controllers\FunnelAnalyticsController;
 use App\Http\Controllers\GeoCheckController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\QuoteCalculationController;
@@ -43,6 +44,13 @@ use Illuminate\Support\Facades\Route;
 | Quote tracking routes for session lifecycle (start, step, heartbeat, complete).
 |
 */
+
+// ─── Health Check (public — no auth, light throttle) ────────────────
+Route::prefix('health')->middleware('throttle:60,1')->group(function () {
+    Route::get('/', HealthController::class);
+    Route::get('/realtime', [HealthController::class, 'realtime']);
+    Route::get('/queues', [HealthController::class, 'queues']);
+});
 
 // ─── Geo Check (public — no geo restriction, heavy throttle) ────────
 Route::get('/geo/check', [GeoCheckController::class, 'check'])->middleware('throttle:30,1');
@@ -304,7 +312,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'admin.ip', 'thrott
     // ─── Settings ───────────────────────────────────────────
     Route::get('settings', [SettingsController::class, 'index']);
     Route::put('settings', [SettingsController::class, 'update']);
-    Route::post('settings/password', [SettingsController::class, 'changePassword']);
+    Route::post('settings/password', [SettingsController::class, 'changePassword'])->middleware('throttle:3,1');
 
     // ─── User Management ────────────────────────────────────
     Route::get('users', [UserManagementController::class, 'index']);

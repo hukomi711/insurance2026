@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+          extensions: mbstring, intl, pdo_sqlite, sqlite3, redis, fileinfo
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+
+      - name: Static analysis
+        run: ./vendor/bin/phpstan analyse --memory-limit=512M
+
+      - name: Backend tests
+        run: ./vendor/bin/phpunit
+
+      - name: Frontend tests
+        run: npx vitest run
+
+      - name: Frontend build
+        run: npm run build
+
+      - name: Validate health routes are registered
+        run: |
+          php -r 'chdir(getcwd()); require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $kernel = $app->make("Illuminate\\Contracts\\Console\\Kernel"); $kernel->bootstrap(); $routes = app("router")->getRoutes(); $required=["api/health","api/health/realtime","api/health/queues"]; $found=[]; foreach($routes as $r){ $found[]=$r->uri(); } foreach($required as $uri){ if(!in_array($uri,$found,true)){ fwrite(STDERR, "Missing route: $uri\n"); exit(1);} } echo "Health routes OK\n";'

@@ -15,6 +15,7 @@
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.6",
         "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.0",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "mockery/mockery": "^1.6",
@@ -51,12 +52,21 @@
             "@php artisan test --ansi"
         ],
         "format": "./vendor/bin/pint",
+        "analyse": "./vendor/bin/phpstan analyse --memory-limit=512M",
         "ide-helper": [
             "@php artisan ide-helper:generate",
             "@php artisan ide-helper:models -N"
         ],
         "cache:clear": [
             "@php artisan optimize:clear --ansi"
+        ],
+        "gate": [
+            "@php artisan optimize:clear --ansi",
+            "@test",
+            "@analyse",
+            "npm test -- --run",
+            "npm run build",
+            "@php artisan route:list --ansi"
         ],
         "cache:warm": [
             "@php artisan config:cache --ansi",
