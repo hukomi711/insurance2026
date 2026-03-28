@@ -1,0 +1,121 @@
+name: Deploy Gate (Production)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to deploy (branch, tag, or SHA)
+        required: true
+        default: main
+      base_url:
+        description: Production base URL (e.g. https://example.com)
+        required: true
+      rollback_ref:
+        description: Rollback ref/tag if deployment verification fails
+        required: true
+        default: v1.0.0-stable
+      dry_run:
+        description: If true, skip actual deploy command
+        required: true
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Verify CI status for target ref
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          payload="$(curl -sS \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/commits/${{ inputs.ref }}/status")"
+
+          state="$(PAYLOAD="$payload" python3 -c 'import json, os; print(json.loads(os.environ["PAYLOAD"]).get("state", "unknown"))')"
+
+          echo "Commit CI state: $state"
+          test "$state" = "success"
+
+      - name: Health guard (pre-deploy)
+        run: |
+          for ep in /api/health /api/health/realtime /api/health/queues; do
+            code="$(curl -s -o /dev/null -w "%{http_code}" "${{ inputs.base_url }}${ep}")"
+            echo "$ep => $code"
+            test "$code" = "200"
+          done
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: preflight
+    environment:
+      name: production
+      url: ${{ inputs.base_url }}
+    steps:
+      - name: Checkout target ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Deploy
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "DRY RUN: deploy skipped"
+            exit 0
+          fi
+
+          chmod +x docker/scripts/deploy.sh
+          ./docker/scripts/deploy.sh
+
+  verify:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: ${{ !inputs.dry_run }}
+    steps:
+      - name: Checkout repo (for smoke script)
+        uses: actions/checkout@v4
+
+      - name: Smoke check (post-deploy)
+        run: |
+          chmod +x docker/scripts/smoke-test.sh
+          ./docker/scripts/smoke-test.sh "${{ inputs.base_url }}"
+
+  rollback:
+    runs-on: ubuntu-latest
+    needs: [deploy, verify]
+    if: ${{ failure() && !inputs.dry_run }}
+    environment:
+      name: production
+      url: ${{ inputs.base_url }}
+    steps:
+      - name: Checkout rollback ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.rollback_ref }}
+
+      - name: Execute rollback
+        run: |
+          echo "Rolling back to: ${{ inputs.rollback_ref }}"
+          chmod +x docker/scripts/deploy.sh
+          ./docker/scripts/deploy.sh
+
+      - name: Verify rollback health
+        run: |
+          for ep in /api/health /api/health/realtime /api/health/queues; do
+            code="$(curl -s -o /dev/null -w "%{http_code}" "${{ inputs.base_url }}${ep}")"
+            echo "$ep => $code"
+            test "$code" = "200"
+          done
