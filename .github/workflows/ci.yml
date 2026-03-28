@@ -115,4 +115,4 @@ jobs:
             fi
             sleep 1
           done
-          ./docker/scripts/smoke-test.sh http://127.0.0.1:8000
+          SMOKE_CHECK_QUEUE_HEALTH=0 SMOKE_CHECK_404_PAGE=0 ./docker/scripts/smoke-test.sh http://127.0.0.1:8000

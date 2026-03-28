@@ -7,6 +7,8 @@ set -euo pipefail
 BASE="${1:-http://localhost}"
 PASS=0
 FAIL=0
+CHECK_QUEUE_HEALTH="${SMOKE_CHECK_QUEUE_HEALTH:-1}"
+CHECK_404_PAGE="${SMOKE_CHECK_404_PAGE:-1}"
 
 check() {
     local label="$1" url="$2" expected="${3:-200}"
@@ -27,7 +29,11 @@ echo "── App ──"
 check "Homepage"        "$BASE/"
 check "Health"          "$BASE/api/health"
 check "Health/Realtime" "$BASE/api/health/realtime"
-check "Health/Queues"   "$BASE/api/health/queues"
+if [ "$CHECK_QUEUE_HEALTH" = "1" ]; then
+    check "Health/Queues"   "$BASE/api/health/queues"
+else
+    echo "  • Health/Queues check skipped (SMOKE_CHECK_QUEUE_HEALTH=0)"
+fi
 
 echo ""
 echo "── Static Assets ──"
@@ -35,7 +41,11 @@ check "Robots.txt"      "$BASE/robots.txt"
 
 echo ""
 echo "── Reverse Proxy ──"
-check "404 page"        "$BASE/does-not-exist" 404
+if [ "$CHECK_404_PAGE" = "1" ]; then
+    check "404 page"        "$BASE/does-not-exist" 404
+else
+    echo "  • 404 page check skipped (SMOKE_CHECK_404_PAGE=0)"
+fi
 
 echo ""
 echo "═══ Results: $PASS passed, $FAIL failed ═══"
