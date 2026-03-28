@@ -157,15 +157,15 @@ class SystemMonitorController extends Controller
     private function getDiskSpace(): array
     {
         try {
-            $total = disk_total_space('/');
-            $free = disk_free_space('/');
-            $used = $total - $free;
+            $total = disk_total_space('/') ?: 0;
+            $free = disk_free_space('/') ?: 0;
+            $used = (int) $total - (int) $free;
 
             return [
-                'total'       => $this->formatBytes($total),
+                'total'       => $this->formatBytes((int) $total),
                 'used'        => $this->formatBytes($used),
-                'free'        => $this->formatBytes($free),
-                'percentUsed' => round(($used / $total) * 100, 2),
+                'free'        => $this->formatBytes((int) $free),
+                'percentUsed' => $total > 0 ? round(($used / $total) * 100, 2) : 0,
             ];
         } catch (\Exception $e) {
             return [

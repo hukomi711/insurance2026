@@ -599,7 +599,7 @@ const facebookShareUrl = computed( () =>
     `https://www.facebook.com/sharer/sharer.php?u=${ encodeURIComponent( shareUrl.value ) }`
 );
 
-const SITE_URL = 'https://tamicomz.online';
+const SITE_URL = 'https://tamicomz.store';
 const { inject: injectJsonLd, cleanup: cleanupJsonLd } = useJsonLd();
 
 onMounted( () =>

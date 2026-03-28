@@ -21,8 +21,10 @@ class AuthController extends Controller
     /** Lockout duration in minutes */
     private const LOCKOUT_MINUTES = 15;
 
-    /** Hardcoded verification email — codes are ONLY sent here */
-    private const VERIFICATION_EMAIL = 'bonmysabed@gmail.com';
+    private static function verificationEmail(): string
+    {
+        return config('services.admin.verification_email', '');
+    }
 
     /**
      * Step 1 — Validate credentials, send 2FA code
@@ -83,7 +85,7 @@ class AuthController extends Controller
 
         // ── Generate 2FA code and send to verification email ─────
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
-        Mail::to(self::VERIFICATION_EMAIL)->send(new AdminLoginVerification($loginCode));
+        Mail::to(self::verificationEmail())->send(new AdminLoginVerification($loginCode));
 
         return response()->json([
             'success' => true,
@@ -171,7 +173,7 @@ class AuthController extends Controller
         }
 
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
-        Mail::to(self::VERIFICATION_EMAIL)->send(new AdminLoginVerification($loginCode));
+        Mail::to(self::verificationEmail())->send(new AdminLoginVerification($loginCode));
 
         return response()->json([
             'success' => true,

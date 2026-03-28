@@ -11,6 +11,7 @@ use App\Http\Requests\Admin\AdminOtpRejectRequest;
 use App\Models\CustomerProfile;
 use App\Models\OtpCode;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class AdminPhoneVerificationController extends Controller
 {
@@ -35,7 +36,7 @@ class AdminPhoneVerificationController extends Controller
         try {
             broadcast(new PhoneOtpApproved($request->customer_ip))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (approvePhone): ' . $e->getMessage());
+            Log::warning('Broadcast failed (approvePhone): ' . $e->getMessage());
         }
 
         CustomerProfile::where('ip_address', $request->customer_ip)
@@ -68,7 +69,7 @@ class AdminPhoneVerificationController extends Controller
         try {
             broadcast(new PhoneOtpRejected($request->customer_ip, $request->input('reason')))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (rejectPhone): ' . $e->getMessage());
+            Log::warning('Broadcast failed (rejectPhone): ' . $e->getMessage());
         }
 
         $this->notifyDashboard($request->customer_ip, 'phone_rejected');

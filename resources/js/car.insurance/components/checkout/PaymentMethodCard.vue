@@ -117,8 +117,9 @@
             dir="ltr"
             autocomplete="cc-name"
             class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 hover:bg-white text-left uppercase"
-            @input="$emit('update:form', { ...form, cardHolder: $event.target.value })"
+            @input="onCardHolderInput"
           />
+          <p class="typ-c1 text-slate-400 mt-1 text-right" dir="rtl">أدخل الاسم بالإنجليزية كما هو مطبوع على البطاقة</p>
           <p v-if="errors.cardHolder" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ errors.cardHolder }}</p>
         </div>
       </form>
@@ -157,5 +158,11 @@ const onCardNumberInput = (e) => {
 
 const onExpiryInput = (e) => {
   emit('update:form', { ...props.form, expiry: formatExpiry(e.target.value) });
+};
+
+const onCardHolderInput = (e) => {
+  const val = e.target.value.toUpperCase().replace(/[^A-Z\s]/g, '');
+  e.target.value = val;
+  emit('update:form', { ...props.form, cardHolder: val });
 };
 </script>

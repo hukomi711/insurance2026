@@ -9,12 +9,15 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 import HeroSection from '@/components/home/HeroSection.vue';
 import HomePartners from '@/components/home/HomePartners.vue';
 import HomePlans from '@/components/home/HomePlans.vue';
 import HomeWhy from '@/components/home/HomeWhy.vue';
 import StickyMobileCta from '@/components/home/StickyMobileCta.vue';
+
+/** Track dynamically created meta/script elements for cleanup */
+const _createdElements = [];
 
 onMounted( () => {
     document.title = 'تأمينكم - مقارنة أسعار التأمين | منصة تأمين في السعودية';
@@ -36,6 +39,7 @@ function setMeta( name, content, attr = 'name' ) {
         el = document.createElement( 'meta' );
         el.setAttribute( attr, name );
         document.head.appendChild( el );
+        _createdElements.push( el );
     }
     el.setAttribute( 'content', content );
 }
@@ -49,7 +53,7 @@ function injectJsonLd() {
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
         name: 'تأمينكم',
-        url: 'https://tamicomz.online',
+        url: 'https://tamicomz.store',
         applicationCategory: 'FinanceApplication',
         operatingSystem: 'Web, iOS, Android',
         description: 'منصة مقارنة أسعار تأمين السيارات في السعودية',
@@ -60,5 +64,11 @@ function injectJsonLd() {
         },
     } );
     document.head.appendChild( script );
+    _createdElements.push( script );
 }
+
+onUnmounted( () => {
+    _createdElements.forEach( el => el.remove() );
+    _createdElements.length = 0;
+} );
 </script>

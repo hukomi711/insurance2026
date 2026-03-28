@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PhoneVerification extends Model
 {
+    /** @var list<string> */
     protected $fillable = [
         'user_id',
         'ip_address',
@@ -18,6 +19,7 @@ class PhoneVerification extends Model
         'attempts',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'verified'    => 'boolean',
         'verified_at' => 'datetime',
@@ -25,6 +27,7 @@ class PhoneVerification extends Model
         'attempts'    => 'integer',
     ];
 
+    /** @var list<string> */
     protected $hidden = [
         'otp_code',
     ];
@@ -38,18 +41,18 @@ class PhoneVerification extends Model
 
     /* ── Scopes ────────────────────────────────────── */
 
-    public function scopeVerified($query)
+    public function scopeVerified(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('verified', true);
     }
 
-    public function scopePending($query)
+    public function scopePending(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('verified', false)
             ->where('expires_at', '>', now());
     }
 
-    public function scopeForPhone($query, string $phone)
+    public function scopeForPhone(\Illuminate\Database\Eloquent\Builder $query, string $phone)
     {
         return $query->where('phone_number', $phone);
     }

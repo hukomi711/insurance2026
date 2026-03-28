@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class QuoteStepLog extends Model
 {
+    /** @var list<string> */
     protected $fillable = [
         'quote_session_id',
         'step_name',
@@ -19,6 +20,7 @@ class QuoteStepLog extends Model
         'interaction_count',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'form_snapshot' => 'array',
         'entered_at' => 'datetime',

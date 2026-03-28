@@ -16,6 +16,7 @@ class AdminAction extends Model
      */
     public const UPDATED_AT = null;
 
+    /** @var list<string> */
     protected $fillable = [
         'admin_id',
         'action',
@@ -24,6 +25,7 @@ class AdminAction extends Model
         'meta',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'meta'       => 'array',
         'created_at' => 'datetime',

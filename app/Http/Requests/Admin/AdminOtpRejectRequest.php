@@ -8,6 +8,10 @@ use Illuminate\Foundation\Http\FormRequest;
  * Shared request for admin rejection actions that require otp_id + customer_ip + reason.
  *
  * Used by: Phone verification reject, STC waiting/otp/call reject
+ *
+ * @property int         $otp_id
+ * @property string      $customer_ip
+ * @property string|null $reason
  */
 class AdminOtpRejectRequest extends FormRequest
 {

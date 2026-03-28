@@ -114,24 +114,16 @@ class FunnelAnalyticsController extends Controller
             $query->where('campaign', $campaign);
         }
 
-        // ── 1. Step views & completions count ──
-        $stepViews = (clone $query)
-            ->where('event_name', 'funnel_step_viewed')
-            ->select('step_name', DB::raw('COUNT(*) as views'))
-            ->groupBy('step_name')
-            ->pluck('views', 'step_name');
+        // ── 1. Step views, completions & abandoned in a single query ──
+        $stepCounts = (clone $query)
+            ->whereIn('event_name', ['funnel_step_viewed', 'funnel_step_completed', 'funnel_step_abandoned'])
+            ->select('step_name', 'event_name', DB::raw('COUNT(*) as cnt'))
+            ->groupBy('step_name', 'event_name')
+            ->get();
 
-        $stepCompletions = (clone $query)
-            ->where('event_name', 'funnel_step_completed')
-            ->select('step_name', DB::raw('COUNT(*) as completions'))
-            ->groupBy('step_name')
-            ->pluck('completions', 'step_name');
-
-        $stepAbandoned = (clone $query)
-            ->where('event_name', 'funnel_step_abandoned')
-            ->select('step_name', DB::raw('COUNT(*) as abandoned'))
-            ->groupBy('step_name')
-            ->pluck('abandoned', 'step_name');
+        $stepViews = $stepCounts->where('event_name', 'funnel_step_viewed')->pluck('cnt', 'step_name');
+        $stepCompletions = $stepCounts->where('event_name', 'funnel_step_completed')->pluck('cnt', 'step_name');
+        $stepAbandoned = $stepCounts->where('event_name', 'funnel_step_abandoned')->pluck('cnt', 'step_name');
 
         // Build ordered funnel
         $funnel = [];

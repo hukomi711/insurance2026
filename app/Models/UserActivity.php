@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserActivity extends Model
 {
+    /** @var list<string> */
     protected $fillable = [
         'user_id',
         'ip_address',
@@ -17,6 +18,7 @@ class UserActivity extends Model
         'metadata',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'metadata' => 'array',
     ];
@@ -30,22 +32,22 @@ class UserActivity extends Model
 
     /* ── Scopes ────────────────────────────────────── */
 
-    public function scopeForUser($query, int $userId)
+    public function scopeForUser(\Illuminate\Database\Eloquent\Builder $query, int $userId)
     {
         return $query->where('user_id', $userId);
     }
 
-    public function scopeForIp($query, string $ip)
+    public function scopeForIp(\Illuminate\Database\Eloquent\Builder $query, string $ip)
     {
         return $query->where('ip_address', $ip);
     }
 
-    public function scopeOfAction($query, string $action)
+    public function scopeOfAction(\Illuminate\Database\Eloquent\Builder $query, string $action)
     {
         return $query->where('action', $action);
     }
 
-    public function scopeRecent($query, int $minutes = 60)
+    public function scopeRecent(\Illuminate\Database\Eloquent\Builder $query, int $minutes = 60)
     {
         return $query->where('created_at', '>=', now()->subMinutes($minutes));
     }

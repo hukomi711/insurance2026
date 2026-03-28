@@ -81,6 +81,7 @@ class LiveChatController extends Controller
 
         $conversation = LivechatConversation::where('session_id', $sessionId)->firstOrFail();
 
+        /** @var \App\Models\LivechatMessage $message */
         $message = $conversation->messages()->create([
             'sender' => 'admin',
             'admin_id' => Auth::id(),
@@ -133,6 +134,7 @@ class LiveChatController extends Controller
             $conversation->update(['visitor_name' => $request->input('name')]);
         }
 
+        /** @var \App\Models\LivechatMessage $message */
         $message = $conversation->messages()->create([
             'sender' => 'visitor',
             'message' => $request->input('message'),

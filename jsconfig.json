@@ -27,7 +27,9 @@
     ],
     "exclude": [
         "node_modules",
+        "vendor",
         "dist",
-        "public/build"
+        "public/build",
+        "storage"
     ]
 }

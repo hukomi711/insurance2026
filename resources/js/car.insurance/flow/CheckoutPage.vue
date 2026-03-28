@@ -12,7 +12,6 @@
                 </button>
             </div>
         </div>
-        <FunnelProgress :current="1" />
 
         <!-- Main Content -->
         <div v-if="plan" class="box py-4 sm:py-6">
@@ -69,9 +68,9 @@
                                 </CheckboxIndicator>
                             </CheckboxRoot>
                             <span class="typ-s2 text-foreground">أقر بأن جميع البيانات المدخلة صحيحة و أوافق على
-                                <a href="#" class="text-primary hover:underline">الشروط والأحكام</a>
+                                <router-link to="/terms" target="_blank" class="text-primary hover:underline">الشروط والأحكام</router-link>
                                 و
-                                <a href="#" class="text-primary hover:underline">سياسة الخصوصية</a>
+                                <router-link to="/privacy" target="_blank" class="text-primary hover:underline">سياسة الخصوصية</router-link>
                                 الخاصة بتأمينكم
                             </span>
                         </label>
@@ -149,62 +148,25 @@
 
     </div>
 
-    <!-- ═══ Discount Popup Modal ═══ -->
-    <Teleport to="body">
-        <Transition enter-active-class="transition-all duration-300 ease-out"
-            enter-from-class="opacity-0" enter-to-class="opacity-100"
-            leave-active-class="transition-all duration-200 ease-in"
-            leave-from-class="opacity-100" leave-to-class="opacity-0">
-            <div v-if="showDiscountPopup" class="fixed inset-0 z-[999] flex items-center justify-center p-4"
-                @click.self="showDiscountPopup = false">
-                <!-- Overlay -->
-                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-
-                <!-- Modal -->
-                <div class="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden animate-bounce-in">
-                    <!-- Close Button -->
-                    <button class="absolute top-3 start-3 z-10 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors cursor-pointer shadow-sm"
-                        @click="showDiscountPopup = false">
-                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-
-                    <!-- Discount Image -->
-                    <div class="w-full">
-                        <img :src="cashBackImg" alt="وفّر على أسعار التأمين" class="w-full h-auto object-cover" width="1071" height="1280" />
-                    </div>
-
-                    <!-- Content -->
-                    <div class="p-5 text-center">
-                        <div class="inline-flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-4 py-1.5 mb-3">
-                            <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                            <span class="text-red-600 typ-c1 font-bold">عرض لفترة محدودة</span>
-                        </div>
-
-                        <!-- Countdown Timer -->
-                        <div class="flex items-center justify-center gap-4 mb-5" dir="ltr">
-                            <div class="flex flex-col items-center">
-                                <span class="text-5xl font-extrabold text-primary ltr-nums tabular-nums w-20 text-center">{{ discountMinutes }}</span>
-                                <span class="typ-b2 text-muted mt-1">دقيقة</span>
-                            </div>
-                            <span class="text-4xl font-bold text-slate-300 -mt-5">:</span>
-                            <div class="flex flex-col items-center">
-                                <span class="text-5xl font-extrabold text-primary ltr-nums tabular-nums w-20 text-center">{{ discountSeconds }}</span>
-                                <span class="typ-b2 text-muted mt-1">ثانية</span>
-                            </div>
-                        </div>
-
-                        <!-- CTA Button -->
-                        <button class="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold text-base rounded-xl transition-colors cursor-pointer"
-                            @click="showDiscountPopup = false">
-                            استفد من العرض الآن
-                        </button>
-                    </div>
-                </div>
+    <!-- ═══ Discount Inline Banner (subtle, non-intrusive) ═══ -->
+    <Transition enter-active-class="transition-all duration-500 ease-out"
+        enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100" leave-to-class="opacity-0">
+        <div v-if="showDiscountPopup" class="fixed bottom-20 lg:bottom-4 start-4 end-4 sm:start-auto sm:end-4 sm:max-w-sm z-[60] bg-white rounded-2xl shadow-lg border border-emerald-200 p-4 flex items-start gap-3">
+            <img :src="cashBackImg" alt="كاش باك" class="w-14 h-14 rounded-xl object-cover shrink-0" width="56" height="56" />
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-foreground">وفّر على تأمينك!</p>
+                <p class="text-xs text-muted mt-0.5">أكمل عملية الدفع الآن واستفد من العرض</p>
             </div>
-        </Transition>
-    </Teleport>
+            <button class="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer shrink-0 mt-0.5"
+                @click="showDiscountPopup = false">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    </Transition>
 </template>
 
 <script setup>
@@ -217,7 +179,7 @@ import { getPlanWithCompany } from '@/data';
 import { calculateTotalWithVAT } from '@/utils/pricing';
 import { validateCardForm } from '@/utils/cardValidation';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
-import { trackStepViewed, trackCheckoutSubmitted, trackStepCompleted } from '@/composables/useFunnelTracking';
+import { trackStepViewed, trackCheckoutSubmitted, trackStepCompleted, useAbandonmentTracking } from '@/composables/useFunnelTracking';
 import { useInsuranceStore } from '@/store';
 import { usePricingEngine } from '@/utils/pricingEngine';
 import { usePayment } from '@/composables/usePayment';
@@ -226,7 +188,6 @@ import { getReasonLabel } from '@/constants/rejectionReasons';
 import { useI18n } from 'vue-i18n';
 import logger from '@/utils/logger';
 import SarIcon from '@/components/SarIcon.vue';
-import FunnelProgress from '@/car.insurance/components/FunnelProgress.vue';
 import PaymentMethodCard from '../components/checkout/PaymentMethodCard.vue';
 import PriceSummaryCard from '../components/checkout/PriceSummaryCard.vue';
 import cashBackImg from '@/../../resources/images/logo/summary_logo/cash_back.jpeg';
@@ -286,10 +247,9 @@ onMounted( () => {
     trackStep( 'checkout', 5, { plan_id: planId.value }, 'next' );
     trackStepViewed( 'checkout', { plan_id: planId.value } );
 
-    // Show discount popup after user has had time to look at the page
+    // Show discount banner after user has had time to look at the page
     setTimeout( () => {
         showDiscountPopup.value = true;
-        startDiscountTimer();
     }, 5000 );
 } );
 
@@ -370,21 +330,6 @@ const cardRejectionReason = ref( '' );
 
 // ═══ Discount Popup ═══
 const showDiscountPopup = ref( false );
-const discountTimeLeft = ref( 30 * 60 );
-let discountTimer = null;
-
-const discountMinutes = computed( () => String( Math.floor( discountTimeLeft.value / 60 ) ).padStart( 2, '0' ) );
-const discountSeconds = computed( () => String( discountTimeLeft.value % 60 ).padStart( 2, '0' ) );
-
-function startDiscountTimer() {
-    discountTimer = setInterval( () => {
-        if ( discountTimeLeft.value > 0 ) {
-            discountTimeLeft.value--;
-        } else {
-            clearInterval( discountTimer );
-        }
-    }, 1000 );
-}
 
 //
 function validate() {
@@ -536,8 +481,13 @@ function goBack() {
     router.push( { name: 'compare' } );
 }
 
+// ── Abandonment tracking cleanup ──
+let _cleanupAbandonment;
+onMounted( () => {
+    _cleanupAbandonment = useAbandonmentTracking( () => 'checkout' );
+} );
 onUnmounted( () => {
-    if ( discountTimer ) clearInterval( discountTimer );
+    if ( _cleanupAbandonment ) _cleanupAbandonment();
 } );
 </script>
 

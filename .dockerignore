@@ -48,6 +48,16 @@ storage/framework/sessions/*
 storage/framework/views/*
 storage/framework/cache/*
 
+# ── Dev / CI-only files ──────────────────────────────────────
+.editorconfig
+.gitleaks.toml
+.pre-commit-config.yaml
+phpstan.neon
+vitest.config.js
+DEPLOYMENT.md
+backup*.sql
+*.sql
+
 # ── OS junk ──────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

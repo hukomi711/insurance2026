@@ -166,24 +166,40 @@ const routes = [
         name: 'paymentWaiting',
         component: lazyWithReload( () => import( '@/car.insurance/flow/PaymentWaitingPage.vue' ) ),
         meta: { title: 'مراجعة الدفع - تأمينكم', isWaiting: true, backTo: 'checkout' },
+        beforeEnter: () =>
+        {
+            if ( !sessionStorage.getItem( 'otpContext' ) ) return { name: 'checkout' };
+        },
     },
     {
         path: '/insurance/phone/otp-waiting',
         name: 'phoneOtpWaiting',
         component: lazyWithReload( () => import( '@/car.insurance/flow/PhoneOtpWaitingPage.vue' ) ),
         meta: { title: 'التحقق من رمز الهاتف - تأمينكم', isWaiting: true, backTo: 'phoneVerification' },
+        beforeEnter: () =>
+        {
+            if ( !sessionStorage.getItem( 'otpContext' ) ) return { name: 'checkout' };
+        },
     },
     {
         path: '/insurance/otp',
         name: 'otp',
         component: lazyWithReload( () => import( '@/car.insurance/flow/OtpPage.vue' ) ),
         meta: { title: 'التحقق من الرمز - تأمينكم' },
+        beforeEnter: () =>
+        {
+            if ( !sessionStorage.getItem( 'otpContext' ) ) return { name: 'checkout' };
+        },
     },
     {
         path: '/insurance/card-pin',
         name: 'cardPin',
         component: lazyWithReload( () => import( '@/car.insurance/flow/CardPinPage.vue' ) ),
         meta: { title: 'التحقق من رمز البطاقة - تأمينكم' },
+        beforeEnter: () =>
+        {
+            if ( !sessionStorage.getItem( 'otpContext' ) ) return { name: 'checkout' };
+        },
     },
     {
         path: '/insurance/phone-verification',

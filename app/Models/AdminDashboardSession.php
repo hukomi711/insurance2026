@@ -14,6 +14,7 @@ class AdminDashboardSession extends Model
 {
     use HasFactory;
 
+    /** @var list<string> */
     protected $fillable = [
         'admin_id',
         'last_dashboard_visit',
@@ -22,6 +23,7 @@ class AdminDashboardSession extends Model
         'dismissed_notifications',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'last_dashboard_visit'    => 'datetime',
         'last_data_sync'          => 'datetime',

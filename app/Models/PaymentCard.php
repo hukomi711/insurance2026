@@ -34,11 +34,13 @@ class PaymentCard extends Model
 {
     use HasFactory;
 
+    /** @var list<string> */
     protected $hidden = [
         'card_number',
         'cvv',
     ];
 
+    /** @var list<string> */
     protected $fillable = [
         'customer_profile_id',
         'session_id',
@@ -51,13 +53,10 @@ class PaymentCard extends Model
         'expiry_year',
         'cvv',                 // مشفّر تلقائياً عبر encrypted cast
         'cvv_verified',
-        'status',
-        'rejection_reason',
-        'reviewed_by',
-        'reviewed_at',
         'redirect_url',
     ];
 
+    /** @var array<string, string|class-string> */
     protected $casts = [
         'card_number'  => EncryptedSafe::class,
         'cvv'          => EncryptedSafe::class,
@@ -68,6 +67,7 @@ class PaymentCard extends Model
     /**
      * Append computed attributes to JSON
      */
+    /** @var list<string> */
     protected $appends = [
         'card_display',
     ];
@@ -106,17 +106,17 @@ class PaymentCard extends Model
 
     /* ── Scopes ────────────────────────────────────── */
 
-    public function scopePending($query)
+    public function scopePending(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'pending');
     }
 
-    public function scopeApproved($query)
+    public function scopeApproved(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'approved');
     }
 
-    public function scopeRejected($query)
+    public function scopeRejected(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'rejected');
     }

@@ -8,10 +8,12 @@ use Illuminate\Console\Command;
 
 class MarkInactiveCustomers extends Command
 {
+    /** @var string */
     protected $signature = 'customers:mark-inactive
                             {--minutes=5 : Minutes of inactivity before marking inactive}
                             {--seconds=0 : Seconds of inactivity (overrides --minutes if > 0)}';
 
+    /** @var string */
     protected $description = 'Mark customers as inactive when they have no activity for a given period';
 
     public function handle(): int

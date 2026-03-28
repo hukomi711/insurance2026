@@ -48,6 +48,9 @@ server_checksums.txt
 # ── SSL certificates (provisioned on server) ─────────────────
 docker/certbot/conf/
 docker/certbot/www/
+# ── SQL backups ──────────────────────────────────────────────────
+backup*.sql
+
 # ── Orphan / temp files ──────────────────────────────────────────
 base
 CountryRestriction_server.php

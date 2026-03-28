@@ -121,7 +121,7 @@ class AdminNotificationController extends Controller
                 'icon' => 'fa-user-plus',
                 'message' => "عميل جديد متصل: {$name}",
                 'time' => $customer->created_at->diffForHumans(),
-                'read' => isset($dismissedSet[$key]) || true,
+                'read' => isset($dismissedSet[$key]),
                 'key' => $key,
                 'meta' => ['customer_ip' => $customer->ip_address],
             ];
@@ -144,6 +144,7 @@ class AdminNotificationController extends Controller
         }
 
         // Sort: unread first, then by newest
+        /** @var array<int, array{id: int, type: string, icon: string, message: string, time: string, read: bool, key: string, meta: array}> $notifications */
         usort($notifications, function ($a, $b) {
             if ($a['read'] !== $b['read']) {
                 return $a['read'] ? 1 : -1;

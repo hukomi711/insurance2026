@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,7 @@ use Illuminate\Support\Str;
 
 class QuoteSession extends Model
 {
+    /** @var list<string> */
     protected $fillable = [
         'uuid',
         'customer_ip',
@@ -34,6 +36,7 @@ class QuoteSession extends Model
         'utm_campaign',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'vehicle_data' => 'array',
         'personal_data' => 'array',
@@ -77,17 +80,17 @@ class QuoteSession extends Model
 
     // ─── Scopes ─────────────────────────────────────────────
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query)
     {
         return $query->where('status', 'active');
     }
 
-    public function scopeAbandoned($query)
+    public function scopeAbandoned(Builder $query)
     {
         return $query->where('status', 'abandoned');
     }
 
-    public function scopeCompleted($query)
+    public function scopeCompleted(Builder $query)
     {
         return $query->where('status', 'completed');
     }
@@ -95,7 +98,7 @@ class QuoteSession extends Model
     /**
      * Sessions with no heartbeat within the given minutes (stale)
      */
-    public function scopeStale($query, int $minutes = 5)
+    public function scopeStale(Builder $query, int $minutes = 5)
     {
         return $query->where('status', 'active')
             ->where('last_heartbeat_at', '<', now()->subMinutes($minutes));
@@ -104,7 +107,7 @@ class QuoteSession extends Model
     /**
      * Sessions that are currently live (heartbeat within threshold)
      */
-    public function scopeLive($query, int $minutes = 2)
+    public function scopeLive(Builder $query, int $minutes = 2)
     {
         return $query->where('status', 'active')
             ->where('last_heartbeat_at', '>=', now()->subMinutes($minutes));

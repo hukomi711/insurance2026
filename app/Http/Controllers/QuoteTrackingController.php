@@ -73,6 +73,7 @@ class QuoteTrackingController extends Controller
         ]);
 
         // Close the current step log
+        /** @var \App\Models\QuoteStepLog|null $currentLog */
         $currentLog = $session->stepLogs()
             ->whereNull('exited_at')
             ->latest()
@@ -173,6 +174,7 @@ class QuoteTrackingController extends Controller
         $session = QuoteSession::where('uuid', $uuid)->firstOrFail();
 
         // Close last step log
+        /** @var \App\Models\QuoteStepLog|null $currentLog */
         $currentLog = $session->stepLogs()
             ->whereNull('exited_at')
             ->latest()

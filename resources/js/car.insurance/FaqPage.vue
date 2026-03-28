@@ -3,8 +3,8 @@
         <!-- Page Header with Search -->
         <div class="faq-header">
             <div class="faq-header__inner">
-                <h1 class="faq-header__title">كيف نقدر نساعدك؟</h1>
-                <p class="faq-header__subtitle">ابحث في الأسئلة الشائعة أو تصفّح حسب الفئة</p>
+                <h1 class="faq-header__title">{{ t('faq.title') }}</h1>
+                <p class="faq-header__subtitle">{{ t('faq.subtitle') }}</p>
 
                 <!-- Search Box -->
                 <div class="faq-search">
@@ -13,7 +13,7 @@
                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     <input id="faq-search" v-model="searchQuery" type="text" name="faq-search"
-                        autocomplete="off" aria-label="بحث في الأسئلة الشائعة" placeholder="ابحث عن سؤالك هنا..."
+                        autocomplete="off" :aria-label="t('faq.searchAriaLabel')" :placeholder="t('faq.searchPlaceholder')"
                         class="faq-search__input" />
                     <button v-if="searchQuery" class="faq-search__clear" @click="searchQuery = ''">
                         <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -32,9 +32,8 @@
                 <!-- Search Results Mode -->
                 <div v-if="searchQuery.trim()">
                     <p style="font-size: 14px; color: var(--color-muted); margin-bottom: 24px;">
-                        <span v-if="searchResults.length">{{ searchResults.length }} نتيجة لـ "{{ searchQuery
-                        }}"</span>
-                        <span v-else>لا توجد نتائج لـ "{{ searchQuery }}"</span>
+                        <span v-if="searchResults.length">{{ t('faq.resultsCount', { count: searchResults.length, query: searchQuery }) }}</span>
+                        <span v-else>{{ t('faq.noResults', { query: searchQuery }) }}</span>
                     </p>
 
                     <!-- Search Results Accordion -->
@@ -67,11 +66,10 @@
                                     d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <p style="color: var(--color-muted); font-size: 14px;">جرّب بكلمات مختلفة أو تصفّح الفئات أدناه
-                        </p>
+                        <p style="color: var(--color-muted); font-size: 14px;">{{ t('faq.tryDifferent') }}</p>
                         <button style="margin-top: 16px; color: var(--color-primary); font-size: 14px; font-weight: 500; background: none; border: none; cursor: pointer;"
                             @click="searchQuery = ''">
-                            عرض جميع الأسئلة
+                            {{ t('faq.showAll') }}
                         </button>
                     </div>
                 </div>
@@ -87,7 +85,7 @@
                     </div>
 
                     <!-- All Categories View -->
-                    <div v-if="activeCategory === 'الكل'" class="faq-groups">
+                    <div v-if="activeCategory === t('faq.all')" class="faq-groups">
                         <div v-for="group in faqItems" :key="group.category" class="faq-group">
                             <!-- Category Header -->
                             <div class="faq-group__header">
@@ -160,8 +158,8 @@
                                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                         </svg>
                     </div>
-                    <h3 class="faq-cta__title">لم تجد إجابتك؟</h3>
-                    <p class="faq-cta__desc">فريق خدمة العملاء جاهز لمساعدتك على مدار الساعة</p>
+                    <h3 class="faq-cta__title">{{ t('faq.notFound') }}</h3>
+                    <p class="faq-cta__desc">{{ t('faq.supportReady') }}</p>
                     <div class="faq-cta__buttons">
                         <router-link to="/contact" class="faq-cta__btn faq-cta__btn--primary">
                             <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor"
@@ -169,7 +167,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
-                            تواصل معنا
+                            {{ t('faq.contactUs') }}
                         </router-link>
                         <a href="tel:920000000" class="faq-cta__btn faq-cta__btn--secondary">
                             <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor"
@@ -188,13 +186,16 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { AccordionRoot, AccordionItem, AccordionHeader, AccordionTrigger, AccordionContent } from 'radix-vue';
 import { faqItems } from '@/data';
 
-const searchQuery = ref( '' );
-const activeCategory = ref( 'الكل' );
+const { t } = useI18n();
 
-const categories = computed( () => [ 'الكل', ...faqItems.map( c => c.category ) ] );
+const searchQuery = ref( '' );
+const activeCategory = ref( t('faq.all') );
+
+const categories = computed( () => [ t('faq.all'), ...faqItems.map( c => c.category ) ] );
 
 const allQuestions = computed( () => faqItems.flatMap( c => c.questions ) );
 

@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\DB;
 
 class DetectAbandonedFunnelSessions extends Command
 {
+    /** @var string */
     protected $signature = 'funnel:detect-abandoned';
 
+    /** @var string */
     protected $description = 'Detect sessions that stalled on a funnel step and insert abandonment events';
 
     /**

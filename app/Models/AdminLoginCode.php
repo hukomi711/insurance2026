@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AdminLoginCode extends Model
 {
+    /** @var list<string> */
     protected $fillable = [
         'user_id',
         'code',

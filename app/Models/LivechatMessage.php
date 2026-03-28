@@ -22,6 +22,7 @@ class LivechatMessage extends Model
 {
     use HasFactory;
 
+    /** @var list<string> */
     protected $fillable = [
         'conversation_id',
         'sender',
@@ -30,6 +31,7 @@ class LivechatMessage extends Model
         'is_read',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'is_read' => 'boolean',
     ];

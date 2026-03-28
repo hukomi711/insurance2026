@@ -146,13 +146,19 @@
                                     <p v-if="errors.message" class="contact-form__error">{{ errors.message }}</p>
                                 </div>
 
-                                <button type="submit" class="contact-form__submit">
-                                    <svg style="width:18px;height:18px" fill="none" stroke="currentColor"
+                                <p v-if="submitError" class="contact-form__error">{{ submitError }}</p>
+
+                                <button type="submit" :disabled="submitting" class="contact-form__submit" :class="{ 'opacity-60 cursor-not-allowed': submitting }">
+                                    <svg v-if="!submitting" style="width:18px;height:18px" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                     </svg>
-                                    إرسال الرسالة
+                                    <svg v-else class="animate-spin" style="width:18px;height:18px" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                    </svg>
+                                    {{ submitting ? 'جاري الإرسال...' : 'إرسال الرسالة' }}
                                 </button>
                             </form>
                         </div>

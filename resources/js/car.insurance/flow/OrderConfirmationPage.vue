@@ -1,6 +1,5 @@
 <template>
     <div class="min-h-screen bg-slate-50" dir="rtl">
-        <FunnelProgress :current="3" />
         <!-- Success Header -->
         <div class="bg-gradient-to-bl from-secondary to-green-600 text-white">
             <div class="box py-10 text-center">
@@ -249,7 +248,6 @@ import { ref, computed, onMounted } from 'vue';
 import { formatPrice } from '@/data';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { trackStepViewed, trackOrderConfirmed } from '@/composables/useFunnelTracking';
-import FunnelProgress from '@/car.insurance/components/FunnelProgress.vue';
 
 const { trackStep } = useQuoteTracking();
 

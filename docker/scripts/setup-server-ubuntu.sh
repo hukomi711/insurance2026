@@ -9,7 +9,7 @@ set -euo pipefail
 
 APP_DIR="/opt/tamicomz"
 DEPLOY_USER="deploy"
-DOMAIN="tamicomz.online"
+DOMAIN="tamicomz.store"
 
 echo "══════════════════════════════════════════════════════════════"
 echo "  Insurance 2026 — Server Setup (Ubuntu)"

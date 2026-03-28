@@ -7,33 +7,39 @@
                 <h1 class="funnel-title">تحليل التحويل</h1>
                 <p class="funnel-subtitle">قمع المبيعات · مسار العميل من العروض حتى التأكيد</p>
             </div>
-            <button class="btn-refresh" :disabled="loading" @click="load">
-                <i class="fa-solid fa-rotate-right" :class="{ 'fa-spin': loading }"></i>
-                تحديث
-            </button>
+            <div class="header-actions">
+                <button class="btn-refresh" :disabled="!report" @click="exportCSV">
+                    <i class="fa-solid fa-file-csv"></i>
+                    تصدير CSV
+                </button>
+                <button class="btn-refresh" :disabled="loading" @click="load">
+                    <i class="fa-solid fa-rotate-right" :class="{ 'fa-spin': loading }"></i>
+                    تحديث
+                </button>
+            </div>
         </div>
 
         <!-- ── Filters ── -->
         <div class="filters-bar">
             <div class="filter-group">
-                <label>من</label>
-                <input v-model="filters.from" type="date" class="filter-input" />
+                <label for="funnel-from">من</label>
+                <input id="funnel-from" v-model="filters.from" name="funnel-from" type="date" class="filter-input" />
             </div>
             <div class="filter-group">
-                <label>إلى</label>
-                <input v-model="filters.to" type="date" class="filter-input" />
+                <label for="funnel-to">إلى</label>
+                <input id="funnel-to" v-model="filters.to" name="funnel-to" type="date" class="filter-input" />
             </div>
             <div class="filter-group">
-                <label>الجهاز</label>
-                <select v-model="filters.device_type" class="filter-input">
+                <label for="funnel-device">الجهاز</label>
+                <select id="funnel-device" v-model="filters.device_type" name="funnel-device" class="filter-input">
                     <option value="">الكل</option>
                     <option value="mobile">موبايل</option>
                     <option value="desktop">ديسكتوب</option>
                 </select>
             </div>
             <div class="filter-group">
-                <label>المصدر</label>
-                <input v-model="filters.source" type="text" placeholder="utm_source" class="filter-input" />
+                <label for="funnel-source">المصدر</label>
+                <input id="funnel-source" v-model="filters.source" name="funnel-source" type="text" placeholder="utm_source" class="filter-input" />
             </div>
             <button class="btn-apply" @click="load">تطبيق</button>
         </div>
@@ -76,7 +82,7 @@
             <div class="kpi-card">
                 <div class="kpi-icon kpi-icon--red"><i class="fa-solid fa-comment-sms"></i></div>
                 <div class="kpi-body">
-                    <div class="kpi-value">{{ report.otp.success_rate }}%</div>
+                    <div class="kpi-value">{{ report.otp?.success_rate ?? 0 }}%</div>
                     <div class="kpi-label">نجاح OTP</div>
                 </div>
             </div>
@@ -88,7 +94,7 @@
             <div class="card">
                 <h2 class="card-title"><i class="fa-solid fa-filter"></i> قمع التحويل</h2>
                 <div class="funnel-bars">
-                    <div v-for="step in report.funnel" :key="step.step" class="funnel-row">
+                    <div v-for="step in (report.funnel ?? [])" :key="step.step" class="funnel-row">
                         <div class="funnel-row__label">{{ stepLabel(step.step) }}</div>
                         <div class="funnel-row__track">
                             <div
@@ -110,7 +116,7 @@
             <div class="card">
                 <h2 class="card-title"><i class="fa-solid fa-fire"></i> نقاط الانسحاب</h2>
                 <div class="dropoff-list">
-                    <div v-for="step in report.funnel" :key="step.step" class="dropoff-row">
+                    <div v-for="step in (report.funnel ?? [])" :key="step.step" class="dropoff-row">
                         <div class="dropoff-row__label">{{ stepLabel(step.step) }}</div>
                         <div class="dropoff-row__bar-wrap">
                             <div
@@ -128,26 +134,26 @@
                 <h2 class="card-title"><i class="fa-solid fa-comment-sms"></i> تحليل OTP</h2>
                 <div class="otp-grid">
                     <div class="otp-stat">
-                        <span class="otp-stat__num">{{ report.otp.requested }}</span>
+                        <span class="otp-stat__num">{{ report.otp?.requested ?? 0 }}</span>
                         <span class="otp-stat__lbl">طلبات</span>
                     </div>
                     <div class="otp-stat otp-stat--warn">
-                        <span class="otp-stat__num">{{ report.otp.resent }}</span>
+                        <span class="otp-stat__num">{{ report.otp?.resent ?? 0 }}</span>
                         <span class="otp-stat__lbl">إعادة إرسال</span>
                     </div>
                     <div class="otp-stat otp-stat--danger">
-                        <span class="otp-stat__num">{{ report.otp.expired }}</span>
+                        <span class="otp-stat__num">{{ report.otp?.expired ?? 0 }}</span>
                         <span class="otp-stat__lbl">منتهية</span>
                     </div>
                     <div class="otp-stat otp-stat--success">
-                        <span class="otp-stat__num">{{ report.otp.verified }}</span>
+                        <span class="otp-stat__num">{{ report.otp?.verified ?? 0 }}</span>
                         <span class="otp-stat__lbl">مكتملة</span>
                     </div>
                 </div>
                 <div class="otp-bar-wrap">
-                    <div class="otp-bar-fill" :style="{ width: report.otp.success_rate + '%' }"></div>
+                    <div class="otp-bar-fill" :style="{ width: (report.otp?.success_rate ?? 0) + '%' }"></div>
                 </div>
-                <p class="otp-rate-label">معدل النجاح {{ report.otp.success_rate }}%</p>
+                <p class="otp-rate-label">معدل النجاح {{ report.otp?.success_rate ?? 0 }}%</p>
             </div>
 
             <!-- ── Device Split ── -->
@@ -176,7 +182,7 @@
             <!-- ── Daily Trend ── -->
             <div class="card card--wide">
                 <h2 class="card-title"><i class="fa-solid fa-chart-area"></i> الزيارات اليومية</h2>
-                <div v-if="report.daily.length" class="daily-chart">
+                <div v-if="report.daily?.length" class="daily-chart">
                     <div
                         v-for="day in report.daily"
                         :key="day.day"
@@ -197,7 +203,7 @@
             <div class="card">
                 <h2 class="card-title"><i class="fa-solid fa-stopwatch"></i> متوسط الوقت لكل خطوة</h2>
                 <div class="time-list">
-                    <template v-if="Object.keys(report.median_elapsed_seconds).length">
+                    <template v-if="report.median_elapsed_seconds && Object.keys(report.median_elapsed_seconds).length">
                         <div v-for="(secs, step) in report.median_elapsed_seconds" :key="step" class="time-row">
                             <span class="time-row__label">{{ stepLabel(step) }}</span>
                             <span class="time-row__val">{{ formatSeconds(secs) }}</span>
@@ -264,16 +270,16 @@ onMounted( load );
 // ── Computed ─────────────────────────────────────────────────────────
 const funnelMap = computed( () =>
 {
-    if ( !report.value ) return {};
+    if ( !report.value?.funnel ) return {};
     return Object.fromEntries( report.value.funnel.map( s => [ s.step, s ] ) );
 } );
 
 const maxViews = computed( () =>
-    report.value ? Math.max( 1, ...report.value.funnel.map( s => s.views ) ) : 1
+    report.value?.funnel?.length ? Math.max( 1, ...report.value.funnel.map( s => s.views ) ) : 1
 );
 
 const maxDropoff = computed( () =>
-    report.value ? Math.max( 1, ...report.value.funnel.map( s => s.abandoned ) ) : 1
+    report.value?.funnel?.length ? Math.max( 1, ...report.value.funnel.map( s => s.abandoned ) ) : 1
 );
 
 const maxDaily = computed( () =>
@@ -348,6 +354,84 @@ function shortDate ( dateStr )
     const d = new Date( dateStr );
     return `${ d.getMonth() + 1 }/${ d.getDate() }`;
 }
+
+// ── CSV Export ────────────────────────────────────────────────────────
+function exportCSV ()
+{
+    if ( !report.value ) return;
+    const r = report.value;
+    const rows = [];
+
+    // Funnel steps
+    rows.push( [ 'قمع التحويل' ] );
+    rows.push( [ 'المرحلة', 'المشاهدات', 'المتروك', 'معدل التحويل %' ] );
+    ( r.funnel || [] ).forEach( s =>
+        rows.push( [ stepLabel( s.step ), s.views, s.abandoned, s.rate ] )
+    );
+    rows.push( [] );
+
+    // Overall conversion
+    if ( r.overall_conversion != null )
+    {
+        rows.push( [ 'التحويل الإجمالي', `${ r.overall_conversion }%` ] );
+        rows.push( [] );
+    }
+
+    // OTP stats
+    if ( r.otp )
+    {
+        rows.push( [ 'إحصائيات OTP' ] );
+        rows.push( [ 'المقياس', 'القيمة' ] );
+        rows.push( [ 'الإجمالي', r.otp.total ] );
+        rows.push( [ 'ناجح', r.otp.approved ] );
+        rows.push( [ 'فاشل', r.otp.rejected ] );
+        rows.push( [ 'معلق', r.otp.pending ] );
+        rows.push( [] );
+    }
+
+    // Device breakdown
+    if ( r.device_breakdown )
+    {
+        rows.push( [ 'توزيع الأجهزة' ] );
+        rows.push( [ 'الجهاز', 'العدد' ] );
+        rows.push( [ 'جوال', r.device_breakdown.mobile || 0 ] );
+        rows.push( [ 'حاسوب', r.device_breakdown.desktop || 0 ] );
+        rows.push( [] );
+    }
+
+    // Median elapsed seconds
+    if ( r.median_elapsed_seconds )
+    {
+        rows.push( [ 'متوسط الوقت لكل مرحلة' ] );
+        rows.push( [ 'المرحلة', 'الوقت (ثانية)' ] );
+        Object.entries( r.median_elapsed_seconds ).forEach( ( [ step, secs ] ) =>
+            rows.push( [ stepLabel( step ), secs ] )
+        );
+        rows.push( [] );
+    }
+
+    // Daily trend
+    if ( r.daily?.length )
+    {
+        rows.push( [ 'الاتجاه اليومي' ] );
+        rows.push( [ 'التاريخ', 'الجلسات الفريدة' ] );
+        r.daily.forEach( d => rows.push( [ d.date, d.unique_sessions ] ) );
+    }
+
+    // Build CSV content
+    const csv = rows.map( row =>
+        row.map( cell => `"${ String( cell ?? '' ).replace( /"/g, '""' ) }"` ).join( ',' )
+    ).join( '\n' );
+
+    // Add BOM for Arabic support in Excel
+    const blob = new Blob( [ '\uFEFF' + csv ], { type: 'text/csv;charset=utf-8;' } );
+    const url  = URL.createObjectURL( blob );
+    const a    = document.createElement( 'a' );
+    a.href     = url;
+    a.download = `funnel-report-${ filters.value.from }-${ filters.value.to }.csv`;
+    a.click();
+    URL.revokeObjectURL( url );
+}
 </script>
 
 <style scoped>
@@ -385,6 +469,7 @@ function shortDate ( dateStr )
 .btn-refresh { background: #f1f5f9; color: #475569; }
 .btn-refresh:hover:not(:disabled) { background: #e2e8f0; }
 .btn-refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+.header-actions { display: flex; gap: 0.5rem; }
 .btn-apply { background: #6366f1; color: #fff; height: 2rem; }
 .btn-apply:hover { opacity: 0.88; }
 

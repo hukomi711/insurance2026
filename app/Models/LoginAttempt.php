@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LoginAttempt extends Model
 {
+    /** @var list<string> */
     protected $fillable = [
         'user_id',
         'email',
@@ -25,30 +26,32 @@ class LoginAttempt extends Model
 
     // ─── Scopes ─────────────────────────────────────────────────────
 
-    public function scopeSuccessful($query)
+    public function scopeSuccessful(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'success');
     }
 
-    public function scopeFailed($query)
+    public function scopeFailed(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'failed');
     }
 
-    public function scopeSearch($query, ?string $term)
+    public function scopeSearch(\Illuminate\Database\Eloquent\Builder $query, ?string $term)
     {
         if (! $term) {
             return $query;
         }
 
-        return $query->where(function ($q) use ($term) {
-            $q->where('email', 'LIKE', "%{$term}%")
-              ->orWhere('ip_address', 'LIKE', "%{$term}%")
-              ->orWhere('location', 'LIKE', "%{$term}%");
+        $escaped = str_replace(['%', '_'], ['\%', '\_'], $term);
+
+        return $query->where(function ($q) use ($escaped) {
+            $q->where('email', 'LIKE', "%{$escaped}%")
+              ->orWhere('ip_address', 'LIKE', "%{$escaped}%")
+              ->orWhere('location', 'LIKE', "%{$escaped}%");
         });
     }
 
-    public function scopeRecent($query, int $hours = 24)
+    public function scopeRecent(\Illuminate\Database\Eloquent\Builder $query, int $hours = 24)
     {
         return $query->where('created_at', '>=', now()->subHours($hours));
     }
@@ -58,7 +61,7 @@ class LoginAttempt extends Model
     /**
      * Record a login attempt.
      */
-    public static function record(string $email, string $ip, ?string $userAgent, string $status, ?int $userId = null): static
+    public static function record(string $email, string $ip, ?string $userAgent, string $status, ?int $userId = null): self
     {
         return static::create([
             'user_id'    => $userId,

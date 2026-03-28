@@ -1,0 +1,26 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+
+    level: 5
+
+    ignoreErrors:
+        - '#Unsafe usage of new static#'
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder#'
+        - '#Call to an undefined method Illuminate\\Database\\Query\\Builder#'
+        - identifier: nullsafe.neverNull
+        - identifier: ternary.alwaysTrue
+        - identifier: match.alwaysTrue
+        - identifier: property.notFound
+        - identifier: nullCoalesce.expr
+        - identifier: notIdentical.alwaysTrue
+
+    treatPhpDocTypesAsCertain: false
+
+    excludePaths:
+        - app/Providers/
+
+    reportUnmatchedIgnoredErrors: false

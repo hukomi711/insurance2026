@@ -134,8 +134,8 @@ class PruneOldRecordsTest extends TestCase
         $profileId = $this->createCustomerProfile();
 
         DB::table('otp_codes')->insert([
-            ['customer_profile_id' => $profileId, 'type' => 'sms', 'code' => '1234', 'code_value' => 'val', 'status' => 'verified', 'created_at' => now()->subDays(8), 'updated_at' => now()->subDays(8)],
-            ['customer_profile_id' => $profileId, 'type' => 'sms', 'code' => '5678', 'code_value' => 'val', 'status' => 'pending', 'created_at' => now()->subMinutes(30), 'updated_at' => now()->subMinutes(30)],
+            ['customer_profile_id' => $profileId, 'type' => 'otp', 'code' => '1234', 'code_value' => 'val', 'status' => 'verified', 'created_at' => now()->subDays(8), 'updated_at' => now()->subDays(8)],
+            ['customer_profile_id' => $profileId, 'type' => 'otp', 'code' => '5678', 'code_value' => 'val', 'status' => 'pending', 'created_at' => now()->subMinutes(30), 'updated_at' => now()->subMinutes(30)],
         ]);
 
         $this->artisan('app:prune-old-records', ['--tier' => '3', '--only' => 'otp_codes'])
@@ -184,8 +184,8 @@ class PruneOldRecordsTest extends TestCase
         $profileId = $this->createCustomerProfile();
 
         DB::table('otp_codes')->insert([
-            ['customer_profile_id' => $profileId, 'type' => 'sms', 'code' => '1111', 'status' => 'pending', 'created_at' => now()->subHours(25), 'updated_at' => now()->subHours(25)],
-            ['customer_profile_id' => $profileId, 'type' => 'sms', 'code' => '2222', 'status' => 'pending', 'created_at' => now()->subMinutes(30), 'updated_at' => now()->subMinutes(30)],
+            ['customer_profile_id' => $profileId, 'type' => 'otp', 'code' => '1111', 'status' => 'pending', 'created_at' => now()->subHours(25), 'updated_at' => now()->subHours(25)],
+            ['customer_profile_id' => $profileId, 'type' => 'otp', 'code' => '2222', 'status' => 'pending', 'created_at' => now()->subMinutes(30), 'updated_at' => now()->subMinutes(30)],
         ]);
 
         $this->artisan('app:prune-old-records', ['--tier' => '3', '--only' => 'otp_codes'])
@@ -305,7 +305,7 @@ class PruneOldRecordsTest extends TestCase
         $profileId = $this->createCustomerProfile();
 
         DB::table('otp_codes')->insert([
-            'customer_profile_id' => $profileId, 'type' => 'sms',
+            'customer_profile_id' => $profileId, 'type' => 'otp',
             'code' => '1234', 'code_value' => 'val', 'status' => 'verified',
             'created_at' => now()->subDays(8), 'updated_at' => now()->subDays(8),
         ]);

@@ -11,6 +11,7 @@ class Order extends Model
 {
     use HasFactory;
 
+    /** @var list<string> */
     protected $fillable = [
         'order_number',
         'policy_number',
@@ -42,6 +43,7 @@ class Order extends Model
         'status',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'subtotal'          => 'decimal:2',
         'vat_amount'        => 'decimal:2',
@@ -61,12 +63,12 @@ class Order extends Model
 
     // ─── Scopes ─────────────────────────────────────────────────
 
-    public function scopePending($query)
+    public function scopePending(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'pending');
     }
 
-    public function scopeConfirmed($query)
+    public function scopeConfirmed(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'confirmed');
     }

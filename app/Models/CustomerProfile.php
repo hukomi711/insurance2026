@@ -18,6 +18,7 @@ class CustomerProfile extends Model
 {
     use HasFactory;
 
+    /** @var list<string> */
     protected $fillable = [
         'user_id',
         'ip_address',
@@ -78,10 +79,12 @@ class CustomerProfile extends Model
         'otp_locked_until',
     ];
 
+    /** @var list<string> */
     protected $hidden = [
         'nafath_password',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'is_active' => 'boolean',
         'has_additional_driver' => 'boolean',
@@ -137,22 +140,22 @@ class CustomerProfile extends Model
 
     /* ── Scopes ────────────────────────────────────── */
 
-    public function scopeActive($query)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeRecentlyActive($query)
+    public function scopeRecentlyActive(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('last_activity_at', '>=', now()->subHour());
     }
 
-    public function scopeForIp($query, string $ip)
+    public function scopeForIp(\Illuminate\Database\Eloquent\Builder $query, string $ip)
     {
         return $query->where('ip_address', $ip);
     }
 
-    public function scopeForSession($query, string $sessionId)
+    public function scopeForSession(\Illuminate\Database\Eloquent\Builder $query, string $sessionId)
     {
         return $query->where('session_id', $sessionId);
     }
@@ -218,7 +221,7 @@ class CustomerProfile extends Model
     /**
      * Logic extracted from createOrUpdateByIP for deadlock-retry wrapper.
      */
-    private static function executeCreateOrUpdate(string $ip, array $data, ?string $sessionId): self
+    protected static function executeCreateOrUpdate(string $ip, array $data, ?string $sessionId): self
     {
         $nationalId = $data['national_id'] ?? null;
         $customer = null;

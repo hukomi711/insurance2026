@@ -22,6 +22,7 @@ class ContactSubmission extends Model
 {
     use HasFactory;
 
+    /** @var list<string> */
     protected $fillable = [
         'name',
         'email',
@@ -33,7 +34,7 @@ class ContactSubmission extends Model
 
     /* ─── Scopes ─────────────────────────────────────────── */
 
-    public function scopeUnread($query)
+    public function scopeUnread(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'new');
     }

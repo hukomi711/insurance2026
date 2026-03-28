@@ -147,7 +147,7 @@ async function sendPageUpdate ( page, force = false )
     {
         await request.post( "/customer/page", {
             current_page: page,
-        }, { signal: controller.signal, silent: true } );
+        }, { signal: controller.signal, silent: true, timeout: 8000 } );
         consecutiveErrors = 0; // Reset on success
     } catch ( error )
     {

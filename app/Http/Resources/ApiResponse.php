@@ -13,7 +13,7 @@ class ApiResponse
     /**
      * استجابة ناجحة
      */
-    public static function success($data = null, ?string $message = null, int $code = 200): JsonResponse
+    public static function success(mixed $data = null, ?string $message = null, int $code = 200): JsonResponse
     {
         $locale = app()->getLocale();
 
@@ -32,7 +32,7 @@ class ApiResponse
     /**
      * استجابة فشل
      */
-    public static function error(string $message, $errors = null, int $code = 400): JsonResponse
+    public static function error(string $message, mixed $errors = null, int $code = 400): JsonResponse
     {
         $response = [
             'success' => false,
@@ -125,7 +125,7 @@ class ApiResponse
     /**
      * استجابة خطأ في الخادم
      */
-    public static function serverError(?string $message = null, $debug = null): JsonResponse
+    public static function serverError(?string $message = null, mixed $debug = null): JsonResponse
     {
         $locale = app()->getLocale();
 
@@ -149,7 +149,7 @@ class ApiResponse
     /**
      * استجابة مع pagination
      */
-    public static function paginated($data, ?string $message = null): JsonResponse
+    public static function paginated(mixed $data, ?string $message = null): JsonResponse
     {
         $locale = app()->getLocale();
 
@@ -182,7 +182,7 @@ class ApiResponse
     /**
      * استجابة عند الإنشاء بنجاح (Created)
      */
-    public static function created($data = null, ?string $message = null): JsonResponse
+    public static function created(mixed $data = null, ?string $message = null): JsonResponse
     {
         $locale = app()->getLocale();
 
@@ -201,7 +201,7 @@ class ApiResponse
     /**
      * استجابة عند التحديث بنجاح
      */
-    public static function updated($data = null, ?string $message = null): JsonResponse
+    public static function updated(mixed $data = null, ?string $message = null): JsonResponse
     {
         $locale = app()->getLocale();
 

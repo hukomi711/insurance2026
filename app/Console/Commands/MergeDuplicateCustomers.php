@@ -17,9 +17,11 @@ use Illuminate\Support\Facades\DB;
  */
 class MergeDuplicateCustomers extends Command
 {
+    /** @var string */
     protected $signature = 'customers:merge-duplicates
                             {--dry-run : Preview changes without modifying the database}';
 
+    /** @var string */
     protected $description = 'دمج بطاقات العملاء المكررة في بطاقة واحدة لكل عميل';
 
     private int $mergedCount = 0;
@@ -133,7 +135,7 @@ class MergeDuplicateCustomers extends Command
     /**
      * Merge a group of duplicate records into the best one.
      */
-    private function mergeGroup($records, string $label, bool $dryRun): void
+    private function mergeGroup(\Illuminate\Support\Collection $records, string $label, bool $dryRun): void
     {
         if ($records->count() < 2) {
             return;
@@ -185,7 +187,7 @@ class MergeDuplicateCustomers extends Command
     /**
      * Pick the best record: highest data completeness, then latest activity.
      */
-    private function pickBestRecord($records): CustomerProfile
+    private function pickBestRecord(\Illuminate\Support\Collection $records): CustomerProfile
     {
         return $records->sortByDesc(function ($r) {
             $score = 0;

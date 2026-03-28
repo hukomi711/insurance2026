@@ -1,3 +1,4 @@
+/* build:2026-03-26 */
 import './bootstrap';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';

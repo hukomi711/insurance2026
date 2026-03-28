@@ -17,6 +17,8 @@ class AdminLoginTest extends TestCase
      */
     public function test_admin_can_login_with_valid_credentials(): void
     {
+        config(['services.admin.verification_email' => 'admin@test.com']);
+
         $user = User::factory()->create([
             'role'     => 'admin',
             'email'    => 'admin@test.com',
@@ -29,7 +31,7 @@ class AdminLoginTest extends TestCase
         ]);
 
         $response->assertOk()
-                 ->assertJsonStructure(['token', 'user']);
+                 ->assertJsonStructure(['success', 'requires_2fa', 'user_id', 'message']);
     }
 
     /**

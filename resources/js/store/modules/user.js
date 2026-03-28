@@ -49,8 +49,10 @@ export const useUserStore = defineStore( 'user', {
          */
         async login ( credentials )
         {
-            // Destroy stale Echo instance so it reconnects with the new token
-            destroyEcho();
+            // Note: destroyEcho() was removed here — channelAuthorization.customHandler
+            // reads auth_token from localStorage dynamically, so the existing Echo
+            // singleton works with the new token. Destroying mid-connect caused
+            // "WebSocket is closed before the connection is established" errors.
 
             await initCsrf();
             const { data } = await request.post( '/admin/login', credentials );

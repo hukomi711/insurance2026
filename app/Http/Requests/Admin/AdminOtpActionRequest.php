@@ -8,6 +8,9 @@ use Illuminate\Foundation\Http\FormRequest;
  * Shared request for admin actions that require otp_id + customer_ip.
  *
  * Used by: Phone verification approve, STC waiting/otp/call approve
+ *
+ * @property int    $otp_id
+ * @property string $customer_ip
  */
 class AdminOtpActionRequest extends FormRequest
 {

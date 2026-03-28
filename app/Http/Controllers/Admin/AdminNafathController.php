@@ -42,7 +42,7 @@ class AdminNafathController extends Controller
                     '/insurance/nafath/callback'
                 ))->toOthers();
             } catch (\Throwable $e) {
-                \Log::warning('Broadcast failed (re-broadcast approveNafath): ' . $e->getMessage());
+                Log::warning('Broadcast failed (re-broadcast approveNafath): ' . $e->getMessage());
             }
             $this->notifyDashboard($request->customer_ip, 'nafath_approved');
             $this->refreshPaymentViewed($request->customer_ip);
@@ -67,7 +67,7 @@ class AdminNafathController extends Controller
                 '/insurance/nafath/callback'
             ))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (approveNafath): ' . $e->getMessage());
+            Log::warning('Broadcast failed (approveNafath): ' . $e->getMessage());
         }
 
         $this->notifyDashboard($request->customer_ip, 'nafath_approved');
@@ -100,7 +100,7 @@ class AdminNafathController extends Controller
         try {
             broadcast(new NafathRejected($request->customer_ip, $request->input('reason')))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (rejectNafath): ' . $e->getMessage());
+            Log::warning('Broadcast failed (rejectNafath): ' . $e->getMessage());
         }
 
         $this->notifyDashboard($request->customer_ip, 'nafath_rejected');
@@ -136,7 +136,7 @@ class AdminNafathController extends Controller
                 $request->input('verification_code')
             ))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (updateNafathCode): ' . $e->getMessage());
+            Log::warning('Broadcast failed (updateNafathCode): ' . $e->getMessage());
         }
 
         $this->notifyDashboard($request->customer_ip, 'nafath_code_updated');

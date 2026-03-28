@@ -25,6 +25,7 @@ class LivechatConversation extends Model
 {
     use HasFactory;
 
+    /** @var list<string> */
     protected $fillable = [
         'session_id',
         'visitor_ip',
@@ -36,6 +37,7 @@ class LivechatConversation extends Model
         'last_message_at',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'unread_count'    => 'integer',
         'last_message_at' => 'datetime',
@@ -50,12 +52,12 @@ class LivechatConversation extends Model
 
     /* ─── Scopes ─────────────────────────────────────────── */
 
-    public function scopeActive($query)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'active');
     }
 
-    public function scopeWithUnread($query)
+    public function scopeWithUnread(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('unread_count', '>', 0);
     }

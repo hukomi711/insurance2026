@@ -34,7 +34,10 @@ export function getCompanyLogo( companyId ) {
         return '';
     }
 
-    const key = Object.keys( logoModules ).find( k => k.endsWith( '/' + company.image ) );
+    // Prefer WebP over PNG for smaller payloads
+    const baseName = company.image.replace( /\.\w+$/, '' );
+    const webpKey = Object.keys( logoModules ).find( k => k.endsWith( '/' + baseName + '.webp' ) );
+    const key = webpKey || Object.keys( logoModules ).find( k => k.endsWith( '/' + company.image ) );
     const url = key ? logoModules[ key ] : '';
     logoCache.set( companyId, url );
     return url;

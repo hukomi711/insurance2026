@@ -7,7 +7,7 @@
             <div v-if="plan.heroIncluded" class="inline-flex items-center rounded-full py-1 px-2.5 typ-c1 font-medium bg-gradient-light-blue-green gap-1.5 cursor-pointer"
                 @click="emit( 'show-hero' )">
                 <svg class="size-3.5 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
+                    stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
@@ -28,8 +28,11 @@
         </div>
 
         <!-- Company + Price Row (always visible — clickable to expand) -->
-        <div class="flex items-center justify-between px-4 py-3 cursor-pointer"
-            @click="emit( 'toggle-expand' )">
+        <div class="flex items-center justify-between px-4 py-3 cursor-pointer" role="button" tabindex="0"
+            :aria-expanded="expanded"
+            @click="emit( 'toggle-expand' )"
+            @keydown.enter.prevent="emit( 'toggle-expand' )"
+            @keydown.space.prevent="emit( 'toggle-expand' )">
             <div class="flex items-center gap-3 min-w-0">
                 <!-- Compare Checkbox -->
                 <label class="flex items-center cursor-pointer shrink-0" @click.stop>
@@ -38,11 +41,12 @@
                         :name="`compare-${plan.id}`" :disabled="!canToggleCompare && !compareSelected"
                         class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary"
                         @change="emit( 'update:compareSelected', $event.target.checked )" />
+                    <span class="sr-only">مقارنة {{ plan.company.nameAr }}</span>
                 </label>
                 <!-- Company Logo -->
                 <div
                     class="size-12 shrink-0 rounded-lg border border-slate-200 overflow-hidden flex items-center justify-center bg-white">
-                    <img :src="getCompanyLogo( plan.companyId )" :alt="plan.company.nameAr"
+                    <img :src="getCompanyLogo( plan.companyId )" :alt="plan.company.nameAr" loading="lazy"
                         class="max-w-full w-full h-full object-contain" width="48" height="48" />
                 </div>
                 <!-- Company Name & Type -->
@@ -55,7 +59,7 @@
                         <span v-if="plan.repairLocation"
                             class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 typ-c2 font-medium"
                             :class="plan.repairLocation === 'الوكالة' ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700'">
-                            <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <path d="M3 7h3a2 2 0 012 2v9a2 2 0 01-2 2H4a1 1 0 01-1-1V7z" />
                                 <path d="M8 7h8l4 5v6a2 2 0 01-2 2h-1" />
                                 <circle cx="7" cy="18" r="2" /><circle cx="17" cy="18" r="2" />
@@ -80,7 +84,7 @@
                 </div>
                 <svg class="size-5 text-slate-400 transition-transform duration-200 shrink-0"
                     :class="{ 'rotate-180': expanded }" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
+                    stroke-width="2" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                 </svg>
             </div>
@@ -94,7 +98,7 @@
                 <div class="flex items-center justify-between flex-wrap gap-2 typ-s2">
                     <div class="flex items-center gap-1.5">
                         <svg class="size-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <circle cx="12" cy="12" r="9" />
                             <path d="M12 12V7" />
                             <path d="M12 12h4.5" />

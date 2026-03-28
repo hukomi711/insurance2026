@@ -10,20 +10,20 @@
     </div>
 
     <!-- ═══ Quotes Loaded ═══ -->
-    <div v-else class="min-h-screen bg-slate-50" dir="rtl">
+    <div v-else class="min-h-screen bg-slate-50" dir="rtl" role="main">
 
         <!-- ── Top Header: Back + Timer ── -->
         <div class="bg-white border-b border-slate-200">
             <div class="box py-3 flex items-center justify-between">
                 <router-link :to="{ name: 'policyDetails' }"
                     class="flex items-center gap-1.5 text-primary typ-s2 hover:text-primary-dark transition-colors">
-                    <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                     الرجوع
                 </router-link>
                 <div v-if="countdown.total > 0" class="flex items-center gap-2 typ-s2 text-muted">
-                    <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -32,7 +32,6 @@
                 </div>
             </div>
         </div>
-        <FunnelProgress :current="0" />
 
         <!-- ── Main 3-Column Grid ── -->
         <div class="box py-4 sm:py-6">
@@ -58,12 +57,13 @@
                     <!-- AI Recommendation Accordion -->
                     <div v-if="recommendedPlan || cheapestPlan" class="mb-4">
                         <button class="w-full flex items-center justify-between bg-gradient-to-l from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-colors hover:border-emerald-300"
+                            :aria-expanded="aiAccordionOpen"
                             @click="aiAccordionOpen = !aiAccordionOpen">
                             <div class="flex items-center gap-2">
                                 <div
                                     class="size-7 sm:size-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
                                     <svg class="size-3.5 sm:size-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2">
+                                        stroke-width="2" aria-hidden="true">
                                         <path stroke-linecap="round" stroke-linejoin="round"
                                             d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
                                     </svg>
@@ -72,7 +72,7 @@
                             </div>
                             <svg class="size-5 text-emerald-600 transition-transform duration-200"
                                 :class="{ 'rotate-180': aiAccordionOpen }" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                                stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                             </svg>
                         </button>
@@ -85,7 +85,7 @@
                                     class="w-[240px] sm:w-[280px] shrink-0 bg-white rounded-xl border border-orange-200 shadow-sm overflow-hidden">
                                     <div
                                         class="bg-gradient-to-l from-orange-50 to-amber-50 px-3 py-1.5 flex items-center gap-1.5">
-                                        <svg class="size-3.5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="size-3.5 text-orange-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                             <path
                                                 d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                         </svg>
@@ -94,7 +94,7 @@
                                     <div class="p-3">
                                         <div class="flex items-center gap-2.5 mb-2.5">
                                             <img :src="getCompanyLogo(recommendedPlan.companyId)"
-                                                :alt="recommendedPlan.company.nameAr"
+                                                :alt="recommendedPlan.company.nameAr" loading="lazy"
                                                 class="size-10 rounded-lg object-contain bg-white p-1 border border-slate-100" width="40" height="40" />
                                             <div class="min-w-0">
                                                 <p class="typ-t3 text-foreground truncate">
@@ -127,12 +127,12 @@
                                     <div
                                         class="bg-gradient-to-l from-green-50 to-emerald-50 px-3 py-1.5 flex items-center gap-1.5">
                                         <span class="typ-c1">💰</span>
-                                        <span class="typ-c1 font-bold text-green-800">الأوفر</span>
+                                        <span class="typ-c1 font-bold text-green-900">الأوفر</span>
                                     </div>
                                     <div class="p-3">
                                         <div class="flex items-center gap-2.5 mb-2.5">
                                             <img :src="getCompanyLogo(cheapestPlan.companyId)"
-                                                :alt="cheapestPlan.company.nameAr"
+                                                :alt="cheapestPlan.company.nameAr" loading="lazy"
                                                 class="size-10 rounded-lg object-contain bg-white p-1 border border-slate-100" width="40" height="40" />
                                             <div class="min-w-0">
                                                 <p class="typ-t3 text-foreground truncate">
@@ -191,7 +191,7 @@
                                        disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center cursor-pointer"
                                 @click="updateQuoteOptions">
                                 <svg v-if="isUpdatingQuotes" class="animate-spin size-5" viewBox="0 0 24 24"
-                                    fill="none">
+                                    fill="none" aria-hidden="true">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                         stroke-width="4" />
                                     <path class="opacity-75" fill="currentColor"
@@ -206,7 +206,7 @@
                     <div class="xl:hidden flex items-center gap-2 overflow-x-auto no-scrollbar mb-3 -mx-1 px-1">
                         <button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white typ-s2 text-foreground font-bold rounded-full shadow-sm"
                             @click="showMobileFilters = true">
-                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
                             </svg>
@@ -221,10 +221,10 @@
 
                     <!-- Offers Count + Compact Toggle -->
                     <div class="flex items-center justify-between mb-3 sm:mb-4">
-                        <h1 class="typ-t2 sm:typ-t1 text-foreground">
+                        <p class="typ-t2 sm:typ-t1 text-foreground">
                             <span class="text-primary font-extrabold ltr-nums">{{ sortedPlans.length }}</span>
                             عرض متاح
-                        </h1>
+                        </p>
                         <label for="compact-toggle"
                             class="hidden md:flex items-center gap-2 cursor-pointer typ-s2 text-muted">
                             <span>عرض مختصر</span>
@@ -257,7 +257,7 @@
                         <div v-if="sortedPlans.length === 0"
                             class="text-center py-16 bg-white rounded-xl border border-slate-200">
                             <svg class="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
+                                viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
@@ -272,7 +272,7 @@
                     <div class="mt-8 flex justify-center">
                         <router-link :to="{ name: 'policyDetails' }"
                             class="flex items-center gap-2 text-primary typ-s2 font-bold hover:text-primary-dark transition-colors">
-                            <svg class="size-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="size-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 19l-7-7 7-7" />
                             </svg>
@@ -305,7 +305,7 @@
                 <!-- Compare Selected -->
                 <button v-if="selectedPlans.length >= 2" class="flex items-center gap-2 px-4 py-2 bg-secondary text-white typ-s2 font-bold rounded-xl"
                     @click="showCompareModal = true">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
@@ -315,7 +315,7 @@
                 <!-- Mobile Filter Trigger -->
                 <button class="flex items-center gap-1.5 px-4 py-2 border border-slate-200 typ-s2 text-foreground font-bold rounded-xl"
                     @click="showMobileFilters = true">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                     </svg>
@@ -408,14 +408,13 @@ import AppSelect from '@/components/ui/AppSelect.vue';
 import QuotesLoading from '@/components/ui/QuotesLoading.vue';
 import AppError from '@/components/ui/AppError.vue';
 import QuoteCard from '@/car.insurance/components/compare/QuoteCard.vue';
-import FunnelProgress from '@/car.insurance/components/FunnelProgress.vue';
 const OfferDetailsSheet = defineAsyncComponent( () => import( '@/components/OfferDetailsSheet.vue' ) );
 const TaminkomHeroModal = defineAsyncComponent( () => import( '@/components/TaminkomHeroModal.vue' ) );
 const CompareModal = defineAsyncComponent( () => import( '@/car.insurance/components/compare/CompareModal.vue' ) );
 const MobileFiltersSheet = defineAsyncComponent( () => import( '@/car.insurance/components/compare/MobileFiltersSheet.vue' ) );
 import CompareSidebar from '@/car.insurance/components/compare/CompareSidebar.vue';
 import logger from '@/utils/logger';
-import cashBackImg from '@/../../resources/images/logo/summary_logo/cash_back.jpeg';
+const cashBackImg = new URL( '../../../../resources/images/logo/summary_logo/cash_back.jpeg', import.meta.url ).href;
 
 const route = useRoute();
 const router = useRouter();
@@ -520,6 +519,9 @@ onMounted( () => {
         showDiscountPopup.value = true;
         startDiscountTimer();
     }, 800 );
+
+    // Pause timers when tab is hidden, resume when visible
+    document.addEventListener( 'visibilitychange', handleVisibilityChange );
 } );
 
 // State
@@ -544,11 +546,13 @@ const discountMinutes = computed( () => String( Math.floor( discountTimeLeft.val
 const discountSeconds = computed( () => String( discountTimeLeft.value % 60 ).padStart( 2, '0' ) );
 
 function startDiscountTimer() {
+    if ( discountTimer ) clearInterval( discountTimer );
     discountTimer = setInterval( () => {
         if ( discountTimeLeft.value > 0 ) {
             discountTimeLeft.value--;
         } else {
             clearInterval( discountTimer );
+            discountTimer = null;
         }
     }, 1000 );
 }
@@ -707,17 +711,19 @@ const categoryTabs = computed( () => {
         { value: 'vehicleDamagePlus', label: 'أضرار المركبة بلس' },
         { value: 'comprehensive', label: 'الشامل' },
     ];
+    // Single pass: bucket plans by subType and track min price per bucket
+    const buckets = {};
+    for ( const p of plansWithCompany.value ) {
+        if ( !buckets[ p.subType ] ) buckets[ p.subType ] = { count: 0, minPrice: Infinity };
+        buckets[ p.subType ].count++;
+        if ( p.annualPrice < buckets[ p.subType ].minPrice ) buckets[ p.subType ].minPrice = p.annualPrice;
+    }
     return types.map( t => {
-        const plans = plansWithCompany.value.filter( p => p.subType === t.value );
-        const minPrice = plans.length > 0
-            ? Math.min( ...plans.map( p => p.annualPrice ) )
-            : null;
+        const b = buckets[ t.value ];
         return {
             ...t,
-            count: plans.length,
-            priceLabel: minPrice !== null
-                ? formatNumber( Math.round( minPrice ) )
-                : 'لا يوجد تسعيرات',
+            count: b ? b.count : 0,
+            priceLabel: b ? formatNumber( Math.round( b.minPrice ) ) : 'لا يوجد تسعيرات',
         };
     } );
 } );
@@ -798,12 +804,23 @@ function updateCountdown() {
 let loadingDoneTimer = null;
 let updatingDoneTimer = null;
 
+function handleVisibilityChange() {
+    if ( document.hidden ) {
+        clearInterval( countdownInterval );
+        if ( discountTimer ) clearInterval( discountTimer );
+    } else {
+        countdownInterval = setInterval( updateCountdown, 1000 );
+        if ( discountTimeLeft.value > 0 ) startDiscountTimer();
+    }
+}
+
 onUnmounted( () => {
     clearInterval( countdownInterval );
     clearInterval( loadingInterval );
     clearTimeout( loadingDoneTimer );
     clearTimeout( updatingDoneTimer );
     if ( discountTimer ) clearInterval( discountTimer );
+    document.removeEventListener( 'visibilitychange', handleVisibilityChange );
 } );
 
 // Actions

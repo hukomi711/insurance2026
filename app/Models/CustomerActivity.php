@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CustomerActivity extends Model
 {
+    /** @var list<string> */
     protected $fillable = [
         'customer_profile_id',
         'customer_name',
@@ -18,6 +19,7 @@ class CustomerActivity extends Model
         'metadata',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'metadata' => 'array',
     ];
@@ -31,32 +33,32 @@ class CustomerActivity extends Model
 
     // ─── Scopes ─────────────────────────────────────────────────────
 
-    public function scopeActive($query)
+    public function scopeActive(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'active');
     }
 
-    public function scopeCompleted($query)
+    public function scopeCompleted(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'completed');
     }
 
-    public function scopeFailed($query)
+    public function scopeFailed(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'failed');
     }
 
-    public function scopeOfStage($query, string $stage)
+    public function scopeOfStage(\Illuminate\Database\Eloquent\Builder $query, string $stage)
     {
         return $query->where('stage', $stage);
     }
 
-    public function scopeRecent($query, int $minutes = 60)
+    public function scopeRecent(\Illuminate\Database\Eloquent\Builder $query, int $minutes = 60)
     {
         return $query->where('created_at', '>=', now()->subMinutes($minutes));
     }
 
-    public function scopeSearch($query, ?string $term)
+    public function scopeSearch(\Illuminate\Database\Eloquent\Builder $query, ?string $term)
     {
         if (! $term) {
             return $query;

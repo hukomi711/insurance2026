@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PaymentRequest extends Model
 {
+    /** @var list<string> */
     protected $fillable = [
         'customer_ip',
         'user_id',
@@ -29,6 +30,7 @@ class PaymentRequest extends Model
         'metadata',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'amount'           => 'decimal:2',
         'gateway_response' => 'array',
@@ -58,22 +60,22 @@ class PaymentRequest extends Model
 
     /* ── Scopes ────────────────────────────────────── */
 
-    public function scopePending($query)
+    public function scopePending(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'pending');
     }
 
-    public function scopeCompleted($query)
+    public function scopeCompleted(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'completed');
     }
 
-    public function scopeFailed($query)
+    public function scopeFailed(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'failed');
     }
 
-    public function scopeForCustomer($query, string $ip)
+    public function scopeForCustomer(\Illuminate\Database\Eloquent\Builder $query, string $ip)
     {
         return $query->where('customer_ip', $ip);
     }

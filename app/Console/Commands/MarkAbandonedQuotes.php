@@ -8,10 +8,12 @@ use Illuminate\Console\Command;
 
 class MarkAbandonedQuotes extends Command
 {
+    /** @var string */
     protected $signature = 'quotes:mark-abandoned
                             {--minutes=5 : Minutes of inactivity before marking abandoned}
                             {--cleanup-heartbeats : Also delete heartbeats older than 24h}';
 
+    /** @var string */
     protected $description = 'Mark stale quote sessions as abandoned and optionally clean up old heartbeats';
 
     public function handle(): int

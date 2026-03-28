@@ -44,10 +44,10 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(300)->by($request->ip());
         });
 
-        // 6 attempts per minute per IP+session+type for OTP submissions
+        // 3 attempts per minute per IP+session+type for OTP submissions
         RateLimiter::for('otp-submit', function (Request $request) {
             $key = $request->ip() . '|' . $request->input('session_id', '_') . '|' . $request->input('type', 'otp');
-            return Limit::perMinute(6)->by($key);
+            return Limit::perMinute(3)->by($key);
         });
 
         // 2 attempts per minute per IP+session for OTP resend

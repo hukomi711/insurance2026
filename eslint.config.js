@@ -67,6 +67,7 @@ export default [
                 AbortController: 'readonly',
                 AbortSignal: 'readonly',
                 structuredClone: 'readonly',
+                queueMicrotask: 'readonly',
                 /* Vite */
                 'import.meta': 'readonly',
             },

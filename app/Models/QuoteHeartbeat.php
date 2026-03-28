@@ -7,8 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class QuoteHeartbeat extends Model
 {
+    /** @var bool */
     public $timestamps = false;
 
+    /** @var list<string> */
     protected $fillable = [
         'quote_session_id',
         'current_step',
@@ -17,6 +19,7 @@ class QuoteHeartbeat extends Model
         'pinged_at',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'tab_visible' => 'boolean',
         'pinged_at' => 'datetime',

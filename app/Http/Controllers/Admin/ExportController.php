@@ -75,7 +75,7 @@ class ExportController extends Controller
     /**
      * Helper: تحويل البيانات إلى CSV وتنزيلها
      */
-    private function downloadCsv($data, string $filename)
+    private function downloadCsv(iterable $data, string $filename)
     {
         $headers = [
             'Content-Type'        => 'text/csv; charset=UTF-8',

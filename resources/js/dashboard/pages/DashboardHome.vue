@@ -12,7 +12,7 @@
         />
 
         <!-- Connected Customers Section -->
-        <div class="mb-8" dir="rtl">
+        <section class="mb-8" dir="rtl" aria-labelledby="connected-customers-title">
             <!-- ─── Header Card ─── -->
             <div class="rounded-2xl mb-4 transition-colors duration-200"
                 :style="{
@@ -24,7 +24,7 @@
                 <!-- Row 1: Title + Active count + Refresh -->
                 <div class="flex items-center justify-between px-5 pt-4 pb-3">
                     <div class="flex items-center gap-3">
-                        <h2 class="text-lg font-bold font-heading flex items-center gap-2" :style="{ color: 'var(--admin-text)' }">
+                        <h2 id="connected-customers-title" class="text-lg font-bold font-heading flex items-center gap-2" :style="{ color: 'var(--admin-text)' }">
                             <i class="fa-solid fa-users text-[var(--admin-accent-blue)]" aria-hidden="true"></i>
                             العملاء المتصلون
                         </h2>
@@ -46,18 +46,21 @@
                     <!-- Country filter pills -->
                     <div class="flex items-center gap-1.5">
                         <button
+                            aria-label="تصفية: عرض الكل"
                             class="px-3 py-1.5 text-xs font-bold rounded-full transition-all"
                             :class="countryFilter === '' ? 'bg-white/[0.08] shadow-sm' : 'hover:bg-white/[0.04]'"
                             :style="{ color: countryFilter === '' ? 'var(--admin-text)' : 'var(--admin-text-dim)' }"
                             @click="setCountryFilter('')"
                         >الكل</button>
                         <button
+                            aria-label="تصفية: السعودية فقط"
                             class="px-3 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1"
                             :class="countryFilter === 'SA' ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : 'hover:bg-white/[0.04]'"
                             :style="countryFilter !== 'SA' ? { color: 'var(--admin-text-dim)' } : {}"
                             @click="setCountryFilter('SA')"
                         ><i class="fa-solid fa-location-dot text-[10px]" aria-hidden="true"></i> السعودية</button>
                         <button
+                            aria-label="تصفية: دول أخرى"
                             class="px-3 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1"
                             :class="countryFilter === 'other' ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'hover:bg-white/[0.04]'"
                             :style="countryFilter !== 'other' ? { color: 'var(--admin-text-dim)' } : {}"
@@ -134,6 +137,8 @@
                         <template v-for="p in visiblePages" :key="p">
                             <span v-if="p === '...'" class="px-1" style="color: var(--admin-text-dim);">…</span>
                             <button v-else
+                                :aria-label="`صفحة ${p}`"
+                                :aria-current="p === currentPage ? 'page' : undefined"
                                 class="min-w-[32px] px-2 py-1.5 text-xs font-medium rounded-lg border transition-all"
                                 :class="p === currentPage ? 'bg-blue-600 text-white border-blue-600' : 'border-white/[0.08] hover:bg-white/[0.06]'"
                                 :style="p !== currentPage ? { color: 'var(--admin-text-muted)' } : {}"
@@ -159,7 +164,7 @@
                 <i class="fa-solid fa-users text-3xl mb-3" style="color: var(--admin-text-dim);" aria-hidden="true"></i>
                 <p class="text-sm" style="color: var(--admin-text-dim);">لا يوجد عملاء متصلون حالياً</p>
             </div>
-        </div>
+        </section>
 
 
     </div>
@@ -1198,7 +1203,7 @@ const handleCustomerRedirect = async ( payload ) => {
 
 // ── markViewedOnServer — local helper for re-marking after actions ──
 const markViewedOnServer = async ( id, section ) => {
-    try { await request.post( `/admin/customers/${ id }/mark-viewed`, { data_type: section } ); } catch ( e ) { logger.warn( 'markViewedOnServer failed:', e?.message ); }
+    try { await request.post( `/admin/customers/${ id }/mark-viewed`, { data_type: section }, { timeout: 5000 } ); } catch ( e ) { logger.warn( 'markViewedOnServer failed:', e?.message ); }
 };
 
 /**

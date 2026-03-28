@@ -129,7 +129,7 @@ class QuoteCalculationService
              * $this->getTransmissionFactor($v['transmissionType'] ?? null);
     }
 
-    private function getVehicleAgeFactor($year): float
+    private function getVehicleAgeFactor(mixed $year): float
     {
         if (!$year) return 1.0;
         $currentYear = (int) date('Y');
@@ -142,13 +142,13 @@ class QuoteCalculationService
         return 1.0;
     }
 
-    private function getManufacturerFactor($makeId): float
+    private function getManufacturerFactor(mixed $makeId): float
     {
         if (!$makeId) return 1.0;
         return $this->config['manufacturer_factors'][(int) $makeId] ?? 1.0;
     }
 
-    private function getVehicleValueFactor($value): float
+    private function getVehicleValueFactor(mixed $value): float
     {
         if (!$value) return 1.0;
         $val = (int) $value;
@@ -160,7 +160,7 @@ class QuoteCalculationService
         return 1.0;
     }
 
-    private function getPurposeFactor($purpose): float
+    private function getPurposeFactor(mixed $purpose): float
     {
         return $this->config['purpose_factors'][$purpose] ?? 1.0;
     }
@@ -175,7 +175,7 @@ class QuoteCalculationService
         return $hasTrailer === 'yes' ? $this->config['trailer_factor'] : 1.0;
     }
 
-    private function getTransmissionFactor($type): float
+    private function getTransmissionFactor(mixed $type): float
     {
         return $this->config['transmission_factors'][(string) $type] ?? 1.0;
     }
@@ -196,7 +196,7 @@ class QuoteCalculationService
              * $this->getAdditionalDriversFactor($d['additionalDrivers'] ?? []);
     }
 
-    private function getDriverAgeFactor($dateOfBirth): float
+    private function getDriverAgeFactor(mixed $dateOfBirth): float
     {
         if (!$dateOfBirth) return 1.0;
 
@@ -215,23 +215,23 @@ class QuoteCalculationService
         return 1.0;
     }
 
-    private function getExperienceFactor($experience): float
+    private function getExperienceFactor(mixed $experience): float
     {
         if (!$experience) return 1.0;
         return $this->config['experience_factors'][(string) $experience] ?? 1.0;
     }
 
-    private function getAccidentFactor($count): float
+    private function getAccidentFactor(mixed $count): float
     {
         return $this->config['accident_factors'][(string) $count] ?? 1.0;
     }
 
-    private function getViolationFactor($violations): float
+    private function getViolationFactor(mixed $violations): float
     {
         return $this->config['violation_factors'][$violations] ?? 1.0;
     }
 
-    private function getEducationFactor($education): float
+    private function getEducationFactor(mixed $education): float
     {
         if (!$education) return 1.0;
         return $this->config['education_factors'][(string) $education] ?? 1.0;
@@ -264,19 +264,19 @@ class QuoteCalculationService
              * $this->getMileageFactor($d['expectedKM'] ?? null);
     }
 
-    private function getCityFactor($city): float
+    private function getCityFactor(mixed $city): float
     {
         if (!$city) return 1.0;
         return $this->config['city_factors'][$city]
             ?? $this->config['city_factors']['_default'];
     }
 
-    private function getParkingFactor($parking): float
+    private function getParkingFactor(mixed $parking): float
     {
         return $this->config['parking_factors'][(string) $parking] ?? 1.0;
     }
 
-    private function getMileageFactor($mileage): float
+    private function getMileageFactor(mixed $mileage): float
     {
         return $this->config['mileage_factors'][(string) $mileage] ?? 1.0;
     }
@@ -285,13 +285,13 @@ class QuoteCalculationService
     //  Policy Factors
     // ═══════════════════════════════════════════════
 
-    private function getPolicyFactor(array $policy, $deductible): float
+    private function getPolicyFactor(array $policy, mixed $deductible): float
     {
         return $this->getDeductibleFactor($deductible)
              * $this->getRepairMethodFactor($policy['repairMethod'] ?? 'workshop');
     }
 
-    private function getDeductibleFactor($deductible): float
+    private function getDeductibleFactor(mixed $deductible): float
     {
         if ($deductible === null || $deductible === '') return 1.0;
 
@@ -320,7 +320,7 @@ class QuoteCalculationService
     //  NCD Factor
     // ═══════════════════════════════════════════════
 
-    private function getNcdFactor($ncdYears): float
+    private function getNcdFactor(mixed $ncdYears): float
     {
         if ($ncdYears === null || $ncdYears === '') return 1.0;
         return $this->config['ncd_factors'][(string) $ncdYears] ?? 1.0;

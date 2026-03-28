@@ -12,6 +12,22 @@ concurrency:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    env:
+      APP_ENV: testing
+      APP_DEBUG: true
+      DB_CONNECTION: sqlite
+      DB_DATABASE: database/database.sqlite
+      CACHE_STORE: redis
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
 
     steps:
       - name: Checkout
@@ -40,6 +56,8 @@ jobs:
       - name: Prepare environment
         run: |
           cp .env.example .env
+          mkdir -p database
+          touch database/database.sqlite
           php artisan key:generate --ansi
 
       - name: Static analysis
@@ -57,3 +75,15 @@ jobs:
       - name: Validate health routes are registered
         run: |
           php -r 'chdir(getcwd()); require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $kernel = $app->make("Illuminate\\Contracts\\Console\\Kernel"); $kernel->bootstrap(); $routes = app("router")->getRoutes(); $required=["api/health","api/health/realtime","api/health/queues"]; $found=[]; foreach($routes as $r){ $found[]=$r->uri(); } foreach($required as $uri){ if(!in_array($uri,$found,true)){ fwrite(STDERR, "Missing route: $uri\n"); exit(1);} } echo "Health routes OK\n";'
+
+      - name: Start app and run smoke test
+        run: |
+          chmod +x docker/scripts/smoke-test.sh
+          php artisan serve --host=127.0.0.1 --port=8000 > /tmp/laravel.log 2>&1 &
+          for i in {1..20}; do
+            if curl -s -o /dev/null http://127.0.0.1:8000/up; then
+              break
+            fi
+            sleep 1
+          done
+          ./docker/scripts/smoke-test.sh http://127.0.0.1:8000

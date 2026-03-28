@@ -11,11 +11,13 @@ class OtpCode extends Model
 {
     use HasFactory;
 
+    /** @var list<string> */
     protected $hidden = [
         'code',
         'code_hash',
     ];
 
+    /** @var list<string> */
     protected $fillable = [
         'customer_profile_id',
         'session_id',
@@ -31,6 +33,7 @@ class OtpCode extends Model
         'verified_at',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'expires_at' => 'datetime',
         'verified_at' => 'datetime',
@@ -105,12 +108,12 @@ class OtpCode extends Model
 
     /* ── Scopes ────────────────────────────────────── */
 
-    public function scopePending($query)
+    public function scopePending(\Illuminate\Database\Eloquent\Builder $query)
     {
         return $query->where('status', 'pending');
     }
 
-    public function scopeOfType($query, string $type)
+    public function scopeOfType(\Illuminate\Database\Eloquent\Builder $query, string $type)
     {
         return $query->where('type', $type);
     }

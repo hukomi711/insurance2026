@@ -66,6 +66,14 @@ async function _createEcho ()
 
         window.Pusher = Pusher;
 
+        // Clear Pusher transport cache — the cached strategy uses a tight
+        // timeout (latency×2+1000ms, failFast:true) that aborts WS connections
+        // prematurely on reconnect, producing "closed before established" errors.
+        try {
+            localStorage.removeItem( 'pusherTransportTLS' );
+            localStorage.removeItem( 'pusherTransportNonTLS' );
+        } catch { /* ignored */ }
+
         const scheme = import.meta.env.VITE_REVERB_SCHEME || "http";
         const host = import.meta.env.VITE_REVERB_HOST || "localhost";
         const port = import.meta.env.VITE_REVERB_PORT || "8080";
@@ -78,7 +86,7 @@ async function _createEcho ()
             wsPort: port,
             wssPort: port,
             forceTLS: scheme === "https",
-            enabledTransports: [ "ws", "wss" ],
+            enabledTransports: [ "ws" ],
             disableStats: true,
             authEndpoint: "/api/broadcasting/auth",
             // Custom authorizer — bypasses Pusher.js internal XHR auth

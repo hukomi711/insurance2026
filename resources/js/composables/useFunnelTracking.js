@@ -225,3 +225,75 @@ export function trackOrderConfirmed ( metadata )
 {
     trackFunnelEvent( 'order_confirmed', { step_name: 'confirmation', metadata } );
 }
+
+// ── Abandonment tracking ────────────────────────────────────────────
+
+/**
+ * Track a funnel step being abandoned (user leaving mid-step).
+ * Uses navigator.sendBeacon for reliability during page unload.
+ *
+ * @param {string} step — The step being abandoned
+ * @param {string} [reason] — Reason for abandonment (e.g. 'page_unload', 'back_button', 'api_error')
+ * @param {Object} [metadata] — Extra context
+ */
+export function trackStepAbandoned ( step, reason, metadata )
+{
+    const utm = getUtmParams();
+    const payload = {
+        event_name: 'funnel_step_abandoned',
+        step_name: step,
+        previous_step: getPreviousStep(),
+        quote_uuid: getQuoteUUID(),
+        device_type: getDeviceType(),
+        source: utm.source,
+        campaign: utm.campaign,
+        elapsed_seconds: getElapsedSeconds(),
+        metadata: { ...metadata, reason: reason || 'unknown' },
+    };
+
+    // Use sendBeacon during unload for reliability, fall back to POST
+    if ( navigator.sendBeacon )
+    {
+        const blob = new Blob( [ JSON.stringify( payload ) ], { type: 'application/json' } );
+        navigator.sendBeacon( '/api/analytics/funnel-event', blob );
+    }
+    else
+    {
+        request.post( '/analytics/funnel-event', payload, { silent: true } ).catch( () => {} );
+    }
+}
+
+/**
+ * Install page-level abandonment listeners.
+ * Call once per funnel page in onMounted. Returns cleanup function for onUnmounted.
+ *
+ * @param {() => string} getCurrentStep — Function returning current step name
+ * @returns {() => void} cleanup function
+ */
+export function useAbandonmentTracking ( getCurrentStep )
+{
+    let abandoned = false;
+
+    function handleAbandon ( reason )
+    {
+        if ( abandoned ) return;
+        abandoned = true;
+        const step = getCurrentStep();
+        if ( step ) trackStepAbandoned( step, reason );
+    }
+
+    // Fires on tab close / navigate away
+    function onPageHide () { handleAbandon( 'page_unload' ); }
+    // Fires on browser back button
+    function onPopState () { handleAbandon( 'back_button' ); }
+
+    window.addEventListener( 'pagehide', onPageHide );
+    window.addEventListener( 'popstate', onPopState );
+
+    return () =>
+    {
+        window.removeEventListener( 'pagehide', onPageHide );
+        window.removeEventListener( 'popstate', onPopState );
+    };
+}
+

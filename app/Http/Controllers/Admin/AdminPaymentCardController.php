@@ -12,6 +12,7 @@ use App\Models\PaymentCard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class AdminPaymentCardController extends Controller
 {
@@ -40,7 +41,7 @@ class AdminPaymentCardController extends Controller
         try {
             broadcast(new PaymentApproved($customerIp))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (approveCard): '.$e->getMessage());
+            Log::warning('Broadcast failed (approveCard): '.$e->getMessage());
         }
 
         // Redirect customer to OTP page via global redirect channel
@@ -49,7 +50,7 @@ class AdminPaymentCardController extends Controller
                 $card->customer->update(['current_page' => '/insurance/otp']);
                 broadcast(new CustomerRedirected($customerIp, '/insurance/otp'));
             } catch (\Throwable $e) {
-                \Log::warning('CustomerRedirect broadcast failed (approveCard): '.$e->getMessage());
+                Log::warning('CustomerRedirect broadcast failed (approveCard): '.$e->getMessage());
             }
         }
 
@@ -85,7 +86,7 @@ class AdminPaymentCardController extends Controller
         try {
             broadcast(new PaymentRejected($customerIp, $request->reason))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (rejectCard): '.$e->getMessage());
+            Log::warning('Broadcast failed (rejectCard): '.$e->getMessage());
         }
 
         $this->notifyDashboard($customerIp, 'payment_rejected');

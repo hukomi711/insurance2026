@@ -33,3 +33,15 @@ title = "Insurance2026 Gitleaks Config"
   regex = '''(?i)(APP_KEY|DB_PASSWORD|MAIL_PASSWORD|REDIS_PASSWORD|STATUS_POLL_SECRET)\s*=\s*\S{8,}'''
   path = '''\.env'''
   keywords = ["APP_KEY", "DB_PASSWORD", "MAIL_PASSWORD"]
+
+[[rules]]
+  id = "admin-password-inline"
+  description = "Hardcoded admin password"
+  regex = '''(?i)ADMIN_PASSWORD\s*=\s*\S{6,}'''
+  keywords = ["ADMIN_PASSWORD"]
+
+[[rules]]
+  id = "gmail-app-password"
+  description = "Gmail app password (16 char space-separated)"
+  regex = '''(?i)MAIL_PASSWORD\s*=\s*["']?[a-z]{4}\s+[a-z]{4}\s+[a-z]{4}\s+[a-z]{4}["']?'''
+  keywords = ["MAIL_PASSWORD"]

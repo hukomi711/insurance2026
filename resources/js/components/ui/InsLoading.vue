@@ -12,6 +12,7 @@
                     <p v-if="text || $slots.default" class="mt-3 text-foreground font-medium text-base">
                         <slot>{{ text }}</slot>
                     </p>
+                    <p v-if="subText" class="mt-1 text-sm text-muted">{{ subText }}</p>
                 </div>
             </div>
         </Transition>
@@ -34,11 +35,12 @@ import { computed } from 'vue';
 
 const props = defineProps( {
     text: { type: String, default: '' },
+    subText: { type: String, default: '' },
     modal: { type: Boolean, default: false },
     color: {
         type: String,
         default: 'primary',
-        validator: v => [ 'primary', 'secondary', 'amber', 'white' ].includes( v ),
+        validator: v => [ 'primary', 'secondary', 'amber', 'emerald', 'white' ].includes( v ),
     },
     size: {
         type: String,
@@ -56,6 +58,7 @@ const colorMap = {
     primary: 'border-blue-200 border-t-primary',
     secondary: 'border-green-100 border-t-secondary',
     amber: 'border-amber-100 border-t-amber-500',
+    emerald: 'border-emerald-100 border-t-emerald-500',
     white: 'border-white/30 border-t-white',
 };
 

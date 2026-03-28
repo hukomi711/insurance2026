@@ -7,12 +7,14 @@ use Illuminate\Support\Facades\DB;
 
 class PruneOldRecords extends Command
 {
+    /** @var string */
     protected $signature = 'app:prune-old-records
                             {--dry-run : Show what would be pruned without executing}
                             {--tier=1,2,3 : Comma-separated tiers to run (1=ephemeral, 2=operational, 3=security)}
                             {--only= : Only process this specific table}
                             {--include-anonymize : Include Tier 4 customer profile anonymization}';
 
+    /** @var string */
     protected $description = 'Tiered data retention: prune old records, scrub sensitive fields, and optionally anonymize inactive profiles';
 
     private int $chunkSize = 1000;

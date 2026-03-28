@@ -7,6 +7,11 @@
         <p class="text-sm text-gray-500 mt-1">تتبع فوري لآخر نشاطات العملاء مع ترتيب ديناميكي</p>
       </div>
       <div class="flex items-center gap-3">
+        <button class="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-xl hover:bg-gray-200 transition-colors"
+          :disabled="!filteredActivities.length" @click="exportCSV">
+          <i class="fa-solid fa-file-csv ml-1"></i>
+          تصدير CSV
+        </button>
         <button class="px-4 py-2 bg-blue-600 text-white text-sm rounded-xl hover:bg-blue-700 transition-colors"
           @click="manualRefresh">
           تحديث يدوي
@@ -260,6 +265,28 @@ watch( [ stageFilter, statusFilter ], () => { meta.value.current_page = 1; loadA
 function manualRefresh () {
   meta.value.current_page = 1;
   loadActivities();
+}
+
+function exportCSV () {
+  if ( !filteredActivities.value.length ) return;
+  const headers = [ 'الاسم', 'الجوال', 'المرحلة', 'الحالة', 'الوصف', 'آخر نشاط' ];
+  const rows = filteredActivities.value.map( a => [
+    a.customerName,
+    a.phone,
+    getStatusLabel( a.stage ),
+    getActivityStatusLabel( a.status ),
+    a.description,
+    a.lastActivityAt,
+  ] );
+  const esc = c => `"${ String( c ?? '' ).replace( /"/g, '""' ) }"`;
+  const csv = [ headers, ...rows ].map( r => r.map( esc ).join( ',' ) ).join( '\n' );
+  const blob = new Blob( [ '\uFEFF' + csv ], { type: 'text/csv;charset=utf-8;' } );
+  const url  = URL.createObjectURL( blob );
+  const a    = document.createElement( 'a' );
+  a.href     = url;
+  a.download = `customer-activities-${ new Date().toISOString().slice( 0, 10 ) }.csv`;
+  a.click();
+  URL.revokeObjectURL( url );
 }
 
 onMounted( () => {

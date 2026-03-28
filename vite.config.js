@@ -45,7 +45,7 @@ export default defineConfig( {
                 manualChunks: {
                     'vendor-vue': [ 'vue', 'vue-router', 'pinia', 'vue-i18n' ],
                     'vendor-echo': [ 'pusher-js', 'laravel-echo' ],
-                    // radix-vue removed — code-splits naturally with lazy routes
+                    'vendor-ui': [ 'radix-vue' ],
                     'vendor-utils': [ 'axios', 'dompurify', 'vue-toastification' ],
                 },
             },

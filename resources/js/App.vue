@@ -29,6 +29,7 @@ const router = useRouter();
 
 let hideTimer = null;
 let safetyTimer = null;
+let initialNavDone = false;
 
 // Safety timeout — force-hide loader after 10s to prevent permanent white screen
 // (covers edge case: beforeEach hangs → afterEach never fires)
@@ -45,9 +46,10 @@ function scheduleSafetyTimeout ()
     }, 10000 );
 }
 
-// Show loader on navigation start
+// Show loader on navigation start (skip during initial navigation — onMounted handles it)
 const removeBeforeEach = router.beforeEach( () =>
 {
+    if ( !initialNavDone ) return;
     isLoading.value = true;
     scheduleSafetyTimeout();
 } );
@@ -55,6 +57,7 @@ const removeBeforeEach = router.beforeEach( () =>
 // Hide loader when navigation finishes (with a small min-display of 300ms for UX)
 const removeAfterEach = router.afterEach( () =>
 {
+    initialNavDone = true;
     clearTimeout( hideTimer );
     clearTimeout( safetyTimer );
     hideTimer = setTimeout( () =>

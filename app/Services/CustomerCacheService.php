@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CustomerCacheService
 {
@@ -38,17 +40,17 @@ class CustomerCacheService
                     }
                 } while ($cursor !== 0);
             } catch (\Throwable $e) {
-                \Log::warning('Redis SCAN flush failed, falling back to Cache::forget: ' . $e->getMessage());
+                Log::warning('Redis SCAN flush failed, falling back to Cache::forget: ' . $e->getMessage());
                 self::forgetCommonKeys();
             }
         } elseif ($driver === 'database') {
             try {
                 $cachePrefix = config('cache.prefix', '');
-                \Illuminate\Support\Facades\DB::table(
+                DB::table(
                     config('cache.stores.database.table', 'cache')
                 )->where('key', 'like', $cachePrefix . 'admin:customers:%')->delete();
             } catch (\Throwable $e) {
-                \Log::warning('DB cache flush failed: ' . $e->getMessage());
+                Log::warning('DB cache flush failed: ' . $e->getMessage());
                 self::forgetCommonKeys();
             }
         } else {

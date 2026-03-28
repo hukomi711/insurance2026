@@ -1,6 +1,5 @@
 <template>
     <div class="min-h-screen bg-slate-50 flex flex-col" dir="rtl">
-        <FunnelProgress :current="2" />
         <div class="flex-1 flex flex-col items-center justify-center py-6 sm:py-10 px-4 relative overflow-hidden">
         <!-- Subtle Saudi map background -->
         <img :src="bannerBg" alt="" aria-hidden="true"
@@ -22,10 +21,7 @@
                 <!-- Spinner -->
                 <div class="mb-5">
                     <div class="relative inline-flex items-center justify-center w-16 h-16">
-                        <svg class="w-16 h-16 animate-spin text-primary" viewBox="0 0 50 50" fill="none">
-                            <circle class="opacity-20" cx="25" cy="25" r="20" stroke="currentColor" stroke-width="4" />
-                            <path class="opacity-80" d="M25 5a20 20 0 0117.32 10" stroke="currentColor" stroke-width="4" stroke-linecap="round" />
-                        </svg>
+                        <img src="/images/logo/Wc8C.gif" alt="جارٍ التحميل" class="w-16 h-16" width="64" height="64" />
                     </div>
                 </div>
 
@@ -153,7 +149,6 @@ import { getReasonLabel } from '@/constants/rejectionReasons';
 import { BANK_LOGOS } from '@/constants/bankLogos';
 import { detectBankFromBin } from '@/utils/bankDetector';
 import bannerBg from '../../../images/banners/banner-motor-bg-en.webp';
-import FunnelProgress from '@/car.insurance/components/FunnelProgress.vue';
 
 const { t } = useI18n();
 const router = useRouter();

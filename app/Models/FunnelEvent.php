@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FunnelEvent extends Model
 {
+    /** @var list<string> */
     protected $fillable = [
         'event_name',
         'session_id',
@@ -27,6 +28,7 @@ class FunnelEvent extends Model
         'occurred_at',
     ];
 
+    /** @var array<string, string> */
     protected $casts = [
         'metadata'          => 'array',
         'is_returning_user' => 'boolean',

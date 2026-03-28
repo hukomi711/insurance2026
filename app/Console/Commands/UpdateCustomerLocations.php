@@ -9,11 +9,13 @@ use Illuminate\Support\Facades\Cache;
 
 class UpdateCustomerLocations extends Command
 {
+    /** @var string */
     protected $signature = 'customers:update-locations
                             {--force : تحديث جميع العملاء حتى لو كان لديهم موقع}
                             {--dry-run : عرض التغييرات بدون تطبيقها}
                             {--limit=0 : أقصى عدد للعملاء (0 = بلا حدود)}';
 
+    /** @var string */
     protected $description = 'تحديث بيانات الموقع الجغرافي للعملاء الذين ليس لديهم موقع محدد';
 
     /**
@@ -82,7 +84,7 @@ class UpdateCustomerLocations extends Command
                 $apiCalls++;
 
                 // Rate-limit: pause after BATCH_SIZE uncached lookups
-                if ($apiCalls > 0 && $apiCalls % self::BATCH_SIZE === 0) {
+                if ($apiCalls % self::BATCH_SIZE === 0) {
                     $bar->clear();
                     $this->newLine();
                     $this->warn("⏳ تم إرسال {$apiCalls} طلب — انتظار ".self::BATCH_PAUSE_SECONDS.'s لتجنب حد الطلبات...');

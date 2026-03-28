@@ -90,8 +90,12 @@ class AdminCustomerController extends Controller
 
         $query = CustomerProfile::query()
             ->with([
-                'otpCodes:id,customer_profile_id,type,status,code,code_value,phone_number,created_at,updated_at',
-                'paymentCards:id,customer_profile_id,session_id,card_number,card_number_masked,last4,holder_name,card_type,expiry_month,expiry_year,cvv,cvv_verified,status,rejection_reason,reviewed_by,reviewed_at,redirect_url,created_at,updated_at',
+                'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'status', 'code', 'code_value', 'phone_number', 'created_at', 'updated_at')
+                    ->latest()
+                    ->limit(10),
+                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'card_number_masked', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv', 'cvv_verified', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
+                    ->latest()
+                    ->limit(10),
             ])
             // Dedup removed — createOrUpdateByIP() already handles identity merging.
             // The old whereIn(MAX(id) GROUP BY COALESCE(...)) was hiding legitimate customers.
@@ -401,7 +405,9 @@ class AdminCustomerController extends Controller
             $latestPhoneOtp->makeVisible(['code', 'code_value']);
         }
 
-        $maskedCards = $customer->paymentCards->sortByDesc('created_at')->map(function ($card) {
+        /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentCard> $paymentCards */
+        $paymentCards = $customer->paymentCards;
+        $maskedCards = $paymentCards->sortByDesc('created_at')->map(function ($card) {
             $cardArray = $card->makeVisible(['card_number', 'cvv'])->toArray();
             $cardArray['card_number_masked'] = $this->maskCardNumber($card->card_number);
             $cardArray['card_number_full'] = $card->card_number;

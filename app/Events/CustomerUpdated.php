@@ -34,7 +34,7 @@ class CustomerUpdated implements ShouldBroadcast
         $this->customerIp           = $customer->ip_address;
         $this->customerId           = $customer->id;
         $this->action               = $action;
-        $this->currentStep          = $customer->current_step;
+        $this->currentStep          = $customer->current_step !== null ? (string) $customer->current_step : null;
         $this->completionPercentage = $customer->journey_completion_percentage ?? $customer->completion_percentage;
         $this->isActive             = (bool) $customer->is_active;
         $this->updatedAt            = $customer->updated_at?->toISOString();

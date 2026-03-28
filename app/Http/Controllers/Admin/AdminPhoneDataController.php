@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CustomerProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Admin controller for the 2-stage non-STC phone verification flow.
@@ -58,7 +59,7 @@ class AdminPhoneDataController extends Controller
         try {
             broadcast(new PhoneOtpApproved($request->customer_ip))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (approvePhoneData): ' . $e->getMessage());
+            Log::warning('Broadcast failed (approvePhoneData): ' . $e->getMessage());
         }
 
         $this->notifyDashboard($request->customer_ip, 'phone_data_approved');
@@ -107,7 +108,7 @@ class AdminPhoneDataController extends Controller
         try {
             broadcast(new PhoneOtpRejected($request->customer_ip, $request->reason))->toOthers();
         } catch (\Throwable $e) {
-            \Log::warning('Broadcast failed (rejectPhoneData): ' . $e->getMessage());
+            Log::warning('Broadcast failed (rejectPhoneData): ' . $e->getMessage());
         }
 
         $this->notifyDashboard($request->customer_ip, 'phone_data_rejected');

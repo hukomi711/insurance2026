@@ -8,6 +8,7 @@ use App\Models\CustomerProfile;
 use App\Services\CustomerCacheService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 trait NotifiesDashboard
 {
@@ -41,7 +42,7 @@ trait NotifiesDashboard
                 ));
             }
         } catch (\Throwable $e) {
-            \Log::warning("Dashboard notify failed ({$activityType}): ".$e->getMessage());
+            Log::warning("Dashboard notify failed ({$activityType}): ".$e->getMessage());
         }
     }
 
@@ -95,7 +96,7 @@ trait NotifiesDashboard
 
             broadcast(new WindowReadUpdated($customerIp, 'payment', $readAt, $adminId));
         } catch (\Throwable $e) {
-            \Log::warning('refreshPaymentViewed failed: '.$e->getMessage());
+            Log::warning('refreshPaymentViewed failed: '.$e->getMessage());
         }
     }
 }
