@@ -55,3 +55,17 @@ backup*.sql
 base
 CountryRestriction_server.php
 deploy.tar.gz
+
+# SSH keys
+9Nhe5m38FnE5Wa4MxJ
+9Nhe5m38FnE5Wa4MxJ.pub
+
+# Windows artifact
+nul
+
+# SSH keys
+9Nhe5m38FnE5Wa4MxJ
+9Nhe5m38FnE5Wa4MxJ.pub
+
+# Windows artifact
+nul
