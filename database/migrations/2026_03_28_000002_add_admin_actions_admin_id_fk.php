@@ -21,7 +21,7 @@ return new class extends Migration
         $driver = Schema::getConnection()->getDriverName();
 
         $hasFk = false;
-        if ($driver === 'mysql') {
+        if (in_array($driver, ['mysql', 'mariadb'])) {
             $existingFk = DB::select(
                 "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
                  WHERE TABLE_NAME = 'admin_actions'

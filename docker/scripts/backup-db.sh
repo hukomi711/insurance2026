@@ -1,8 +1,8 @@
 #!/bin/bash
-BACKUP_DIR="/opt/tamicomz/backups"
+BACKUP_DIR="/opt/tamincom/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 FILENAME="insurance2026_${DATE}.sql.gz"
-DB_PASS=$(cat /opt/tamicomz/docker/secrets/db_password.txt)
+DB_PASS=$(cat /opt/tamincom/docker/secrets/db_password.txt)
 
 docker exec ins2026-db mariadb-dump -u insurance -p"${DB_PASS}" insurance2026 --single-transaction --routines --triggers | gzip > "${BACKUP_DIR}/${FILENAME}"
 

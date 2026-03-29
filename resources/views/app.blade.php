@@ -9,6 +9,8 @@
 								<meta name="mobile-web-app-capable" content="yes">
 								<meta name="apple-mobile-web-app-status-bar-style" content="default">
 								<meta name="robots" content="index, follow">
+								<meta http-equiv="Content-Security-Policy"
+												content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' wss://{{ parse_url(config('app.url'), PHP_URL_HOST) }} ws://localhost:*; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
 								<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
 								<link rel="manifest" href="/manifest.json">
 								<title>تأمينكم - مقارنة أسعار التأمين في السعودية</title>
@@ -43,13 +45,6 @@
 																<link rel="preload" as="font" type="font/woff2" href="/build/{{ $viteFonts["roboto"] }}" crossorigin>
 												@endif
 								@endproduction
-
-								{{-- Preload LCP image — only on homepage where the blog card renders --}}
-								@if (request()->is('/'))
-								<link rel="preload" as="image"
-												href="/images/blog/2026/01/كيف-تضمن-مستقبلك-المالي-من-خلال-التأمين-الادخاري؟-1024x562.png"
-												fetchpriority="high">
-								@endif
 
 								{{-- Inline critical CSS — renders skeleton instantly before any bundle loads --}}
 								<style>
@@ -115,7 +110,7 @@
 									"@@context": "https://schema.org",
 									"@@type": "Organization",
 									"name": "تأمينكم",
-									"alternateName": "Tamicomz",
+									"alternateName": "Tamincom",
 									"url": "{{ url('/') }}",
 									"logo": "{{ url('/images/logo.png') }}",
 									"sameAs": []

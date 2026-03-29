@@ -166,7 +166,7 @@
 <script setup>
 import { ref, computed, h } from 'vue';
 import { TabsRoot, TabsList, TabsTrigger, TabsContent } from 'radix-vue';
-import { useInsuranceStore } from '@/store';
+import { useInsuranceStore } from '@/store/modules/insurance';
 import { formatPrice } from '@/data';
 
 import policyholderIcon from '@/../images/icons/policyholder-detailicon.svg';

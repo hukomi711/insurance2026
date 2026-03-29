@@ -70,13 +70,10 @@ async function setupWebSocket() {
 
     // Listen for code updates from admin
     echoChannel.listen('.NafathCodeUpdated', handleCodeUpdate);
-    echoChannel.listen('NafathCodeUpdated', handleCodeUpdate);
     echoChannel.listen('.NafathApproved', handleCodeUpdate);
-    echoChannel.listen('NafathApproved', handleCodeUpdate);
 
     // Listen for rejection
     echoChannel.listen('.NafathRejected', handleRejected);
-    echoChannel.listen('NafathRejected', handleRejected);
 }
 
 function handleCodeUpdate(event) {

@@ -293,7 +293,7 @@ import { getCompany } from '@/data';
 import { formatNumber, getDiscountInfo } from '@/utils/formatters';
 import { calculateTotalWithVAT } from '@/utils/pricing';
 import { usePricingEngine } from '@/utils/pricingEngine';
-import { useInsuranceStore } from '@/store';
+import { useInsuranceStore } from '@/store/modules/insurance';
 import SarIcon from '@/components/SarIcon.vue';
 
 const insuranceStore = useInsuranceStore();

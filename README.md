@@ -236,6 +236,27 @@ npm run build
 - Dependencies use deterministic installs (`npm ci`, `composer install --prefer-dist`).
 - `storage:link` is automated in Docker deployment via `docker/scripts/deploy.sh`.
 
+## Compliance & Domain Safety
+
+To reduce abuse risk, copyright disputes, and domain suspension exposure, the project includes compliance baselines:
+
+- Terms of Service: `docs/legal/TERMS.md`
+- Privacy Policy: `docs/legal/PRIVACY.md`
+- Acceptable Use Policy: `docs/legal/ACCEPTABLE_USE.md`
+- Copyright/IP Takedown Policy: `docs/legal/DMCA.md`
+- Third-party attribution register: `THIRD_PARTY_NOTICES.md`
+- Security reporting policy: `SECURITY.md`
+
+> Replace placeholder contact emails in policy files before production publication.
+
+## Security Automation
+
+- Weekly dependency audit workflow: `.github/workflows/security-audit.yml`
+- Dependabot updates (Composer/NPM/GitHub Actions): `.github/dependabot.yml`
+- Manual local checks:
+  - `composer audit`
+  - `npm audit --omit=dev`
+
 ## License
 
 Proprietary — All rights reserved.

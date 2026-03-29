@@ -146,8 +146,10 @@ const footerSections = [
     title: 'الدعم',
     links: [
       { label: 'تواصل معنا', href: '/contact' },
-      { label: 'سياسة الخصوصية', href: '/' },
-      { label: 'الشروط والأحكام', href: '/' },
+      { label: 'سياسة الخصوصية', href: '/privacy' },
+      { label: 'الشروط والأحكام', href: '/terms' },
+      { label: 'سياسة الاستخدام المقبول', href: '/acceptable-use' },
+      { label: 'حقوق الملكية الفكرية', href: '/dmca' },
     ],
   },
   {

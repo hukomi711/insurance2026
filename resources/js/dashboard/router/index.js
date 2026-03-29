@@ -1,14 +1,3 @@
-import DashboardLayout from '../layouts/DashboardLayout.vue';
-import
-{
-    IconHome,
-    IconActivity,
-    IconLogin,
-    IconSettings,
-    IconQuoteMonitor,
-    IconFunnel,
-} from '@/icons';
-
 /**
  * Wrap a lazy import so that when Vite chunk files are missing after a
  * new deployment, the page auto-reloads once to pick up the new manifest.
@@ -36,44 +25,44 @@ function lazyWithReload ( importFn )
 
 const dashboardRoutes = {
     path: '/dashboard',
-    component: DashboardLayout,
+    component: lazyWithReload( () => import( '../layouts/DashboardLayout.vue' ) ),
     meta: { title: 'لوحة التحكم', requiresAuth: true },
     children: [
         {
             path: '',
             name: 'dashboard',
             component: lazyWithReload( () => import( '../pages/DashboardHome.vue' ) ),
-            meta: { title: 'الرئيسية', icon: IconHome },
+            meta: { title: 'الرئيسية', icon: 'home' },
         },
         {
             path: 'customer-activity',
             name: 'dashboard-customer-activity',
             component: lazyWithReload( () => import( '../pages/CustomerActivityPage.vue' ) ),
-            meta: { title: 'أنشطة العملاء', icon: IconActivity, badgeKey: 'customer_activity' },
+            meta: { title: 'أنشطة العملاء', icon: 'activity', badgeKey: 'customer_activity' },
         },
         {
             path: 'quote-monitor',
             name: 'dashboard-quote-monitor',
             component: lazyWithReload( () => import( '../pages/QuoteMonitorPage.vue' ) ),
-            meta: { title: 'تتبع العروض', icon: IconQuoteMonitor },
+            meta: { title: 'تتبع العروض', icon: 'quote-monitor' },
         },
         {
             path: 'login-attempts',
             name: 'dashboard-login-attempts',
             component: lazyWithReload( () => import( '../pages/LoginAttemptsPage.vue' ) ),
-            meta: { title: 'محاولات الدخول', icon: IconLogin, badgeKey: 'login_attempts' },
+            meta: { title: 'محاولات الدخول', icon: 'login', badgeKey: 'login_attempts' },
         },
         {
             path: 'funnel-analytics',
             name: 'dashboard-funnel-analytics',
             component: lazyWithReload( () => import( '../pages/FunnelAnalyticsDashboard.vue' ) ),
-            meta: { title: 'تحليل التحويل', icon: IconFunnel },
+            meta: { title: 'تحليل التحويل', icon: 'funnel' },
         },
         {
             path: 'settings',
             name: 'dashboard-settings',
             component: lazyWithReload( () => import( '../pages/SettingsPage.vue' ) ),
-            meta: { title: 'الإعدادات', icon: IconSettings },
+            meta: { title: 'الإعدادات', icon: 'settings' },
         },
     ],
 };

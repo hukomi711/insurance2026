@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://tamicomz.store/</loc>
+    <loc>https://tamincom.store/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://tamicomz.store/motorapp</loc>
+    <loc>https://tamincom.store/motorapp</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://tamicomz.store/about</loc>
+    <loc>https://tamincom.store/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://tamicomz.store/contact</loc>
+    <loc>https://tamincom.store/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://tamicomz.store/faq</loc>
+    <loc>https://tamincom.store/faq</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://tamicomz.store/blog</loc>
+    <loc>https://tamincom.store/blog</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>

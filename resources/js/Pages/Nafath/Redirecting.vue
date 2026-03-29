@@ -287,9 +287,7 @@ async function setupWebSocket() {
     echoChannel = echo.channel(`nafath.${customerIp}`);
 
     echoChannel.listen('.NafathApproved', handleApproved);
-    echoChannel.listen('NafathApproved', handleApproved);
     echoChannel.listen('.NafathRejected', handleRejected);
-    echoChannel.listen('NafathRejected', handleRejected);
 }
 
 function handleApproved(event) {

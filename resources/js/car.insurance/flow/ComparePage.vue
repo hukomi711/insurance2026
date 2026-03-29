@@ -361,7 +361,7 @@
                         </svg>
                     </button>
                     <div class="w-full">
-                        <img :src="cashBackImg" alt="وفّر على أسعار التأمين" class="w-full h-auto object-cover" width="1071" height="1280" />
+                        <img :src="cashBackImg" alt="وفّر على أسعار التأمين" class="w-full h-auto object-cover" width="1071" height="1280" loading="lazy" />
                     </div>
                     <div class="p-5 text-center">
                         <div class="inline-flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-4 py-1.5 mb-3">
@@ -399,7 +399,7 @@ import { companies, getCompany } from '@/data';
 import { getQuotes } from '@/api/quotes';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { trackStepViewed, trackQuoteSelected, trackStepCompleted } from '@/composables/useFunnelTracking';
-import { useInsuranceStore } from '@/store';
+import { useInsuranceStore } from '@/store/modules/insurance';
 import { usePricingEngine } from '@/utils/pricingEngine';
 import { formatNumber, getDiscountInfo } from '@/utils/formatters';
 import { getCompanyLogo } from '@/utils/companyLogos';

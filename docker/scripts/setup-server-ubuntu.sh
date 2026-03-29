@@ -7,9 +7,9 @@
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
 
-APP_DIR="/opt/tamicomz"
+APP_DIR="/opt/tamincom"
 DEPLOY_USER="deploy"
-DOMAIN="tamicomz.store"
+DOMAIN="tamincom.store"
 
 echo "══════════════════════════════════════════════════════════════"
 echo "  Insurance 2026 — Server Setup (Ubuntu)"

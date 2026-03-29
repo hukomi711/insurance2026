@@ -94,4 +94,21 @@ export default [
             'vue/v-on-event-hyphenation': 'off',
         },
     },
+
+    /* ── Node.js / CommonJS scripts ────────────────────────────────── */
+    {
+        files: [ 'scripts/**/*.cjs' ],
+        languageOptions: {
+            sourceType: 'commonjs',
+            globals: {
+                require: 'readonly',
+                module: 'readonly',
+                exports: 'readonly',
+                __dirname: 'readonly',
+                __filename: 'readonly',
+                process: 'readonly',
+                console: 'readonly',
+            },
+        },
+    },
 ];

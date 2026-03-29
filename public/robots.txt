@@ -4,4 +4,4 @@ Disallow: /login
 Disallow: /insurance/
 Disallow: /api/
 
-Sitemap: https://tamicomz.store/sitemap.xml
+Sitemap: https://tamincom.store/sitemap.xml

@@ -1,16 +1,18 @@
 @import "tailwindcss";
-@import "@fortawesome/fontawesome-free/css/fontawesome.min.css";
-@import "@fortawesome/fontawesome-free/css/solid.min.css";
+/* FA subset: only base styles + the 64 icon mappings we use (8.9 kB vs 55 kB original). */
+@import "./fontawesome-subset.css";
+.fa-solid, .fas { font-weight: 900; }
 @import "./admin-tokens.css";
 
-/* Override FA's font-display: block → swap (prevents 3 s invisible icons) */
+/* Subset woff2 containing only the 64 icons we use.
+   Original: 154 kB → Subset: 6 kB (96% smaller).
+   font-display: swap prevents 3 s invisible icons. */
 @font-face {
     font-family: "Font Awesome 6 Free";
     font-style: normal;
     font-weight: 900;
     font-display: swap;
-    src: url("@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2") format("woff2"),
-         url("@fortawesome/fontawesome-free/webfonts/fa-solid-900.ttf") format("truetype");
+    src: url("../fonts/fa-solid-900-subset.woff2") format("woff2");
 }
 
 /* ── Self-hosted Google Fonts (subset-optimized, no CDN dependency) ──

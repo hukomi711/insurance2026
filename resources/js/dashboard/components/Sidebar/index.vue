@@ -32,7 +32,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAppStore } from '@/store';
+import { useAppStore } from '@/store/modules/app';
 import { IconLogout } from '@/icons';
 import SidebarLogo from './SidebarLogo.vue';
 import SidebarItem from './SidebarItem.vue';

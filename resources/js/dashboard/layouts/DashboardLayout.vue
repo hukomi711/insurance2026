@@ -14,12 +14,17 @@
             <Navbar />
             <AppMain />
         </div>
+
+        <!-- Dev-only audit overlay -->
+        <AuditOverlay v-if="isDev" />
     </div>
 </template>
 
 <script setup>
-import { onMounted, onBeforeUnmount, ref, provide } from 'vue';
-import { useAppStore, useBadgeStore, useNotificationsStore } from '@/store';
+import { onMounted, onBeforeUnmount, ref, provide, defineAsyncComponent } from 'vue';
+import { useAppStore } from '@/store/modules/app';
+import { useBadgeStore } from '@/store/modules/badges';
+import { useNotificationsStore } from '@/store/modules/notifications';
 import { startAdminPolling, stopAdminPolling, setTabVisible } from '@/services/adminPolling';
 import { OPEN_CHAT_TARGET } from '../dashboardKeys';
 import { useTheme } from '../composables/useTheme';
@@ -27,6 +32,11 @@ import logger from '@/utils/logger';
 import Sidebar from '../components/Sidebar/index.vue';
 import Navbar from '../components/Navbar/index.vue';
 import AppMain from '../components/AppMain.vue';
+
+const isDev = import.meta.env.DEV;
+const AuditOverlay = isDev
+    ? defineAsyncComponent( () => import( '@/components/dev/AuditOverlay.vue' ) )
+    : null;
 
 const appStore = useAppStore();
 const { init: initTheme } = useTheme();
@@ -65,6 +75,13 @@ onMounted( () => {
     const badgeStore = useBadgeStore();
     const notificationsStore = useNotificationsStore();
     startAdminPolling( { badgeStore, notificationsStore } );
+
+    // 🔍 Dev-only: initialize audit system
+    if ( isDev ) {
+        import( '@/composables/useFrontendAudit' ).then( ( { useFrontendAudit } ) => {
+            useFrontendAudit();
+        } );
+    }
 } );
 
 onBeforeUnmount( () => {

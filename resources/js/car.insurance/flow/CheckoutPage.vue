@@ -154,7 +154,7 @@
         leave-active-class="transition-all duration-200 ease-in"
         leave-from-class="opacity-100" leave-to-class="opacity-0">
         <div v-if="showDiscountPopup" class="fixed bottom-20 lg:bottom-4 start-4 end-4 sm:start-auto sm:end-4 sm:max-w-sm z-[60] bg-white rounded-2xl shadow-lg border border-emerald-200 p-4 flex items-start gap-3">
-            <img :src="cashBackImg" alt="كاش باك" class="w-14 h-14 rounded-xl object-cover shrink-0" width="56" height="56" />
+            <img :src="cashBackImg" alt="كاش باك" class="w-14 h-14 rounded-xl object-cover shrink-0" width="56" height="56" loading="lazy" />
             <div class="flex-1 min-w-0">
                 <p class="text-sm font-bold text-foreground">وفّر على تأمينك!</p>
                 <p class="text-xs text-muted mt-0.5">أكمل عملية الدفع الآن واستفد من العرض</p>
@@ -180,7 +180,7 @@ import { calculateTotalWithVAT } from '@/utils/pricing';
 import { validateCardForm } from '@/utils/cardValidation';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { trackStepViewed, trackCheckoutSubmitted, trackStepCompleted, useAbandonmentTracking } from '@/composables/useFunnelTracking';
-import { useInsuranceStore } from '@/store';
+import { useInsuranceStore } from '@/store/modules/insurance';
 import { usePricingEngine } from '@/utils/pricingEngine';
 import { usePayment } from '@/composables/usePayment';
 import { submitQuote } from '@/api/quotes';

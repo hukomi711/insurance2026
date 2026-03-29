@@ -4,7 +4,7 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import Toast from 'vue-toastification';
 import 'vue-toastification/dist/index.css';
-import i18n from './i18n';
+import i18n, { i18nReady } from './i18n';
 import App from './App.vue';
 import router from './router/index';
 import { initGlobalTracking, cleanupVisitorTracking } from './composables/useVisitorTracking';
@@ -65,6 +65,10 @@ app.config.errorHandler = ( err, instance, info ) =>
         console.warn( '[Vue Error] Could not load notifications store:', storeErr );
     } );
 };
+
+// Wait for lazy-loaded English locale (if user's saved locale is 'en')
+// before mounting so the first render shows correct translations.
+await i18nReady;
 
 app.mount( '#app' );
 

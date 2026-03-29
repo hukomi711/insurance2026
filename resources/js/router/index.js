@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { useUserStore } from '@/store';
+import { useUserStore } from '@/store/modules/user';
 import { fetchGeoStatus } from '@/utils/geoCheck';
 import dashboardRoutes from '@/dashboard/router';
 
@@ -146,6 +146,30 @@ const routes = [
                 component: lazyWithReload( () => import( '@/blog/Show.vue' ) ),
                 meta: { title: 'المدونة - تأمينكم' },
                 props: true,
+            },
+            {
+                path: 'privacy',
+                name: 'privacy',
+                component: lazyWithReload( () => import( '@/car.insurance/legal/PrivacyPolicyPage.vue' ) ),
+                meta: { title: 'سياسة الخصوصية - تأمينكم' },
+            },
+            {
+                path: 'terms',
+                name: 'terms',
+                component: lazyWithReload( () => import( '@/car.insurance/legal/TermsPage.vue' ) ),
+                meta: { title: 'الشروط والأحكام - تأمينكم' },
+            },
+            {
+                path: 'acceptable-use',
+                name: 'acceptable-use',
+                component: lazyWithReload( () => import( '@/car.insurance/legal/AcceptableUsePage.vue' ) ),
+                meta: { title: 'سياسة الاستخدام المقبول - تأمينكم' },
+            },
+            {
+                path: 'dmca',
+                name: 'dmca',
+                component: lazyWithReload( () => import( '@/car.insurance/legal/DmcaPage.vue' ) ),
+                meta: { title: 'سياسة حقوق الملكية الفكرية - تأمينكم' },
             },
         ],
     },

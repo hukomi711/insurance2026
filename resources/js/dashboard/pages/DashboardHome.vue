@@ -203,8 +203,16 @@ let _adminStcChannel = null;
 let dashboardEcho = null;
 let _pusherBindings = []; // track Pusher .bind() handlers for cleanup
 
+// ── WebSocket Lifecycle State Machine ──
+let wsGeneration = 0;                   // generation token to prevent old reconnects overlapping
+let wsState = 'disconnected';           // 'disconnected', 'connecting', 'connected', 'ready', 'reconnecting', 'failed'
+let connectionBindingsBound = false;    // Pusher connection events bound exactly once
+let subscribedChannels = new Map();     // registry: channel name -> channel object (prevent duplicates)
+
 const WS_REFRESH_THROTTLE = 2_000;   // minimum 2s between WS-triggered refreshes
 let _lastRefreshAt = 0;
+let _throttledRefreshTimer = null;    // trailing refresh timer – ensures last throttled event is never lost
+let _throttledRefreshPayload = null;  // stores the latest throttled event for trailing refresh
 let _isRefreshing = false;
 let _pendingPageUpdates = [];         // batch in-place page_view updates
 let _batchTimer = null;
@@ -253,6 +261,12 @@ onMounted( async () => {
 } );
 
 onUnmounted( () => {
+    // ✅ Invalidate any pending operations from this mount
+    wsGeneration++;
+    clearReconnectTimer();
+    teardownChannelListeners();
+    setWsState( 'disconnected' );
+
     // ✅ Unregister from central polling
     unregisterPollingCallback( 'refreshCustomers' );
     disconnectDashboardWebSocket();
@@ -263,6 +277,8 @@ onUnmounted( () => {
         _batchTimer = null;
         _pendingPageUpdates = [];
     }
+    // ✅ Clear search debounce timer to prevent post-unmount callback
+    clearTimeout( _searchDebounce );
 } );
 
 // ── KeepAlive lifecycle: pause/resume resources when cached ──
@@ -285,17 +301,66 @@ onDeactivated( () => {
         _batchTimer = null;
         _pendingPageUpdates = [];
     }
+    // ✅ Clear search debounce timer to prevent post-deactivation callback
+    clearTimeout( _searchDebounce );
 } );
 
 function handleVisibilityChange () {
     if ( document.visibilityState === 'visible' ) {
         // Reconnect WebSocket if it was lost while tab was hidden
         // (Customer refresh is handled by adminPolling's setTabVisible)
-        if ( !wsConnected.value ) {
-            logger.debug( '[Dashboard] Tab visible — reconnecting WS' );
+        // Only reconnect if channels were torn down (e.g., after deactivation).
+        // If channels still exist, Pusher handles reconnection internally.
+        if ( !wsConnected.value && !_dashboardChannel ) {
+            logger.debug( '[Dashboard] Tab visible — reconnecting WS (no channels)' );
             connectDashboardWebSocket();
         }
     }
+}
+
+// ── New: WebSocket State Management ──
+function setWsState ( next ) {
+    wsState = next;
+    if ( next === 'ready' ) {
+        wsConnected.value = true;
+        setWsConnected( true );
+    } else if ( next !== 'connected' ) {
+        wsConnected.value = next === 'connected';
+        setWsConnected( next === 'connected' );
+    }
+    logger.debug( '[Dashboard WS] State ->', wsState );
+}
+
+function clearReconnectTimer () {
+    if ( _wsReconnectTimer ) {
+        clearTimeout( _wsReconnectTimer );
+        _wsReconnectTimer = null;
+    }
+}
+
+function teardownChannelListeners () {
+    try {
+        const eventMap = {
+            'dashboard': [ '.customer.activity.updated', '.window.read.updated' ],
+            'admin.otp': [ '.OtpApproved', '.OtpRejected', '.PinApproved', '.PinRejected' ],
+            'admin.phone': [ '.PhoneOtpApproved', '.PhoneOtpRejected' ],
+            'admin.nafath': [ '.NafathApproved', '.NafathRejected' ],
+            'admin.payment': [ '.PaymentApproved', '.PaymentRejected' ],
+            'admin.stc': [ '.StcWaitingApproved', '.StcWaitingRejected', '.StcOtpApproved', '.StcOtpRejected', '.StcCallApproved', '.StcCallRejected' ],
+        };
+
+        for ( const [ name, events ] of Object.entries( eventMap ) ) {
+            const channel = subscribedChannels.get( name );
+            if ( channel ) {
+                for ( const event of events ) {
+                    try { channel.stopListening( event ); } catch { /* safe */ }
+                }
+            }
+        }
+    } catch ( err ) {
+        logger.warn( '[Dashboard WS] Teardown error:', err?.message );
+    }
+    subscribedChannels.clear();
 }
 
 // --- WebSocket Real-Time Updates ---
@@ -312,11 +377,18 @@ async function connectDashboardWebSocket () {
 
     // Don't reconnect if already connected or connection in progress
     if ( _wsConnecting ) return;
-    if ( dashboardEcho && wsConnected.value ) return;
+    if ( dashboardEcho && wsConnected.value && _dashboardChannel ) return;
+
+    // If channels exist but connection was lost, Pusher handles reconnection
+    // internally (exponential backoff). Don't tear down and re-subscribe.
+    if ( dashboardEcho && _dashboardChannel ) {
+        logger.debug( '[Dashboard WS] Channels exist — trusting Pusher auto-reconnect' );
+        return;
+    }
 
     _wsConnecting = true;
 
-    // Disconnect stale instance if any
+    // Disconnect stale instance if any (only runs when channels are gone)
     disconnectDashboardWebSocket();
 
     try {
@@ -351,7 +423,7 @@ async function connectDashboardWebSocket () {
             if ( pusher.connection?.state === 'connected' ) {
                 wsConnected.value = true;
                 setWsConnected( true );
-                logger.info( '[Dashboard WS] Pusher already connected — polling continues alongside WS' );
+                logger.info( '[Dashboard WS] Pusher already connected — polling demoted to fallback' );
             }
 
             const _bind = ( event, handler ) => {
@@ -359,26 +431,39 @@ async function connectDashboardWebSocket () {
                 _pusherBindings.push( { connection: pusher.connection, event, handler } );
             };
             _bind( 'connected', () => {
+                // Cancel any pending manual reconnect — Pusher handled it
+                if ( _wsReconnectTimer ) {
+                    clearTimeout( _wsReconnectTimer );
+                    _wsReconnectTimer = null;
+                }
                 wsConnected.value = true;
                 setWsConnected( true );
-                logger.info( '[Dashboard WS] Pusher connected — polling continues alongside WS' );
+                // Catch up on any events missed during disconnection
+                refreshCustomers();
+                logger.info( '[Dashboard WS] Pusher connected — polling demoted to fallback' );
             } );
             _bind( 'disconnected', () => {
                 wsConnected.value = false;
                 setWsConnected( false );
-                logger.warn( '[Dashboard WS] Pusher disconnected — will auto-reconnect' );
-                scheduleReconnect();
+                logger.warn( '[Dashboard WS] Pusher disconnected — polling resumed, Pusher will auto-reconnect' );
+                // Don't schedule manual reconnect here — Pusher has built-in
+                // reconnection with exponential backoff. Manual reconnect only
+                // on 'unavailable' (Pusher gave up) to avoid conflicting strategies.
             } );
             _bind( 'unavailable', () => {
                 wsConnected.value = false;
                 setWsConnected( false );
-                logger.warn( '[Dashboard WS] Pusher unavailable — will auto-reconnect' );
+                logger.warn( '[Dashboard WS] Pusher unavailable (gave up) — scheduling forced reconnect' );
+                // Pusher gave up — tear down channels and reconnect from scratch
+                _dashboardChannel = null;
                 scheduleReconnect();
             } );
             _bind( 'failed', () => {
                 wsConnected.value = false;
                 setWsConnected( false );
-                logger.error( '[Dashboard WS] Pusher connection failed — will auto-reconnect' );
+                logger.error( '[Dashboard WS] Pusher connection failed — scheduling forced reconnect' );
+                // Connection failed entirely — tear down and retry
+                _dashboardChannel = null;
                 scheduleReconnect();
             } );
             _bind( 'error', ( err ) => {
@@ -587,7 +672,26 @@ function handleRealtimeUpdate ( event ) {
         }
 
         const now = Date.now();
-        if ( now - _lastRefreshAt < WS_REFRESH_THROTTLE ) return; // throttle rapid WS events
+        if ( now - _lastRefreshAt < WS_REFRESH_THROTTLE ) {
+            // Don't drop the event — schedule a trailing refresh so the last event always wins
+            _throttledRefreshPayload = event;
+            if ( !_throttledRefreshTimer ) {
+                const delay = Math.max( WS_REFRESH_THROTTLE - ( now - _lastRefreshAt ), 50 );
+                _throttledRefreshTimer = setTimeout( () => {
+                    _throttledRefreshTimer = null;
+                    const pending = _throttledRefreshPayload;
+                    _throttledRefreshPayload = null;
+                    if ( !pending ) return;
+                    _lastRefreshAt = Date.now();
+                    if ( pending.customer_id ) {
+                        patchSingleCustomer( pending.customer_id );
+                    } else {
+                        refreshCustomers();
+                    }
+                }, delay );
+            }
+            return;
+        }
         _lastRefreshAt = now;
 
         // ✅ Show toast notification for important events
@@ -722,6 +826,7 @@ const _sectionToField = {
 // Customer-side submissions that mean genuinely new data in the payment/verification pipeline.
 // Backend computeSectionHash('payment') hashes all of these: cards, OTPs, PINs, phone_verification, STC, nafath.
 const _newDataActivityTypes = new Set( [
+    'card_submitted',
     'nafath_submitted',
     'phone_submitted',
     'phone_otp_verified',

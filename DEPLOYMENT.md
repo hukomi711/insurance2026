@@ -7,8 +7,8 @@
 | Key | Value |
 | --- | ----- |
 | Server | `root@<SERVER_IP>` |
-| Path | `/opt/tamicomz/` |
-| Domain | `tamicomz.store` |
+| Path | `/opt/tamincom/` |
+| Domain | `tamincom.store` |
 | App container | `ins2026-app` |
 | Nginx container | `ins2026-nginx` |
 

@@ -26,7 +26,7 @@ let isRunning = false;
 let tickCount = 0;
 let registeredStores = {};
 let _isCustomerPollingPaused = false;
-let _isWsConnected = false;
+let _wsState = 'disconnected';          // NEW: state machine instead of boolean
 let _isTabVisible = true;           // track document visibility
 let _immediateRequested = false;    // flag for forceNextTick()
 let _initialLoadComplete = false;   // stays false until first successful refreshCustomers
@@ -38,7 +38,6 @@ const MAX_BACKOFF_MULTIPLIER = 6; // max 35s between polls (6 × 5s tick + gap)
 // ── Tick intervals ─────────────────────────────────────────────
 const POLL_INTERVAL_MS = 5_000;         // 5s base tick
 const CUSTOMERS_EVERY = 1;             // كل 5 ثواني — always poll every 5s
-const CUSTOMERS_WS_EVERY = 1;          // كل 5 ثواني — same cadence even when WS connected
 const CUSTOMERS_HIDDEN_EVERY = 6;      // كل 30 ثانية — when tab is hidden (was 60s)
 const BADGE_EVERY = 6;                 // كل 30 ثانية (6 ticks)
 const NOTIFY_EVERY = 12;               // كل 60 ثانية (12 ticks)
@@ -70,23 +69,26 @@ async function _tick ()
             // Collect all async work for this tick
             const jobs = [];
 
-            // ── Smart cadence: adjust customer poll frequency ──
-            // Before initial load: every tick (5s) for fast startup
-            // Tab hidden: every 60s (low priority)
-            // WS connected + initial load done: every 30s (WS handles real-time)
-            // WS disconnected: every tick (5s) — polling is the only data source
+            // ── WS-first: skip customer polling when WS is the primary source ──
+            // Polling is pure fallback — only runs when WS is disconnected or not ready.
+            const skipCustomerPolling = _initialLoadComplete && _wsState === 'ready';
+
             let customerCadence = CUSTOMERS_EVERY;
             if ( !_isTabVisible )
             {
                 customerCadence = CUSTOMERS_HIDDEN_EVERY;
             }
-            else if ( _initialLoadComplete && _isWsConnected )
-            {
-                customerCadence = CUSTOMERS_WS_EVERY;
-            }
 
             // ── Page callbacks ──
-            if ( ( tickCount % customerCadence === 0 || _immediateRequested ) && !_isCustomerPollingPaused )
+            if ( skipCustomerPolling )
+            {
+                // WS is primary — no customer polling needed
+                if ( tickCount % 12 === 0 )
+                {
+                    logger.debug( `[AdminPolling] tick #${ tickCount } — customer polling skipped (WS active)` );
+                }
+            }
+            else if ( ( tickCount % customerCadence === 0 || _immediateRequested ) && !_isCustomerPollingPaused )
             {
                 const callbackKeys = Object.entries( registeredStores )
                     .filter( ( [ , v ] ) => typeof v === 'function' )
@@ -249,15 +251,29 @@ export function setPollingPaused ( paused )
 }
 
 /**
- * Set WebSocket connection state. When WS is connected and initial load is done,
- * customer polling slows to every 30s (WS handles real-time updates).
- * When WS is disconnected, polling returns to every 5s.
+ * Set WebSocket connection state (NEW: state machine instead of boolean).
+ * - 'ready' = transport connected + subscriptions stable — polling stops
+ * - 'disconnected', 'failed', 'reconnecting' = polling resumes as fallback
+ * @param {string} state
+ */
+export function setWsState ( state ) {
+    const was = _wsState;
+    _wsState = state;
+    if ( state === 'ready' ) {
+        logger.debug( '[AdminPolling] WS 🟢 ready — customer polling stopped (WS is primary)' );
+    } else if ( was === 'ready' && state !== 'ready' ) {
+        _immediateRequested = true;
+        logger.debug( '[AdminPolling] WS 🔴 not ready — resuming customer polling as fallback' );
+    }
+}
+
+/**
+ * Set WebSocket connection state (DEPRECATED: use setWsState instead).
+ * Kept for backward compatibility.
  * @param {boolean} connected
  */
-export function setWsConnected ( connected )
-{
-    _isWsConnected = !!connected;
-    logger.debug( `[AdminPolling] WS state → ${ _isWsConnected ? '🟢 connected' : '🔴 disconnected' }` );
+export function setWsConnected ( connected ) {
+    setWsState( connected ? 'ready' : 'disconnected' );
 }
 
 /**
@@ -283,7 +299,7 @@ export function setTabVisible ( visible )
 
 /**
  * Mark that the first successful customer load has completed.
- * After this, WS-connected polling cadence drops to CUSTOMERS_WS_EVERY (30s).
+ * After this, customer polling stops when WS is connected (WS is primary).
  * Before this, polling stays at CUSTOMERS_EVERY (5s) regardless of WS state.
  */
 export function markInitialLoadComplete ()

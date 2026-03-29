@@ -152,13 +152,13 @@ onMounted( () =>
                 '@type': 'ListItem',
                 position: 1,
                 name: 'الرئيسية',
-                item: 'https://tamicomz.store',
+                item: 'https://tamincom.store',
             },
             {
                 '@type': 'ListItem',
                 position: 2,
                 name: 'المدونة',
-                item: 'https://tamicomz.store/blog',
+                item: 'https://tamincom.store/blog',
             },
         ],
     } );

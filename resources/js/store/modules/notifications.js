@@ -80,6 +80,12 @@ export const useNotificationsStore = defineStore( 'notifications', {
                 time: 'الآن',
                 read: false,
             } );
+
+            // Cap items to prevent unbounded memory growth
+            if ( this.items.length > 200 )
+            {
+                this.items.length = 200;
+            }
         },
 
         // ─────────── Toast Queue System ───────────

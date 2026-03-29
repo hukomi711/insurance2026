@@ -118,6 +118,7 @@ export function usePaymentModal ( props, emit )
 
     // ── Acted IDs tracking (prevents polling from reverting admin actions) ──
     const actedOtpIds = reactive( new Set() );
+    const actedCardIds = reactive( new Set() );
     const MAX_ACTED_IDS = 500;
 
     // ── BIN lookup ────────────────────────────────────────────────
@@ -167,8 +168,27 @@ export function usePaymentModal ( props, emit )
                 fresh.custom_data = { ...preservedCustomData, ...( fresh.custom_data || {} ) };
             }
 
-            // Cap actedOtpIds to prevent unbounded growth
+            // Cap acted ID sets to prevent unbounded growth
             if ( actedOtpIds.size > MAX_ACTED_IDS ) actedOtpIds.clear();
+            if ( actedCardIds.size > MAX_ACTED_IDS ) actedCardIds.clear();
+
+            // Preserve card status when admin has acted (prevents stale API revert)
+            const prevCards = resolveCards( selectedPaymentCustomer.value );
+            const freshCards = resolveCards( fresh );
+            if ( freshCards.length && prevCards.length )
+            {
+                for ( const freshCard of freshCards )
+                {
+                    const prevCard = prevCards.find( ( c ) => c.id === freshCard.id );
+                    if ( !prevCard ) continue;
+
+                    // Admin acted (approved/rejected), but stale API still says pending → keep acted status
+                    if ( actedCardIds.has( freshCard.id ) && freshCard.status === 'pending' && prevCard.status !== 'pending' )
+                    {
+                        freshCard.status = prevCard.status;
+                    }
+                }
+            }
 
             // Preserve pending status for OTPs that admin hasn't acted on
             // AND preserve acted status when stale API returns pending
@@ -722,6 +742,11 @@ export function usePaymentModal ( props, emit )
         const statusMap = { 'card-approve': 'approved', 'card-reject': 'rejected' };
         if ( statusMap[ action ] )
         {
+            // Track the card ID so the watcher preserves status across stale API refreshes
+            const cards = resolveCards( selectedPaymentCustomer.value );
+            const cardId = cards[ cardIndex ]?.id;
+            if ( cardId ) actedCardIds.add( cardId );
+
             updateCardStatusLocally( selectedPaymentCustomer.value, cardIndex, statusMap[ action ] );
             refreshCustomerRef();
         }

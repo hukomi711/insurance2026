@@ -3,7 +3,7 @@
 # Insurance 2026 — First Deploy: Generate Secrets & Configure .env
 # ═══════════════════════════════════════════════════════════════════
 # Run once on the server BEFORE the first deploy.sh:
-#   cd /opt/tamicomz
+#   cd /opt/tamincom
 #   bash docker/scripts/first-deploy.sh
 #
 # What it does:
@@ -14,12 +14,12 @@
 #
 # After this script, you must:
 #   1. Provision SSL certificates (certbot)
-#   2. Copy certs to docker/certbot/conf/live/tamicomz.store/
+#   2. Copy certs to docker/certbot/conf/live/tamincom.store/
 #   3. Run: bash docker/scripts/deploy.sh
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
 
-DOMAIN="tamicomz.store"
+DOMAIN="tamincom.store"
 
 echo "══════════════════════════════════════════════════════════════"
 echo "  Insurance 2026 — First Deploy Setup"
@@ -28,7 +28,7 @@ echo "════════════════════════�
 # ── Sanity checks ────────────────────────────────────────────────
 if [ ! -f .env.production ]; then
     echo "!! ERROR: .env.production not found."
-    echo "   Are you in the project root? (/opt/tamicomz)"
+    echo "   Are you in the project root? (/opt/tamincom)"
     exit 1
 fi
 

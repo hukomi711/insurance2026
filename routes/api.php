@@ -52,6 +52,25 @@ Route::prefix('health')->middleware('throttle:60,1')->group(function () {
     Route::get('/queues', [HealthController::class, 'queues']);
 });
 
+// ─── Legal / Policy (public — cacheable, light throttle) ────────────
+Route::prefix('legal')->middleware('throttle:30,1')->group(function () {
+    Route::get('/', function () {
+        return response()->json([
+            'policies' => [
+                ['slug' => 'privacy', 'title' => 'سياسة الخصوصية', 'url' => '/privacy'],
+                ['slug' => 'terms', 'title' => 'الشروط والأحكام', 'url' => '/terms'],
+                ['slug' => 'acceptable-use', 'title' => 'سياسة الاستخدام المقبول', 'url' => '/acceptable-use'],
+                ['slug' => 'dmca', 'title' => 'حقوق الملكية الفكرية', 'url' => '/dmca'],
+            ],
+            'contact' => [
+                'legal' => 'legal@taminkom.com',
+                'abuse' => 'abuse@taminkom.com',
+                'privacy' => 'privacy@taminkom.com',
+            ],
+        ]);
+    });
+});
+
 // ─── Geo Check (public — no geo restriction, heavy throttle) ────────
 Route::get('/geo/check', [GeoCheckController::class, 'check'])->middleware('throttle:30,1');
 

@@ -261,7 +261,7 @@ import { useRouter } from 'vue-router';
 import { CheckboxRoot, CheckboxIndicator } from 'radix-vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
-import { useInsuranceStore } from '@/store';
+import { useInsuranceStore } from '@/store/modules/insurance';
 import logger from '@/utils/logger';
 import StepProgressBar from '../components/vehicle-details/StepProgressBar.vue';
 const DriversSheet = defineAsyncComponent( () => import( '../components/vehicle-details/DriversSheet.vue' ) );

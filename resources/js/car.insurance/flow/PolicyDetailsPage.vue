@@ -278,7 +278,7 @@
 import { ref, reactive, computed, watch, onMounted, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
-import { useInsuranceStore } from '@/store';
+import { useInsuranceStore } from '@/store/modules/insurance';
 import AppSelect from '@/components/ui/AppSelect.vue';
 import { regionsData, citiesByRegion } from '@/data';
 import logger from '@/utils/logger';

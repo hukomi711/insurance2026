@@ -5,7 +5,7 @@
         :style="isActive ? {} : { color: 'var(--admin-sidebar-text)' }"
         @mouseenter="!isActive && ($event.currentTarget.style.backgroundColor = 'var(--admin-sidebar-hover)')"
         @mouseleave="!isActive && ($event.currentTarget.style.backgroundColor = 'transparent')">
-        <component :is="item.meta.icon" class="text-xl w-5 text-center" />
+        <component :is="iconComponent" class="text-xl w-5 text-center" />
         {{ item.meta.title }}
         <span v-if="badgeCount > 0"
             class="mr-auto bg-red-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none animate-pulse">
@@ -17,10 +17,13 @@
 <script setup>
 import { computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { useBadgeStore } from '@/store';
+import { useBadgeStore } from '@/store/modules/badges';
+import { IconHome, IconActivity, IconLogin, IconSettings, IconQuoteMonitor, IconFunnel } from '@/icons';
+
+const ICON_MAP = { home: IconHome, activity: IconActivity, login: IconLogin, settings: IconSettings, 'quote-monitor': IconQuoteMonitor, funnel: IconFunnel };
 
 const props = defineProps( {
-    /** @type {{ path: string, meta: { title: string, icon: object, badgeKey?: string, activeMenu?: string } }} */
+    /** @type {{ path: string, meta: { title: string, icon: string, badgeKey?: string, activeMenu?: string } }} */
     item: {
         type: Object,
         required: true,
@@ -29,6 +32,8 @@ const props = defineProps( {
 
 const route = useRoute();
 const badgeStore = useBadgeStore();
+
+const iconComponent = computed( () => ICON_MAP[ props.item.meta.icon ] || null );
 
 const isActive = computed( () => {
     const target = props.item.meta.activeMenu || props.item.path;

@@ -176,14 +176,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
-import { useNotificationsStore } from '@/store';
+import { useNotificationsStore } from '@/store/modules/notifications';
 import Hamburger from './Hamburger.vue';
 import Breadcrumb from './Breadcrumb.vue';
 import UserDropdown from './UserDropdown.vue';
 import ThemeToggle from '../ui/ThemeToggle.vue';
-import NotificationDetailModal from '../modals/NotificationDetailModal.vue';
+const NotificationDetailModal = defineAsyncComponent( () => import( '../modals/NotificationDetailModal.vue' ) );
 
 const router = useRouter();
 const notificationsStore = useNotificationsStore();

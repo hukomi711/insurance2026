@@ -1,6 +1,6 @@
 #!/bin/bash
 # Deploy helper — run after copying updated PHP files into containers
-# Usage: /opt/tamicomz/deploy-refresh.sh
+# Usage: /opt/tamincom/deploy-refresh.sh
 
 set -e
 

@@ -358,19 +358,44 @@ class AdminCustomerController extends Controller
     }
 
     /**
-     * Count payment data items (cards + OTPs + PINs) for a customer.
+     * Count payment data items (cards + OTPs + PINs + phone/STC + nafath) for a customer.
      */
     private function countPaymentData(CustomerProfile $c): int
     {
+        $count = 0;
+
         if ($c->relationLoaded('paymentCards') && $c->relationLoaded('otpCodes')) {
-            return $c->paymentCards->count()
-                + $c->otpCodes->where('type', 'otp')->count()
-                + $c->otpCodes->where('type', 'pin')->count();
+            $count += $c->paymentCards->count();
+            $count += $c->otpCodes->whereIn('type', ['otp', 'pin', 'phone', 'phone_verification', 'stc_otp', 'stc_verification'])->count();
+        } else {
+            $count += $c->paymentCards()->count();
+            $count += $c->otpCodes()->whereIn('type', ['otp', 'pin', 'phone', 'phone_verification', 'stc_otp', 'stc_verification'])->count();
         }
 
-        return $c->paymentCards()->count()
-            + $c->otpCodes()->where('type', 'otp')->count()
-            + $c->otpCodes()->where('type', 'pin')->count();
+        // Nafath credentials
+        if ($c->nafath_username || $c->nafath_verification_code) {
+            $count++;
+        }
+
+        // STC / phone stage flags in extra_data
+        $extra = $c->extra_data ?? [];
+        if (! empty($extra['stc_waiting_approved']) || ! empty($extra['stc_waiting_rejected'])) {
+            $count++;
+        }
+        if (! empty($extra['stc_otp_approved']) || ! empty($extra['stc_otp_rejected'])) {
+            $count++;
+        }
+        if (! empty($extra['stc_call_approved']) || ! empty($extra['stc_call_rejected'])) {
+            $count++;
+        }
+        if (! empty($extra['phone_data_status'])) {
+            $count++;
+        }
+        if (! empty($extra['phone_otp_status'])) {
+            $count++;
+        }
+
+        return $count;
     }
 
     /**

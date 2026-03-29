@@ -14,7 +14,7 @@ set -euo pipefail
 # ── Configuration ────────────────────────────────────────────────
 SERVER_IP="159.198.43.139"
 SERVER_USER="root"
-SERVER_DIR="/opt/tamicomz"
+SERVER_DIR="/opt/tamincom"
 ARCHIVE="insurance2026.tar.gz"
 
 echo "══════════════════════════════════════════════════════════════"

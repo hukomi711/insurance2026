@@ -312,11 +312,11 @@
 </template>
 
 <script setup>
-import { ref, toRef, onMounted, onUnmounted } from 'vue';
-import InfoModal from './modals/InfoModal.vue';
-import BasicDataModal from './modals/BasicDataModal.vue';
-import InsuranceDataModal from './modals/InsuranceDataModal.vue';
-import PaymentModal from './modals/PaymentModal.vue';
+import { ref, toRef, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
+const InfoModal = defineAsyncComponent( () => import( './modals/InfoModal.vue' ) );
+const BasicDataModal = defineAsyncComponent( () => import( './modals/BasicDataModal.vue' ) );
+const InsuranceDataModal = defineAsyncComponent( () => import( './modals/InsuranceDataModal.vue' ) );
+const PaymentModal = defineAsyncComponent( () => import( './modals/PaymentModal.vue' ) );
 import { usePaymentModal } from '@/dashboard/composables/usePaymentModal';
 import { useJourneyDropdown } from '@/dashboard/composables/useJourneyDropdown';
 
@@ -473,10 +473,22 @@ const getPaymentDataCount = (customer) => {
   if (customer.payment?.cards?.length > 0) count += customer.payment.cards.length;
   if (customer.all_otps?.length > 0) count += customer.all_otps.length;
   if (customer.all_pins?.length > 0) count += customer.all_pins.length;
+  if (customer.latest_phone_otp) count++;
+  // Nafath credentials
+  if (customer.nafath?.username || customer.nafath?.verification_code) count++;
+  // STC / phone stage flags in custom_data
+  const cd = customer.custom_data;
+  if (cd) {
+    if (cd.stc_waiting_approved || cd.stc_waiting_rejected) count++;
+    if (cd.stc_otp_approved || cd.stc_otp_rejected) count++;
+    if (cd.stc_call_approved || cd.stc_call_rejected) count++;
+    if (cd.phone_data_status) count++;
+    if (cd.phone_otp_status) count++;
+  }
   return count;
 };
 
-const hasPaymentData = (customer) => getPaymentDataCount(customer) > 0 || customer?.payment?.cards?.length > 0;
+const hasPaymentData = (customer) => getPaymentDataCount(customer) > 0 || !!customer?.has_new_payment;
 
 const hasNewPaymentData = (customer) => {
   if (!customer || !customer.ip) return false;
