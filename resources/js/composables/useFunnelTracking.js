@@ -259,7 +259,10 @@ export function trackStepAbandoned ( step, reason, metadata )
     }
     else
     {
-        request.post( '/analytics/funnel-event', payload, { silent: true } ).catch( () => {} );
+        request.post( '/analytics/funnel-event', payload, { silent: true } ).catch( ( err ) =>
+        {
+            console.warn( '[FunnelTracking] Failed to send event:', err.message || err );
+        } );
     }
 }
 

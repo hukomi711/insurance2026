@@ -53,6 +53,10 @@ class PaymentCard extends Model
         'expiry_year',
         'cvv',                 // مشفّر تلقائياً عبر encrypted cast
         'cvv_verified',
+        'status',
+        'rejection_reason',
+        'reviewed_by',
+        'reviewed_at',
         'redirect_url',
     ];
 

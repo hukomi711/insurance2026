@@ -7,9 +7,11 @@ Security fixes are applied to the active production branch and latest maintained
 ## Reporting a Vulnerability
 
 Please report vulnerabilities privately to:
-- security@your-domain.example
+
+- <security@tamincom.store>
 
 Include:
+
 - Affected component/path
 - Reproduction steps
 - Impact assessment

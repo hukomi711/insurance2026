@@ -84,7 +84,7 @@
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-8">
                         <h2 class="text-xl font-bold text-slate-900 font-heading">القائمة</h2>
-                        <button class="p-2 rounded-sm hover:bg-slate-100 transition-colors" @click="toggleMobileMenu">
+                        <button class="p-2 rounded-sm hover:bg-slate-100 transition-colors" aria-label="إغلاق القائمة" @click="toggleMobileMenu">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

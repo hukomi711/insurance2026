@@ -99,16 +99,6 @@ async function doFetchGeoStatus ()
 }
 
 /**
- * Is the current visitor from Saudi Arabia? (synchronous, uses cache only)
- * Returns true if no data available (Fail-Open).
- */
-export function isSaudiVisitor ()
-{
-    const cached = getCachedStatus();
-    return cached ? cached.is_saudi : true;
-}
-
-/**
  * Does the current visitor have full (owner) access? (synchronous, uses cache only)
  * Returns false if no data available (Fail-Closed for admin).
  */
@@ -116,21 +106,6 @@ export function isAdminIp ()
 {
     const cached = getCachedStatus();
     return cached ? cached.access_scope === 'full' : false;
-}
-
-/**
- * Force clear geo cache (useful after VPN change, for testing, etc.)
- */
-export function clearGeoCache ()
-{
-    try
-    {
-        sessionStorage.removeItem( CACHE_KEY );
-    }
-    catch
-    {
-        // ignore
-    }
 }
 
 // ─── Internal helpers ───────────────────────────────────────────────

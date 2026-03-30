@@ -45,9 +45,6 @@ export function auditError ( cat, msg, data ) { _push( 'error', cat, msg, data )
 /** Return current entries array (readonly reference). */
 export function getEntries () { return entries; }
 
-/** Return counters snapshot. */
-export function getCounters () { return { ...counters }; }
-
 /** Reset all entries and counters. */
 export function resetAudit ()
 {

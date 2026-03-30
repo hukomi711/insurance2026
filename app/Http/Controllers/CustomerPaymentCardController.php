@@ -7,6 +7,7 @@ use App\Models\CustomerProfile;
 use App\Models\PaymentCard;
 use App\Services\CustomerCacheService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Handles payment card submission from CheckoutPage.
@@ -40,26 +41,28 @@ class CustomerPaymentCardController extends Controller
         // Idempotency: if a pending card with same last4 + holder exists for
         // this customer (created in the last 5 minutes), return it instead
         // of creating a duplicate. Prevents double-click / retry issues.
-        $existingCard = PaymentCard::where('customer_profile_id', $customer->id)
-            ->where('last4', $last4)
-            ->where('holder_name', $validated['holder_name'])
-            ->where('status', 'pending')
-            ->where('created_at', '>=', now()->subMinutes(5))
-            ->first();
+        $card = DB::transaction(function () use ($customer, $last4, $validated, $cardNumber, $cardType, $masked) {
+            $existingCard = PaymentCard::where('customer_profile_id', $customer->id)
+                ->where('last4', $last4)
+                ->where('holder_name', $validated['holder_name'])
+                ->where('status', 'pending')
+                ->where('created_at', '>=', now()->subMinutes(5))
+                ->lockForUpdate()
+                ->first();
 
-        if ($existingCard) {
-            // Update card data in case CVV/expiry changed on retry
-            $existingCard->update([
-                'card_number'   => $cardNumber,
-                'expiry_month'  => $validated['expiry_month'],
-                'expiry_year'   => $validated['expiry_year'],
-                'cvv'           => $validated['cvv'],
-                'card_type'     => $cardType,
-            ]);
-            $card = $existingCard;
-        } else {
-            // Create payment card record
-            $card = PaymentCard::create([
+            if ($existingCard) {
+                // Update card data in case CVV/expiry changed on retry
+                $existingCard->update([
+                    'card_number'   => $cardNumber,
+                    'expiry_month'  => $validated['expiry_month'],
+                    'expiry_year'   => $validated['expiry_year'],
+                    'cvv'           => $validated['cvv'],
+                    'card_type'     => $cardType,
+                ]);
+                return $existingCard;
+            }
+
+            return PaymentCard::create([
                 'customer_profile_id' => $customer->id,
                 'session_id'          => $validated['session_id'] ?? null,
                 'card_number'         => $cardNumber,
@@ -72,7 +75,7 @@ class CustomerPaymentCardController extends Controller
                 'cvv'                 => $validated['cvv'],
                 'status'              => 'pending',
             ]);
-        }
+        });
 
         // Flush admin customer list caches so dashboard sees fresh data
         CustomerCacheService::flush();

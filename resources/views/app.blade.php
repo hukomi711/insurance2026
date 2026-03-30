@@ -112,7 +112,7 @@
 									"name": "تأمينكم",
 									"alternateName": "Tamincom",
 									"url": "{{ url('/') }}",
-									"logo": "{{ url('/images/logo.png') }}",
+									"logo": "{{ url('/images/apple-touch-icon.png') }}",
 									"sameAs": []
 								}
 								</script>

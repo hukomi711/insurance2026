@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
@@ -92,7 +93,7 @@ class OrderController extends Controller
             }
         }
 
-        $order = Order::create($validated);
+        $order = DB::transaction(fn () => Order::create($validated));
 
         return response()->json([
             'success'       => true,

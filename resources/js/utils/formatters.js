@@ -32,17 +32,6 @@ export function formatCurrency( num ) {
 export const formatPrice = formatCurrency;
 
 /**
- * Format an ISO date string to Arabic locale
- * @param {string} dateStr - ISO date string or 'YYYY-MM-DD'
- * @param {Intl.DateTimeFormatOptions} [options]
- * @returns {string}
- */
-export function formatDate( dateStr, options = {} ) {
-    const defaults = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date( dateStr ).toLocaleDateString( AR_LOCALE, { ...defaults, ...options } );
-}
-
-/**
  * Get Arabic label for a status code
  * @param {string} status
  * @returns {string}
@@ -110,40 +99,6 @@ export function formatDateTime( dateStr ) {
         hour: '2-digit',
         minute: '2-digit',
     } );
-}
-
-/**
- * Format currency in SAR (Intl format)
- * @param {number} amount
- * @returns {string}
- */
-export function formatCurrencySAR( amount ) {
-    if ( !amount ) return '—';
-    return new Intl.NumberFormat( AR_LOCALE, {
-        style: 'currency',
-        currency: 'SAR',
-        minimumFractionDigits: 0,
-    } ).format( amount );
-}
-
-/**
- * Get relative time in Arabic (e.g., "منذ 5 دقائق")
- * @param {string} lastActivity - ISO date string
- * @returns {string}
- */
-export function getTimeSinceActivity( lastActivity ) {
-    if ( !lastActivity ) return '';
-    const now = new Date();
-    const last = new Date( lastActivity );
-    const diffMs = now - last;
-    const diffMins = Math.floor( diffMs / 60000 );
-
-    if ( diffMins < 1 ) return 'الآن';
-    if ( diffMins < 60 ) return `منذ ${ diffMins } دقيقة`;
-    const diffHours = Math.floor( diffMins / 60 );
-    if ( diffHours < 24 ) return `منذ ${ diffHours } ساعة`;
-    const diffDays = Math.floor( diffHours / 24 );
-    return `منذ ${ diffDays } يوم`;
 }
 
 /**

@@ -5,7 +5,7 @@
             <a href="/">
                 <img src="/images/logo/Nafath/logo.png" width="128" alt="Nafath" />
             </a>
-            <img src="/images/logo/Nafath/vision2030-grey.svg" width="128" class="u-hidden-mobile" />
+                <img src="/images/logo/Nafath/vision2030-grey.svg" width="128" class="u-hidden-mobile" alt="رؤية 2030" />
         </header>
 
         <!-- Main Content -->
@@ -126,7 +126,7 @@
                             </form>
                         </div>
                         <div class="nafath-info-col u-hidden-mobile">
-                            <img src="/images/logo/Nafath/secure.svg" width="150" />
+                            <img src="/images/logo/Nafath/secure.svg" width="150" alt="تسجيل دخول آمن" />
                             <p>الرجاء إدخال اسم المستخدم \ الهوية الوطنية وكلمة المرور ثم اضغط تسجيل الدخول</p>
                         </div>
                     </div>

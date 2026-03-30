@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
 class HealthController extends Controller
@@ -95,7 +96,8 @@ class HealthController extends Controller
             DB::connection()->getPdo();
 
             return 'ok';
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            Log::warning('[Health] Database check failed', ['error' => $e->getMessage()]);
             return 'unhealthy';
         }
     }
@@ -106,7 +108,8 @@ class HealthController extends Controller
             Redis::connection()->ping();
 
             return 'ok';
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            Log::warning('[Health] Redis check failed', ['error' => $e->getMessage()]);
             return 'unhealthy';
         }
     }

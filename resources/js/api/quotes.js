@@ -12,7 +12,7 @@ import { buildPricingPayload } from '@/utils/buildPricingPayload';
  * Local recalc: deductible/repair changes on ComparePage use calculateAllQuotes directly (no round-trip).
  */
 
-const { calculateAllQuotes, calculatePremium } = usePricingEngine();
+const { calculateAllQuotes } = usePricingEngine();
 
 /**
  * Set repairLocation on plans based on user's repair method choice.
@@ -86,44 +86,6 @@ export async function getQuotes ( formData = {} )
 }
 
 /**
- * Fetch a single quote/plan by ID with dynamic pricing.
- * @param {number|string} planId
- * @param {Object} [formData] — { vehicle, driver, policy } for dynamic pricing
- * @returns {Promise<object|null>}
- */
-export function getQuoteById ( planId, formData = {} )
-{
-    // return request.get( `/quotes/${ planId }` );
-
-    return new Promise( ( resolve ) =>
-    {
-        setTimeout( () =>
-        {
-            const plan = vehiclePlans.find( p => p.id === Number( planId ) );
-            if ( !plan ) return resolve( null );
-
-            const planWithCompany = { ...plan, company: getCompany( plan.companyId ) };
-
-            // Apply dynamic pricing if form data is provided
-            const hasFormData = formData.vehicle || formData.driver || formData.policy;
-            if ( hasFormData )
-            {
-                const pricing = calculatePremium( planWithCompany, formData );
-                resolve( {
-                    ...planWithCompany,
-                    annualPrice: pricing.annualPrice,
-                    monthlyPrice: pricing.monthlyPrice,
-                    pricingFactors: pricing.factors,
-                } );
-            } else
-            {
-                resolve( planWithCompany );
-            }
-        }, 300 );
-    } );
-}
-
-/**
  * Submit a selected quote for checkout — creates a real order via API.
  * @param {{ planId: number, deductible?: number, additionalCoverages?: number[], [key: string]: any }} payload
  * @returns {Promise<{ success: boolean, order_number: string, policy_number: string, order_id: number }>}
@@ -132,33 +94,4 @@ export async function submitQuote ( payload )
 {
     const { data } = await request.post( '/orders', payload );
     return data;
-}
-
-/**
- * Fetch recommended/featured quotes with dynamic pricing.
- * @param {Object} [formData] — { vehicle, driver, policy } for dynamic pricing
- * @returns {Promise<{ recommended: object|null, cheapest: object|null }>}
- */
-export function getFeaturedQuotes ( formData = {} )
-{
-    // return request.get( '/quotes/featured', { params } );
-
-    return new Promise( ( resolve ) =>
-    {
-        setTimeout( () =>
-        {
-            const basePlans = vehiclePlans.map( p => ( { ...p, company: getCompany( p.companyId ) } ) );
-
-            const hasFormData = formData.vehicle || formData.driver || formData.policy;
-            const plans = hasFormData
-                ? calculateAllQuotes( basePlans, formData )
-                : basePlans;
-
-            const recommended = plans.find( p => p.badgeType === 'recommended' ) || null;
-            const cheapest = plans.find( p => p.badgeType === 'cheapest' )
-                || [ ...plans ].sort( ( a, b ) => a.annualPrice - b.annualPrice )[ 0 ]
-                || null;
-            resolve( { recommended, cheapest } );
-        }, 300 );
-    } );
 }

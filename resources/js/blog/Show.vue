@@ -599,7 +599,7 @@ const facebookShareUrl = computed( () =>
     `https://www.facebook.com/sharer/sharer.php?u=${ encodeURIComponent( shareUrl.value ) }`
 );
 
-const SITE_URL = 'https://tamincom.store';
+const SITE_URL = window.location.origin;
 const { inject: injectJsonLd, cleanup: cleanupJsonLd } = useJsonLd();
 
 onMounted( () =>
@@ -630,7 +630,7 @@ onMounted( () =>
                 name: 'تأمينكم',
                 logo: {
                     '@type': 'ImageObject',
-                    url: `${ SITE_URL }/images/logo.png`,
+                    url: `${ SITE_URL }/images/apple-touch-icon.png`,
                 },
             },
             mainEntityOfPage: {

@@ -101,31 +101,3 @@ export function leaveAll ( scope )
         logger.debug( `[ChannelRegistry] Left ${ toLeave.length } channels (scope=${ scope || 'all' }, remaining=${ _registry.size })` );
     } );
 }
-
-/**
- * Check if a channel is currently subscribed.
- * @param {string} name
- * @returns {boolean}
- */
-export function isSubscribed ( name )
-{
-    return _registry.has( name );
-}
-
-/**
- * Get list of active channel names.
- * @returns {string[]}
- */
-export function getActiveChannels ()
-{
-    return [ ..._registry.keys() ];
-}
-
-/**
- * Get full registry info (for debugging / audit overlay).
- * @returns {{ name: string, scope: string, ts: number }[]}
- */
-export function getRegistryInfo ()
-{
-    return [ ..._registry.entries() ].map( ( [ name, { scope, ts } ] ) => ( { name, scope, ts } ) );
-}

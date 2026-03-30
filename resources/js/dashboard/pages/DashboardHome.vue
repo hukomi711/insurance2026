@@ -204,9 +204,7 @@ let dashboardEcho = null;
 let _pusherBindings = []; // track Pusher .bind() handlers for cleanup
 
 // ── WebSocket Lifecycle State Machine ──
-let wsGeneration = 0;                   // generation token to prevent old reconnects overlapping
 let wsState = 'disconnected';           // 'disconnected', 'connecting', 'connected', 'ready', 'reconnecting', 'failed'
-let connectionBindingsBound = false;    // Pusher connection events bound exactly once
 let subscribedChannels = new Map();     // registry: channel name -> channel object (prevent duplicates)
 
 const WS_REFRESH_THROTTLE = 2_000;   // minimum 2s between WS-triggered refreshes
@@ -216,6 +214,7 @@ let _throttledRefreshPayload = null;  // stores the latest throttled event for t
 let _isRefreshing = false;
 let _pendingPageUpdates = [];         // batch in-place page_view updates
 let _batchTimer = null;
+let _retryTimer = null;               // retry timer for failed initial load
 const BATCH_INTERVAL = 2_000;         // apply batched updates every 2 seconds
 
 // ── Loading / error state for initial fetch ──
@@ -256,13 +255,11 @@ onMounted( async () => {
     // ✅ Initial load with retry — if first call fails, retry after 2s
     const ok = await refreshCustomers();
     if ( !ok ) {
-        setTimeout( () => refreshCustomers(), 2000 );
+        _retryTimer = setTimeout( () => refreshCustomers(), 2000 );
     }
 } );
 
 onUnmounted( () => {
-    // ✅ Invalidate any pending operations from this mount
-    wsGeneration++;
     clearReconnectTimer();
     teardownChannelListeners();
     setWsState( 'disconnected' );
@@ -279,6 +276,9 @@ onUnmounted( () => {
     }
     // ✅ Clear search debounce timer to prevent post-unmount callback
     clearTimeout( _searchDebounce );
+    // ✅ Clear retry timer
+    clearTimeout( _retryTimer );
+    _retryTimer = null;
 } );
 
 // ── KeepAlive lifecycle: pause/resume resources when cached ──
@@ -288,7 +288,7 @@ onActivated( () => {
     document.addEventListener( 'visibilitychange', handleVisibilityChange );
     // ✅ Retry-aware refresh on reactivation
     refreshCustomers().then( ok => {
-        if ( !ok ) setTimeout( () => refreshCustomers(), 2000 );
+        if ( !ok ) _retryTimer = setTimeout( () => refreshCustomers(), 2000 );
     } );
 } );
 
@@ -303,6 +303,9 @@ onDeactivated( () => {
     }
     // ✅ Clear search debounce timer to prevent post-deactivation callback
     clearTimeout( _searchDebounce );
+    // ✅ Clear retry timer
+    clearTimeout( _retryTimer );
+    _retryTimer = null;
 } );
 
 function handleVisibilityChange () {

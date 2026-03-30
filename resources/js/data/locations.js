@@ -287,7 +287,4 @@ export const citiesByRegion = {
   },
 };
 
-/**
- * Flat list of all Saudi cities (Arabic) — backward compatible
- */
-export const saudiCities = Object.values(citiesByRegion.ar).flat();
+

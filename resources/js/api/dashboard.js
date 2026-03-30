@@ -9,18 +9,6 @@ import request from './request';
  * have dedicated API modules: loginAttempts.js, customerActivities.js, settings.js
  */
 
-/** @returns {Promise<{ data: object }>} */
-export function getStats ()
-{
-    return request.get( '/admin/dashboard/stats' );
-}
-
-/** @returns {Promise<{ data: Array }>} */
-export function getMonthlySales ()
-{
-    return request.get( '/admin/dashboard/sales/monthly' );
-}
-
 /**
  * Fetch real-time admin notifications
  * @returns {Promise<{ data: { success: boolean, data: Array, unread_count: number } }>}
@@ -281,12 +269,6 @@ export function getQuoteLiveSessions ()
 export function getQuoteSessions ( params = {} )
 {
     return request.get( '/admin/quotes', { params } );
-}
-
-/** @returns {Promise<{ data: object }>} */
-export function getQuoteSession ( uuid )
-{
-    return request.get( `/admin/quotes/${ uuid }` );
 }
 
 /** @returns {Promise<{ data: object }>} */

