@@ -72,8 +72,8 @@ class HealthController extends Controller
 
         $horizonStatus = 'unhealthy';
         try {
-            $masterStatus = Redis::connection()->get('horizon:master:status');
-            $horizonStatus = $masterStatus === 'running' ? 'ok' : 'unhealthy';
+            $exitCode = \Illuminate\Support\Facades\Artisan::call('horizon:status');
+            $horizonStatus = $exitCode === 0 ? 'ok' : 'unhealthy';
         } catch (\Throwable) {
             // already unhealthy
         }

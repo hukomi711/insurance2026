@@ -97,12 +97,12 @@
                             </svg>
                         </button>
 
-                        <!-- Horizontal Cards Carousel -->
-                        <div v-show="aiAccordionOpen" class="mt-3 overflow-x-auto no-scrollbar">
-                            <div class="flex gap-3" style="min-width: max-content;">
+                        <!-- AI Cards Grid -->
+                        <div v-show="aiAccordionOpen" class="mt-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <!-- Recommended Card -->
                                 <div v-if="recommendedPlan"
-                                    class="w-[240px] sm:w-[280px] shrink-0 bg-white rounded-xl border border-orange-200 shadow-sm overflow-hidden">
+                                    class="bg-white rounded-xl border border-orange-200 shadow-sm overflow-hidden">
                                     <div
                                         class="bg-gradient-to-l from-orange-50 to-amber-50 px-3 py-1.5 flex items-center gap-1.5">
                                         <svg class="size-3.5 text-orange-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
@@ -143,7 +143,7 @@
 
                                 <!-- Cheapest Card -->
                                 <div v-if="cheapestPlan"
-                                    class="w-[240px] sm:w-[280px] shrink-0 bg-white rounded-xl border border-green-200 shadow-sm overflow-hidden">
+                                    class="bg-white rounded-xl border border-green-200 shadow-sm overflow-hidden">
                                     <div
                                         class="bg-gradient-to-l from-green-50 to-emerald-50 px-3 py-1.5 flex items-center gap-1.5">
                                         <span class="typ-c1">💰</span>
@@ -183,13 +183,13 @@
                     </div>
 
                     <!-- Repair Method & Coverage -->
-                    <div class="flex flex-nowrap w-full gap-1.5 sm:gap-2 mb-4">
-                        <div class="w-[38%] sm:w-1/3">
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 mb-4">
+                        <div class="sm:col-span-4">
                             <AppSelect id="repairMethod" v-model="quoteOptions.repairMethod"
                                 label="طريقة الإصلاح" :options="repairMethodOptions" variant="standard"
                                 name="repairMethod" />
                         </div>
-                        <div class="flex-1 min-w-0">
+                        <div class="sm:col-span-5">
                             <div class="group relative flex border border-slate-300 rounded-lg min-h-[3.25rem] sm:min-h-[3.5rem] px-3 sm:px-4 py-2 items-center gap-1.5 sm:gap-2 w-full
                                         focus-within:border-primary transition">
                                 <input id="coverageLimit" v-model.number="quoteOptions.coverageLimit" type="number" autocomplete="off"
@@ -205,8 +205,8 @@
                                 </label>
                             </div>
                         </div>
-                        <div class="shrink-0">
-                            <button :disabled="isUpdatingQuotes" class="min-h-[3.25rem] sm:min-h-[3.5rem] px-4 sm:px-6 typ-t3 font-bold rounded-lg bg-primary text-white
+                        <div class="sm:col-span-3">
+                            <button :disabled="isUpdatingQuotes" class="w-full min-h-[3.25rem] sm:min-h-[3.5rem] px-4 sm:px-6 typ-t3 font-bold rounded-lg bg-primary text-white
                                        hover:bg-primary-dark active:bg-primary-darker disabled:bg-slate-400
                                        disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center cursor-pointer"
                                 @click="updateQuoteOptions">
@@ -222,25 +222,29 @@
                         </div>
                     </div>
 
-                    <!-- Mobile Sort/Filter Scrollbar -->
-                    <div class="xl:hidden flex items-center gap-2 overflow-x-auto no-scrollbar mb-3 -mx-1 px-1">
-                        <button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white typ-s2 text-foreground font-bold rounded-full shadow-sm"
-                            @click="showMobileFilters = true">
-                            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-                            </svg>
-                            الترتيب و التصنيف
-                        </button>
-                        <button v-for="option in sortOptions" :key="option.value" class="shrink-0 px-3 py-1.5 typ-c1 font-bold rounded-full border transition-colors whitespace-nowrap"
-                            :class="sortBy === option.value ? 'bg-primary text-white border-primary' : 'bg-white text-muted border-slate-200'"
-                            @click="sortBy = option.value">
-                            {{ option.label }}
-                        </button>
+                    <!-- Mobile Results Header -->
+                    <div class="xl:hidden flex items-center justify-between mb-3">
+                        <p class="typ-t2 text-foreground">
+                            <span class="text-primary font-extrabold ltr-nums">{{ sortedPlans.length }}</span>
+                            عرض متاح
+                        </p>
+                        <div class="flex items-center gap-2">
+                            <span class="typ-c1 text-muted bg-slate-100 rounded-full px-2.5 py-1">
+                                {{ sortOptions.find( o => o.value === sortBy )?.label || 'السعر: الأقل' }}
+                            </span>
+                            <button class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white typ-s2 text-foreground font-bold rounded-full shadow-sm"
+                                @click="showMobileFilters = true">
+                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                                </svg>
+                                تصفية
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Offers Count + Compact Toggle -->
-                    <div class="flex items-center justify-between mb-3 sm:mb-4">
+                    <!-- Offers Count + Compact Toggle (desktop only) -->
+                    <div class="hidden xl:flex items-center justify-between mb-3 sm:mb-4">
                         <p class="typ-t2 sm:typ-t1 text-foreground">
                             <span class="text-primary font-extrabold ltr-nums">{{ sortedPlans.length }}</span>
                             عرض متاح

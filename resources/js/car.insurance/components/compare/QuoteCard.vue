@@ -28,14 +28,16 @@
         </div>
 
         <!-- Company + Price Row (always visible — clickable to expand) -->
-        <div class="flex items-center justify-between px-4 py-3 cursor-pointer" role="button" tabindex="0"
+        <div class="px-4 py-3 cursor-pointer" role="button" tabindex="0"
             :aria-expanded="expanded"
             @click="emit( 'toggle-expand' )"
             @keydown.enter.prevent="emit( 'toggle-expand' )"
             @keydown.space.prevent="emit( 'toggle-expand' )">
-            <div class="flex items-center gap-3 min-w-0">
+
+            <!-- Zone 1: Header — checkbox + logo + company meta -->
+            <div class="flex items-start gap-3">
                 <!-- Compare Checkbox -->
-                <label class="flex items-center cursor-pointer shrink-0" @click.stop>
+                <label class="flex items-center cursor-pointer shrink-0 pt-1" @click.stop>
                     <input :id="`compare-${plan.id}`" type="checkbox"
                         :checked="compareSelected"
                         :name="`compare-${plan.id}`" :disabled="!canToggleCompare && !compareSelected"
@@ -50,11 +52,11 @@
                         class="max-w-full w-full h-full object-contain" width="48" height="48" />
                 </div>
                 <!-- Company Name & Type -->
-                <div class="min-w-0">
-                    <h3 class="typ-t3 truncate max-w-[180px] sm:max-w-[280px] lg:max-w-[400px]">
+                <div class="min-w-0 flex-1">
+                    <h3 class="text-sm sm:text-base font-bold text-slate-900 leading-5 line-clamp-2 sm:line-clamp-1">
                         {{ plan.company.nameAr }}
                     </h3>
-                    <div class="flex items-center gap-1.5 flex-wrap">
+                    <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
                         <p class="typ-c1 text-muted">{{ plan.typeAr }}</p>
                         <span v-if="plan.repairLocation"
                             class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 typ-c2 font-medium"
@@ -69,41 +71,86 @@
                         </span>
                     </div>
                 </div>
+
+                <!-- Desktop: Price + CTA + Chevron (hidden on mobile) -->
+                <div class="hidden lg:flex items-center gap-3 shrink-0 ms-auto">
+                    <div class="flex flex-col items-end gap-0.5">
+                        <div v-if="discount.hasDiscount" class="flex items-center gap-1.5">
+                            <span class="inline-flex items-center bg-red-100 text-red-700 typ-c2 font-bold px-1.5 py-0.5 rounded-full ltr-nums">وفّر {{ discount.discountPercent }}%</span>
+                            <span class="text-slate-400 typ-c1 line-through ltr-nums">{{ formatNumber( discount.originalPrice ) }}</span>
+                        </div>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-2xl font-extrabold ltr-nums text-primary">{{ formatNumber( plan.annualPrice ) }}</span>
+                            <SarIcon className="size-3" />
+                        </div>
+                        <p class="typ-c2 text-muted ltr-nums">
+                            {{ formatNumber( plan.monthlyPrice || Math.ceil( plan.annualPrice / 12 ) ) }}
+                            <SarIcon className="size-2 text-muted inline-block align-middle" />
+                            / شهرياً
+                        </p>
+                        <p class="typ-c2 text-slate-500 inline-flex items-center gap-1">
+                            <svg class="size-3.5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.4 9.74-7 10-3.6-.26-7-5-7-10V7l7-4z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.5 12.5l1.8 1.8 3.2-3.6" />
+                            </svg>
+                            <span v-if="plan.company?.rating">تقييم {{ Number( plan.company.rating ).toFixed( 1 ) }}/5</span>
+                            <span v-else>شركة موثوقة</span>
+                        </p>
+                    </div>
+                    <button class="cursor-pointer whitespace-nowrap transition-colors h-9 px-3 typ-c1 font-bold rounded-lg bg-primary text-white hover:bg-primary-dark inline-flex items-center justify-center"
+                        @click.stop="emit( 'quick-select' )">
+                        اختر الآن
+                    </button>
+                    <svg class="size-5 text-slate-400 transition-transform duration-200 shrink-0"
+                        :class="{ 'rotate-180': expanded }" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </div>
             </div>
-            <!-- Price + Chevron -->
-            <div class="flex items-center gap-3 shrink-0">
-                <div class="flex flex-col items-end gap-0.5">
-                    <div v-if="discount.hasDiscount" class="flex items-center gap-1.5">
-                        <span class="inline-flex items-center bg-red-100 text-red-700 typ-c2 font-bold px-1.5 py-0.5 rounded-full ltr-nums">وفّر {{ discount.discountPercent }}%</span>
-                        <span class="text-slate-400 typ-c1 line-through ltr-nums">{{ formatNumber( discount.originalPrice ) }}</span>
+
+            <!-- Zone 2: Price Box (mobile/tablet only) -->
+            <div class="mt-3 rounded-xl bg-slate-50 border border-slate-100 p-3 lg:hidden">
+                <div v-if="discount.hasDiscount" class="flex items-center gap-1.5 mb-1">
+                    <span class="inline-flex items-center bg-red-100 text-red-700 text-[11px] font-bold px-1.5 py-0.5 rounded-full ltr-nums">وفّر {{ discount.discountPercent }}%</span>
+                    <span class="text-slate-400 text-xs line-through ltr-nums">{{ formatNumber( discount.originalPrice ) }}</span>
+                </div>
+                <div class="flex items-end justify-between gap-3">
+                    <div>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-xl sm:text-2xl font-extrabold ltr-nums text-primary">{{ formatNumber( plan.annualPrice ) }}</span>
+                            <span class="text-xs text-muted">ريال / سنوياً</span>
+                        </div>
+                        <p class="text-xs text-muted ltr-nums mt-0.5">
+                            {{ formatNumber( plan.monthlyPrice || Math.ceil( plan.annualPrice / 12 ) ) }}
+                            ريال / شهرياً
+                        </p>
                     </div>
-                    <div class="flex items-baseline gap-1">
-                        <span class="typ-t2 lg:typ-h2 font-extrabold ltr-nums text-primary">{{ formatNumber( plan.annualPrice ) }}</span>
-                        <SarIcon className="size-3" />
-                    </div>
-                    <p class="typ-c2 text-muted ltr-nums">
-                        {{ formatNumber( plan.monthlyPrice || Math.ceil( plan.annualPrice / 12 ) ) }}
-                        <SarIcon className="size-2 text-muted inline-block align-middle" />
-                        / شهرياً
-                    </p>
-                    <p class="typ-c2 text-slate-500 inline-flex items-center gap-1">
+                    <p class="text-xs text-slate-500 inline-flex items-center gap-1 shrink-0">
                         <svg class="size-3.5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.4 9.74-7 10-3.6-.26-7-5-7-10V7l7-4z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.5 12.5l1.8 1.8 3.2-3.6" />
                         </svg>
-                        <span v-if="plan.company?.rating">تقييم {{ Number( plan.company.rating ).toFixed( 1 ) }}/5</span>
-                        <span v-else>شركة موثوقة</span>
+                        <span v-if="plan.company?.rating">{{ Number( plan.company.rating ).toFixed( 1 ) }}/5</span>
+                        <span v-else>موثوقة</span>
                     </p>
                 </div>
-                <button class="cursor-pointer whitespace-nowrap transition-colors h-9 px-3 typ-c1 font-bold rounded-lg bg-primary text-white hover:bg-primary-dark inline-flex items-center justify-center"
+            </div>
+
+            <!-- Zone 3: Action Row (mobile/tablet only) -->
+            <div class="mt-3 flex items-center gap-2 lg:hidden">
+                <button class="flex-1 h-11 px-4 text-sm font-bold rounded-lg bg-primary text-white hover:bg-primary-dark transition-colors inline-flex items-center justify-center cursor-pointer"
                     @click.stop="emit( 'quick-select' )">
                     اختر الآن
                 </button>
-                <svg class="size-5 text-slate-400 transition-transform duration-200 shrink-0"
-                    :class="{ 'rotate-180': expanded }" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                </svg>
+                <button class="h-11 w-11 rounded-lg border border-slate-200 text-slate-500 inline-flex items-center justify-center shrink-0 cursor-pointer hover:bg-slate-50 transition-colors"
+                    @click.stop="emit( 'toggle-expand' )">
+                    <svg class="size-5 transition-transform duration-200"
+                        :class="{ 'rotate-180': expanded }" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </button>
             </div>
         </div>
 

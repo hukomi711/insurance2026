@@ -38,8 +38,20 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4 sm:gap-6">
 
+                <!-- ═══ Price Sidebar (mobile: first, desktop: right column) ═══ -->
+                <div class="order-first lg:order-last">
+                    <div class="lg:sticky lg:top-[70px] space-y-4">
+                        <PriceSummaryCard
+                            :subtotal="subtotal"
+                            :vat-amount="vatAmount"
+                            :total-price="totalPrice"
+                            :addons="selectedAddons"
+                        />
+                    </div>
+                </div>
+
                 <!-- ═══ Left Column: Forms ═══ -->
-                <div class="min-w-0 space-y-4 sm:space-y-6">
+                <div class="order-last lg:order-first min-w-0 space-y-4 sm:space-y-6">
 
                     <!-- Payment Method Card -->
                     <PaymentMethodCard
@@ -53,48 +65,11 @@
                     />
 
                     <!-- Terms & Conditions -->
-                    <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6">
-                        <h5 class="text-lg font-bold text-foreground mb-4">الشروط والأحكام</h5>
-
-                        <label for="accept-terms" class="flex items-start gap-3 cursor-pointer">
-                            <CheckboxRoot id="accept-terms" v-model:checked="form.acceptTerms" name="accept-terms"
-                                class="flex h-5 w-5 shrink-0 appearance-none items-center justify-center rounded-md border-2 mt-0.5 transition-colors cursor-pointer"
-                                :class="form.acceptTerms ? 'bg-primary border-primary' : 'bg-white border-slate-300 hover:border-slate-400'">
-                                <CheckboxIndicator>
-                                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
-                                            d="M5 13l4 4L19 7" />
-                                    </svg>
-                                </CheckboxIndicator>
-                            </CheckboxRoot>
-                            <span class="typ-s2 text-foreground">أقر بأن جميع البيانات المدخلة صحيحة و أوافق على
-                                <router-link to="/terms" target="_blank" class="text-primary hover:underline">الشروط والأحكام</router-link>
-                                و
-                                <router-link to="/privacy" target="_blank" class="text-primary hover:underline">سياسة الخصوصية</router-link>
-                                الخاصة بتأمينكم
-                            </span>
-                        </label>
-
-                        <p v-if="errors.acceptTerms" class="text-destructive typ-c1 mt-3">
-                            {{ errors.acceptTerms }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- ═══ Right Column: Price Sidebar ═══ -->
-                <div class="order-last">
-                    <div class="lg:sticky lg:top-[70px] space-y-4">
-
-                        <!-- ── تفاصيل الملخص ── -->
-                        <PriceSummaryCard
-                            :subtotal="subtotal"
-                            :vat-amount="vatAmount"
-                            :total-price="totalPrice"
-                            :addons="selectedAddons"
-                        />
-
-                    </div>
+                    <TermsCard
+                        :accepted="form.acceptTerms"
+                        :error="errors.acceptTerms"
+                        @update:accepted="form.acceptTerms = $event"
+                    />
                 </div>
             </div>
 
@@ -173,9 +148,6 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import {
-    CheckboxRoot, CheckboxIndicator,
-} from 'radix-vue';
 import { getPlanWithCompany } from '@/data';
 import { calculateTotalWithVAT } from '@/utils/pricing';
 import { validateCardForm, isValidLuhn, isExpiryValid } from '@/utils/cardValidation';
@@ -192,6 +164,7 @@ import request from '@/api/request';
 import SarIcon from '@/components/SarIcon.vue';
 import PaymentMethodCard from '../components/checkout/PaymentMethodCard.vue';
 import PriceSummaryCard from '../components/checkout/PriceSummaryCard.vue';
+import TermsCard from '../components/checkout/TermsCard.vue';
 import cashBackImg from '@/../../resources/images/logo/summary_logo/cash_back.jpeg';
 
 const route = useRoute();
