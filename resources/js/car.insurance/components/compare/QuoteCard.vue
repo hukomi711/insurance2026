@@ -81,7 +81,24 @@
                         <span class="typ-t2 lg:typ-h2 font-extrabold ltr-nums text-primary">{{ formatNumber( plan.annualPrice ) }}</span>
                         <SarIcon className="size-3" />
                     </div>
+                    <p class="typ-c2 text-muted ltr-nums">
+                        {{ formatNumber( plan.monthlyPrice || Math.ceil( plan.annualPrice / 12 ) ) }}
+                        <SarIcon className="size-2 text-muted inline-block align-middle" />
+                        / شهرياً
+                    </p>
+                    <p class="typ-c2 text-slate-500 inline-flex items-center gap-1">
+                        <svg class="size-3.5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.4 9.74-7 10-3.6-.26-7-5-7-10V7l7-4z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.5 12.5l1.8 1.8 3.2-3.6" />
+                        </svg>
+                        <span v-if="plan.company?.rating">تقييم {{ Number( plan.company.rating ).toFixed( 1 ) }}/5</span>
+                        <span v-else>شركة موثوقة</span>
+                    </p>
                 </div>
+                <button class="cursor-pointer whitespace-nowrap transition-colors h-9 px-3 typ-c1 font-bold rounded-lg bg-primary text-white hover:bg-primary-dark inline-flex items-center justify-center"
+                    @click.stop="emit( 'quick-select' )">
+                    اختر الآن
+                </button>
                 <svg class="size-5 text-slate-400 transition-transform duration-200 shrink-0"
                     :class="{ 'rotate-180': expanded }" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" aria-hidden="true">
@@ -159,24 +176,6 @@
             <!-- Product Info / Benefits -->
             <div class="px-4 pb-3">
                 <div class="border-t border-slate-100 pt-3 relative">
-                    <button v-if="plan.benefits.length > 2" class="absolute end-0 -top-4 rounded-b-lg typ-c1 font-bold text-primary shadow-sm bg-white border border-slate-200 border-t-0 w-[90px] text-center py-0.5 cursor-pointer z-10"
-                        @click.stop="emit( 'toggle-benefits' )">
-                        <span v-if="benefitsExpanded" class="inline-flex items-center gap-1">
-                            <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 15l-6-6-6 6" />
-                            </svg>
-                            إغلاق
-                        </span>
-                        <span v-else class="inline-flex items-center gap-1">
-                            <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M6 9l6 6 6-6" />
-                            </svg>
-                            معاينة الكل
-                        </span>
-                    </button>
-
                     <p class="typ-c1 text-slate-500 mb-2">معلومات المنتج</p>
                     <p v-if="plan.heroIncluded" class="flex items-center typ-c1 text-slate-900 gap-1 mb-1.5">
                         <svg class="size-4 shrink-0 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -186,7 +185,7 @@
                         </svg>
                         تأمينكم هيرو: خدمة مقدمة من تأمينكم :دعم فوري بعد الحوادث، من خدمات السحب إلى أوبر وخدمة تقدير
                     </p>
-                    <div v-for="( benefit, i ) in ( benefitsExpanded ? plan.benefits : plan.benefits.slice( 0, 2 ) )"
+                    <div v-for="( benefit, i ) in plan.benefits.slice( 0, 3 )"
                         :key="i" class="flex gap-1.5 w-full mb-1">
                         <svg class="size-4 shrink-0 text-green-500 mt-0.5" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -195,24 +194,22 @@
                         </svg>
                         <p class="typ-c1 text-slate-900">{{ benefit }}</p>
                     </div>
+                    <p v-if="plan.benefits.length > 3" class="typ-c2 text-slate-500 mt-1">
+                        +{{ plan.benefits.length - 3 }} مزايا إضافية (داخل التفاصيل)
+                    </p>
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="px-4 py-3 border-t border-slate-100 flex flex-col-reverse lg:flex-row lg:justify-end gap-2">
-                <button class="cursor-pointer whitespace-nowrap transition-colors min-h-11 px-6 typ-s2 font-bold rounded-lg bg-transparent text-primary hover:text-primary-dark w-full lg:w-auto inline-flex items-center justify-center"
+            <div class="px-4 py-3 border-t border-slate-100 flex justify-end">
+                <button class="cursor-pointer whitespace-nowrap transition-colors min-h-11 px-6 typ-s2 font-bold rounded-lg bg-transparent text-primary hover:text-primary-dark w-full lg:w-auto inline-flex items-center justify-center gap-2"
                     @click="emit( 'show-details' )">
-                    أظهر التفاصيل
-                </button>
-                <button class="cursor-pointer whitespace-nowrap transition-colors min-h-11 px-6 typ-s2 font-bold rounded-lg bg-primary text-white hover:bg-primary-dark w-full lg:w-auto inline-flex items-center justify-center gap-2"
-                    @click="emit( 'select' )">
-                    <span>اختيار</span>
-                    <svg class="size-5 shrink-0 rtl:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 12H5" />
-                        <path d="M14 17l5-5" />
-                        <path d="M14 7l5 5" />
+                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H8a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-5.5" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 3h6v6" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 14L21 3" />
                     </svg>
+                    عرض التفاصيل الكاملة
                 </button>
             </div>
         </div>
@@ -240,6 +237,6 @@ const discount = computed( () => getDiscountInfo( props.plan ) );
 const emit = defineEmits( [
     'toggle-expand', 'toggle-benefits', 'select',
     'show-details', 'update:compareSelected', 'show-hero',
-    'deductible-change',
+    'deductible-change', 'quick-select',
 ] );
 </script>

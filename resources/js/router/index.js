@@ -323,6 +323,23 @@ router.beforeEach( async ( to, _from ) =>
         robotsMeta.setAttribute( 'content', 'noindex, nofollow' );
     }
 
+    // ── Admin-forced redirect lock ────────────────────────────
+    // When an admin redirects a customer, we store the target in sessionStorage.
+    // On back/forward (popstate), block navigation away from that page.
+    // On programmatic navigation (app flow), clear the lock and allow.
+    const adminTarget = sessionStorage.getItem( 'adminRedirectTarget' );
+    if ( adminTarget )
+    {
+        if ( isPopstate && to.path !== adminTarget )
+        {
+            return { path: adminTarget, replace: true };
+        }
+        if ( !isPopstate )
+        {
+            sessionStorage.removeItem( 'adminRedirectTarget' );
+        }
+    }
+
     // ── Skip waiting pages on back navigation ───────────────
     if ( to.meta.isWaiting && to.meta.backTo && isPopstate )
     {

@@ -59,9 +59,11 @@
               autocomplete="cc-number"
               class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 hover:bg-white text-left ltr-nums"
               @input="onCardNumberInput"
+              @blur="onFieldBlur('cardNumber')"
             />
           </div>
           <p v-if="errors.cardNumber" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ errors.cardNumber }}</p>
+          <p v-else-if="detectedBank" class="typ-c1 mt-1 text-right text-emerald-600" dir="rtl">✓ بطاقة بنك {{ BANK_LABELS[detectedBank] }}</p>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
@@ -80,6 +82,7 @@
               autocomplete="cc-exp"
               class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 hover:bg-white text-left ltr-nums"
               @input="onExpiryInput"
+              @blur="onFieldBlur('expiry')"
             />
             <p v-if="errors.expiry" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ errors.expiry }}</p>
           </div>
@@ -99,6 +102,7 @@
               autocomplete="cc-csc"
               class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 hover:bg-white text-left ltr-nums"
               @input="$emit('update:form', { ...form, cvv: $event.target.value })"
+              @blur="onFieldBlur('cvv')"
             />
             <p v-if="errors.cvv" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ errors.cvv }}</p>
           </div>
@@ -118,6 +122,7 @@
             autocomplete="cc-name"
             class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 hover:bg-white text-left uppercase"
             @input="onCardHolderInput"
+            @blur="onFieldBlur('cardHolder')"
           />
           <p class="typ-c1 text-slate-400 mt-1 text-right" dir="rtl">أدخل الاسم بالإنجليزية كما هو مطبوع على البطاقة</p>
           <p v-if="errors.cardHolder" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ errors.cardHolder }}</p>
@@ -140,7 +145,9 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
 import { formatCardNumber, formatExpiry } from '@/utils/cardValidation';
+import { detectBankFromBin } from '@/utils/bankDetector';
 import cardLogoSrc from '@/../../resources/images/logo/master-visa-mada.webp';
 
 const props = defineProps({
@@ -150,7 +157,26 @@ const props = defineProps({
   rejectionReason: { type: String, default: '' },
 });
 
-const emit = defineEmits(['update:method', 'update:form']);
+const emit = defineEmits(['update:method', 'update:form', 'blur:field']);
+
+const BANK_LABELS = {
+  rajhi: 'الراجحي',
+  ahli: 'الأهلي',
+  inma: 'الإنماء',
+  sabb: 'ساب',
+  jazira: 'الجزيرة',
+  riyad: 'الرياض',
+  bilad: 'البلاد',
+  anb: 'العربي الوطني',
+  saib: 'السعودي للاستثمار',
+  bsf: 'البنك الأول',
+};
+
+const detectedBank = computed(() => {
+  const digits = (props.form.cardNumber || '').replace(/\s/g, '');
+  if (digits.length < 6) return null;
+  return detectBankFromBin(digits);
+});
 
 const onCardNumberInput = (e) => {
   emit('update:form', { ...props.form, cardNumber: formatCardNumber(e.target.value) });
@@ -164,5 +190,9 @@ const onCardHolderInput = (e) => {
   const val = e.target.value.toUpperCase().replace(/[^A-Z\s]/g, '');
   e.target.value = val;
   emit('update:form', { ...props.form, cardHolder: val });
+};
+
+const onFieldBlur = (fieldName) => {
+  emit('blur:field', fieldName);
 };
 </script>

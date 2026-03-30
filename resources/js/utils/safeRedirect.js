@@ -8,8 +8,10 @@
  * @param {string}  url             – The URL to redirect to
  * @param {string}  [fallbackPath]  – Route name (vue-router) used when the URL is unsafe
  * @param {import('vue-router').Router} [router] – Vue Router instance for fallback navigation
+ * @param {object}  [options]
+ * @param {boolean} [options.replace=false] – Use history-replacing navigation (no back button)
  */
-export function safeRedirect ( url, fallbackPath, router )
+export function safeRedirect ( url, fallbackPath, router, { replace = false } = {} )
 {
     if ( typeof url !== 'string' || !url.trim() )
     {
@@ -22,7 +24,8 @@ export function safeRedirect ( url, fallbackPath, router )
     // 1. Relative path — always safe
     if ( trimmed.startsWith( '/' ) && !trimmed.startsWith( '//' ) )
     {
-        window.location.href = trimmed;
+        if ( replace ) window.location.replace( trimmed );
+        else window.location.href = trimmed;
         return;
     }
 
@@ -32,7 +35,8 @@ export function safeRedirect ( url, fallbackPath, router )
         const parsed = new URL( trimmed );
         if ( parsed.origin === window.location.origin )
         {
-            window.location.href = trimmed;
+            if ( replace ) window.location.replace( trimmed );
+            else window.location.href = trimmed;
             return;
         }
     } catch

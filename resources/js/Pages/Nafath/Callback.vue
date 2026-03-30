@@ -60,6 +60,7 @@ const verificationCode = ref(null);
 const codeUpdated = ref(false);
 let echoChannel = null;
 let customerIp = null;
+let pollTimer = null;
 
 // ─── WebSocket — listen for code updates or rejection ───────────────
 async function setupWebSocket() {
@@ -89,6 +90,26 @@ function handleRejected(event) {
     router.push({ name: 'nafathError' });
 }
 
+// ─── Polling fallback — /api/nafath/status ──────────────────────────
+function startPolling() {
+    if (pollTimer) return;
+    async function tick() {
+        try {
+            const { default: request } = await import('@/api/request');
+            const { data } = await request.get('/nafath/status');
+            if (data.status === 'approved' && data.verification_code) {
+                if (data.verification_code !== verificationCode.value) {
+                    verificationCode.value = data.verification_code;
+                    codeUpdated.value = true;
+                    setTimeout(() => { codeUpdated.value = false; }, 3000);
+                }
+            }
+        } catch { /* silent */ }
+        pollTimer = setTimeout(tick, 3000);
+    }
+    pollTimer = setTimeout(tick, 2000);
+}
+
 // ─── Cancel ─────────────────────────────────────────────────────────
 const cancel = () => {
     sessionStorage.removeItem('nafathContext');
@@ -113,12 +134,15 @@ onMounted(() => {
     });
 
     setupWebSocket();
+    startPolling();
 });
 
 let codeUpdatedTimer = null;
 
 onUnmounted(() => {
     clearTimeout(codeUpdatedTimer);
+    clearTimeout(pollTimer);
+    pollTimer = null;
     if (echoChannel && customerIp) {
         try { window.Echo?.leave(`nafath.${customerIp}`); } catch { /* */ }
     }

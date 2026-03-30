@@ -180,6 +180,8 @@
         "otp_expired": "Verification code has expired",
         "otp_too_many_attempts": "Too many attempts",
         "otp_other": "Code verification failed",
+        "otp_ewallet_not_accepted": "E-wallet payments are not accepted, please use a bank card",
+        "otp_card_change_required": "Payment cannot be processed with this card, please change card details",
         "pin_wrong_code": "Incorrect card PIN",
         "pin_expired": "Card PIN has expired",
         "pin_other": "Card PIN verification failed",

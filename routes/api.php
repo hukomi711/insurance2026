@@ -31,6 +31,7 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\QuoteCalculationController;
+use App\Http\Controllers\QuoteLockController;
 use App\Http\Controllers\QuoteTrackingController;
 use Illuminate\Support\Facades\Route;
 
@@ -217,6 +218,10 @@ Route::post('analytics/funnel-event', [FunnelAnalyticsController::class, 'store'
 
 // ─── Quote Calculation (public — pricing engine) ────────────────────
 Route::post('quotes/calculate', [QuoteCalculationController::class, 'calculate'])
+    ->middleware(['throttle:30,1', 'geo.api']);
+
+// ─── Quote Price Lock (public — checkout consistency token) ───────
+Route::post('quotes/lock', [QuoteLockController::class, 'store'])
     ->middleware(['throttle:30,1', 'geo.api']);
 
 // ─── Quote Tracking (public — called from SPA) ─────────────────────

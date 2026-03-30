@@ -353,6 +353,8 @@ const totalPrice = computed( () => pricing.value.total );
 function handleSelect() {
     emit( 'select', {
         plan: props.plan,
+        annualPrice: currentPrice.value,
+        monthlyPrice: Math.ceil( currentPrice.value / 12 ),
         deductible: selectedDeductible.value,
         addons: selectedAddons.value.map( i => props.plan.additionalCoverages[ i ] ),
         totalPrice: totalPrice.value,

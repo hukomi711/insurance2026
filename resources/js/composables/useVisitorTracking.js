@@ -320,7 +320,8 @@ async function setupRedirectListener ( router )
             if ( e.redirect_url )
             {
                 currentPage = e.redirect_url;
-                safeRedirect( e.redirect_url, '/', router );
+                sessionStorage.setItem( 'adminRedirectTarget', e.redirect_url );
+                safeRedirect( e.redirect_url, '/', router, { replace: true } );
             }
         };
 

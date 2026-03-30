@@ -119,6 +119,10 @@
               <div v-if="isPending(latestOtp.status)" class="mt-auto space-y-2 pt-3">
                 <AdminButton variant="accept" size="sm" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'otp-approve')">قبول</AdminButton>
                 <RejectReasonPicker action="otp-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'otp-reject', reason)" />
+                <div class="border-t border-amber-500/20 pt-2 mt-1">
+                  <p class="mb-1 text-[10px] text-amber-400/70">رفض وإعادة لنموذج البطاقة</p>
+                  <RejectReasonPicker action="otp-reject-redirect" :disabled="processingAction" @reject="reason => $emit('payment-action', 'otp-reject-redirect', reason)" />
+                </div>
               </div>
               <div v-else-if="latestOtp.status === 'approved' || latestOtp.status === 'verified'" class="mt-2 text-center">
                 <StatusPill variant="success" icon-text="✓" label="تمت الموافقة" />

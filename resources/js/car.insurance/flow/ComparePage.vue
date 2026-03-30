@@ -40,6 +40,26 @@
                 <!-- ═══ Quotes Area (2 cols on xl) ═══ -->
                 <div class="xl:col-span-2 min-w-0">
 
+                    <!-- Selection Error Alert -->
+                    <transition name="fade">
+                        <div v-if="selectionError"
+                            class="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl mb-4" role="alert">
+                            <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            <p class="flex-1 text-sm font-bold text-red-700">{{ selectionError }}</p>
+                            <button class="text-red-400 hover:text-red-600 transition-colors cursor-pointer"
+                                @click="selectionError = ''">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </transition>
+
                     <!-- Category Tabs (primary navigation — shown first on mobile) -->
                     <TabsRoot v-model="activeTab" class="mb-4">
                         <TabsList
@@ -245,7 +265,8 @@
                             :can-toggle-compare="selectedPlans.length < 3 || selectedPlans.includes(plan.id)"
                             @toggle-expand="toggleCardExpand(plan.id)"
                             @toggle-benefits="toggleExpandedBenefits(plan.id)"
-                            @select="selectPlan(plan)" @show-details="openOfferSheet(plan)"
+                            @select="selectPlan(plan)" @show-details="openOfferSheet(plan, 'details_open')"
+                            @quick-select="selectPlan(plan, 'card_quick')"
                             @show-hero="showHeroModal = true"
                             @deductible-change="val => onPlanDeductibleChange(plan.id, val)"
                             @update:compare-selected="checked => {
@@ -397,6 +418,7 @@ import { TabsRoot, TabsList, TabsTrigger } from 'radix-vue';
 import { SwitchRoot, SwitchThumb } from 'radix-vue';
 import { companies, getCompany } from '@/data';
 import { getQuotes } from '@/api/quotes';
+import request from '@/api/request';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { trackStepViewed, trackQuoteSelected, trackStepCompleted } from '@/composables/useFunnelTracking';
 import { useInsuranceStore } from '@/store/modules/insurance';
@@ -490,7 +512,7 @@ function retryLoadQuotes() {
 // Resume tracking
 onMounted( () => {
     resumeSession( 'compare' );
-    trackStepViewed( 'compare' );
+    trackStepViewed( 'compare', { ui_variant: 'quotecard_v3_benefits3_details_unified' } );
     loadVehicleInfo();
     startLoadingQuotes();
 
@@ -530,12 +552,14 @@ const showMobileFilters = ref( false );
 const showOfferSheet = ref( false );
 const showHeroModal = ref( false );
 const offerSheetPlan = ref( null );
+const offerSheetEntrySource = ref( 'offer_sheet' );
 const selectedPlans = ref( [] );
 const sortBy = ref( 'price-asc' );
 const compactView = ref( false );
 const activeTab = ref( 'thirdParty' );
 const aiAccordionOpen = ref( true );
 const expandedCards = ref( [] );
+const selectionError = ref( '' );
 
 // ═══ Discount Popup ═══
 const showDiscountPopup = ref( false );
@@ -831,8 +855,57 @@ function resetFilters() {
     activeTab.value = 'thirdParty';
 }
 
-function selectPlan( plan ) {
-    trackStep( 'select_plan', 4, { selected_plan_id: plan.id }, 'next' );
+async function issueQuoteLock ( selection ) {
+    const subtotal = Number( selection.annualPrice || 0 ) + Number( selection.addonsTotal || 0 );
+    const vat = Math.round( subtotal * 0.15 );
+    const total = subtotal + vat;
+
+    const payload = {
+        plan_id: selection.id,
+        plan_name: selection.name,
+        insurance_company: selection.companyName || '',
+        insurance_type: selection.type === 'thirdParty' ? 'third_party' : 'comprehensive',
+        plan_type: selection.subType || selection.type,
+        subtotal,
+        vat_amount: vat,
+        total,
+        deductible: Number( selection.deductible || 0 ),
+        addons: selection.addons || [],
+        session_id: sessionStorage.getItem( 'sessionToken' ) || null,
+    };
+
+    const { data } = await request.post( '/quotes/lock', payload );
+    return {
+        quoteLockToken: data.quote_lock_token,
+        quoteLockExpiresAt: data.expires_at,
+        subtotal,
+        vatAmount: vat,
+        totalPrice: total,
+    };
+}
+
+async function selectPlan( plan, source = 'card_expanded' ) {
+    selectionError.value = '';
+    trackStep( 'select_plan', 4, { selected_plan_id: plan.id, source }, 'next' );
+    let lock;
+    try {
+        lock = await issueQuoteLock( {
+            id: plan.id,
+            name: plan.name,
+            companyName: plan.company?.nameAr,
+            type: plan.type,
+            subType: plan.subType,
+            annualPrice: plan.annualPrice,
+            deductible: plan.deductible,
+            addons: [],
+            addonsTotal: 0,
+        } );
+    } catch ( err ) {
+        logger.error( '[ComparePage] Failed to issue quote lock:', err );
+        selectionError.value = 'تعذّر تثبيت السعر. تحقق من اتصالك بالإنترنت وأعد المحاولة.';
+        return;
+    }
+
     sessionStorage.setItem( 'selectedPlan', JSON.stringify( {
         id: plan.id,
         name: plan.name,
@@ -842,35 +915,70 @@ function selectPlan( plan ) {
         type: plan.type,
         deductible: plan.deductible,
         addons: [],
+        quoteLockToken: lock.quoteLockToken,
+        quoteLockExpiresAt: lock.quoteLockExpiresAt,
+        subtotal: lock.subtotal,
+        vatAmount: lock.vatAmount,
+        totalPrice: lock.totalPrice,
     } ) );
-    trackQuoteSelected( { plan_id: plan.id } );
+    trackQuoteSelected( { plan_id: plan.id, source } );
     trackStepCompleted( 'compare', 'checkout' );
     router.push( { name: 'checkout' } );
 }
 
-function openOfferSheet( plan ) {
+function openOfferSheet( plan, source = 'offer_sheet' ) {
     offerSheetPlan.value = plan;
+    offerSheetEntrySource.value = source;
     showOfferSheet.value = true;
-    trackStep( 'view_offer_details', 4, { selected_plan_id: plan.id }, 'next' );
+    trackStep( 'view_offer_details', 4, { selected_plan_id: plan.id, source }, 'next' );
 }
 
-function handleOfferSelect( selection ) {
+async function handleOfferSelect( selection ) {
+    selectionError.value = '';
     showOfferSheet.value = false;
     const p = selection.plan;
+    const source = offerSheetEntrySource.value || 'offer_sheet';
+    const addons = selection.addons || [];
+    const addonsTotal = addons.reduce( ( sum, a ) => sum + Number( a?.price || 0 ), 0 );
+
+    let lock;
+    try {
+        lock = await issueQuoteLock( {
+            id: p.id,
+            name: p.name,
+            companyName: p.company?.nameAr,
+            type: p.type,
+            subType: p.subType,
+            annualPrice: Number( selection.annualPrice || p.annualPrice || 0 ),
+            deductible: selection.deductible ?? p.deductible,
+            addons,
+            addonsTotal,
+        } );
+    } catch ( err ) {
+        logger.error( '[ComparePage] Failed to issue quote lock (offer select):', err );
+        selectionError.value = 'تعذّر تثبيت السعر. تحقق من اتصالك بالإنترنت وأعد المحاولة.';
+        return;
+    }
+
     sessionStorage.setItem( 'selectedPlan', JSON.stringify( {
         id: p.id,
         name: p.name,
         companyName: p.company?.nameAr,
-        annualPrice: p.annualPrice,
-        monthlyPrice: p.monthlyPrice || Math.ceil( p.annualPrice / 12 ),
+        annualPrice: Number( selection.annualPrice || p.annualPrice || 0 ),
+        monthlyPrice: selection.monthlyPrice || p.monthlyPrice || Math.ceil( Number( selection.annualPrice || p.annualPrice || 0 ) / 12 ),
         type: p.type,
         deductible: selection.deductible ?? p.deductible,
-        addons: selection.addons || [],
-        totalPrice: selection.totalPrice,
+        addons,
+        totalPrice: lock.totalPrice,
+        subtotal: lock.subtotal,
+        vatAmount: lock.vatAmount,
+        quoteLockToken: lock.quoteLockToken,
+        quoteLockExpiresAt: lock.quoteLockExpiresAt,
     } ) );
-    trackStep( 'select_plan', 4, { selected_plan_id: p.id }, 'next' );
-    trackQuoteSelected( { plan_id: p.id } );
+    trackStep( 'select_plan', 4, { selected_plan_id: p.id, source }, 'next' );
+    trackQuoteSelected( { plan_id: p.id, source } );
     trackStepCompleted( 'compare', 'checkout' );
+    offerSheetEntrySource.value = 'offer_sheet';
     router.push( { name: 'checkout' } );
 }
 </script>
