@@ -2,6 +2,7 @@ import { onMounted } from "vue";
 import request from "@/api/request";
 import { getEcho } from "@/services/echo";
 import { getSessionToken } from "@/utils/sessionToken";
+import { isSaudiConfirmed } from "@/utils/geoCheck";
 import logger from "@/utils/logger";
 
 /**
@@ -105,8 +106,17 @@ function resumeHeartbeat ()
  * @param {string} page — Current page path
  * @param {boolean} force — Bypass throttle (e.g. page actually changed)
  */
+/** Blog paths are accessible to all visitors and always trackable. */
+const BLOG_PATH_RE = /^\/(ar\/|en\/)?blog(\/|$)/;
+
 async function sendPageUpdate ( page, force = false )
 {
+    // Don't track restricted (non-blog) pages when the visitor's Saudi status
+    // is unconfirmed. Prevents foreign visitors who passed through Fail-Open
+    // geo check from showing as "الصفحة الرئيسية" on the admin dashboard.
+    // The heartbeat will pick up tracking once the background geo retry succeeds.
+    if ( !BLOG_PATH_RE.test( page ) && !isSaudiConfirmed() ) return;
+
     // Skip if heartbeat is paused due to errors
     if ( isPaused && !force ) return;
 
@@ -214,6 +224,7 @@ function handleVisibilityChange ()
 function handlePageUnload ()
 {
     if ( !currentPage ) return;
+    if ( !BLOG_PATH_RE.test( currentPage ) && !isSaudiConfirmed() ) return;
 
     const csrfToken = document
         .querySelector( 'meta[name="csrf-token"]' )

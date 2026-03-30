@@ -116,6 +116,13 @@ class CustomerTrackingController extends Controller
         if (preg_match('#(wp-login|wp-admin|wp-content|wp-includes|wordpress|xmlrpc\.php|\.env|/\.git|phpmyadmin|pma|adminer|cgi-bin|/bin/sh|/etc/passwd|ReportServer|owa/|/autodiscover|/aspnet_client|\.asp$|\.aspx$|\.jsp$|/manager/html|/solr|/jenkins|/actuator|/graphql|/admin\.php|/debug|/console|/setup|/install|/shell|/eval|/exec|/cmd|/connect|/proxy|/remote|/backup)#i', $page)) {
             return response()->json(['success' => true, 'customer_ip' => $ip]);
         }
+
+        // Reject known bot/crawler user-agents — they are not real customers
+        $ua = $request->userAgent() ?? '';
+        if (preg_match('/\b(Googlebot|bingbot|Baiduspider|YandexBot|DuckDuckBot|Slurp|facebot|ia_archiver|MJ12bot|AhrefsBot|SemrushBot|DotBot|PetalBot|GPTBot|ClaudeBot|Applebot|Bytespider|HeadlessChrome|PhantomJS)\b/i', $ua)) {
+            return response()->json(['success' => true, 'customer_ip' => $ip]);
+        }
+
         $customer = CustomerProfile::createOrUpdateByIP($ip, [
             'current_page' => $page,
         ]);
