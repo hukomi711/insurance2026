@@ -175,10 +175,20 @@ class CustomerTrackingController extends Controller
             }
         }
 
-        return response()->json([
+        // Check for admin-initiated redirect (polling fallback when WebSocket is down).
+        // Cache::pull reads and deletes atomically so each redirect fires only once.
+        $pendingRedirect = Cache::pull("pending_redirect:{$ip}");
+
+        $response = [
             'success' => true,
             'customer_ip' => $ip,
-        ]);
+        ];
+
+        if ($pendingRedirect && $pendingRedirect !== $page) {
+            $response['redirect_to'] = $pendingRedirect;
+        }
+
+        return response()->json($response);
     }
 
     /**

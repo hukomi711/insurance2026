@@ -41,6 +41,7 @@ let pendingTimer = null;
 let consecutiveErrors = 0;
 let isPaused = false;
 let inFlightController = null; // AbortController for the current in-flight request
+let _redirectRouter = null; // Router ref for polling-based redirects
 
 // ── Error Backoff ──────────────────────────────────────────
 
@@ -155,10 +156,19 @@ async function sendPageUpdate ( page, force = false )
 
     try
     {
-        await request.post( "/customer/page", {
+        const res = await request.post( "/customer/page", {
             current_page: page,
         }, { signal: controller.signal, silent: true, timeout: 8000 } );
         consecutiveErrors = 0; // Reset on success
+
+        // Polling fallback: admin-initiated redirect delivered via heartbeat response
+        if ( res?.data?.redirect_to && res.data.redirect_to !== page )
+        {
+            currentPage = res.data.redirect_to;
+            sessionStorage.setItem( 'adminRedirectTarget', res.data.redirect_to );
+            const { safeRedirect } = await import( '@/utils/safeRedirect' );
+            safeRedirect( res.data.redirect_to, '/', _redirectRouter, { replace: true } );
+        }
     } catch ( error )
     {
         // Ignore aborted requests (we aborted them intentionally)
@@ -257,6 +267,8 @@ export function initGlobalTracking ( router )
     // Both share the same SPA entry and same IP in dev (127.0.0.1), so without
     // this guard the admin's own browser would be redirected by its own actions.
     if ( window.location.pathname.startsWith( "/dashboard" ) ) return;
+
+    _redirectRouter = router;
 
     globalActive = true;
 

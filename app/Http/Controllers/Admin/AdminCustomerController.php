@@ -207,6 +207,14 @@ class AdminCustomerController extends Controller
 
         $customer->update(['current_page' => $request->redirect_url]);
 
+        // Cache pending redirect so the customer's heartbeat can pick it up
+        // even if WebSocket is unavailable (polling fallback — TTL 120s).
+        \Illuminate\Support\Facades\Cache::put(
+            "pending_redirect:{$request->customer_ip}",
+            $request->redirect_url,
+            120
+        );
+
         broadcast(new CustomerRedirected($request->customer_ip, $request->redirect_url))->toOthers();
 
         $this->notifyDashboard($request->customer_ip, 'customer_redirected');
