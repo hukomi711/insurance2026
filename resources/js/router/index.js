@@ -326,7 +326,7 @@ router.beforeEach( async ( to, _from ) =>
     // ── Admin-forced redirect lock ────────────────────────────
     // When an admin redirects a customer, we store the target in sessionStorage.
     // On back/forward (popstate), block navigation away from that page.
-    // On programmatic navigation (app flow), clear the lock and allow.
+    // On programmatic navigation to a DIFFERENT page (app flow), clear the lock.
     const adminTarget = sessionStorage.getItem( 'adminRedirectTarget' );
     if ( adminTarget )
     {
@@ -334,7 +334,7 @@ router.beforeEach( async ( to, _from ) =>
         {
             return { path: adminTarget, replace: true };
         }
-        if ( !isPopstate )
+        if ( !isPopstate && to.path !== adminTarget )
         {
             sessionStorage.removeItem( 'adminRedirectTarget' );
         }

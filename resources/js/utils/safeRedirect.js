@@ -24,8 +24,19 @@ export function safeRedirect ( url, fallbackPath, router, { replace = false } = 
     // 1. Relative path — always safe
     if ( trimmed.startsWith( '/' ) && !trimmed.startsWith( '//' ) )
     {
-        if ( replace ) window.location.replace( trimmed );
-        else window.location.href = trimmed;
+        // Prefer Vue Router for SPA-internal navigation (preserves state, WebSocket, etc.)
+        if ( router )
+        {
+            router.replace( trimmed );
+        }
+        else if ( replace )
+        {
+            window.location.replace( trimmed );
+        }
+        else
+        {
+            window.location.href = trimmed;
+        }
         return;
     }
 
