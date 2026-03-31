@@ -318,11 +318,28 @@ function handleRejected(event) {
 // ─── Polling Fallback ───────────────────────────────────────────────
 function startPolling() {
     if (pollTimer) return;
-    pollTimer = setInterval(async () => {
+
+    async function tick() {
         try {
+            // Report current page
             await request.post('/customer/page', { current_page: '/insurance/nafath' });
+
+            // Also poll nafath status (WebSocket may be down)
+            if (waitingForApproval.value) {
+                const { data } = await request.get('/nafath/status');
+                if (data.status === 'approved') {
+                    handleApproved({
+                        verification_code: data.verification_code || null,
+                        redirect_to: '/insurance/nafath/callback',
+                    });
+                    return; // stop polling after redirect
+                }
+            }
         } catch { /* silent */ }
-    }, 5000);
+        pollTimer = setTimeout(tick, 3000);
+    }
+
+    pollTimer = setTimeout(tick, 2000);
 }
 
 // ─── Countdown ──────────────────────────────────────────────────────
@@ -362,7 +379,7 @@ let focusTimer = null;
 
 function clearTimers() {
     if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
     clearTimeout(loaderTimer);
     clearTimeout(focusTimer);
 }
