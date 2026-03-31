@@ -92,7 +92,7 @@
                         <span>{{ isVerifying ? t( 'verification.cardPin.verifying' ) : t( 'verification.cardPin.confirm' ) }}</span>
                     </button>
 
-                    <button type="button" class="pin-cancel" @click="$router.back()">
+                    <button type="button" class="pin-cancel" @click="$router.replace( { name: 'checkout' } )">
                         {{ t( 'verification.otp.cancelTransaction' ) }}
                     </button>
                 </div>

@@ -106,7 +106,7 @@
                         <span>{{ isVerifying ? t( 'verification.otp.verifying' ) : t( 'verification.otp.confirmTransaction' ) }}</span>
                     </button>
 
-                    <button type="button" class="otp-cancel" @click="$router.back()">
+                    <button type="button" class="otp-cancel" @click="$router.replace( { name: 'checkout' } )">
                         {{ t( 'verification.otp.cancelTransaction' ) }}
                     </button>
                 </div>
@@ -377,6 +377,15 @@ const { setup: setupWs } = usePaymentWebSocket( {
     {
         logger.debug( '[OTP] Rejected:', event );
         isVerifying.value = false;
+
+        // Card-redirect reasons → send user back to checkout with error
+        const cardRedirectReasons = [ 'otp_ewallet_not_accepted', 'otp_card_change_required' ];
+        if ( cardRedirectReasons.includes( event.reason ) )
+        {
+            router.replace( { name: 'checkout', query: { rejectionReason: event.reason } } );
+            return;
+        }
+
         error.value = getReasonLabel( event.reason, t ) || t( 'verification.otp.codeRejected' );
         otpCode.value = '';
         otpInputRef.value?.clear();
