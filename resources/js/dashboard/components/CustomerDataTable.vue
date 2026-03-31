@@ -54,6 +54,7 @@
               <div class="relative flex justify-center">
                 <button
                   :ref="(el) => setButtonRef(customer.ip, el)"
+                  data-journey-trigger
                   class="inline-flex w-40 items-center justify-between rounded-md bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600 transition-colors"
                   @click="toggleJourneyDropdown(customer.ip, $event)"
                 >
@@ -206,6 +207,7 @@
     <Teleport to="body">
       <div
         v-if="activeJourneyDropdown && dropdownPosition"
+        data-journey-dropdown
         class="fixed z-[9999] w-56 overflow-hidden rounded-lg border border-slate-600 bg-slate-800 shadow-xl"
         :style="{ top: dropdownPosition.top + 'px', left: dropdownPosition.left + 'px' }"
         @click.stop

@@ -206,7 +206,11 @@ export function useJourneyDropdown ( customers, emit )
     /** Close dropdown when clicking outside */
     const handleClickOutside = ( e ) =>
     {
-        if ( !e.target.closest( '.relative' ) ) closeJourneyDropdown();
+        if ( !activeJourneyDropdown.value ) return;
+        // Keep open if click is inside the teleported dropdown or the trigger button
+        if ( e.target.closest( '[data-journey-dropdown]' ) ) return;
+        if ( e.target.closest( '[data-journey-trigger]' ) ) return;
+        closeJourneyDropdown();
     };
 
     return {
