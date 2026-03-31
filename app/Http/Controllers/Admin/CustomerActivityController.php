@@ -16,19 +16,23 @@ class CustomerActivityController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $allowedStages = ['customer_info', 'vehicle_info', 'compare', 'checkout', 'payment', 'mojaz'];
+        $allowedStatuses = ['active', 'completed', 'failed'];
+        $perPage = min((int) $request->input('per_page', 30), 100);
+
         $query = CustomerActivity::with('customerProfile:id,full_name,phone_number,ip_address')
             ->search($request->input('search'))
             ->when(
-                $request->filled('stage') && $request->input('stage') !== 'all',
+                $request->filled('stage') && in_array($request->input('stage'), $allowedStages, true),
                 fn($q) => $q->ofStage($request->input('stage'))
             )
             ->when(
-                $request->filled('status') && $request->input('status') !== 'all',
+                $request->filled('status') && in_array($request->input('status'), $allowedStatuses, true),
                 fn($q) => $q->where('status', $request->input('status'))
             )
             ->orderByDesc('created_at');
 
-        $activities = $query->paginate($request->input('per_page', 30));
+        $activities = $query->paginate($perPage);
 
         return response()->json([
             'success'    => true,
@@ -51,8 +55,9 @@ class CustomerActivityController extends Controller
      */
     private function getStats(): array
     {
-        return Cache::remember('admin:activity_stats', 10, function () {
+        return Cache::remember('admin:activity_stats', 30, function () {
             $row = CustomerActivity::query()
+                ->where('created_at', '>=', now()->subDays(7))
                 ->select([
                     DB::raw('COUNT(*) as total'),
                     DB::raw("SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_count"),

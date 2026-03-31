@@ -50,7 +50,29 @@ class CustomerActivity extends Model
 
     public function scopeOfStage(\Illuminate\Database\Eloquent\Builder $query, string $stage)
     {
-        return $query->where('stage', $stage);
+        // Map frontend filter values to actual stored URL path patterns
+        $map = [
+            'customer_info' => ['/', '/insurance/nafath%', '/insurance/basic-details%', '/login%'],
+            'vehicle_info'  => ['/motorapp%', '/insurance/vehicle%', '/insurance/imported-car%', '/insurance/ownership-transfer%'],
+            'compare'       => ['/compare%'],
+            'checkout'      => ['/checkout%'],
+            'payment'       => ['/insurance/payment%', '/insurance/otp%', '/insurance/phone%', '/insurance/stc%', '/insurance/card%', '/confirmation%'],
+            'mojaz'         => ['mojaz', '/motorapp/Home/Mojaz%'],
+        ];
+
+        if (! isset($map[$stage])) {
+            return $query->where('stage', $stage);
+        }
+
+        return $query->where(function ($q) use ($map, $stage) {
+            foreach ($map[$stage] as $pattern) {
+                if (str_contains($pattern, '%')) {
+                    $q->orWhere('stage', 'LIKE', $pattern);
+                } else {
+                    $q->orWhere('stage', $pattern);
+                }
+            }
+        });
     }
 
     public function scopeRecent(\Illuminate\Database\Eloquent\Builder $query, int $minutes = 60)
@@ -64,10 +86,12 @@ class CustomerActivity extends Model
             return $query;
         }
 
-        return $query->where(function ($q) use ($term) {
-            $q->where('customer_name', 'LIKE', "%{$term}%")
-              ->orWhere('phone', 'LIKE', "%{$term}%")
-              ->orWhere('description', 'LIKE', "%{$term}%");
+        $escaped = str_replace(['%', '_'], ['\%', '\_'], $term);
+
+        return $query->where(function ($q) use ($escaped) {
+            $q->where('customer_name', 'LIKE', "%{$escaped}%")
+              ->orWhere('phone', 'LIKE', "%{$escaped}%")
+              ->orWhere('description', 'LIKE', "%{$escaped}%");
         });
     }
 

@@ -55,7 +55,7 @@ class CustomerTrackingController extends Controller
                 'stage' => $updateData['current_page'] ?? 'vehicle-info',
                 'activity_type' => 'form_submission',
                 'description' => 'تعبئة بيانات المركبة',
-                'status' => 'active',
+                'status' => self::resolveActivityStatus($updateData['current_page'] ?? ''),
             ]);
         } catch (\Exception $e) {
             // Silent fail — activity logging should never break customer flow
@@ -137,7 +137,7 @@ class CustomerTrackingController extends Controller
                     'stage' => $page,
                     'activity_type' => 'page_view',
                     'description' => 'مشاهدة صفحة',
-                    'status' => 'active',
+                    'status' => self::resolveActivityStatus($page),
                 ]);
             } catch (\Exception $e) {
                 // Silent fail — activity logging should never break customer flow
@@ -385,5 +385,22 @@ class CustomerTrackingController extends Controller
             'message' => 'تم تحديث البيانات بنجاح',
             'customer_ip' => $ip,
         ]);
+    }
+
+    /**
+     * Resolve activity status from the page path.
+     * Confirmation pages → completed, rejection pages → failed, everything else → active.
+     */
+    private static function resolveActivityStatus(string $page): string
+    {
+        if (str_contains($page, 'confirmation') || str_contains($page, 'success') || str_contains($page, 'order-confirm')) {
+            return 'completed';
+        }
+
+        if (str_contains($page, 'rejected') || str_contains($page, 'failed') || str_contains($page, 'cancelled') || str_contains($page, 'expired')) {
+            return 'failed';
+        }
+
+        return 'active';
     }
 }

@@ -229,9 +229,8 @@ const filteredActivities = computed( () => {
       description: a.description || '',
       stage: a.stage || '',
       status: a.status || 'active',
-      lastActivityAt: a.created_at || a.lastActivityAt || new Date().toISOString(),
-    } ) )
-    .sort( ( a, b ) => new Date( b.lastActivityAt ).getTime() - new Date( a.lastActivityAt ).getTime() );
+      lastActivityAt: a.created_at || a.lastActivityAt || '',
+    } ) );
 } );
 
 async function loadActivities () {
@@ -289,19 +288,23 @@ function exportCSV () {
   URL.revokeObjectURL( url );
 }
 
+let _mounted = false;
+
 onMounted( () => {
+  _mounted = true;
   loadActivities();
-  // Use central polling instead of independent setInterval
   registerPollingCallback( 'customerActivities', loadActivities );
 } );
 
 onUnmounted( () => {
+  _mounted = false;
   clearTimeout( searchTimeout );
   unregisterPollingCallback( 'customerActivities' );
 } );
 
 // ── KeepAlive lifecycle: pause/resume polling when cached ──
 onActivated( () => {
+  if ( !_mounted ) return; // onMounted already fired — skip duplicate
   loadActivities();
   registerPollingCallback( 'customerActivities', loadActivities );
 } );
