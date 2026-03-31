@@ -108,6 +108,7 @@
             <div v-else-if="customers.length > 0">
                 <CustomerDataTable
                     :customers="customers"
+                    :changed-fields="changedFields"
                     :processing-action="processingAction"
                     @delete-card="handleDeleteCard"
                     @show-details="handleShowDetails"
@@ -802,6 +803,50 @@ function handleWindowRead ( event ) {
 // All mutations already replace items via spread so triggerRef() is used for in-place changes.
 const customers = shallowRef( [] );
 
+// ── Change Highlighting ──
+// Tracks which fields changed for each customer (by IP) since the last refresh.
+// Used by CustomerDataTable to flash changed cells.
+const changedFields = ref( new Map() ); // ip → Set<fieldName>
+const _prevSnapshot = new Map();       // ip → customer object (last known state)
+
+const TRACKED_FIELDS = [ 'is_active', 'full_name', 'nationalId', 'national_id', 'city', 'country', 'ip' ];
+
+function _resolveCurrentPage ( c ) {
+    return c?.journey?.current_page || c?.current_page || null;
+}
+
+function computeChanges ( newRows ) {
+    const newChanges = new Map();
+    for ( const customer of newRows ) {
+        const ip = customer.ip;
+        if ( !ip ) continue;
+        const prev = _prevSnapshot.get( ip );
+        if ( prev ) {
+            const changed = new Set();
+            for ( const field of TRACKED_FIELDS ) {
+                if ( customer[ field ] !== prev[ field ] ) changed.add( field );
+            }
+            if ( _resolveCurrentPage( customer ) !== _resolveCurrentPage( prev ) ) {
+                changed.add( 'current_page' );
+            }
+            if ( changed.size > 0 ) newChanges.set( ip, changed );
+        }
+        // Always update snapshot with a lightweight plain copy
+        _prevSnapshot.set( ip, {
+            ip: customer.ip,
+            is_active: customer.is_active,
+            full_name: customer.full_name,
+            nationalId: customer.nationalId,
+            national_id: customer.national_id,
+            city: customer.city,
+            country: customer.country,
+            current_page: customer.current_page,
+            journey: customer.journey ? { current_page: customer.journey.current_page } : null,
+        } );
+    }
+    return newChanges;
+}
+
 // ── Mark-Viewed Race-Condition Guard ──
 // When an admin clicks a button, we optimistically set has_new_X = false.
 // But a concurrent refreshCustomers / patchSingleCustomer API response may
@@ -956,7 +1001,9 @@ const refreshCustomers = async () => {
         }
         const { data } = await getCustomers( params );
         const rows = data.data || [];
-        customers.value = applyNotificationGuards( rows );
+        const guarded = applyNotificationGuards( rows );
+        changedFields.value = computeChanges( guarded );
+        customers.value = guarded;
         // Update pagination state from API response
         currentPage.value = data.current_page ?? 1;
         lastPage.value = data.last_page ?? 1;
@@ -987,6 +1034,13 @@ const patchSingleCustomer = async ( customerId ) => {
         const { data } = await getCustomer( customerId );
         if ( !data?.success || !data?.data ) return;
         const [ guarded ] = applyNotificationGuards( [ data.data ] );
+        // Compute per-field changes for this single customer and merge into changedFields
+        const single = computeChanges( [ guarded ] );
+        if ( single.size > 0 ) {
+            const merged = new Map( changedFields.value );
+            for ( const [ ip, fields ] of single ) merged.set( ip, fields );
+            changedFields.value = merged;
+        }
         const idx = customers.value.findIndex( c => c.id === customerId );
         if ( idx !== -1 ) {
             customers.value[ idx ] = guarded;

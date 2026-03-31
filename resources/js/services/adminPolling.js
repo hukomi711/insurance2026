@@ -69,10 +69,7 @@ async function _tick ()
             // Collect all async work for this tick
             const jobs = [];
 
-            // ── WS-first: skip customer polling when WS is the primary source ──
-            // Polling is pure fallback — only runs when WS is disconnected or not ready.
-            const skipCustomerPolling = _initialLoadComplete && _wsState === 'ready';
-
+            // ── Always poll customers every 5s (WS supplements but does not replace) ──
             let customerCadence = CUSTOMERS_EVERY;
             if ( !_isTabVisible )
             {
@@ -80,15 +77,7 @@ async function _tick ()
             }
 
             // ── Page callbacks ──
-            if ( skipCustomerPolling )
-            {
-                // WS is primary — no customer polling needed
-                if ( tickCount % 12 === 0 )
-                {
-                    logger.debug( `[AdminPolling] tick #${ tickCount } — customer polling skipped (WS active)` );
-                }
-            }
-            else if ( ( tickCount % customerCadence === 0 || _immediateRequested ) && !_isCustomerPollingPaused )
+            if ( ( tickCount % customerCadence === 0 || _immediateRequested ) && !_isCustomerPollingPaused )
             {
                 const callbackKeys = Object.entries( registeredStores )
                     .filter( ( [ , v ] ) => typeof v === 'function' )

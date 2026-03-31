@@ -23,7 +23,10 @@
             v-for="(customer, index) in customers"
             :key="customer.id"
             class="transition-colors hover:bg-gray-700"
-            :class="{ 'bg-amber-900/30': customer.has_new_vehicle || customer.has_new_insurance || customer.has_new_payment }"
+            :class="{
+              'bg-amber-900/30': customer.has_new_vehicle || customer.has_new_insurance || customer.has_new_payment,
+              'row-changed': isFieldChanged(customer, 'is_active', 'current_page', 'full_name', 'nationalId', 'national_id', 'city', 'country', 'ip'),
+            }"
           >
             <!-- حذف -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
@@ -50,7 +53,7 @@
             </td>
 
             <!-- المسار الحالي -->
-            <td class="px-3 py-2 text-center whitespace-nowrap">
+            <td class="px-3 py-2 text-center whitespace-nowrap" :class="{ 'cell-changed': isFieldChanged(customer, 'current_page') }">
               <div class="relative flex justify-center">
                 <button
                   :ref="(el) => setButtonRef(customer.ip, el)"
@@ -126,7 +129,7 @@
             </td>
 
             <!-- الاسم -->
-            <td class="px-3 py-2 font-medium text-white whitespace-nowrap">{{ getCustomerName(customer) || '—' }}</td>
+            <td class="px-3 py-2 font-medium text-white whitespace-nowrap" :class="{ 'cell-changed': isFieldChanged(customer, 'full_name') }">{{ getCustomerName(customer) || '\u2014' }}</td>
 
             <!-- البيانات الأساسية -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
@@ -158,10 +161,10 @@
             </td>
 
             <!-- رقم الهوية -->
-            <td class="px-3 py-2 font-mono text-xs text-white whitespace-nowrap">{{ customer.nationalId || '—' }}</td>
+            <td class="px-3 py-2 font-mono text-xs text-white whitespace-nowrap" :class="{ 'cell-changed': isFieldChanged(customer, 'nationalId', 'national_id') }">{{ customer.nationalId || '\u2014' }}</td>
 
             <!-- الموقع -->
-            <td class="px-3 py-2 text-center whitespace-nowrap">
+            <td class="px-3 py-2 text-center whitespace-nowrap" :class="{ 'cell-changed': isFieldChanged(customer, 'city', 'country') }">
               <div
                 v-if="customer.city || customer.country"
                 class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium"
@@ -180,10 +183,10 @@
             </td>
 
             <!-- IP -->
-            <td class="px-3 py-2 font-mono text-xs text-white whitespace-nowrap">{{ customer.ip }}</td>
+            <td class="px-3 py-2 font-mono text-xs text-white whitespace-nowrap" :class="{ 'cell-changed': isFieldChanged(customer, 'ip') }">{{ customer.ip }}</td>
 
             <!-- الحالة -->
-            <td class="px-2 py-2 text-center whitespace-nowrap">
+            <td class="px-2 py-2 text-center whitespace-nowrap" :class="{ 'cell-changed': isFieldChanged(customer, 'is_active') }">
               <span
                 class="inline-block h-3 w-3 rounded-full"
                 :class="
@@ -335,9 +338,21 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  changedFields: {
+    // Map<ip, Set<fieldName>> — injected by DashboardHome after each refresh
+    type: Object,
+    default: () => new Map(),
+  },
 });
 
 const emit = defineEmits(['delete-card', 'show-details', 'action', 'redirect', 'modal-opened', 'modal-closed']);
+
+// Returns true when a tracked field changed for this customer in the latest refresh.
+const isFieldChanged = ( customer, ...fields ) => {
+  const set = props.changedFields.get( customer.ip );
+  if ( !set ) return false;
+  return fields.some( f => set.has( f ) );
+};
 
 // ── Payment Modal (composable) ──────────────────────────────────
 const {
@@ -578,6 +593,25 @@ onUnmounted(() => {
 
 .customer-data-table {
   direction: ltr;
+}
+
+/* ── Cell change highlight ── */
+@keyframes cell-flash {
+  0%   { background-color: rgba(234, 179, 8, 0.30); }
+  70%  { background-color: rgba(234, 179, 8, 0.12); }
+  100% { background-color: transparent; }
+}
+.cell-changed {
+  animation: cell-flash 3.5s ease-out forwards;
+}
+
+/* ── Row change highlight (tracked fields: status, page, name, ID, location, IP) ── */
+@keyframes row-flash {
+  0%   { background-color: rgba(59, 130, 246, 0.10); }
+  100% { background-color: transparent; }
+}
+.row-changed {
+  animation: row-flash 3.5s ease-out forwards;
 }
 
 .customer-data-table table td,
