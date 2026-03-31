@@ -94,8 +94,9 @@
                         {{ friendlyRejectionReason || 'لم تتم الموافقة على العملية' }}
                     </p>
                     <p class="text-xs text-slate-500 mt-1">يمكنك المحاولة مرة أخرى ببطاقة مختلفة</p>
+                    <p class="text-xs text-slate-400 mt-2">سيتم إعادة التوجيه تلقائياً...</p>
                     <button
-                        class="mt-4 inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold text-sm px-6 py-2.5 rounded-xl transition-colors cursor-pointer"
+                        class="mt-3 inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold text-sm px-6 py-2.5 rounded-xl transition-colors cursor-pointer"
                         @click="goBackToCheckout">
                         <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -204,6 +205,13 @@ const { status: paymentStatus, rejectionReason, setup: setupWs } = usePaymentWeb
     onRejected ( event )
     {
         logger.debug( '[PaymentWaiting] Payment rejected:', event );
+        // Clear otpContext so the beforeEnter guard blocks re-entry
+        sessionStorage.removeItem( 'otpContext' );
+        // Auto-redirect to checkout after brief visual feedback
+        setTimeout( () =>
+        {
+            router.replace( { name: 'checkout', query: { rejectionReason: event.reason || '' } } );
+        }, 3000 );
     },
 
     async pollFn ( { handleApproved, handleRejected } )
@@ -232,7 +240,8 @@ const friendlyRejectionReason = computed( () => getReasonLabel( rejectionReason.
 
 function goBackToCheckout ()
 {
-    router.push( { name: 'checkout', query: { rejectionReason: rejectionReason.value || '' } } );
+    sessionStorage.removeItem( 'otpContext' );
+    router.replace( { name: 'checkout', query: { rejectionReason: rejectionReason.value || '' } } );
 }
 
 // "Taking too long" indicator — shown after 30 seconds of waiting
