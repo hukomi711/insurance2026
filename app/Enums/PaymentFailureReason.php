@@ -78,7 +78,7 @@ final class PaymentFailureReason
         return 'تعذر إتمام العملية';
     }
 
-    public static function actionFor(string $reason): ?string
+    public static function actionFor(string $reason): string
     {
         return match ($reason) {
             self::RAJHI_NOT_SUPPORTED => 'use_another_card',
