@@ -175,8 +175,8 @@ class QuoteCalculationServiceTest extends TestCase
         $this->assertEquals(1.0, $result['pricingFactors']['ncd']);
         $this->assertEquals('neutral (missing)', $result['notes']['drivingExperience']);
         $this->assertEquals('neutral (missing)', $result['notes']['ncdYears']);
-        // Unknown city now neutral (_default = 1.00)
-        $this->assertEquals(1.0, $result['pricingFactors']['lifestyle']);
+        // Unknown city is neutral, but mileage '3' currently applies 1.20
+        $this->assertEquals(1.2, $result['pricingFactors']['lifestyle']);
     }
 
     /**
