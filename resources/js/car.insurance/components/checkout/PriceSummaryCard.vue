@@ -6,7 +6,7 @@
     <!-- مبلغ الوثيقة -->
     <div class="flex flex-wrap justify-between items-center gap-2 px-3 mb-4">
       <span class="text-black text-base font-bold">مبلغ الوثيقة</span>
-      <span class="text-black text-base font-bold ms-auto ltr-nums flex items-center gap-1">
+      <span class="text-black text-base font-bold ms-auto ltr-nums inline-flex items-center gap-1 whitespace-nowrap">
         <span>{{ formatDecimal(subtotal) }}</span>
         <SarIcon className="size-3 text-black" />
       </span>
@@ -41,7 +41,7 @@
     <!-- المجموع (بدون ضريبة) -->
     <div class="flex flex-wrap justify-between items-center gap-2 px-3 mb-1">
       <span class="text-slate-500 text-base font-semibold">المجموع (بدون ضريبة):</span>
-      <span class="text-slate-500 text-base font-semibold ms-auto ltr-nums flex items-center gap-1">
+      <span class="text-slate-500 text-base font-semibold ms-auto ltr-nums inline-flex items-center gap-1 whitespace-nowrap">
         <span>{{ formatDecimal(totalPrice - vatAmount) }}</span>
         <SarIcon className="size-3 text-slate-500" />
       </span>
@@ -50,7 +50,7 @@
     <!-- ضريبة القيمة المضافة -->
     <div class="flex flex-wrap justify-between items-center gap-2 px-3 mb-2">
       <span class="text-slate-500 text-base font-semibold">ضريبة القيمة المضافة (15%):</span>
-      <span class="text-slate-500 text-base font-semibold ms-auto ltr-nums flex items-center gap-1">
+      <span class="text-slate-500 text-base font-semibold ms-auto ltr-nums inline-flex items-center gap-1 whitespace-nowrap">
         <span>+{{ formatDecimal(vatAmount) }}</span>
         <SarIcon className="size-3 text-slate-500" />
       </span>
@@ -78,7 +78,7 @@
       <div class="relative z-[2] text-white flex flex-wrap justify-between items-start gap-2">
         <span class="font-bold text-xl leading-6">المجموع</span>
         <div class="text-end ms-auto leading-6">
-          <span class="font-bold text-xl ltr-nums flex items-center gap-1 justify-end">
+          <span class="font-bold text-xl ltr-nums inline-flex items-center gap-1 justify-end whitespace-nowrap">
             <span>{{ formatDecimal(totalPrice) }}</span>
             <SarIcon className="size-4 text-white" />
           </span>

@@ -87,7 +87,7 @@
             </div>
 
             <!-- Resend -->
-            <div v-if="resendTimer <= 0" class="otp-card__resend">
+            <div v-if="resendTimer <= 0 || codeExpired" class="otp-card__resend">
                 <button :disabled="isResending" class="otp-card__resend-btn" @click="resendOtp">
                     <svg v-if="isResending" class="otp-card__spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />

