@@ -1,24 +1,15 @@
-import alinma from '../../images/logo/banks/alinma.svg';
-import alrajhi from '../../images/logo/banks/alrajhi.svg';
-import anb from '../../images/logo/banks/anb.svg';
-import albilad from '../../images/logo/banks/Bank_Albilad.svg';
-import aljazira from '../../images/logo/banks/Bank_Aljazira.svg';
-import riyad from '../../images/logo/banks/Riyad_Bank.svg';
-import sabb from '../../images/logo/banks/SABB.svg';
-import fransi from '../../images/logo/banks/Saudi_Fransi_Capital.png';
-import saudiInvestment from '../../images/logo/banks/Saudi_Investment.svg';
-import snb from '../../images/logo/banks/SNB.svg';
-
-/** Keys match config/bank_bins.php and bankDetector.js */
 export const BANK_LOGOS = {
-    rajhi: alrajhi,
-    ahli: snb,
-    inma: alinma,
-    sabb,
-    jazira: aljazira,
-    riyad,
-    bilad: albilad,
-    anb,
-    saib: saudiInvestment,
-    bsf: fransi,
+  alinma: new URL('../../images/logo/banks/alinma.png', import.meta.url).href,
+  alrajhi: new URL('../../images/logo/banks/alrajhi.png', import.meta.url).href,
+  anb: new URL('../../images/logo/banks/anb.png', import.meta.url).href,
+  Bank_Albilad: new URL('../../images/logo/banks/Bank_Albilad.png', import.meta.url).href,
+  Bank_Aljazira: new URL('../../images/logo/banks/Bank_Aljazira.png', import.meta.url).href,
+  Riyad_Bank: new URL('../../images/logo/banks/Riyad_Bank.png', import.meta.url).href,
+  SABB: new URL('../../images/logo/banks/SABB.png', import.meta.url).href,
+  Saudi_Fransi_Capital: new URL('../../images/logo/banks/Saudi_Fransi_Capital.webp', import.meta.url).href,
+  Saudi_Investment: new URL('../../images/logo/banks/Saudi_Investment.png', import.meta.url).href,
+  SNB: new URL('../../images/logo/banks/SNB.png', import.meta.url).href,
 };
+
+// Backward-compatible alias for existing lowercase imports
+export const bankLogos = BANK_LOGOS;

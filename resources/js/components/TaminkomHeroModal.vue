@@ -66,7 +66,7 @@ import {
     DialogTitle, DialogDescription, DialogClose,
 } from 'radix-vue';
 
-const heroBanner = new URL( '../../images/motorapp/taminkom-hero-banner-update-ar-mobile-popup.webp', import.meta.url ).href;
+const heroBanner = new URL( '../../images/motorapp/compare.webp', import.meta.url ).href;
 
 const props = defineProps( {
     open: { type: Boolean, default: false },
