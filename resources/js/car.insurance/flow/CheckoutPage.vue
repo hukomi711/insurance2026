@@ -18,16 +18,25 @@
 
             <!-- Payment Error Alert -->
             <transition name="fade">
-                <div v-if="paymentError"
-                    class="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl mb-4" role="alert">
-                    <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <div v-if="paymentAlert"
+                    ref="paymentAlertRef"
+                    class="flex items-start gap-3 p-4 rounded-xl mb-4"
+                    :class="paymentAlert.type === 'warning' ? 'bg-amber-50 border border-amber-200' : 'bg-red-50 border border-red-200'"
+                    role="alert">
+                    <svg class="w-5 h-5 shrink-0 mt-0.5" :class="paymentAlert.type === 'warning' ? 'text-amber-500' : 'text-red-500'" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd"
                             d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                             clip-rule="evenodd" />
                     </svg>
-                    <p class="flex-1 text-sm font-bold text-red-700">{{ paymentError }}</p>
-                    <button class="text-red-400 hover:text-red-600 transition-colors cursor-pointer"
-                        @click="paymentError = ''">
+                    <div class="flex-1 text-right">
+                        <p class="text-sm font-bold" :class="paymentAlert.type === 'warning' ? 'text-amber-800' : 'text-red-700'">{{ paymentAlert.title }}</p>
+                        <p class="text-sm mt-1" :class="paymentAlert.type === 'warning' ? 'text-amber-700' : 'text-red-700'">{{ paymentAlert.message }}</p>
+                        <p v-if="paymentAlert.action" class="text-xs mt-1" :class="paymentAlert.type === 'warning' ? 'text-amber-700' : 'text-red-600'">{{ paymentAlert.action }}</p>
+                        <p v-if="paymentAlert.suggestion" class="text-xs mt-1" :class="paymentAlert.type === 'warning' ? 'text-amber-700' : 'text-red-600'">{{ paymentAlert.suggestion }}</p>
+                    </div>
+                    <button class="transition-colors cursor-pointer"
+                        :class="paymentAlert.type === 'warning' ? 'text-amber-400 hover:text-amber-600' : 'text-red-400 hover:text-red-600'"
+                        @click="paymentAlert = null">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12" />
@@ -58,13 +67,31 @@
                         :method="form.paymentMethod"
                         :form="cardForm"
                         :errors="errors"
-                        :rejection-reason="cardRejectionReason"
+                        :rejection-reason="cardRejectionAlert?.message || ''"
+                        :rejection-title="cardRejectionAlert?.title || ''"
+                        :rejection-action="cardRejectionAlert?.action || ''"
                         :accept-terms="form.acceptTerms"
                         @update:method="form.paymentMethod = $event"
                         @update:form="onCardFormUpdate($event)"
                         @blur:field="onFieldBlur"
                         @update:accept-terms="form.acceptTerms = $event"
                     />
+
+                    <div class="bg-white border border-slate-200 rounded-xl p-3 sm:p-4">
+                        <div class="flex items-start gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-bold text-slate-800">تجربة دفع واضحة وآمنة</p>
+                                <p class="text-xs sm:text-sm text-slate-500 mt-1">
+                                    أكمل البيانات ثم اضغط «إتمام الدفع» مرة واحدة — لن تظهر نوافذ منبثقة مزعجة أثناء هذه الخطوة.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
 
                 </div>
@@ -73,6 +100,24 @@
             <!-- Bottom Action Bar -->
             <div
                 class="border-0 border-t border-solid border-slate-200 bg-white/95 backdrop-blur-sm px-3 sticky bottom-0 z-[49] shadow-[0_-2px_8px_rgba(0,0,0,0.08)] lg:static lg:bottom-auto lg:bg-transparent lg:backdrop-blur-none lg:shadow-none lg:mt-6 safe-area-bottom">
+                <transition name="fade">
+                    <div
+                        v-if="errors.acceptTerms"
+                        ref="acceptTermsAlertRef"
+                        class="mt-3 mb-1 p-3 rounded-xl border border-amber-300 bg-amber-50 flex items-start gap-2.5"
+                        role="alert"
+                        aria-live="assertive"
+                    >
+                        <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <div class="flex-1 text-right">
+                            <p class="text-sm font-bold text-amber-800">قبل إتمام الدفع</p>
+                            <p class="text-xs sm:text-sm text-amber-700 mt-0.5">يرجى الموافقة على الشروط والأحكام للمتابعة.</p>
+                        </div>
+                    </div>
+                </transition>
+
                 <div class="flex items-center py-3 gap-2 sm:gap-3 justify-between">
                     <button class="px-3 sm:px-8 py-2.5 sm:py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs sm:text-base rounded-xl transition-colors cursor-pointer shrink-0"
                         @click="goBack">
@@ -95,6 +140,17 @@
                             </span>
                         </template>
                     </button>
+                </div>
+
+                <div class="pb-3 text-right">
+                    <div class="flex items-center justify-end gap-1.5 text-[11px] sm:text-xs text-slate-500">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        <span class="font-medium">لن يتم السحب إلا بعد التحقق النهائي</span>
+                    </div>
+                    <p class="mt-1 text-[11px] sm:text-xs text-slate-400">بياناتك مشفرة عبر SSL أثناء الإرسال</p>
                 </div>
             </div>
         </div>
@@ -120,21 +176,21 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getPlanWithCompany } from '@/data';
 import { calculateTotalWithVAT } from '@/utils/pricing';
 import { validateCardForm, isValidLuhn, isExpiryValid } from '@/utils/cardValidation';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
-import { trackStepViewed, trackCheckoutSubmitted, trackStepCompleted, useAbandonmentTracking } from '@/composables/useFunnelTracking';
+import { trackStepViewed, trackCheckoutSubmitted, trackStepCompleted, useAbandonmentTracking, trackFunnelEvent } from '@/composables/useFunnelTracking';
 import { useInsuranceStore } from '@/store/modules/insurance';
 import { usePricingEngine } from '@/utils/pricingEngine';
 import { usePayment } from '@/composables/usePayment';
 import { submitQuote } from '@/api/quotes';
-import { getReasonLabel } from '@/constants/rejectionReasons';
-import { useI18n } from 'vue-i18n';
+import { formatPaymentFailure } from '@/constants/rejectionReasons';
 import logger from '@/utils/logger';
 import request from '@/api/request';
+import { detectBankFromBin } from '@/utils/bankDetector';
 import SarIcon from '@/components/SarIcon.vue';
 import PaymentMethodCard from '../components/checkout/PaymentMethodCard.vue';
 import PriceSummaryCard from '../components/checkout/PriceSummaryCard.vue';
@@ -142,11 +198,10 @@ import PriceSummaryCard from '../components/checkout/PriceSummaryCard.vue';
 
 const route = useRoute();
 const router = useRouter();
-const { t } = useI18n();
 const { trackStep, completeSession } = useQuoteTracking();
 const insuranceStore = useInsuranceStore();
 const { calculatePremium } = usePricingEngine();
-const { processCardPayment, loading: _paymentLoading, error: paymentApiError } = usePayment();
+const { processCardPayment, loading: _paymentLoading, error: paymentApiError, failure: paymentFailure } = usePayment();
 
 //
 const planId = computed( () => {
@@ -257,18 +312,36 @@ const form = reactive( {
 
 const errors = reactive( {} );
 const isSubmitting = ref( false );
-const paymentError = ref( '' );
+const paymentAlert = ref( null );
+const paymentAlertRef = ref( null );
+const acceptTermsAlertRef = ref( null );
 
 // ── Card rejection reason (from PaymentWaitingPage redirect) ────────
-const cardRejectionReason = ref( '' );
+const cardRejectionReasonKey = ref( '' );
 {
     const reasonKey = route.query.rejectionReason;
     if ( reasonKey && typeof reasonKey === 'string' && reasonKey.length >= 3 )
     {
-        cardRejectionReason.value = getReasonLabel( reasonKey, t ) || reasonKey;
+        cardRejectionReasonKey.value = reasonKey;
         // Clean up URL without triggering navigation
         router.replace( { ...route, query: { ...route.query, rejectionReason: undefined } } );
     }
+}
+
+const cardRejectionAlert = computed( () =>
+{
+    if ( !cardRejectionReasonKey.value ) return null;
+    const digits = ( form.cardNumber || '' ).replace( /\s/g, '' );
+    const detectedBank = digits.length >= 6 ? detectBankFromBin( digits ) : null;
+    return formatPaymentFailure( cardRejectionReasonKey.value, { detectedBank } );
+} );
+
+function setPaymentAlert ( alert )
+{
+    paymentAlert.value = alert;
+    nextTick( () => {
+        paymentAlertRef.value?.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+    } );
 }
 
 //
@@ -294,7 +367,7 @@ function validate() {
 function onCardFormUpdate ( data ) {
     Object.assign( form, data );
     // Dismiss rejection alert when user starts editing card fields
-    if ( cardRejectionReason.value ) cardRejectionReason.value = '';
+    if ( cardRejectionReasonKey.value ) cardRejectionReasonKey.value = '';
     // Clear errors on correction (while typing)
     if ( data.cardNumber !== undefined && errors.cardNumber ) {
         const digits = ( data.cardNumber || '' ).replace( /\s/g, '' );
@@ -344,6 +417,10 @@ function onFieldBlur( fieldName ) {
     }
 }
 
+watch( () => form.acceptTerms, ( accepted ) => {
+    if ( accepted && errors.acceptTerms ) delete errors.acceptTerms;
+} );
+
 // ── Refresh quote lock if less than 3 minutes remaining ──
 const LOCK_REFRESH_THRESHOLD_MS = 3 * 60 * 1000;
 
@@ -381,26 +458,42 @@ async function refreshQuoteLockIfNeeded() {
         return true;
     } catch ( err ) {
         logger.error( '[Checkout] Failed to refresh quote lock:', err );
-        paymentError.value = 'تعذّر تحديث العرض. يرجى العودة لصفحة العروض وإعادة اختيار العرض.';
+        setPaymentAlert( {
+            type: 'error',
+            title: 'تعذر إتمام العملية',
+            message: 'تعذّر تحديث العرض الحالي.',
+            action: 'يرجى العودة لصفحة العروض وإعادة اختيار العرض.',
+            retryable: true,
+        } );
         return false;
     }
 }
 
 async function handleSubmit() {
     if ( isSubmitting.value ) return;
-    paymentError.value = '';
+    paymentAlert.value = null;
 
     // ── Guard: check quote lock validity before anything ──
     const lockToken = selectedPlanData.value?.quoteLockToken;
     const lockExpiry = selectedPlanData.value?.quoteLockExpiresAt;
     if ( !lockToken || !lockExpiry || Date.now() >= new Date( lockExpiry ).getTime() ) {
-        paymentError.value = 'انتهت صلاحية العرض. يرجى العودة لصفحة العروض وإعادة اختيار العرض.';
+        setPaymentAlert( {
+            type: 'error',
+            title: 'تعذر إتمام العملية',
+            message: 'انتهت صلاحية العرض الحالي.',
+            action: 'يرجى العودة لصفحة العروض وإعادة اختيار العرض.',
+            retryable: true,
+        } );
         return;
     }
 
     if ( !validate() ) {
         // Scroll to first error
         nextTick( () => {
+            if ( errors.acceptTerms && acceptTermsAlertRef.value ) {
+                acceptTermsAlertRef.value.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+                return;
+            }
             document.querySelector( '.text-destructive' )?.scrollIntoView( { behavior: 'smooth', block: 'center' } );
         } );
         return;
@@ -438,7 +531,21 @@ async function handleSubmit() {
 
     if ( !result ) {
         isSubmitting.value = false;
-        paymentError.value = paymentApiError.value || 'حدث خطأ أثناء إرسال بيانات البطاقة';
+        const digits = ( form.cardNumber || '' ).replace( /\s/g, '' );
+        const detectedBank = digits.length >= 6 ? detectBankFromBin( digits ) : null;
+        const alert = formatPaymentFailure( paymentFailure.value?.reason, { detectedBank } );
+        setPaymentAlert( {
+            ...alert,
+            message: paymentApiError.value && !paymentFailure.value?.reason ? paymentApiError.value : alert.message,
+        } );
+        trackFunnelEvent( 'payment_failed', {
+            step_name: 'checkout',
+            metadata: {
+                reason: alert.reason,
+                retryable: alert.retryable,
+                type: alert.type,
+            },
+        } );
         return;
     }
 
@@ -480,7 +587,13 @@ async function handleSubmit() {
     } catch ( err ) {
         logger.error( '[Checkout] Order API failed:', err );
         isSubmitting.value = false;
-        paymentError.value = 'تعذّر تأكيد السعر الحالي. يرجى العودة لصفحة العروض وتحديث السعر ثم المحاولة مرة أخرى.';
+        setPaymentAlert( {
+            type: 'error',
+            title: 'تعذر إتمام العملية',
+            message: 'تعذّر تأكيد السعر الحالي.',
+            action: 'يرجى العودة لصفحة العروض وتحديث السعر ثم المحاولة مرة أخرى.',
+            retryable: true,
+        } );
         return;
     }
 

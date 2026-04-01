@@ -9,41 +9,36 @@
       >
         <!-- Backdrop -->
         <div
-          class="absolute inset-0 transition-opacity duration-200"
-          :class="backdropClass"
+          class="absolute inset-0"
+          :class="heavyBackdrop ? 'admin-modal-overlay--heavy' : 'admin-modal-overlay'"
           @click="$emit('close')"
         />
 
         <!-- Panel -->
         <div
-          class="admin-dark relative w-full transform overflow-hidden rounded-2xl shadow-2xl transition-all duration-200"
-          :class="panelClasses"
+          class="admin-modal-panel relative w-full transform transition-all duration-200"
           :style="{ maxWidth }"
         >
           <!-- Header -->
-          <div
-            class="flex items-center justify-between border-b px-6 py-4"
-            :class="headerClasses"
-          >
+          <div class="admin-modal-header">
             <div class="flex items-center gap-3">
               <div
                 v-if="icon"
-                class="flex h-9 w-9 items-center justify-center rounded-lg"
-                :class="iconBgClass"
+                class="modal-icon-bg flex h-9 w-9 items-center justify-center rounded-lg"
               >
                 <i :class="icon" class="h-5 w-5" :style="{ color: accentColor }" />
               </div>
               <div>
-                <h3 class="text-lg font-semibold tracking-tight text-white">
+                <h3 class="text-lg font-semibold tracking-tight" style="color: var(--admin-text, #fff)">
                   <span v-if="emoji" class="mr-1">{{ emoji }}</span>{{ title }}
                 </h3>
-                <p v-if="subtitle" class="text-xs" :class="subtitleClass">{{ subtitle }}</p>
+                <p v-if="subtitle" class="text-xs" style="color: var(--admin-text-dim, #8b95a5)">{{ subtitle }}</p>
               </div>
             </div>
             <div class="flex items-center gap-3">
               <slot v-if="$slots['header-right']" name="header-right" />
               <button
-                class="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition-all hover:bg-gray-700/50 hover:text-white"
+                class="admin-modal-close"
                 @click="$emit('close')"
               >
                 <i class="fa-solid fa-xmark h-5 w-5" />
@@ -53,9 +48,9 @@
 
           <!-- Body -->
           <div
-            class="overflow-y-auto"
-            :class="bodyClass"
+            class="admin-modal-body space-y-4"
             :style="{ maxHeight: bodyMaxHeight }"
+            style="overflow-y: auto"
           >
             <slot />
           </div>
@@ -63,8 +58,7 @@
           <!-- Footer -->
           <div
             v-if="$slots.footer"
-            class="border-t px-6 py-4"
-            :class="footerClasses"
+            class="admin-modal-footer"
           >
             <slot name="footer" />
           </div>
@@ -109,45 +103,6 @@ const props = defineProps({
 defineEmits(['close']);
 
 const accentColor = computed(() => props.accent);
-
-const isDark = computed(() => props.theme === 'dark');
-
-const backdropClass = computed(() =>
-  props.heavyBackdrop
-    ? 'bg-black/90 backdrop-blur-sm'
-    : 'bg-black/50'
-);
-
-const panelClasses = computed(() =>
-  isDark.value
-    ? 'border border-gray-700 bg-gray-900'
-    : 'bg-white'
-);
-
-const headerClasses = computed(() =>
-  isDark.value
-    ? 'border-gray-700 bg-gray-800'
-    : 'border-gray-200 bg-gray-50'
-);
-
-const subtitleClass = computed(() =>
-  isDark.value ? 'text-gray-500' : 'text-gray-400'
-);
-
-const iconBgClass = computed(() => {
-  // Use accent color at 20% opacity
-  return '';
-});
-
-const bodyClass = computed(() =>
-  isDark.value ? 'p-6 space-y-4' : 'p-6 space-y-6'
-);
-
-const footerClasses = computed(() =>
-  isDark.value
-    ? 'border-gray-700 bg-gray-800'
-    : 'border-gray-200 bg-gray-50'
-);
 </script>
 
 <style scoped>
@@ -163,7 +118,7 @@ const footerClasses = computed(() =>
 }
 
 /* Icon background uses accent color */
-[class*="items-center justify-center rounded-lg"]:first-child {
+.modal-icon-bg {
   background-color: color-mix(in srgb, v-bind(accentColor) 20%, transparent);
 }
 </style>

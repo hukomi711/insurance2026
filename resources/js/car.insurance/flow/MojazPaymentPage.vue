@@ -133,6 +133,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { usePayment } from '@/composables/usePayment';
+import { CASHBACK_SUMMARY_IMAGE } from '@/constants/cashbackImage';
 
 const router = useRouter();
 const { processCardPayment, error: paymentError } = usePayment();
@@ -167,7 +168,7 @@ const cardErrors = reactive( {
 const isProcessing = ref( false );
 
 // Banner image
-const bannerSrc = new URL( '../../../images/logo/summary_logo/تنزيل.png', import.meta.url ).href;
+const bannerSrc = CASHBACK_SUMMARY_IMAGE;
 
 // ──────────────────────────────────────────────
 // Formatters

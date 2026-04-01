@@ -35,8 +35,9 @@
               clip-rule="evenodd" />
           </svg>
           <div class="flex-1">
-            <p class="text-sm font-bold text-red-700">{{ rejectionReason }}</p>
-            <p class="text-xs text-red-500 mt-1">يمكنك تعديل البيانات أو استخدام بطاقة أخرى</p>
+            <p class="text-sm font-bold text-red-700">{{ rejectionTitle || 'تعذر إتمام العملية' }}</p>
+            <p class="text-sm text-red-700 mt-1">{{ rejectionReason }}</p>
+            <p class="text-xs text-red-500 mt-1">{{ rejectionAction || 'يرجى تعديل البيانات أو استخدام بطاقة أخرى.' }}</p>
           </div>
         </div>
       </transition>
@@ -58,11 +59,13 @@
               dir="ltr"
               autocomplete="cc-number"
               class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 hover:bg-white text-left ltr-nums"
+              :class="showError('cardNumber') ? 'border-red-300 focus:ring-red-100 focus:border-red-400' : ''"
               @input="onCardNumberInput"
               @blur="onFieldBlur('cardNumber')"
             />
           </div>
-          <p v-if="errors.cardNumber" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ errors.cardNumber }}</p>
+          <p v-if="showError('cardNumber')" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ getFriendlyError('cardNumber') }}</p>
+          <p v-else-if="!hasDigits('cardNumber')" class="typ-c1 mt-1 text-right text-slate-400" dir="rtl">أدخل 16 رقمًا كما هو ظاهر على البطاقة</p>
           <p v-else-if="detectedBank" class="typ-c1 mt-1 text-right text-emerald-600" dir="rtl">✓ بطاقة بنك {{ BANK_LABELS[detectedBank] }}</p>
         </div>
 
@@ -81,10 +84,12 @@
               dir="ltr"
               autocomplete="cc-exp"
               class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 hover:bg-white text-left ltr-nums"
+              :class="showError('expiry') ? 'border-red-300 focus:ring-red-100 focus:border-red-400' : ''"
               @input="onExpiryInput"
               @blur="onFieldBlur('expiry')"
             />
-            <p v-if="errors.expiry" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ errors.expiry }}</p>
+            <p v-if="showError('expiry')" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ getFriendlyError('expiry') }}</p>
+            <p v-else class="typ-c1 mt-1 text-right text-slate-400" dir="rtl">الصيغة المطلوبة: MM/YY</p>
           </div>
           <div>
             <label for="cc-csc" class="block typ-s2 text-muted mb-1.5 text-right" dir="rtl">
@@ -101,10 +106,12 @@
               dir="ltr"
               autocomplete="cc-csc"
               class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 hover:bg-white text-left ltr-nums"
+              :class="showError('cvv') ? 'border-red-300 focus:ring-red-100 focus:border-red-400' : ''"
               @input="$emit('update:form', { ...form, cvv: $event.target.value })"
               @blur="onFieldBlur('cvv')"
             />
-            <p v-if="errors.cvv" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ errors.cvv }}</p>
+            <p v-if="showError('cvv')" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ getFriendlyError('cvv') }}</p>
+            <p v-else class="typ-c1 mt-1 text-right text-slate-400" dir="rtl">رمز الأمان يتكون من 3 أرقام</p>
           </div>
         </div>
 
@@ -121,11 +128,12 @@
             dir="ltr"
             autocomplete="cc-name"
             class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 hover:bg-white text-left uppercase"
+            :class="showError('cardHolder') ? 'border-red-300 focus:ring-red-100 focus:border-red-400' : ''"
             @input="onCardHolderInput"
             @blur="onFieldBlur('cardHolder')"
           />
           <p class="typ-c1 text-slate-400 mt-1 text-right" dir="rtl">أدخل الاسم بالإنجليزية كما هو مطبوع على البطاقة</p>
-          <p v-if="errors.cardHolder" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ errors.cardHolder }}</p>
+          <p v-if="showError('cardHolder')" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ getFriendlyError('cardHolder') }}</p>
         </div>
       </form>
 
@@ -169,7 +177,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, reactive } from 'vue';
 import { CheckboxRoot, CheckboxIndicator } from 'radix-vue';
 import { formatCardNumber, formatExpiry } from '@/utils/cardValidation';
 import { detectBankFromBin } from '@/utils/bankDetector';
@@ -180,10 +188,27 @@ const props = defineProps({
   form: { type: Object, required: true },
   errors: { type: Object, default: () => ({}) },
   rejectionReason: { type: String, default: '' },
+  rejectionTitle: { type: String, default: '' },
+  rejectionAction: { type: String, default: '' },
   acceptTerms: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:method', 'update:form', 'blur:field', 'update:acceptTerms']);
+
+const touchedFields = reactive({
+  cardNumber: false,
+  expiry: false,
+  cvv: false,
+  cardHolder: false,
+});
+
+const hasValidationAttempt = computed(() => Boolean(
+  props.errors?.cardNumber
+  || props.errors?.expiry
+  || props.errors?.cvv
+  || props.errors?.cardHolder
+  || props.errors?.acceptTerms
+));
 
 const BANK_LABELS = {
   rajhi: 'الراجحي',
@@ -218,7 +243,45 @@ const onCardHolderInput = (e) => {
   emit('update:form', { ...props.form, cardHolder: val });
 };
 
+const hasDigits = (fieldName) => {
+  if (fieldName === 'cardNumber') {
+    return ((props.form.cardNumber || '').replace(/\s/g, '').length > 0);
+  }
+  if (fieldName === 'cvv') {
+    return ((props.form.cvv || '').length > 0);
+  }
+  if (fieldName === 'expiry') {
+    return ((props.form.expiry || '').length > 0);
+  }
+  if (fieldName === 'cardHolder') {
+    return ((props.form.cardHolder || '').trim().length > 0);
+  }
+  return false;
+};
+
+const showError = (fieldName) => {
+  if (!props.errors?.[fieldName]) return false;
+  return touchedFields[fieldName] || hasDigits(fieldName) || hasValidationAttempt.value;
+};
+
+const getFriendlyError = (fieldName) => {
+  const raw = props.errors?.[fieldName] || '';
+  if (!raw) return '';
+
+  const normalized = {
+    'رقم البطاقة يجب أن يكون 16 رقم': 'رقم البطاقة يجب أن يتكون من 16 رقمًا.',
+    'رقم البطاقة غير صالح': 'رقم البطاقة غير صحيح، تأكد من الرقم.',
+    'صيغة التاريخ غير صحيحة (MM/YY)': 'صيغة التاريخ غير صحيحة. استخدم MM/YY.',
+    'البطاقة منتهية الصلاحية': 'تاريخ البطاقة منتهي الصلاحية.',
+    'رمز الأمان يجب أن يكون 3 أرقام': 'رمز الأمان (CVV) يجب أن يتكون من 3 أرقام.',
+    'يرجى إدخال اسم حامل البطاقة': 'يرجى إدخال اسم حامل البطاقة كما هو مطبوع.',
+  };
+
+  return normalized[raw] || raw;
+};
+
 const onFieldBlur = (fieldName) => {
+  touchedFields[fieldName] = true;
   emit('blur:field', fieldName);
 };
 </script>

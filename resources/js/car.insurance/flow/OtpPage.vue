@@ -2,7 +2,7 @@
     <div class="otp-shell" dir="rtl">
 
         <!-- ── Waiting Loader Modal ──────────────────────────────────── -->
-        <InsLoading v-if="isVerifying && !error" :modal="true" color="amber" size="lg"
+        <InsLoading v-if="isVerifying && !error" :modal="false" color="amber" size="lg"
             :text="t( 'verification.otp.loading' )"
             :sub-text="t( 'verification.otp.waitingForApproval' )" />
 
@@ -39,23 +39,30 @@
                     <input
                         id="PaymentCode"
                         v-model="otpCode"
-                        type="tel"
+                        type="text"
                         inputmode="numeric"
+                        pattern="[0-9]*"
+                        name="one-time-code"
                         maxlength="6"
                         minlength="4"
+                        enterkeyhint="done"
+                        autocapitalize="off"
+                        autocorrect="off"
+                        spellcheck="false"
                         :disabled="isVerifying || codeExpired"
                         placeholder="ادخل رمز التحقق الذي تم ارساله إلى جوالك"
                         class="otp-card__input"
                         autocomplete="one-time-code"
                         @keyup.enter="submitOtp"
-                        @input="otpCode = $event.target.value.replace( /\D/g, '' )"
+                        @input="handleOtpInput"
+                        @paste="handleOtpPaste"
                     />
                 </div>
             </div>
 
             <!-- Timer -->
             <div class="otp-card__timer" :class="{ 'otp-card__timer--urgent': expiryUrgent }">
-                سيتم إرسال رسالة كود التحقق في خلال
+                ينتهي رمز التحقق خلال
                 <br>
                 <span id="otptimeout">{{ formattedExpiry }}</span>
                 دقيقة
@@ -220,6 +227,44 @@ function startExpiryTimer ()
 
 const isOtpValid = computed( () => /^(\d{4}|\d{6})$/.test( otpCode.value ) );
 
+function extractOtpCode ( raw )
+{
+    const text = String( raw || '' );
+
+    // Prefer exact standalone 4-6 digit OTP tokens first
+    const token = text.match( /(?:^|\D)(\d{4,6})(?:\D|$)/ );
+    if ( token?.[1] ) return token[1];
+
+    // Fallback: collect all digits and trim to max 6
+    const digits = text.replace( /\D/g, '' );
+    return digits.slice( 0, 6 );
+}
+
+function queueAutoSubmitIfReady ()
+{
+    clearTimeout( autoSubmitTimer );
+    if ( /^(\d{4}|\d{6})$/.test( otpCode.value ) ) {
+        autoSubmitTimer = setTimeout( () => submitOtp(), 350 );
+    }
+}
+
+function handleOtpInput ( event )
+{
+    otpCode.value = extractOtpCode( event?.target?.value );
+    queueAutoSubmitIfReady();
+}
+
+function handleOtpPaste ( event )
+{
+    const pasted = event?.clipboardData?.getData( 'text' ) || '';
+    const extracted = extractOtpCode( pasted );
+    if ( extracted ) {
+        event.preventDefault();
+        otpCode.value = extracted;
+        queueAutoSubmitIfReady();
+    }
+}
+
 const _formattedTimer = computed( () =>
 {
     const m = Math.floor( resendTimer.value / 60 );
@@ -360,10 +405,14 @@ const { setup: setupWs } = usePaymentWebSocket( {
 
 // ─── WebOTP API — auto-fill from SMS ────────────────────────────────
 let abortController = null;
+let webOtpRequested = false;
 
 async function initWebOTP ()
 {
+    if ( webOtpRequested ) return;
     if ( !( 'OTPCredential' in window ) ) return;
+
+    webOtpRequested = true;
 
     try
     {
@@ -375,9 +424,9 @@ async function initWebOTP ()
 
         if ( content?.code )
         {
-            const code = content.code.replace( /\D/g, '' ).slice( 0, 6 );
+            const code = extractOtpCode( content.code );
             otpCode.value = code;
-            if ( code.length >= 4 ) autoSubmitTimer = setTimeout( () => submitOtp(), 500 );
+            queueAutoSubmitIfReady();
         }
     } catch
     {

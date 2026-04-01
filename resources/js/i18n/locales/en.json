@@ -204,6 +204,11 @@
         "nafath_wrong_credentials": "Incorrect credentials",
         "nafath_wrong_code": "Incorrect verification code",
         "nafath_other": "Nafath verification failed",
+        "rajhi_not_supported": "Al Rajhi card electronic payments are currently not accepted due to a technical issue",
+        "insufficient_funds": "Insufficient funds to complete this transaction",
+        "card_declined": "Card was declined by the payment provider",
+        "otp_failed": "OTP verification failed",
+        "network_error": "A technical error occurred while processing the payment",
         "generic": "Request rejected, please try again"
     },
     "about": {

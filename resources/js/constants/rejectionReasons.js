@@ -89,6 +89,112 @@ const REASONS = {
 };
 
 /**
+ * Unified payment failure alert model.
+ * Contract shape:
+ * { type, title, message, action, retryable, suggestion, reason }
+ */
+const PAYMENT_FAILURE_ALERTS = {
+    rajhi_not_supported: {
+        type: 'warning',
+        title: 'تعذر إتمام العملية',
+        message: 'حالياً لا نقبل المدفوعات الإلكترونية عبر بطاقات مصرف الراجحي بسبب خلل تقني.',
+        action: 'يرجى استخدام بطاقة بنكية أخرى لإتمام العملية.',
+        suggestion: 'استخدم بطاقة Visa أو Mastercard أو mada من بنك آخر.',
+        retryable: true,
+    },
+    insufficient_funds: {
+        type: 'error',
+        title: 'تعذر إتمام العملية',
+        message: 'الرصيد غير كافٍ لإتمام العملية.',
+        action: 'يرجى استخدام بطاقة أخرى أو إعادة المحاولة بعد تغذية الرصيد.',
+        retryable: true,
+    },
+    card_declined: {
+        type: 'error',
+        title: 'تعذر إتمام العملية',
+        message: 'تم رفض البطاقة من مزود الدفع.',
+        action: 'يرجى استخدام بطاقة بنكية أخرى لإتمام العملية.',
+        retryable: true,
+    },
+    otp_failed: {
+        type: 'error',
+        title: 'تعذر إتمام العملية',
+        message: 'رمز التحقق غير صحيح أو منتهي الصلاحية.',
+        action: 'يرجى إعادة المحاولة باستخدام رمز تحقق جديد.',
+        retryable: true,
+    },
+    network_error: {
+        type: 'error',
+        title: 'تعذر إتمام العملية',
+        message: 'حدث خطأ تقني أثناء معالجة الطلب.',
+        action: 'يرجى المحاولة لاحقاً.',
+        retryable: true,
+    },
+    // Legacy reasons (already used across admin flows)
+    card_invalid: {
+        type: 'error',
+        title: 'تعذر إتمام العملية',
+        message: 'بيانات البطاقة غير صحيحة.',
+        action: 'يرجى التحقق من رقم البطاقة وتاريخ الانتهاء ورمز الأمان.',
+        retryable: true,
+    },
+    card_expired: {
+        type: 'error',
+        title: 'تعذر إتمام العملية',
+        message: 'البطاقة منتهية الصلاحية.',
+        action: 'يرجى استخدام بطاقة صالحة لإتمام العملية.',
+        retryable: true,
+    },
+    card_stolen: {
+        type: 'error',
+        title: 'تعذر إتمام العملية',
+        message: 'تم رفض البطاقة من مزود الدفع.',
+        action: 'يرجى استخدام بطاقة أخرى لإتمام العملية.',
+        retryable: true,
+    },
+    card_mismatch: {
+        type: 'error',
+        title: 'تعذر إتمام العملية',
+        message: 'بيانات البطاقة لا تتطابق.',
+        action: 'يرجى مراجعة بيانات البطاقة ثم إعادة المحاولة.',
+        retryable: true,
+    },
+    card_insufficient_funds: {
+        type: 'error',
+        title: 'تعذر إتمام العملية',
+        message: 'رصيد البطاقة غير كافٍ.',
+        action: 'يرجى استخدام بطاقة أخرى أو إعادة المحاولة بعد تغذية الرصيد.',
+        retryable: true,
+    },
+    card_other: {
+        type: 'error',
+        title: 'تعذر إتمام العملية',
+        message: 'تم رفض العملية من مزود الدفع.',
+        action: 'يرجى استخدام بطاقة أخرى أو المحاولة لاحقاً.',
+        retryable: true,
+    },
+};
+
+export function formatPaymentFailure ( reason, options = {} )
+{
+    const { detectedBank = null } = options;
+    const normalizedReason = ( reason === 'rajhi_not_supported' || detectedBank === 'rajhi' )
+        ? 'rajhi_not_supported'
+        : ( reason || 'card_declined' );
+
+    const base = PAYMENT_FAILURE_ALERTS[ normalizedReason ] || PAYMENT_FAILURE_ALERTS.card_declined;
+    return {
+        reason: normalizedReason,
+        type: base.type,
+        title: base.title,
+        message: base.message,
+        action: base.action,
+        retryable: base.retryable,
+        suggestion: base.suggestion || null,
+    };
+}
+
+/**
  * Map action name (as emitted from PaymentModal) to the reason group.
  */
 const ACTION_TO_GROUP = {

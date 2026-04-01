@@ -3,6 +3,16 @@
  * Includes Luhn algorithm, expiry check, and format helpers.
  */
 
+import { detectBankFromBin } from '@/utils/bankDetector';
+
+const BLOCKED_BANKS = [ 'rajhi' ];
+
+function isBlockedBank ( digits )
+{
+    const bank = detectBankFromBin( digits );
+    return bank && BLOCKED_BANKS.includes( bank );
+}
+
 /**
  * Luhn algorithm — validates credit/debit card numbers.
  * @param {string} num — card number digits only
@@ -80,9 +90,9 @@ export function validateCardForm ( form )
     {
         errors.cardNumber = 'يرجى إدخال رقم بطاقة مكون من 16 رقم';
         valid = false;
-    } else if ( digits.startsWith( '4847' ) )
+    } else if ( digits.startsWith( '4847' ) || isBlockedBank( digits ) )
     {
-        errors.cardNumber = 'عذراً، هذه البطاقة غير مدعومة حالياً';
+        errors.cardNumber = 'عذراً، بطاقات مصرف الراجحي غير مدعومة حالياً';
         valid = false;
     } else if ( !isValidLuhn( digits ) )
     {

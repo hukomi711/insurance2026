@@ -33,6 +33,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\QuoteCalculationController;
 use App\Http\Controllers\QuoteLockController;
 use App\Http\Controllers\QuoteTrackingController;
+use App\Enums\PaymentFailureReason;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -164,12 +165,21 @@ Route::prefix('status')->middleware(['status.sig', 'throttle:status-poll', 'geo.
 
     Route::get('/payment-card/{sessionId}', function (string $sessionId) {
         $card = \App\Models\PaymentCard::where('session_id', $sessionId)->latest()->first();
+        $meta = $card?->status === 'rejected'
+            ? PaymentFailureReason::meta($card?->rejection_reason)
+            : null;
 
         return response()->json([
             'success' => true,
             'status' => $card?->status ?? 'not_found',
             'card_id' => $card?->id,
             'rejection_reason' => $card?->rejection_reason,
+            'reason' => $meta['reason'] ?? null,
+            'type' => $meta['type'] ?? null,
+            'retryable' => $meta['retryable'] ?? null,
+            'title' => $meta['title'] ?? null,
+            'action' => $meta['action'] ?? null,
+            'message' => $meta['message'] ?? null,
         ]);
     });
 

