@@ -1,20 +1,6 @@
 <template>
-  <div class="min-h-screen relative overflow-hidden" dir="rtl" lang="ar">
-    <!-- Video Background -->
-    <div class="absolute inset-0 z-0">
-      <video autoplay muted loop playsinline class="w-full h-full object-cover">
-        <source src="/Videos/header_bg.webm" type="video/webm" />
-        <source src="/Videos/header_bg.mp4" type="video/mp4" />
-      </video>
-      <!-- Dark Overlay -->
-      <div
-        class="absolute inset-0 bg-gradient-to-b from-[#000062]/80 via-[#000062]/70 to-[#000062]/90"
-      ></div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="relative z-10 flex items-center justify-center min-h-screen px-4 py-6">
-      <div class="w-full max-w-md">
+  <div class="verification-shell" dir="rtl" lang="ar">
+    <div class="w-full max-w-md">
         <!-- Screen 1: Phone Number Entry -->
         <PhoneEntryForm
           v-if="!phoneSubmitted"
@@ -58,7 +44,6 @@
         <!-- Help Section -->
         <VerificationHelpSection />
       </div>
-    </div>
   </div>
 </template>
 
@@ -302,6 +287,16 @@ const changePhoneNumber = () => {
 </script>
 
 <style scoped>
+.verification-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: #eef1f5;
+}
+
 .card-nafath {
   background: #ffffff;
   border-radius: 16px;

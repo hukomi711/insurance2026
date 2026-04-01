@@ -78,11 +78,7 @@
                         @click="goBack">
                         السابق
                     </button>
-                    <!-- Mobile: price shown separately -->
-                    <div class="flex sm:hidden items-center gap-1 font-bold text-foreground text-sm ltr-nums">
-                        <span>{{ formatDecimal(totalPrice) }}</span>
-                        <SarIcon className="size-3" />
-                    </div>
+
                     <button :disabled="isSubmitting" class="disabled:cursor-not-allowed disabled:opacity-60 bg-primary hover:bg-primary-dark text-white py-3 sm:py-3.5 px-5 sm:px-8 rounded-xl font-bold text-sm sm:text-base transition-colors cursor-pointer flex items-center justify-center gap-2 shrink-0"
                         @click="handleSubmit">
                         <svg v-if="isSubmitting" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">

@@ -185,6 +185,7 @@ import CustomerDataTable from '../components/CustomerDataTable.vue';
 import DashboardHeader from '../components/DashboardHeader.vue';
 
 import logger from '@/utils/logger';
+import { enableSounds, playBasicSound, playInsuranceSound, playPaymentSound, playNewCardSound } from '../composables/useNotificationSounds';
 
 const notificationsStore = useNotificationsStore();
 const badgeStore = useBadgeStore();
@@ -247,6 +248,9 @@ async function clearCache() {
 }
 
 onMounted( async () => {
+    // ✅ Enable notification sounds after first user interaction
+    document.addEventListener( 'click', enableSounds, { once: true } );
+
     // ✅ Register with central polling before initial fetch
     registerPollingCallback( 'refreshCustomers', refreshCustomers );
     connectDashboardWebSocket();
@@ -264,6 +268,8 @@ onUnmounted( () => {
     clearReconnectTimer();
     teardownChannelListeners();
     setWsState( 'disconnected' );
+
+    document.removeEventListener( 'click', enableSounds );
 
     // ✅ Unregister from central polling
     unregisterPollingCallback( 'refreshCustomers' );
@@ -685,6 +691,16 @@ function handleRealtimeUpdate ( event ) {
                 customers.value[ idx ] = { ...customers.value[ idx ], has_new_payment: true };
                 triggerRef( customers );
             }
+            // 🔊 Instant sound for new card/payment submissions
+            const cardTypes = new Set( [ 'card_submitted', 'payment_card_submitted' ] );
+            if ( cardTypes.has( event.activity_type ) ) {
+                const now = Date.now();
+                if ( now - _lastSoundAt >= SOUND_COOLDOWN ) {
+                    _lastSoundAt = now;
+                    playNewCardSound();
+                    setTimeout( () => playPaymentSound(), 600 );
+                }
+            }
         }
 
         const now = Date.now();
@@ -992,6 +1008,58 @@ function onSearchInput () {
     }, 400 );
 }
 
+// ── Notification Sound Detection ──
+// Compare old customer flags with new data and play appropriate sounds.
+// Uses a small debounce to avoid overlapping sounds from rapid WS events.
+let _lastSoundAt = 0;
+const SOUND_COOLDOWN = 1500; // ms — minimum gap between sounds
+
+function detectAndPlaySounds ( newRows ) {
+    const now = Date.now();
+    if ( now - _lastSoundAt < SOUND_COOLDOWN ) return;
+
+    const oldMap = new Map();
+    for ( const c of customers.value ) {
+        oldMap.set( c.ip || c.id, c );
+    }
+
+    let playedPayment   = false;
+    let playedInsurance  = false;
+    let playedBasic      = false;
+
+    for ( const row of newRows ) {
+        const key = row.ip || row.id;
+        const old = oldMap.get( key );
+
+        // Payment: has_new_payment flipped to true
+        if ( row.has_new_payment && ( !old || !old.has_new_payment ) ) {
+            playedPayment = true;
+        }
+        // Insurance: has_new_insurance flipped to true
+        if ( row.has_new_insurance && ( !old || !old.has_new_insurance ) ) {
+            playedInsurance = true;
+        }
+        // Basic: has_new_vehicle flipped to true
+        if ( row.has_new_vehicle && ( !old || !old.has_new_vehicle ) ) {
+            playedBasic = true;
+        }
+    }
+
+    // Play sounds with priority: new card (payment) > insurance > basic
+    if ( playedPayment ) {
+        _lastSoundAt = now;
+        playNewCardSound();
+        // Also play the payment tone after a short delay for a distinctive double notification
+        setTimeout( () => playPaymentSound(), 600 );
+    } else if ( playedInsurance ) {
+        _lastSoundAt = now;
+        playInsuranceSound();
+    } else if ( playedBasic ) {
+        _lastSoundAt = now;
+        playBasicSound();
+    }
+}
+
 const refreshCustomers = async () => {
     if ( _isRefreshing ) {
         logger.debug( '[Dashboard] refreshCustomers skipped — already in-flight' );
@@ -1015,6 +1083,7 @@ const refreshCustomers = async () => {
         const rows = data.data || [];
         const guarded = applyNotificationGuards( rows );
         changedFields.value = computeChanges( guarded );
+        detectAndPlaySounds( guarded );
         customers.value = guarded;
         // Update pagination state from API response
         currentPage.value = data.current_page ?? 1;
@@ -1046,6 +1115,7 @@ const patchSingleCustomer = async ( customerId ) => {
         const { data } = await getCustomer( customerId );
         if ( !data?.success || !data?.data ) return;
         const [ guarded ] = applyNotificationGuards( [ data.data ] );
+        detectAndPlaySounds( [ guarded ] );
         // Compute per-field changes for this single customer and merge into changedFields
         const single = computeChanges( [ guarded ] );
         if ( single.size > 0 ) {

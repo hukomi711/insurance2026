@@ -7,7 +7,7 @@
     <div class="flex flex-wrap justify-between items-center gap-2 px-3 mb-4">
       <span class="text-black text-base font-bold">مبلغ الوثيقة</span>
       <span class="text-black text-base font-bold ms-auto ltr-nums flex items-center gap-1">
-        <span>{{ formatDecimal(totalPrice) }}</span>
+        <span>{{ formatDecimal(subtotal) }}</span>
         <SarIcon className="size-3 text-black" />
       </span>
     </div>
