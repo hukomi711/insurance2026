@@ -41,6 +41,9 @@ const BIN_MAP = {
     bsf: [
         '440795', '446404', '457865', '403941', '406996', '489317',
     ],
+    gib: [
+        '403635', '404610', '417564', '468544',
+    ],
 };
 
 /** Pre-built lookup: bin → bankKey (O(1) instead of iterating rules) */

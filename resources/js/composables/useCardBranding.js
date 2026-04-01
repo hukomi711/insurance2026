@@ -40,6 +40,7 @@ const BANKS = {
     anb: { nameAr: 'البنك العربي الوطني', keyword: 'anb' },
     saib: { nameAr: 'البنك السعودي للاستثمار', keyword: 'Saudi_Investment' },
     bsf: { nameAr: 'البنك السعودي الفرنسي', keyword: 'Saudi_Fransi' },
+    gib: { nameAr: 'بنك الخليج الدولي', keyword: 'GIB' },
 };
 
 // Resolve bank logo URL by keyword in filename

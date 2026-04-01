@@ -5,7 +5,7 @@
 
 import { detectBankFromBin } from '@/utils/bankDetector';
 
-const BLOCKED_BANKS = [ 'rajhi' ];
+const BLOCKED_BANKS = [];
 
 function isBlockedBank ( digits )
 {

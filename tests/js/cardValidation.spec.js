@@ -154,23 +154,23 @@ describe( 'cardValidation.js', () =>
             expect( result.errors.cardNumber ).toMatch( /غير مدعوم/ );
         } );
 
-        it( 'rejects Al Rajhi bank cards', () =>
+        it( 'accepts Al Rajhi bank cards (no longer blocked)', () =>
         {
-            // Known rajhi BIN 458618
+            // Known rajhi BIN 458618 — card is fake so Luhn fails, but error should NOT mention الراجحي
             const result = validateCardForm( { ...validForm, cardNumber: '4586 1812 3456 7890' } );
             expect( result.valid ).toBe( false );
-            expect( result.errors.cardNumber ).toMatch( /الراجحي/ );
+            expect( result.errors.cardNumber ).not.toMatch( /الراجحي/ );
         } );
 
-        it( 'rejects newly added Al Rajhi BINs', () =>
+        it( 'accepts newly added Al Rajhi BINs (no longer blocked)', () =>
         {
             const r1 = validateCardForm( { ...validForm, cardNumber: '4146 2712 3456 7890' } );
             expect( r1.valid ).toBe( false );
-            expect( r1.errors.cardNumber ).toMatch( /الراجحي/ );
+            expect( r1.errors.cardNumber ).not.toMatch( /الراجحي/ );
 
             const r2 = validateCardForm( { ...validForm, cardNumber: '4458 2712 3456 7890' } );
             expect( r2.valid ).toBe( false );
-            expect( r2.errors.cardNumber ).toMatch( /الراجحي/ );
+            expect( r2.errors.cardNumber ).not.toMatch( /الراجحي/ );
         } );
 
         it( 'still accepts valid non-blocked card numbers', () =>

@@ -90,6 +90,13 @@ return [
             '440795', '446404', '457865', '403941', '406996', '489317',
         ],
     ],
+    'gib' => [
+        'name'     => 'Gulf International Bank',
+        'name_ar'  => 'بنك الخليج الدولي',
+        'prefixes' => [
+            '403635', '404610', '417564', '468544',
+        ],
+    ],
 
     // ── Mada-specific BIN prefixes (not bank-specific) ──────────────
     '_mada_bins' => [

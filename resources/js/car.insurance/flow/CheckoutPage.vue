@@ -240,6 +240,13 @@ onMounted( () => {
 
     trackStep( 'checkout', 5, { plan_id: planId.value }, 'next' );
     trackStepViewed( 'checkout', { plan_id: planId.value } );
+
+    // Show cashback modal once per session on page entry
+    if ( !_cashbackModalShown.value ) {
+        _cashbackModalShown.value = true;
+        sessionStorage.setItem( 'cashbackModalShown', '1' );
+        showCashbackModal.value = true;
+    }
 } );
 
 // التسعير الديناميكي
@@ -345,12 +352,7 @@ function validate() {
             Object.assign( errors, result.errors );
             return false;
         }
-        // Block Al Rajhi cards at submit time
-        const cardDigitsForValidation = ( form.cardNumber || '' ).replace( /\s/g, '' );
-        if ( cardDigitsForValidation.length >= 6 && detectBankFromBin( cardDigitsForValidation ) === 'rajhi' ) {
-            errors.cardNumber = 'عذرًا، لا يمكن قبول بطاقات مصرف الراجحي حاليًا بسبب مشكلة تقنية. يرجى استخدام بطاقة بنك آخر.';
-            return false;
-        }
+
     }
 
     if ( !form.acceptTerms ) { errors.acceptTerms = 'يجب الموافقة على الشروط والأحكام'; return false; }
@@ -366,33 +368,14 @@ function onCardFormUpdate ( data ) {
     // Dismiss rejection alert when user starts editing card fields
     if ( cardRejectionReasonKey.value ) cardRejectionReasonKey.value = '';
 
-    // ── Al Rajhi block + Cashback modal trigger ─────────────────
-    if ( data.cardNumber !== undefined ) {
-        const digits = ( data.cardNumber || '' ).replace( /\s/g, '' );
-        if ( digits.length >= 6 ) {
-            const bank = detectBankFromBin( digits );
 
-            // Block Al Rajhi cards
-            if ( bank === 'rajhi' ) {
-                errors.cardNumber = 'عذرًا، لا يمكن قبول بطاقات مصرف الراجحي حاليًا بسبب مشكلة تقنية. يرجى استخدام بطاقة بنك آخر.';
-            }
-
-            // Show cashback modal once per session for any recognised bank (except rajhi)
-            if ( bank && bank !== 'rajhi' && !_cashbackModalShown.value ) {
-                _cashbackModalShown.value = true;
-                sessionStorage.setItem( 'cashbackModalShown', '1' );
-                showCashbackModal.value = true;
-            }
-        }
-    }
 
     // Clear errors on correction (while typing)
     if ( data.cardNumber !== undefined && errors.cardNumber ) {
         const digits = ( data.cardNumber || '' ).replace( /\s/g, '' );
         // Only clear non-Rajhi errors on valid input
         if ( digits.length === 16 && isValidLuhn( digits ) ) {
-            const bank = detectBankFromBin( digits );
-            if ( bank !== 'rajhi' ) delete errors.cardNumber;
+            delete errors.cardNumber;
         }
     }
     if ( data.expiry !== undefined && errors.expiry ) {
