@@ -252,7 +252,7 @@
         @toggle-policy-holder="togglePolicyHolderAsDriver" />
 
     <!-- ═══════════ Other Details Sheet ═══════════ -->
-    <OtherDetailsSheet v-model:open="showOtherDetailsModal" :other-details="otherDetails" />
+    <OtherDetailsSheet v-model:open="showOtherDetailsModal" v-model:otherDetails="otherDetails" />
 </template>
 
 <script setup>

@@ -246,7 +246,7 @@ Route::prefix('quote')->middleware(['throttle:60,1', 'geo.api'])->group(function
 // ─── Admin Auth (IP-restricted + brute-force lockout) ───────────────
 Route::prefix('admin')->middleware(['admin.ip'])->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:30,1');
-    Route::post('/verify-code', [AuthController::class, 'verifyCode'])->middleware('throttle:10,1');
+    Route::post('/verify-code', [AuthController::class, 'verifyCode'])->middleware('throttle:5,1');
     Route::post('/resend-code', [AuthController::class, 'resendCode'])->middleware('throttle:3,1');
 });
 

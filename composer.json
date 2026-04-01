@@ -100,7 +100,12 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "platform-check": false,
+        "platform": {
+            "ext-pcntl": "8.2",
+            "ext-posix": "8.2"
+        }
     },
     "minimum-stability": "stable",
     "prefer-stable": true

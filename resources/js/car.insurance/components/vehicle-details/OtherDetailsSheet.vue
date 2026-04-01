@@ -277,10 +277,7 @@ import {
 } from 'radix-vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
 
-defineProps( {
-    otherDetails: { type: Object, required: true },
-} );
-
+const otherDetails = defineModel( 'otherDetails', { type: Object, required: true } );
 const open = defineModel( 'open', { type: Boolean, default: false } );
 
 // ── Options arrays (local to this sheet) ──────────────

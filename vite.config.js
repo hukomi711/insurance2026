@@ -42,11 +42,19 @@ export default defineConfig( {
         // Reduces main‑thread blocking and enables parallel HTTP/2 downloads.
         rollupOptions: {
             output: {
-                manualChunks: {
-                    'vendor-vue': [ 'vue', 'vue-router', 'pinia', 'vue-i18n' ],
-                    'vendor-echo': [ 'pusher-js', 'laravel-echo' ],
-                    'vendor-ui': [ 'radix-vue' ],
-                    'vendor-utils': [ 'axios', 'dompurify', 'vue-toastification' ],
+                manualChunks( id ) {
+                    if ( id.includes( 'node_modules/vue/' ) || id.includes( 'node_modules/vue-router/' ) || id.includes( 'node_modules/pinia/' ) || id.includes( 'node_modules/vue-i18n/' ) ) {
+                        return 'vendor-vue';
+                    }
+                    if ( id.includes( 'node_modules/pusher-js/' ) || id.includes( 'node_modules/laravel-echo/' ) ) {
+                        return 'vendor-echo';
+                    }
+                    if ( id.includes( 'node_modules/radix-vue/' ) ) {
+                        return 'vendor-ui';
+                    }
+                    if ( id.includes( 'node_modules/axios/' ) || id.includes( 'node_modules/dompurify/' ) || id.includes( 'node_modules/vue-toastification/' ) ) {
+                        return 'vendor-utils';
+                    }
                 },
             },
         },
