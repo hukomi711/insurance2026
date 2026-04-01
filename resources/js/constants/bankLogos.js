@@ -5,7 +5,7 @@ import albilad from '../../images/logo/banks/Bank_Albilad.svg';
 import aljazira from '../../images/logo/banks/Bank_Aljazira.svg';
 import riyad from '../../images/logo/banks/Riyad_Bank.svg';
 import sabb from '../../images/logo/banks/SABB.svg';
-import fransi from '../../images/logo/banks/Saudi_Fransi_Capital.webp';
+import fransi from '../../images/logo/banks/Saudi_Fransi_Capital.png';
 import saudiInvestment from '../../images/logo/banks/Saudi_Investment.svg';
 import snb from '../../images/logo/banks/SNB.svg';
 

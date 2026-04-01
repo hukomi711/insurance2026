@@ -21,7 +21,7 @@
                 <!-- Spinner -->
                 <div class="mb-5">
                     <div class="relative inline-flex items-center justify-center w-28 h-28">
-                        <img src="/images/logo/Wc8C.gif" alt="جارٍ التحميل" class="w-28 h-28" width="112" height="112" />
+                        <img src="/images/logo/Wc8C.png" alt="جارٍ التحميل" class="w-28 h-28" width="112" height="112" />
                     </div>
                 </div>
 

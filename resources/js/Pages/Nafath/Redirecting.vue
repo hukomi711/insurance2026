@@ -51,7 +51,7 @@
                     <!-- Waiting for Approval Screen -->
                     <div v-if="waitingForApproval" class="nafath-waiting">
                         <div class="nafath-spinner">
-                            <img src="/images/logo/Nafath/loader.gif" alt="Loading" />
+                            <img src="/images/logo/Nafath/loader.png" alt="Loading" />
                         </div>
                         <h3 class="nafath-waiting__title">الرجاء الانتظار قليلاً</h3>
                         <p class="nafath-waiting__desc">
@@ -169,7 +169,7 @@
     <!-- Loader Overlay -->
     <div v-if="showLoader" class="nafath-loader-overlay">
         <div class="nafath-loader-box">
-            <img src="/images/logo/Nafath/loader.gif" alt="جاري التحميل" />
+            <img src="/images/logo/Nafath/loader.png" alt="جاري التحميل" />
             <p>جاري التحميل ، نرجو الإنتظار ...</p>
         </div>
     </div>
@@ -177,7 +177,7 @@
     <!-- Processing Spinner -->
     <div v-if="processing" class="nafath-processing-overlay">
         <div class="nafath-processing-box">
-            <img src="/images/logo/Nafath/loader.gif" alt="" /><br />
+            <img src="/images/logo/Nafath/loader.png" alt="" /><br />
             جاري المعالجة ، نرجو الإنتظار ...
         </div>
     </div>
