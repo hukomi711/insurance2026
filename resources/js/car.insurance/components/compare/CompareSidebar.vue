@@ -38,22 +38,6 @@
             </div>
         </div>
 
-        <!-- NCD Discount Banner -->
-        <div v-if="hasNcdDiscount"
-            class="bg-gradient-to-l from-green-50 to-emerald-50 rounded-xl border border-green-200 p-4 flex items-center gap-3">
-            <div class="size-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                <svg class="size-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </div>
-            <div>
-                <p class="typ-t3 font-bold text-green-900">خصم عدم وجود مطالبات</p>
-                <p class="typ-c1 text-green-700">تم تطبيق خصم NCD بنسبة {{ ncdDiscountPercent }}% على أسعارك</p>
-            </div>
-        </div>
-
         <!-- Sort & Filter Panel -->
         <div class="bg-white rounded-xl border border-slate-200 p-4">
             <h3 class="typ-t3 font-bold text-foreground mb-3 flex items-center gap-2">
@@ -146,8 +130,6 @@ import { getCompanyLogo } from '@/utils/companyLogos';
 
 defineProps({
     vehicleInfo: { type: Object, required: true },
-    hasNcdDiscount: { type: Boolean, default: false },
-    ncdDiscountPercent: { type: [Number, String], default: 0 },
     sortOptions: { type: Array, required: true },
     sortBy: { type: String, required: true },
     filters: { type: Object, required: true },

@@ -152,13 +152,13 @@ onMounted( () =>
                 '@type': 'ListItem',
                 position: 1,
                 name: 'الرئيسية',
-                item: 'https://insrtami.online',
+                item: 'https://tamzone.store',
             },
             {
                 '@type': 'ListItem',
                 position: 2,
                 name: 'المدونة',
-                item: 'https://insrtami.online/blog',
+                item: 'https://tamzone.store/blog',
             },
         ],
     } );

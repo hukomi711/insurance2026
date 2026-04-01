@@ -54,10 +54,6 @@
                                     <p class="typ-c1 text-muted">{{ plan.typeAr }}</p>
                                 </div>
                                 <div class="text-left shrink-0">
-                                    <div v-if="getDiscountInfo(plan).hasDiscount" class="flex items-center gap-1.5 justify-end mb-0.5">
-                                        <span class="inline-flex items-center bg-red-100 text-red-700 typ-c2 font-bold px-1.5 py-0.5 rounded-full ltr-nums">وفّر {{ getDiscountInfo(plan).discountPercent }}%</span>
-                                        <span class="text-slate-400 typ-c2 line-through ltr-nums">{{ formatNumber(getDiscountInfo(plan).originalPrice) }}</span>
-                                    </div>
                                     <div class="flex items-baseline gap-1">
                                         <span class="typ-h2 font-extrabold text-primary ltr-nums">
                                             {{ formatNumber(currentPrice) }}
@@ -290,7 +286,7 @@ import {
     DialogTitle, DialogDescription, DialogClose,
 } from 'radix-vue';
 import { getCompany } from '@/data';
-import { formatNumber, getDiscountInfo } from '@/utils/formatters';
+import { formatNumber } from '@/utils/formatters';
 import { calculateTotalWithVAT } from '@/utils/pricing';
 import { usePricingEngine } from '@/utils/pricingEngine';
 import { useInsuranceStore } from '@/store/modules/insurance';

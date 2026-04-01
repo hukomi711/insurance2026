@@ -5,14 +5,11 @@ import
     BASE_PREMIUMS,
     PRICE_LIMITS,
     VEHICLE_AGE_FACTORS,
-    MANUFACTURER_FACTORS,
     VEHICLE_VALUE_FACTORS,
     PURPOSE_FACTORS,
     MODIFICATION_FACTOR,
     TRAILER_FACTOR,
-    TRANSMISSION_FACTORS,
     DRIVER_AGE_FACTORS,
-    EXPERIENCE_FACTORS,
     ACCIDENT_FACTORS,
     VIOLATION_FACTORS,
     EDUCATION_FACTORS,
@@ -63,10 +60,9 @@ export function usePricingEngine ()
     /**
      * معامل الشركة المصنعة
      */
-    function getManufacturerFactor ( makeId )
+    function getManufacturerFactor ( _makeId )
     {
-        if ( !makeId ) return 1.0;
-        return MANUFACTURER_FACTORS[ Number( makeId ) ] || 1.0;
+        return 1.0;
     }
 
     /**
@@ -107,9 +103,9 @@ export function usePricingEngine ()
     /**
      * معامل ناقل الحركة
      */
-    function getTransmissionFactor ( type )
+    function getTransmissionFactor ( _type )
     {
-        return TRANSMISSION_FACTORS[ type ] || 1.0;
+        return 1.0;
     }
 
     /**
@@ -150,9 +146,9 @@ export function usePricingEngine ()
     /**
      * معامل خبرة القيادة
      */
-    function getExperienceFactor ( experience )
+    function getExperienceFactor ( _experience )
     {
-        return EXPERIENCE_FACTORS[ experience ] || 1.0;
+        return 1.0;
     }
 
     /**

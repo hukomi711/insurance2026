@@ -4,4 +4,4 @@ Disallow: /login
 Disallow: /insurance/
 Disallow: /api/
 
-Sitemap: https://insrtami.online/sitemap.xml
+Sitemap: https://tamzone.store/sitemap.xml

@@ -3,18 +3,7 @@ import { usePricingEngine } from '@/utils/pricingEngine';
 import {
     BASE_PREMIUMS,
     PRICE_LIMITS,
-    VEHICLE_AGE_FACTORS,
-    MANUFACTURER_FACTORS,
-    CITY_FACTORS,
-    NCD_FACTORS,
-    DEDUCTIBLE_FACTORS,
     REPAIR_METHOD_FACTORS,
-    MODIFICATION_FACTOR,
-    TRAILER_FACTOR,
-    FOREIGN_LICENSE_FACTOR,
-    HEALTH_CONDITION_FACTOR,
-    ADDITIONAL_DRIVER_FACTOR,
-    COMPANY_PRICING_FACTORS,
 } from '@/data/pricingConstants';
 
 // Stub logger to avoid side-effects
@@ -179,11 +168,11 @@ describe( 'usePricingEngine', () =>
             expect( accidents ).toBeGreaterThanOrEqual( clean );
         } );
 
-        it( 'NCD discount reduces price', () =>
+        it( 'NCD no longer reduces price', () =>
         {
             const noNcd = priceWith( { driver: { ncdYears: '0' } } );
             const maxNcd = priceWith( { driver: { ncdYears: '5' } } );
-            expect( maxNcd ).toBeLessThanOrEqual( noNcd );
+            expect( maxNcd ).toBe( noNcd );
         } );
 
         it( 'trailer raises price', () =>

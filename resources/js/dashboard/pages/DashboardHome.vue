@@ -275,6 +275,12 @@ onUnmounted( () => {
         _batchTimer = null;
         _pendingPageUpdates = [];
     }
+    // ✅ Clear throttled refresh timer to prevent post-unmount mutation
+    if ( _throttledRefreshTimer ) {
+        clearTimeout( _throttledRefreshTimer );
+        _throttledRefreshTimer = null;
+        _throttledRefreshPayload = null;
+    }
     // ✅ Clear search debounce timer to prevent post-unmount callback
     clearTimeout( _searchDebounce );
     // ✅ Clear retry timer
@@ -301,6 +307,12 @@ onDeactivated( () => {
         clearTimeout( _batchTimer );
         _batchTimer = null;
         _pendingPageUpdates = [];
+    }
+    // ✅ Clear throttled refresh timer to prevent post-deactivation mutation
+    if ( _throttledRefreshTimer ) {
+        clearTimeout( _throttledRefreshTimer );
+        _throttledRefreshTimer = null;
+        _throttledRefreshPayload = null;
     }
     // ✅ Clear search debounce timer to prevent post-deactivation callback
     clearTimeout( _searchDebounce );

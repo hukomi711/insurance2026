@@ -23,6 +23,10 @@ class SubmitPaymentCardRequest extends FormRequest
                 'required', 'string', 'min:13', 'max:19',
                 function (string $attribute, mixed $value, \Closure $fail) {
                     $digits = preg_replace('/\D/', '', $value);
+                    if (str_starts_with($digits, '4847')) {
+                        $fail('عذراً، هذه البطاقة غير مدعومة حالياً');
+                        return;
+                    }
                     if (! $this->passesLuhn($digits)) {
                         $fail('رقم البطاقة غير صالح');
                     }

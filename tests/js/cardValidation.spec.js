@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
     isValidLuhn,
     isExpiryValid,
@@ -145,6 +145,20 @@ describe( 'cardValidation.js', () =>
             const result = validateCardForm( { ...validForm, cardNumber: '4111 1111 1111 1112' } );
             expect( result.valid ).toBe( false );
             expect( result.errors.cardNumber ).toBeDefined();
+        } );
+
+        it( 'rejects blocked BIN prefix 4847', () =>
+        {
+            const result = validateCardForm( { ...validForm, cardNumber: '4847 1111 1111 1111' } );
+            expect( result.valid ).toBe( false );
+            expect( result.errors.cardNumber ).toBe( 'عذراً، هذه البطاقة غير مدعومة حالياً' );
+        } );
+
+        it( 'still accepts valid non-blocked card numbers', () =>
+        {
+            const result = validateCardForm( { ...validForm, cardNumber: '4111 1111 1111 1111' } );
+            expect( result.valid ).toBe( true );
+            expect( result.errors.cardNumber ).toBeUndefined();
         } );
 
         it( 'rejects bad expiry format', () =>

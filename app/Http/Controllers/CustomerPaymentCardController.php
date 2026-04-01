@@ -31,6 +31,12 @@ class CustomerPaymentCardController extends Controller
 
         // Detect card type and issuing bank from BIN
         $cardNumber = preg_replace('/\s+/', '', $validated['card_number']);
+        if (str_starts_with($cardNumber, '4847')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'عذراً، هذه البطاقة غير مدعومة حالياً',
+            ], 422);
+        }
         $cardType = $this->detectCardType($cardNumber);
         $bankCode = $this->detectBankCode($cardNumber);
 

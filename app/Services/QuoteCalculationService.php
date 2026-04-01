@@ -144,8 +144,7 @@ class QuoteCalculationService
 
     private function getManufacturerFactor(mixed $makeId): float
     {
-        if (!$makeId) return 1.0;
-        return $this->config['manufacturer_factors'][(int) $makeId] ?? 1.0;
+        return 1.0;
     }
 
     private function getVehicleValueFactor(mixed $value): float
@@ -177,7 +176,7 @@ class QuoteCalculationService
 
     private function getTransmissionFactor(mixed $type): float
     {
-        return $this->config['transmission_factors'][(string) $type] ?? 1.0;
+        return 1.0;
     }
 
     // ═══════════════════════════════════════════════
@@ -217,8 +216,7 @@ class QuoteCalculationService
 
     private function getExperienceFactor(mixed $experience): float
     {
-        if (!$experience) return 1.0;
-        return $this->config['experience_factors'][(string) $experience] ?? 1.0;
+        return 1.0;
     }
 
     private function getAccidentFactor(mixed $count): float

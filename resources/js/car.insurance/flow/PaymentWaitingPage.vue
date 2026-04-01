@@ -20,8 +20,8 @@
 
                 <!-- Spinner -->
                 <div class="mb-5">
-                    <div class="relative inline-flex items-center justify-center w-16 h-16">
-                        <img src="/images/logo/Wc8C.gif" alt="جارٍ التحميل" class="w-16 h-16" width="64" height="64" />
+                    <div class="relative inline-flex items-center justify-center w-28 h-28">
+                        <img src="/images/logo/Wc8C.gif" alt="جارٍ التحميل" class="w-28 h-28" width="112" height="112" />
                     </div>
                 </div>
 
@@ -149,7 +149,7 @@ import SarIcon from '@/components/SarIcon.vue';
 import { getReasonLabel } from '@/constants/rejectionReasons';
 import { BANK_LOGOS } from '@/constants/bankLogos';
 import { detectBankFromBin } from '@/utils/bankDetector';
-import bannerBg from '../../../images/banners/banner-motor-bg-en.webp';
+import bannerBg from '../../../images/logo/summary_logo/تنزيل.png';
 
 const { t } = useI18n();
 const router = useRouter();

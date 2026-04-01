@@ -6,7 +6,7 @@
 ## 30-Second Diagnosis
 
 ```
-┌─ User: "I can't access insrtami.online on my phone"
+┌─ User: "I can't access tamzone.store on my phone"
 │
 ├─ Q1: Error message?
 │  ├─ ERR_SSL_PROTOCOL_ERROR → Step A
@@ -32,13 +32,13 @@
 
 ```bash
 # Test 1: Server responding?
-curl -sI https://insrtami.online | head -1
+curl -sI https://tamzone.store | head -1
 
 # Test 2: Certificate valid?
-openssl s_client -connect insrtami.online:443 -servername insrtami.online </dev/null 2>/dev/null | grep -E "(subject=|notAfter=)"
+openssl s_client -connect tamzone.store:443 -servername tamzone.store </dev/null 2>/dev/null | grep -E "(subject=|notAfter=)"
 
 # Test 3: Reverb working?
-curl -s https://insrtami.online/api/customer/ip | head -c 50
+curl -s https://tamzone.store/api/customer/ip | head -c 50
 ```
 
 **If all 3 pass:**
@@ -60,7 +60,7 @@ Hi! Let's try a quick test:
 
 1. Go to Settings → [Your Name] → iCloud → Private Relay
 2. Turn it OFF
-3. Go to Safari and reload insrtami.online
+3. Go to Safari and reload tamzone.store
 4. Does it work now?
 
 Let me know what happens! 👍
@@ -84,7 +84,7 @@ Let's test with Cloudflare WARP (free VPN):
 
 1. Download "1.1.1.1: Faster Internet" from App Store / Play Store
 2. Open the app and toggle the switch ON
-3. Then try insrtami.online again
+3. Then try tamzone.store again
 4. Does it work now?
 
 (It's totally safe — just uses a different network path)
@@ -119,7 +119,7 @@ Thanks for reporting! 🎯
 Got it! This is an iOS issue with iCloud Private Relay on .sbs domains.
 
 **Two options:**
-1. Keep Private Relay disabled for insrtami.online
+1. Keep Private Relay disabled for tamzone.store
 2. Use Cloudflare WARP instead (free, protects and speeds up)
 
 Either way, you're all set! Let us know if it happens again. 👍
@@ -133,7 +133,7 @@ I'm escalating this to our engineering team for deeper investigation.
 **To help them investigate, can you:**
 1. Open Chrome on your phone
 2. Press F12 → Console
-3. Paste: fetch('https://insrtami.online').catch(e => console.log(e))
+3. Paste: fetch('https://tamzone.store').catch(e => console.log(e))
 4. Screenshot and reply with the error
 
 We'll get back to you within 24 hours! 🔧

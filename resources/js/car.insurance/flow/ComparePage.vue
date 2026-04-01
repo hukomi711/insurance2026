@@ -74,6 +74,17 @@
                         </TabsList>
                     </TabsRoot>
 
+                    <!-- NCD Discount Banner -->
+                    <div class="flex gap-2 items-center justify-between cursor-pointer rounded-lg p-4 mb-4 hover:opacity-80 transition-opacity bg-green-600 text-white">
+                        <div class="flex gap-2 items-center">
+                            <img :src="ncdBannerImg" alt="ncd-discount-clap" class="max-w-full w-5 h-5" loading="lazy" width="20" height="20" />
+                            <span class="text-sm font-medium">مبروك عليك خصم يبدأ من 10% نتيجة قيادتك الآمنة</span>
+                        </div>
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+
                     <!-- AI Recommendation Accordion -->
                     <div v-if="recommendedPlan || cheapestPlan" class="mb-4">
                         <button class="w-full flex items-center justify-between bg-gradient-to-l from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-colors hover:border-emerald-300"
@@ -124,10 +135,6 @@
                                             </div>
                                         </div>
                                         <div class="mb-3">
-                                            <div v-if="getDiscountInfo(recommendedPlan).hasDiscount" class="flex items-center gap-1.5 mb-0.5">
-                                                <span class="inline-flex items-center bg-red-100 text-red-700 typ-c2 font-bold px-1.5 py-0.5 rounded-full ltr-nums">وفّر {{ getDiscountInfo(recommendedPlan).discountPercent }}%</span>
-                                                <span class="text-slate-400 typ-c2 line-through ltr-nums">{{ formatNumber(getDiscountInfo(recommendedPlan).originalPrice) }}</span>
-                                            </div>
                                             <div class="flex items-baseline gap-1">
                                                 <span class="typ-t1 text-primary font-extrabold ltr-nums">{{ formatNumber(recommendedPlan.annualPrice) }}</span>
                                                 <SarIcon className="size-3 text-primary" />
@@ -162,10 +169,6 @@
                                             </div>
                                         </div>
                                         <div class="mb-3">
-                                            <div v-if="getDiscountInfo(cheapestPlan).hasDiscount" class="flex items-center gap-1.5 mb-0.5">
-                                                <span class="inline-flex items-center bg-red-100 text-red-700 typ-c2 font-bold px-1.5 py-0.5 rounded-full ltr-nums">وفّر {{ getDiscountInfo(cheapestPlan).discountPercent }}%</span>
-                                                <span class="text-slate-400 typ-c2 line-through ltr-nums">{{ formatNumber(getDiscountInfo(cheapestPlan).originalPrice) }}</span>
-                                            </div>
                                             <div class="flex items-baseline gap-1">
                                                 <span class="typ-t1 text-primary font-extrabold ltr-nums">{{ formatNumber(cheapestPlan.annualPrice) }}</span>
                                                 <SarIcon className="size-3 text-primary" />
@@ -307,8 +310,7 @@
                 </div>
 
                 <!-- ═══ Sidebar (desktop only) ═══ -->
-                <CompareSidebar :vehicle-info="vehicleInfo" :has-ncd-discount="hasNcdDiscount"
-                    :ncd-discount-percent="ncdDiscountPercent" :sort-options="sortOptions" :sort-by="sortBy"
+                <CompareSidebar :vehicle-info="vehicleInfo" :sort-options="sortOptions" :sort-by="sortBy"
                     :filters="filters" :companies="companies" @update:sort-by="sortBy = $event"
                     @update:filters="Object.assign(filters, $event)"
                     @reset-filters="resetFilters" @show-hero="showHeroModal = true" />
@@ -369,50 +371,6 @@
         <TaminkomHeroModal v-model:open="showHeroModal" />
     </div>
 
-    <!-- ═══ Discount Popup Modal ═══ -->
-    <Teleport to="body">
-        <Transition enter-active-class="transition-all duration-300 ease-out"
-            enter-from-class="opacity-0" enter-to-class="opacity-100"
-            leave-active-class="transition-all duration-200 ease-in"
-            leave-from-class="opacity-100" leave-to-class="opacity-0">
-            <div v-if="showDiscountPopup" class="fixed inset-0 z-[999] flex items-center justify-center p-4"
-                @click.self="showDiscountPopup = false">
-                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-                <div class="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden animate-bounce-in">
-                    <button class="absolute top-3 start-3 z-10 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors cursor-pointer shadow-sm"
-                        @click="showDiscountPopup = false">
-                        <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                    <div class="w-full">
-                        <img :src="cashBackImg" alt="وفّر على أسعار التأمين" class="w-full h-auto object-cover" width="1071" height="1280" loading="lazy" />
-                    </div>
-                    <div class="p-5 text-center">
-                        <div class="inline-flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-4 py-1.5 mb-3">
-                            <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                            <span class="text-red-600 typ-c1 font-bold">عرض لفترة محدودة</span>
-                        </div>
-                        <div class="flex items-center justify-center gap-4 mb-5" dir="ltr">
-                            <div class="flex flex-col items-center">
-                                <span class="text-5xl font-extrabold text-primary ltr-nums tabular-nums w-20 text-center">{{ discountMinutes }}</span>
-                                <span class="typ-b2 text-muted mt-1">دقيقة</span>
-                            </div>
-                            <span class="text-4xl font-bold text-slate-300 -mt-5">:</span>
-                            <div class="flex flex-col items-center">
-                                <span class="text-5xl font-extrabold text-primary ltr-nums tabular-nums w-20 text-center">{{ discountSeconds }}</span>
-                                <span class="typ-b2 text-muted mt-1">ثانية</span>
-                            </div>
-                        </div>
-                        <button class="w-full py-3 bg-primary hover:bg-primary-dark text-white font-bold text-base rounded-xl transition-colors cursor-pointer"
-                            @click="showDiscountPopup = false">
-                            استفد من العرض الآن
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </Transition>
-    </Teleport>
 </template>
 
 <script setup>
@@ -427,7 +385,7 @@ import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { trackStepViewed, trackQuoteSelected, trackStepCompleted } from '@/composables/useFunnelTracking';
 import { useInsuranceStore } from '@/store/modules/insurance';
 import { usePricingEngine } from '@/utils/pricingEngine';
-import { formatNumber, getDiscountInfo } from '@/utils/formatters';
+import { formatNumber } from '@/utils/formatters';
 import { getCompanyLogo } from '@/utils/companyLogos';
 import SarIcon from '@/components/SarIcon.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
@@ -440,7 +398,8 @@ const CompareModal = defineAsyncComponent( () => import( '@/car.insurance/compon
 const MobileFiltersSheet = defineAsyncComponent( () => import( '@/car.insurance/components/compare/MobileFiltersSheet.vue' ) );
 import CompareSidebar from '@/car.insurance/components/compare/CompareSidebar.vue';
 import logger from '@/utils/logger';
-const cashBackImg = new URL( '../../../../resources/images/logo/summary_logo/cash_back.jpeg', import.meta.url ).href;
+
+const ncdBannerImg = new URL( '../../../images/motorapp/mabruk.webp', import.meta.url ).href;
 
 const route = useRoute();
 const router = useRouter();
@@ -540,12 +499,6 @@ onMounted( () => {
     // Countdown timer
     countdownInterval = setInterval( updateCountdown, 1000 );
 
-    // Show discount popup after a short delay
-    setTimeout( () => {
-        showDiscountPopup.value = true;
-        startDiscountTimer();
-    }, 800 );
-
     // Pause timers when tab is hidden, resume when visible
     document.addEventListener( 'visibilitychange', handleVisibilityChange );
 } );
@@ -564,38 +517,6 @@ const activeTab = ref( 'thirdParty' );
 const aiAccordionOpen = ref( true );
 const expandedCards = ref( [] );
 const selectionError = ref( '' );
-
-// ═══ Discount Popup ═══
-const showDiscountPopup = ref( false );
-const discountTimeLeft = ref( 30 * 60 );
-let discountTimer = null;
-
-const discountMinutes = computed( () => String( Math.floor( discountTimeLeft.value / 60 ) ).padStart( 2, '0' ) );
-const discountSeconds = computed( () => String( discountTimeLeft.value % 60 ).padStart( 2, '0' ) );
-
-function startDiscountTimer() {
-    if ( discountTimer ) clearInterval( discountTimer );
-    discountTimer = setInterval( () => {
-        if ( discountTimeLeft.value > 0 ) {
-            discountTimeLeft.value--;
-        } else {
-            clearInterval( discountTimer );
-            discountTimer = null;
-        }
-    }, 1000 );
-}
-
-// NCD discount computed from store data
-const hasNcdDiscount = computed( () => {
-    const ncdYears = insuranceStore.driver?.ncdYears;
-    return ncdYears && Number( ncdYears ) > 0;
-} );
-const ncdDiscountPercent = computed( () => {
-    const ncdYears = insuranceStore.driver?.ncdYears;
-    if ( !ncdYears ) return 0;
-    const discountMap = { '1': 5, '2': 10, '3': 15, '4': 20, '5': 25, '6': 30, '7': 35 };
-    return discountMap[ String( ncdYears ) ] || 0;
-} );
 
 // Quote options (repair method & coverage)
 const quoteOptions = reactive( {
@@ -835,10 +756,8 @@ let updatingDoneTimer = null;
 function handleVisibilityChange() {
     if ( document.hidden ) {
         clearInterval( countdownInterval );
-        if ( discountTimer ) clearInterval( discountTimer );
     } else {
         countdownInterval = setInterval( updateCountdown, 1000 );
-        if ( discountTimeLeft.value > 0 ) startDiscountTimer();
     }
 }
 
@@ -847,7 +766,6 @@ onUnmounted( () => {
     clearInterval( loadingInterval );
     clearTimeout( loadingDoneTimer );
     clearTimeout( updatingDoneTimer );
-    if ( discountTimer ) clearInterval( discountTimer );
     document.removeEventListener( 'visibilitychange', handleVisibilityChange );
 } );
 

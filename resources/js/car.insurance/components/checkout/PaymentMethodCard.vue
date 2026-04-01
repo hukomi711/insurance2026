@@ -97,7 +97,7 @@
               inputmode="numeric"
               name="cc-csc"
               placeholder="•••"
-              maxlength="4"
+              maxlength="3"
               dir="ltr"
               autocomplete="cc-csc"
               class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 hover:bg-white text-left ltr-nums"
@@ -129,6 +129,30 @@
         </div>
       </form>
 
+      <!-- Terms & Conditions -->
+      <div dir="rtl" class="mt-3 pt-3 border-t border-slate-100">
+        <p v-if="errors.acceptTerms" class="text-sm font-medium text-destructive mb-2">يرجى الموافقة على الشروط والأحكام</p>
+        <label for="accept-terms" class="flex items-center gap-2 cursor-pointer">
+          <CheckboxRoot
+            id="accept-terms"
+            :checked="acceptTerms"
+            name="accept-terms"
+            class="flex h-5 w-5 shrink-0 appearance-none items-center justify-center rounded-md border-2 transition-colors cursor-pointer"
+            :class="acceptTerms ? 'bg-primary border-primary' : 'bg-white border-primary hover:border-primary-dark'"
+            @update:checked="$emit('update:acceptTerms', $event)"
+          >
+            <CheckboxIndicator>
+              <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+              </svg>
+            </CheckboxIndicator>
+          </CheckboxRoot>
+          <span class="text-sm text-slate-500 font-normal">أوافق على
+            <router-link to="/terms" target="_blank" class="text-primary hover:underline">الشروط والأحكام</router-link>
+          </span>
+        </label>
+      </div>
+
       <!-- Security Notice -->
       <div class="flex items-center gap-2.5 mt-3 pt-3 border-t border-slate-100">
         <svg class="w-4 h-4 text-slate-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -146,6 +170,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import { CheckboxRoot, CheckboxIndicator } from 'radix-vue';
 import { formatCardNumber, formatExpiry } from '@/utils/cardValidation';
 import { detectBankFromBin } from '@/utils/bankDetector';
 import cardLogoSrc from '@/../../resources/images/logo/master-visa-mada.webp';
@@ -155,9 +180,10 @@ const props = defineProps({
   form: { type: Object, required: true },
   errors: { type: Object, default: () => ({}) },
   rejectionReason: { type: String, default: '' },
+  acceptTerms: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['update:method', 'update:form', 'blur:field']);
+const emit = defineEmits(['update:method', 'update:form', 'blur:field', 'update:acceptTerms']);
 
 const BANK_LABELS = {
   rajhi: 'الراجحي',

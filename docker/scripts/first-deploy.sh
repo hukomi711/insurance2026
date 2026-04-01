@@ -14,12 +14,12 @@
 #
 # After this script, you must:
 #   1. Provision SSL certificates (certbot)
-#   2. Copy certs to docker/certbot/conf/live/insrtami.online/
+#   2. Copy certs to docker/certbot/conf/live/tamzone.store/
 #   3. Run: bash docker/scripts/deploy.sh
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
 
-DOMAIN="insrtami.online"
+DOMAIN="tamzone.store"
 
 echo "══════════════════════════════════════════════════════════════"
 echo "  Insurance 2026 — First Deploy Setup"

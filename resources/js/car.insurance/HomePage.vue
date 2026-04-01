@@ -53,7 +53,7 @@ function injectJsonLd() {
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
         name: 'تأمينكم',
-        url: 'https://insrtami.online',
+        url: 'https://tamzone.store',
         applicationCategory: 'FinanceApplication',
         operatingSystem: 'Web, iOS, Android',
         description: 'منصة مقارنة أسعار تأمين السيارات في السعودية',

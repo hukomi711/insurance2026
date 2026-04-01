@@ -7,6 +7,16 @@ import { getSessionToken } from "@/utils/sessionToken";
 const MAX_429_RETRIES = 2;
 const RETRY_COUNT_HEADER = "x-retry-count";
 
+/**
+ * Auth endpoints that should never be auto-retried on 429.
+ * Retrying these burns through the security rate-limit window.
+ */
+const NO_RETRY_429_PATHS = [
+    "/admin/login",
+    "/admin/verify-code",
+    "/admin/resend-code",
+];
+
 /** Maximum number of automatic retries on 419 (CSRF mismatch) */
 const MAX_419_RETRIES = 1;
 const CSRF_RETRY_HEADER = "x-csrf-retry";
@@ -17,19 +27,19 @@ let csrfInitialized = false;
 /**
  * Initialize Sanctum CSRF cookie.
  * Must be called once before the first state-changing request.
+ * Coalesces concurrent calls to prevent duplicate fetches.
  * @returns {Promise<void>}
  */
+let _csrfRefreshPromise = null;
 export async function initCsrf ()
 {
     if ( csrfInitialized ) return;
-    try
-    {
-        await axios.get( "/sanctum/csrf-cookie" );
-        csrfInitialized = true;
-    } catch ( err )
-    {
-        logger.warn( "[API] Failed to initialize CSRF cookie:", err.message );
-    }
+    if ( _csrfRefreshPromise ) return _csrfRefreshPromise;
+    _csrfRefreshPromise = axios.get( "/sanctum/csrf-cookie" )
+        .then( () => { csrfInitialized = true; } )
+        .catch( ( err ) => { logger.warn( "[API] Failed to initialize CSRF cookie:", err.message ); } )
+        .finally( () => { _csrfRefreshPromise = null; } );
+    return _csrfRefreshPromise;
 }
 
 /**
@@ -222,10 +232,15 @@ request.interceptors.response.use(
                 error.config.headers?.[ RETRY_COUNT_HEADER ] || "0",
                 10,
             );
-            if ( retryCount >= MAX_429_RETRIES )
+            const isAuthPath = NO_RETRY_429_PATHS.some(
+                ( p ) => error.config.url?.includes( p ),
+            );
+            if ( isAuthPath || retryCount >= MAX_429_RETRIES )
             {
                 logger.warn(
-                    "[API] Rate limited — max retries reached, giving up",
+                    isAuthPath
+                        ? "[API] Rate limited on auth endpoint — not retrying"
+                        : "[API] Rate limited — max retries reached, giving up",
                 );
                 notifications?.push( {
                     type: "error",

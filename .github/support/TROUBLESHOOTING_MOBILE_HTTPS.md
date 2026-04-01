@@ -52,20 +52,21 @@ Is this iPhone/iOS? (YES/NO)
 On iOS, **iCloud Private Relay** intercepts HTTPS requests through Apple's CDN edge, which can cause DNS inconsistency or TLS failures with certain domains (.sbs, smaller TLDs).
 
 ### Test:
-1. **Settings → [Your Name] → iCloud → Private Relay → Turn OFF**
+1. **Settings → (Your Name) → iCloud → Private Relay → Turn OFF**
    
 2. **Safari: Settings → Develop → Turn OFF "Private Browsing"** (if on)
    
 3. **Close Safari completely** (swipe up from task switcher)
    
-4. **Hard refresh:** Open insrtami.online again
+4. **Hard refresh:** Open tamzone.store again
    - If on Safari: Cmd+Shift+R or hold refresh button → "Hard Refresh"
    
 5. **Does the domain load now?**
 
 #### ✅ **Result: YES, loaded!**
 → **Root cause: iOS privacy layer + CDN edge routing incompatibility**
-- **Solution for user:** Keep Private Relay OFF for insrtami.online, or use Cloudflare WARP (see Step 3)
+
+- **Solution for user:** Keep Private Relay OFF for tamzone.store, or use Cloudflare WARP (see Step 3)
 - **Document:** "iOS Private Relay conflict with .sbs domain"
 - **Close ticket** ✅
 
@@ -91,7 +92,7 @@ On iOS, **iCloud Private Relay** intercepts HTTPS requests through Apple's CDN e
 3. **Toggle the switch: ON**
    - Wait 5 seconds for connection
    
-4. **Open Safari/Chrome → Visit insrtami.online**
+4. **Open Safari/Chrome → Visit tamzone.store**
    
 5. **Does it load?**
 
@@ -118,7 +119,7 @@ On iOS, **iCloud Private Relay** intercepts HTTPS requests through Apple's CDN e
    
 2. **Copy-paste this into Console:**
    ```javascript
-   fetch('https://insrtami.online/api/customer/ip')
+   fetch('https://tamzone.store/api/customer/ip')
      .then(r => { console.log('✅ Status:', r.status); return r.text() })
      .then(t => console.log('Response:', t))
      .catch(e => console.error('❌ Error:', e.message))
@@ -206,7 +207,7 @@ Run this every morning to confirm server is healthy:
 
 ```bash
 # From your terminal:
-curl -sI https://insrtami.online | head -5
+curl -sI https://tamzone.store | head -5
 
 # Expected output:
 # HTTP/2 200 

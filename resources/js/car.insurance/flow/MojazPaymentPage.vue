@@ -167,7 +167,7 @@ const cardErrors = reactive( {
 const isProcessing = ref( false );
 
 // Banner image
-const bannerSrc = new URL( '../../../images/banners/banner-motor-bg-en.webp', import.meta.url ).href;
+const bannerSrc = new URL( '../../../images/logo/summary_logo/تنزيل.png', import.meta.url ).href;
 
 // ──────────────────────────────────────────────
 // Formatters

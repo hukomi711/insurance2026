@@ -8,7 +8,7 @@
 | --- | ----- |
 | Server | `root@<SERVER_IP>` |
 | Path | `/opt/tamincom/` |
-| Domain | `insrtami.online` |
+| Domain | `tamzone.store` |
 | App container | `ins2026-app` |
 | Nginx container | `ins2026-nginx` |
 

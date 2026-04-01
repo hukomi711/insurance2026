@@ -124,6 +124,7 @@
             "verifyPhone": "Verify Phone Number",
             "enterPhoneAndBirthdate": "Enter your phone number and birthdate to verify",
             "carrier": "Mobile Carrier",
+            "selectCarrier": "Select carrier",
             "phoneNumber": "Phone Number",
             "phoneExample": "Example: 0512345678",
             "birthdateHijri": "Date of Birth (Hijri)",

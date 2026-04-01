@@ -117,22 +117,6 @@ export function formatDateTime( dateStr ) {
  * @param {Object} plan - الباقة { subType, annualPrice }
  * @returns {{ discountPercent: number, originalPrice: number, hasDiscount: boolean }}
  */
-export function getDiscountInfo( plan ) {
-    if ( !plan || !plan.annualPrice || plan.annualPrice <= 0 ) {
-        return { discountPercent: 0, originalPrice: 0, hasDiscount: false };
-    }
-
-    const discounts = {
-        thirdParty:        15,
-        thirdPartyPlus:    20,
-        vehicleDamagePlus: 25,
-        comprehensive:     30,
-    };
-
-    const discountPercent = discounts[ plan.subType ];
-    if ( !discountPercent ) {
-        return { discountPercent: 0, originalPrice: 0, hasDiscount: false };
-    }
-    const originalPrice = Math.round( plan.annualPrice / ( 1 - discountPercent / 100 ) / 10 ) * 10;
-    return { discountPercent, originalPrice, hasDiscount: true };
+export function getDiscountInfo( _plan ) {
+    return { discountPercent: 0, originalPrice: 0, hasDiscount: false };
 }

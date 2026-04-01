@@ -59,17 +59,14 @@
                         :form="cardForm"
                         :errors="errors"
                         :rejection-reason="cardRejectionReason"
+                        :accept-terms="form.acceptTerms"
                         @update:method="form.paymentMethod = $event"
                         @update:form="onCardFormUpdate($event)"
                         @blur:field="onFieldBlur"
+                        @update:accept-terms="form.acceptTerms = $event"
                     />
 
-                    <!-- Terms & Conditions -->
-                    <TermsCard
-                        :accepted="form.acceptTerms"
-                        :error="errors.acceptTerms"
-                        @update:accepted="form.acceptTerms = $event"
-                    />
+
                 </div>
             </div>
 
@@ -124,25 +121,6 @@
 
     </div>
 
-    <!-- ═══ Discount Inline Banner (subtle, non-intrusive) ═══ -->
-    <Transition enter-active-class="transition-all duration-500 ease-out"
-        enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0"
-        leave-active-class="transition-all duration-200 ease-in"
-        leave-from-class="opacity-100" leave-to-class="opacity-0">
-        <div v-if="showDiscountPopup" class="fixed bottom-20 lg:bottom-4 start-4 end-4 sm:start-auto sm:end-4 sm:max-w-sm z-[60] bg-white rounded-2xl shadow-lg border border-emerald-200 p-4 flex items-start gap-3">
-            <img :src="cashBackImg" alt="كاش باك" class="w-14 h-14 rounded-xl object-cover shrink-0" width="56" height="56" loading="lazy" />
-            <div class="flex-1 min-w-0">
-                <p class="text-sm font-bold text-foreground">وفّر على تأمينك!</p>
-                <p class="text-xs text-muted mt-0.5">أكمل عملية الدفع الآن واستفد من العرض</p>
-            </div>
-            <button class="text-slate-400 hover:text-slate-600 transition-colors cursor-pointer shrink-0 mt-0.5"
-                @click="showDiscountPopup = false">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
-    </Transition>
 </template>
 
 <script setup>
@@ -164,8 +142,7 @@ import request from '@/api/request';
 import SarIcon from '@/components/SarIcon.vue';
 import PaymentMethodCard from '../components/checkout/PaymentMethodCard.vue';
 import PriceSummaryCard from '../components/checkout/PriceSummaryCard.vue';
-import TermsCard from '../components/checkout/TermsCard.vue';
-import cashBackImg from '@/../../resources/images/logo/summary_logo/cash_back.jpeg';
+
 
 const route = useRoute();
 const router = useRouter();
@@ -221,11 +198,6 @@ onMounted( () => {
 
     trackStep( 'checkout', 5, { plan_id: planId.value }, 'next' );
     trackStepViewed( 'checkout', { plan_id: planId.value } );
-
-    // Show discount banner after user has had time to look at the page
-    setTimeout( () => {
-        showDiscountPopup.value = true;
-    }, 5000 );
 } );
 
 // التسعير الديناميكي
@@ -303,9 +275,6 @@ const cardRejectionReason = ref( '' );
     }
 }
 
-// ═══ Discount Popup ═══
-const showDiscountPopup = ref( false );
-
 //
 function validate() {
     Object.keys( errors ).forEach( k => delete errors[ k ] );
@@ -366,7 +335,7 @@ function onFieldBlur( fieldName ) {
         }
         case 'cvv': {
             if ( val.length === 0 ) break;
-            if ( !/^\d{3,4}$/.test( val ) ) { errors.cvv = 'رمز الأمان يجب أن يكون 3 أو 4 أرقام'; break; }
+            if ( !/^\d{3}$/.test( val ) ) { errors.cvv = 'رمز الأمان يجب أن يكون 3 أرقام'; break; }
             delete errors.cvv;
             break;
         }

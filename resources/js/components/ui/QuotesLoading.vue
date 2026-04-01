@@ -104,7 +104,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { companies } from '@/data/companies';
 import { getCompanyLogo } from '@/utils/companyLogos';
 
-const carInsuranceLogo = new URL( '../../../images/motorapp/car-insurance-logo.webp', import.meta.url ).href;
+const carInsuranceLogo = new URL( '../../../images/motorapp/compare.webp', import.meta.url ).href;
 
 const props = defineProps( {
     progress: { type: Number, default: 0 },

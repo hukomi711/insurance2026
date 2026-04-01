@@ -38,6 +38,7 @@ const MAX_BACKOFF_MULTIPLIER = 6; // max 35s between polls (6 × 5s tick + gap)
 // ── Tick intervals ─────────────────────────────────────────────
 const POLL_INTERVAL_MS = 5_000;         // 5s base tick
 const CUSTOMERS_EVERY = 1;             // كل 5 ثواني — always poll every 5s
+const CUSTOMERS_WS_EVERY = 6;          // كل 30 ثانية — WS primary, polling as safety net
 const CUSTOMERS_HIDDEN_EVERY = 6;      // كل 30 ثانية — when tab is hidden (was 60s)
 const BADGE_EVERY = 6;                 // كل 30 ثانية (6 ticks)
 const NOTIFY_EVERY = 12;               // كل 60 ثانية (12 ticks)
@@ -69,11 +70,15 @@ async function _tick ()
             // Collect all async work for this tick
             const jobs = [];
 
-            // ── Always poll customers every 5s (WS supplements but does not replace) ──
+            // ── Customer cadence depends on WS state + tab visibility ──
             let customerCadence = CUSTOMERS_EVERY;
             if ( !_isTabVisible )
             {
                 customerCadence = CUSTOMERS_HIDDEN_EVERY;
+            }
+            else if ( _wsState === 'ready' && _initialLoadComplete )
+            {
+                customerCadence = CUSTOMERS_WS_EVERY;
             }
 
             // ── Page callbacks ──

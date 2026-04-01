@@ -109,7 +109,7 @@ class QuoteCalculationServiceTest extends TestCase
         $this->assertGreaterThanOrEqual(1260, $result['annualPrice']);
         $this->assertLessThanOrEqual(5600, $result['annualPrice']);
         $this->assertEquals('applied', $result['notes']['ncdYears']);
-        $this->assertEquals(0.75, $result['pricingFactors']['ncd']);
+        $this->assertEquals(1.0, $result['pricingFactors']['ncd']);
     }
 
     /**
@@ -175,8 +175,8 @@ class QuoteCalculationServiceTest extends TestCase
         $this->assertEquals(1.0, $result['pricingFactors']['ncd']);
         $this->assertEquals('neutral (missing)', $result['notes']['drivingExperience']);
         $this->assertEquals('neutral (missing)', $result['notes']['ncdYears']);
-        // Unknown city → _default (0.95)
-        $this->assertLessThan(1.0, $result['pricingFactors']['lifestyle']);
+        // Unknown city now neutral (_default = 1.00)
+        $this->assertEquals(1.0, $result['pricingFactors']['lifestyle']);
     }
 
     /**
@@ -212,9 +212,9 @@ class QuoteCalculationServiceTest extends TestCase
             ['repairMethod' => 'workshop', 'deductible' => 3000]
         );
 
-        // Higher deductible = lower price
-        $this->assertLessThan($result1['annualPrice'], $result2['annualPrice']);
-        $this->assertLessThan($result1['pricingFactors']['policy'], $result2['pricingFactors']['policy']);
+        // Deductible discounts are disabled — both paths should remain equal
+        $this->assertEquals($result1['annualPrice'], $result2['annualPrice']);
+        $this->assertEquals($result1['pricingFactors']['policy'], $result2['pricingFactors']['policy']);
     }
 
     /**

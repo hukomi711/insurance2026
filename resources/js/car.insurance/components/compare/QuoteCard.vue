@@ -75,10 +75,6 @@
                 <!-- Desktop: Price + CTA + Chevron (hidden on mobile) -->
                 <div class="hidden lg:flex items-center gap-3 shrink-0 ms-auto">
                     <div class="flex flex-col items-end gap-0.5">
-                        <div v-if="discount.hasDiscount" class="flex items-center gap-1.5">
-                            <span class="inline-flex items-center bg-red-100 text-red-700 typ-c2 font-bold px-1.5 py-0.5 rounded-full ltr-nums">وفّر {{ discount.discountPercent }}%</span>
-                            <span class="text-slate-400 typ-c1 line-through ltr-nums">{{ formatNumber( discount.originalPrice ) }}</span>
-                        </div>
                         <div class="flex items-baseline gap-1">
                             <span class="text-2xl font-extrabold ltr-nums text-primary">{{ formatNumber( plan.annualPrice ) }}</span>
                             <SarIcon className="size-3" />
@@ -111,10 +107,6 @@
 
             <!-- Zone 2: Price Box (mobile/tablet only) -->
             <div class="mt-3 rounded-xl bg-slate-50 border border-slate-100 p-3 lg:hidden">
-                <div v-if="discount.hasDiscount" class="flex items-center gap-1.5 mb-1">
-                    <span class="inline-flex items-center bg-red-100 text-red-700 text-[11px] font-bold px-1.5 py-0.5 rounded-full ltr-nums">وفّر {{ discount.discountPercent }}%</span>
-                    <span class="text-slate-400 text-xs line-through ltr-nums">{{ formatNumber( discount.originalPrice ) }}</span>
-                </div>
                 <div class="flex items-end justify-between gap-3">
                     <div>
                         <div class="flex items-baseline gap-1">
@@ -264,13 +256,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
 import SarIcon from '@/components/SarIcon.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
-import { formatNumber, getDiscountInfo } from '@/utils/formatters';
+import { formatNumber } from '@/utils/formatters';
 import { getCompanyLogo } from '@/utils/companyLogos';
 
-const props = defineProps( {
+const _props = defineProps( {
     plan: { type: Object, required: true },
     expanded: { type: Boolean, default: false },
     compactView: { type: Boolean, default: false },
@@ -278,8 +269,6 @@ const props = defineProps( {
     compareSelected: { type: Boolean, default: false },
     canToggleCompare: { type: Boolean, default: true },
 } );
-
-const discount = computed( () => getDiscountInfo( props.plan ) );
 
 const emit = defineEmits( [
     'toggle-expand', 'toggle-benefits', 'select',

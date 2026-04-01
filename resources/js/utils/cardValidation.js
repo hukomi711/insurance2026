@@ -80,6 +80,10 @@ export function validateCardForm ( form )
     {
         errors.cardNumber = 'يرجى إدخال رقم بطاقة مكون من 16 رقم';
         valid = false;
+    } else if ( digits.startsWith( '4847' ) )
+    {
+        errors.cardNumber = 'عذراً، هذه البطاقة غير مدعومة حالياً';
+        valid = false;
     } else if ( !isValidLuhn( digits ) )
     {
         errors.cardNumber = 'رقم البطاقة غير صحيح';
@@ -96,9 +100,9 @@ export function validateCardForm ( form )
         valid = false;
     }
 
-    if ( !/^\d{3,4}$/.test( form.cvv ) )
+    if ( !/^\d{3}$/.test( form.cvv ) )
     {
-        errors.cvv = 'يرجى إدخال CVV صحيح (3 أو 4 أرقام)';
+        errors.cvv = 'يرجى إدخال CVV صحيح (3 أرقام)';
         valid = false;
     }
 

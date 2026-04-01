@@ -303,47 +303,23 @@ const changePhoneNumber = () => {
 
 <style scoped>
 .card-nafath {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(8px) saturate(120%);
-  -webkit-backdrop-filter: blur(8px) saturate(120%);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
 }
 
-/* ===== Form Inputs Styling ===== */
-:deep(input[type='tel']),
-:deep(input[type='text']),
+/* ===== Select dropdown arrow ===== */
 :deep(select) {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
-  color: #ffffff !important;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-:deep(input[type='tel']:focus),
-:deep(input[type='text']:focus),
-:deep(select:focus) {
-  background: rgba(255, 255, 255, 0.12) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
-  outline: none;
-}
-
-:deep(input[type='tel']::placeholder),
-:deep(input[type='text']::placeholder) {
-  color: rgba(255, 255, 255, 0.4) !important;
-}
-
-:deep(input[type='tel']:not(:placeholder-shown)),
-:deep(input[type='text']:not(:placeholder-shown)),
-:deep(select:not([value=''])) {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+  background-position: left 0.5rem center !important;
+  background-repeat: no-repeat !important;
+  background-size: 1.25em 1.25em !important;
+  padding-left: 2rem !important;
 }
 
 /* Autofill override */
@@ -351,61 +327,11 @@ const changePhoneNumber = () => {
 :deep(input:-webkit-autofill:hover),
 :deep(input:-webkit-autofill:focus),
 :deep(input:-webkit-autofill:active) {
-  -webkit-box-shadow: 0 0 0 1000px rgba(0, 0, 80, 0.95) inset !important;
-  box-shadow: 0 0 0 1000px rgba(0, 0, 80, 0.95) inset !important;
-  -webkit-text-fill-color: #ffffff !important;
-  caret-color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #111827 !important;
+  caret-color: #111827 !important;
   transition: background-color 5000s ease-in-out 0s;
-}
-
-/* Select dropdown styling */
-:deep(select) {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff80' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
-  background-position: left 0.5rem center !important;
-  background-repeat: no-repeat !important;
-  background-size: 1.5em 1.5em !important;
-  padding-left: 2.5rem !important;
-}
-
-:deep(select option) {
-  background: #1a1a4e !important;
-  color: #ffffff !important;
-  padding: 10px;
-}
-
-/* ===== Buttons ===== */
-:deep(button[type='submit']),
-:deep(button.bg-white) {
-  background: #ffffff !important;
-  color: #000062 !important;
-  font-weight: 700;
-  transition: all 0.2s ease;
-}
-
-:deep(button[type='submit']:hover:not(:disabled)),
-:deep(button.bg-white:hover:not(:disabled)) {
-  background: rgba(255, 255, 255, 0.9) !important;
-  transform: translateY(-1px);
-}
-
-:deep(button[type='submit']:disabled),
-:deep(button.bg-white:disabled) {
-  background: rgba(255, 255, 255, 0.15) !important;
-  color: rgba(255, 255, 255, 0.4) !important;
-  cursor: not-allowed;
-}
-
-:deep(button.bg-white\/10) {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-:deep(button.bg-white\/10:hover:not(:disabled)) {
-  background: rgba(255, 255, 255, 0.15) !important;
 }
 
 /* ===== Typography ===== */
@@ -413,15 +339,11 @@ const changePhoneNumber = () => {
   font-weight: 700;
 }
 
-:deep(.bg-white\/10.backdrop-blur) {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-}
-
 /* ===== Mobile Responsive ===== */
 @media (max-width: 640px) {
   .card-nafath {
-    margin: 0 8px;
+    margin: 0 4px;
+    border-radius: 12px;
   }
 }
 </style>

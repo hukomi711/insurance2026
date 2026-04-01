@@ -139,6 +139,7 @@
             "verifyPhone": "التحقق من رقم الهاتف",
             "enterPhoneAndBirthdate": "أدخل رقم الهاتف وتاريخ الميلاد للتحقق",
             "carrier": "شركة الاتصالات",
+            "selectCarrier": "اختر شركة الاتصالات",
             "phoneNumber": "رقم الهاتف",
             "phoneExample": "مثال: 0512345678",
             "birthdateHijri": "تاريخ الميلاد (هجري)",
