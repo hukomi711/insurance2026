@@ -63,16 +63,18 @@ class OrderController extends Controller
             'payment_method' => 'nullable|string|in:card,tabby,tamara',
 
             // Quote lock
-            'quote_lock_token' => 'required|string|max:64',
+            'quote_lock_token' => 'nullable|string|max:64',
         ]);
 
-        // ── Validate quote lock token before price checks ──
-        $lockError = $this->validateQuoteLock($validated, $request);
-        if ($lockError) {
-            return response()->json([
-                'success' => false,
-                'message' => $lockError,
-            ], 422);
+        // ── Validate quote lock token before price checks (skip if no token) ──
+        if (!empty($validated['quote_lock_token'])) {
+            $lockError = $this->validateQuoteLock($validated, $request);
+            if ($lockError) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $lockError,
+                ], 422);
+            }
         }
 
         // ── Server-side price validation ──
@@ -109,7 +111,9 @@ class OrderController extends Controller
         $order = DB::transaction(fn () => Order::create($validated));
 
         // One-time token usage — consume after successful order creation
-        Cache::forget('quote_lock:' . $validated['quote_lock_token']);
+        if (!empty($validated['quote_lock_token'])) {
+            Cache::forget('quote_lock:' . $validated['quote_lock_token']);
+        }
 
         return response()->json([
             'success'       => true,
