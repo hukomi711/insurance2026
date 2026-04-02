@@ -17,13 +17,7 @@
             </div>
         </div>
 
-        <!-- Steps -->
-        <div class="bg-white border-b border-slate-100">
-            <div class="box py-3">
-                <CheckoutSteps :current-step="3" />
-            </div>
-        </div>
-
+        <!-- Main Content -->
         <div class="box py-6 sm:py-8">
             <div class="max-w-2xl mx-auto space-y-5">
 
@@ -231,7 +225,6 @@ import { getPlanWithCompany } from '@/data';
 import { getCompanyLogo } from '@/utils/companyLogos';
 import { formatNumber } from '@/utils/formatters';
 import SarIcon from '@/components/SarIcon.vue';
-import CheckoutSteps from '../components/checkout/CheckoutSteps.vue';
 
 const router = useRouter();
 const insuranceStore = useInsuranceStore();

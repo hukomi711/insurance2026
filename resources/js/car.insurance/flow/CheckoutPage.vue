@@ -1,33 +1,20 @@
 <template>
     <!-- ═══ Fullscreen Payment Gateway — No header/footer, no back button ═══ -->
-    <div class="min-h-screen relative" dir="rtl">
-        <!-- Background -->
-        <img :src="bannerBg" alt="" class="absolute inset-0 w-full h-full object-cover" loading="eager" width="1920" height="1080" />
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>
+    <div class="min-h-screen bg-slate-50" dir="rtl">
 
         <!-- Content -->
-        <div class="relative z-10 min-h-screen flex flex-col justify-center px-4 sm:px-6 py-6 sm:py-8">
+        <div class="min-h-screen flex flex-col justify-center px-4 sm:px-6 py-6 sm:py-8">
             <div class="w-full max-w-lg mx-auto">
 
                 <!-- Header -->
                 <header class="text-center mb-6">
                     <div class="flex justify-center mb-3">
-                        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center shadow-lg">
-                            <svg class="size-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-                            </svg>
-                        </div>
+                        <img src="/images/icons/loader.svg" alt="" class="w-16 h-16" width="64" height="64" />
                     </div>
-                    <h1 class="text-2xl md:text-3xl font-bold text-white drop-shadow-md">ادفع الآن</h1>
-                    <p class="text-white/80 text-sm md:text-base mt-2">
+                    <h1 class="text-2xl md:text-3xl font-bold text-foreground">ادفع الآن</h1>
+                    <p class="text-muted text-sm md:text-base mt-2">
                         أدخل بيانات بطاقتك لإتمام عملية الدفع بأمان
                     </p>
-                    <!-- Price badge -->
-                    <div v-if="totalPrice" class="mt-3 inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-5 py-2">
-                        <span class="text-white/80 text-sm font-medium">المبلغ المطلوب:</span>
-                        <span class="text-white text-lg font-extrabold ltr-nums">{{ formatDecimal( totalPrice ) }}</span>
-                        <SarIcon className="size-3.5 text-white/90" />
-                    </div>
                 </header>
 
                 <!-- Payment Error Alert -->
@@ -71,33 +58,19 @@
 
                         <!-- Card Type Selector -->
                         <div class="flex items-center justify-between mb-4">
-                            <div class="shrink-0">
-                                <svg v-if="form.paymentMethod === 'mada'" class="h-8 w-auto" viewBox="0 0 60 38"
-                                    fill="none">
-                                    <rect width="60" height="38" rx="6" fill="#1d6f37" />
-                                    <text x="30" y="24" text-anchor="middle" font-size="12" fill="white"
-                                        font-weight="bold">mada</text>
-                                </svg>
-                                <svg v-else-if="form.paymentMethod === 'mastercard'" class="h-8 w-auto"
-                                    viewBox="0 0 60 38" fill="none">
-                                    <rect width="60" height="38" rx="6" fill="#fff" stroke="#e2e8f0" />
-                                    <circle cx="23" cy="19" r="10" fill="#eb001b" opacity=".85" />
-                                    <circle cx="37" cy="19" r="10" fill="#f79e1b" opacity=".85" />
-                                </svg>
-                                <svg v-else class="h-8 w-auto" viewBox="0 0 60 38" fill="none">
-                                    <rect width="60" height="38" rx="6" fill="#1a1f71" />
-                                    <text x="30" y="25" text-anchor="middle" font-size="14" fill="white"
-                                        font-weight="bold" font-style="italic">VISA</text>
-                                </svg>
-                            </div>
                             <div class="flex items-center gap-3">
+                                <span class="text-sm font-bold text-slate-700">نوع البطاقة</span>
                                 <select id="payment-card-type" v-model="form.paymentMethod" name="card-type"
                                     class="border border-slate-300 rounded px-2 py-1 text-sm bg-white cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary">
                                     <option value="mada">مدى</option>
                                     <option value="mastercard">Mastercard</option>
                                     <option value="visa">Visa</option>
                                 </select>
-                                <span class="text-sm font-bold text-slate-700">نوع البطاقة</span>
+                            </div>
+                            <div class="shrink-0">
+                                <img v-if="form.paymentMethod === 'mada'" :src="madaLogo" alt="mada" class="h-8 w-auto object-contain" width="60" height="38" />
+                                <img v-else-if="form.paymentMethod === 'mastercard'" :src="mastercardLogo" alt="Mastercard" class="h-8 w-auto object-contain" width="60" height="38" />
+                                <img v-else :src="visaLogo" alt="Visa" class="h-8 w-auto object-contain" width="60" height="38" />
                             </div>
                         </div>
 
@@ -195,9 +168,9 @@
 
                 <!-- No plan fallback -->
                 <div v-else class="text-center py-12">
-                    <p class="text-white text-lg font-bold mb-4">لم يتم اختيار وثيقة</p>
+                    <p class="text-foreground text-lg font-bold mb-4">لم يتم اختيار وثيقة</p>
                     <router-link to="/compare"
-                        class="inline-flex items-center gap-2 bg-white text-primary px-6 py-3 rounded-xl font-medium hover:bg-slate-100 transition-colors">
+                        class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-medium hover:bg-primary-dark transition-colors">
                         العودة للمقارنة
                     </router-link>
                 </div>
@@ -207,7 +180,7 @@
                     <div class="flex items-center justify-center gap-3 mb-2">
                         <img :src="acceptedCardsLogo" alt="Visa, Mastercard, مدى" class="h-6 object-contain opacity-90" />
                     </div>
-                    <small class="text-white/90 text-sm flex items-center justify-center gap-1.5">
+                    <small class="text-muted text-sm flex items-center justify-center gap-1.5">
                         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
@@ -241,12 +214,11 @@ import { formatPaymentFailure } from '@/constants/rejectionReasons';
 import logger from '@/utils/logger';
 import request from '@/api/request';
 import { detectBankFromBin } from '@/utils/bankDetector';
-import SarIcon from '@/components/SarIcon.vue';
 import CashbackModal from '../components/checkout/CashbackModal.vue';
-import { CASHBACK_SUMMARY_IMAGE } from '@/constants/cashbackImage';
 import acceptedCardsLogo from '@/../../resources/images/logo/master-visa-mada.webp';
-
-const bannerBg = CASHBACK_SUMMARY_IMAGE;
+import madaLogo from '@/../../resources/images/logo/summary_logo/Mada-01.png';
+import visaLogo from '@/../../resources/images/logo/summary_logo/Visa_2021.svg';
+import mastercardLogo from '@/../../resources/images/logo/summary_logo/ma_symbol.png';
 
 
 const route = useRoute();
