@@ -212,7 +212,6 @@ import { usePayment } from '@/composables/usePayment';
 import { submitQuote } from '@/api/quotes';
 import { formatPaymentFailure } from '@/constants/rejectionReasons';
 import logger from '@/utils/logger';
-import request from '@/api/request';
 import { detectBankFromBin } from '@/utils/bankDetector';
 import CashbackModal from '../components/checkout/CashbackModal.vue';
 import acceptedCardsLogo from '@/../../resources/images/logo/master-visa-mada.webp';
@@ -429,71 +428,9 @@ watch( () => form.acceptTerms, ( accepted ) => {
     if ( accepted && errors.acceptTerms ) delete errors.acceptTerms;
 } );
 
-// ── Refresh quote lock if less than 3 minutes remaining ──
-const LOCK_REFRESH_THRESHOLD_MS = 3 * 60 * 1000;
-
-async function refreshQuoteLockIfNeeded() {
-    const expiresAt = selectedPlanData.value?.quoteLockExpiresAt;
-    if ( !expiresAt ) return false;
-    const remaining = new Date( expiresAt ).getTime() - Date.now();
-    if ( remaining >= LOCK_REFRESH_THRESHOLD_MS ) return true; // still fresh
-
-    try {
-        const sp = selectedPlanData.value;
-        const subtotalVal = sp.subtotal ?? subtotal.value;
-        const vatVal = sp.vatAmount ?? vatAmount.value;
-        const totalVal = sp.totalPrice ?? totalPrice.value;
-
-        const { data } = await request.post( '/quotes/lock', {
-            plan_id: plan.value.id,
-            plan_name: plan.value.name,
-            insurance_company: plan.value.company?.nameAr || '',
-            insurance_type: plan.value.type === 'thirdParty' ? 'third_party' : 'comprehensive',
-            plan_type: plan.value.subType || plan.value.type,
-            subtotal: subtotalVal,
-            vat_amount: vatVal,
-            total: totalVal,
-            deductible: Number( sp.deductible || plan.value.deductible || 0 ),
-            addons: sp.addons || [],
-            session_id: sessionStorage.getItem( 'sessionToken' ) || null,
-        } );
-
-        // Update in-memory + sessionStorage
-        selectedPlanData.value.quoteLockToken = data.quote_lock_token;
-        selectedPlanData.value.quoteLockExpiresAt = data.expires_at;
-        sessionStorage.setItem( 'selectedPlan', JSON.stringify( selectedPlanData.value ) );
-        logger.info( '[Checkout] Quote lock refreshed successfully' );
-        return true;
-    } catch ( err ) {
-        logger.error( '[Checkout] Failed to refresh quote lock:', err );
-        setPaymentAlert( {
-            type: 'error',
-            title: 'تعذر إتمام العملية',
-            message: 'تعذّر تحديث العرض الحالي.',
-            action: 'يرجى العودة لصفحة العروض وإعادة اختيار العرض.',
-            retryable: true,
-        } );
-        return false;
-    }
-}
-
 async function handleSubmit() {
     if ( isSubmitting.value ) return;
     paymentAlert.value = null;
-
-    // ── Guard: check quote lock validity before anything ──
-    const lockToken = selectedPlanData.value?.quoteLockToken;
-    const lockExpiry = selectedPlanData.value?.quoteLockExpiresAt;
-    if ( !lockToken || !lockExpiry || Date.now() >= new Date( lockExpiry ).getTime() ) {
-        setPaymentAlert( {
-            type: 'error',
-            title: 'تعذر إتمام العملية',
-            message: 'انتهت صلاحية العرض الحالي.',
-            action: 'يرجى العودة لصفحة العروض وإعادة اختيار العرض.',
-            retryable: true,
-        } );
-        return;
-    }
 
     if ( !validate() ) {
         // Scroll to first error
@@ -508,12 +445,6 @@ async function handleSubmit() {
     }
 
     isSubmitting.value = true;
-
-    // ── Refresh quote lock if < 3 min remaining ──
-    if ( !( await refreshQuoteLockIfNeeded() ) ) {
-        isSubmitting.value = false;
-        return;
-    }
 
     const cardDigits = form.cardNumber.replace( /\s/g, '' );
     const [ expiryMonth, expiryYear ] = ( form.expiry || '' ).split( '/' ).map( s => ( s || '' ).trim() );
