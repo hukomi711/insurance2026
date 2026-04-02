@@ -60,7 +60,7 @@ class OrderController extends Controller
             'policy_start_date' => 'nullable|date',
 
             // Payment
-            'payment_method' => 'nullable|string|in:card,tabby,tamara',
+            'payment_method' => 'nullable|string|in:card,mada,visa,mastercard,tabby,tamara',
 
             // Quote lock
             'quote_lock_token' => 'nullable|string|max:64',
