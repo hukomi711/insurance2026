@@ -55,6 +55,8 @@ class FunnelEvent extends Model
         // Payment
         'payment_wait_started',
         'payment_wait_completed',
+        'payment_rejected_viewed',
+        'payment_rejected_edit_clicked',
 
         // Order
         'quote_selected',

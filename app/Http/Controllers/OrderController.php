@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -66,17 +65,6 @@ class OrderController extends Controller
             'quote_lock_token' => 'nullable|string|max:64',
         ]);
 
-        // ── Validate quote lock token before price checks (skip if no token) ──
-        if (!empty($validated['quote_lock_token'])) {
-            $lockError = $this->validateQuoteLock($validated, $request);
-            if ($lockError) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $lockError,
-                ], 422);
-            }
-        }
-
         // ── Server-side price validation ──
         $pricingError = $this->validatePricing($validated);
         if ($pricingError) {
@@ -109,11 +97,6 @@ class OrderController extends Controller
         }
 
         $order = DB::transaction(fn () => Order::create($validated));
-
-        // One-time token usage — consume after successful order creation
-        if (!empty($validated['quote_lock_token'])) {
-            Cache::forget('quote_lock:' . $validated['quote_lock_token']);
-        }
 
         return response()->json([
             'success'       => true,
@@ -156,63 +139,6 @@ class OrderController extends Controller
         }
 
         return null; // All checks passed
-    }
-
-    // ─── Quote lock consistency check ─────────────────────────────
-    private function validateQuoteLock(array $data, Request $request): ?string
-    {
-        $token = $data['quote_lock_token'] ?? null;
-        if (! $token) {
-            return 'رمز تثبيت السعر مفقود.';
-        }
-
-        $lock = Cache::get('quote_lock:' . $token);
-        if (! is_array($lock)) {
-            return 'انتهت صلاحية العرض. يرجى العودة لصفحة المقارنة وتحديث الأسعار.';
-        }
-
-        // IP guard (same requester)
-        if (($lock['issued_ip'] ?? null) && $lock['issued_ip'] !== $request->ip()) {
-            return 'تعذّر التحقق من العرض المثبت. يرجى إعادة اختيار العرض.';
-        }
-
-        // Session guard when available
-        $incomingSession = $request->header('X-Session-ID') ?? $data['session_id'] ?? null;
-        if (! empty($lock['session_id']) && ! empty($incomingSession) && $lock['session_id'] !== $incomingSession) {
-            return 'العرض المثبت لا يطابق الجلسة الحالية.';
-        }
-
-        // Core plan matching
-        if ((int) $lock['plan_id'] !== (int) $data['plan_id']) {
-            return 'العرض المثبت لا يطابق الخطة المختارة.';
-        }
-
-        if (($lock['insurance_type'] ?? null) !== ($data['insurance_type'] ?? null)) {
-            return 'نوع التأمين لا يطابق العرض المثبت.';
-        }
-
-        if (($lock['deductible'] ?? null) !== ($data['deductible'] ?? null)) {
-            return 'قيمة التحمل لا تطابق العرض المثبت.';
-        }
-
-        // Price matching (strict-ish with tiny tolerance for decimals)
-        $subtotal = round((float) $data['subtotal'], 2);
-        $vat      = round((float) $data['vat_amount'], 2);
-        $total    = round((float) $data['total'], 2);
-
-        if (abs($subtotal - (float) ($lock['subtotal'] ?? 0)) > 0.01) {
-            return 'تم تغيير سعر الوثيقة. يرجى تحديث العرض قبل الإكمال.';
-        }
-
-        if (abs($vat - (float) ($lock['vat_amount'] ?? 0)) > 0.01) {
-            return 'تم تغيير الضريبة. يرجى تحديث العرض قبل الإكمال.';
-        }
-
-        if (abs($total - (float) ($lock['total'] ?? 0)) > 0.01) {
-            return 'تم تغيير الإجمالي. يرجى تحديث العرض قبل الإكمال.';
-        }
-
-        return null;
     }
 
     /**
