@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-white min-h-screen">
+    <div class="bg-white min-h-screen" dir="rtl">
         <!-- Step Progress Bar -->
         <StepProgressBar :steps="steps" :current-step="currentStep" />
 
@@ -13,6 +13,36 @@
 
                         <!-- Section: تفاصيل السيارة -->
                         <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">تفاصيل السيارة</h3>
+
+                        <!-- Vehicle Make & Model -->
+                        <div class="flex flex-wrap -mx-1">
+                            <!-- الشركة المصنعة -->
+                            <div class="w-full md:w-6/12 px-1 mb-4">
+                                <label for="vehicleMake"
+                                    class="block text-sm font-bold text-slate-700 mb-1.5">الشركة المصنعة</label>
+                                <AppSelect id="vehicleMake" v-model="form.vehicleMake"
+                                    :options="makeOptions" placeholder="اختر الشركة المصنعة" variant="standard"
+                                    dir="rtl" name="vehicleMake"
+                                    :error="!!errors.vehicleMake" />
+                                <p v-if="errors.vehicleMake" class="text-red-500 text-xs mt-1">
+                                    {{ errors.vehicleMake }}
+                                </p>
+                            </div>
+
+                            <!-- الموديل -->
+                            <div class="w-full md:w-6/12 px-1 mb-4">
+                                <label for="vehicleModel"
+                                    class="block text-sm font-bold text-slate-700 mb-1.5">الموديل</label>
+                                <AppSelect id="vehicleModel" v-model="form.vehicleModel"
+                                    :options="modelOptions" placeholder="اختر الموديل" variant="standard"
+                                    dir="rtl" name="vehicleModel"
+                                    :disabled="!form.vehicleMake"
+                                    :error="!!errors.vehicleModel" />
+                                <p v-if="errors.vehicleModel" class="text-red-500 text-xs mt-1">
+                                    {{ errors.vehicleModel }}
+                                </p>
+                            </div>
+                        </div>
 
                         <div class="flex flex-col md:flex-row gap-4 justify-between">
                             <!-- Purpose of Use -->
@@ -256,10 +286,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, defineAsyncComponent } from 'vue';
+import { ref, reactive, computed, watch, onMounted, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { CheckboxRoot, CheckboxIndicator } from 'radix-vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
+import { vehicleMakes } from '@/data';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { useInsuranceStore } from '@/store/modules/insurance';
 import logger from '@/utils/logger';
@@ -303,6 +334,7 @@ const form = reactive( {
     nationalId: '',
     sequenceNumber: '',
     vehicleMake: '',
+    vehicleModel: '',
     vehicleYear: '',
     fullName: '',
     phone: '',
@@ -320,13 +352,13 @@ const isSubmitting = ref( false );
 
 //
 const otherDetails = reactive( {
-    nightParking: '',
-    expectedKM: '',
-    transmissionType: '',
-    accidentCounts: '',
-    education: '',
+    nightParking: '1',
+    expectedKM: '5',
+    transmissionType: '1',
+    accidentCounts: '0',
+    education: '3',
     workNameAndLocation: '',
-    childrenUnder16: '',
+    childrenUnder16: '0',
     carModification: 'no',
     modification: '',
     hasTrailAttach: 'no',
@@ -334,6 +366,20 @@ const otherDetails = reactive( {
     foreignLicense: 'no',
     healthConditions: 'no',
     trafficViolations: 'no',
+} );
+
+// Vehicle make/model options
+const makeOptions = vehicleMakes.map( m => ( { value: String( m.id ), label: m.nameAr } ) );
+
+const modelOptions = computed( () => {
+    if ( !form.vehicleMake ) return [];
+    const make = vehicleMakes.find( m => String( m.id ) === form.vehicleMake );
+    return make ? make.models.map( ( model ) => ( { value: model, label: model } ) ) : [];
+} );
+
+// Reset model when make changes
+watch( () => form.vehicleMake, () => {
+    form.vehicleModel = '';
 } );
 
 //
@@ -452,11 +498,14 @@ async function submitForm() {
     sessionStorage.setItem( 'vehicleDetails', JSON.stringify( vehicleDetails ) );
 
     // حفظ البيانات في المتجر المركزي
+    const selectedMake = vehicleMakes.find( m => String( m.id ) === form.vehicleMake );
     insuranceStore.setVehicleData( {
         purposeOfUse: form.purposeOfUse,
         estimatedValue: form.estimatedValue,
         sequenceNumber: form.sequenceNumber,
         make: form.vehicleMake,
+        makeName: selectedMake?.nameAr || '',
+        modelName: form.vehicleModel || '',
         year: form.vehicleYear,
         carModification: otherDetails.carModification,
         modification: otherDetails.modification,

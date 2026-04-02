@@ -101,10 +101,20 @@ const routes = [
                 meta: { title: 'نتائج المقارنة - تأمينكم' },
             },
             {
+                path: 'order-review',
+                name: 'orderReview',
+                component: lazyWithReload( () => import( '@/car.insurance/flow/OrderReviewPage.vue' ) ),
+                meta: { title: 'مراجعة الطلب - تأمينكم' },
+                beforeEnter: () =>
+                {
+                    if ( !sessionStorage.getItem( 'selectedPlan' ) ) return { name: 'compare' };
+                },
+            },
+            {
                 path: 'checkout',
                 name: 'checkout',
                 component: lazyWithReload( () => import( '@/car.insurance/flow/CheckoutPage.vue' ) ),
-                meta: { title: 'إتمام الشراء - تأمينكم' },
+                meta: { title: 'الدفع - تأمينكم', hideLayout: true },
                 beforeEnter: () =>
                 {
                     if ( !sessionStorage.getItem( 'selectedPlan' ) ) return { name: 'compare' };

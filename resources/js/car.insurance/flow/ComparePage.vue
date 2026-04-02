@@ -85,106 +85,6 @@
                         </svg>
                     </div>
 
-                    <!-- AI Recommendation Accordion -->
-                    <div v-if="recommendedPlan || cheapestPlan" class="mb-4">
-                        <button class="w-full flex items-center justify-between bg-gradient-to-l from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-colors hover:border-emerald-300"
-                            :aria-expanded="aiAccordionOpen"
-                            @click="aiAccordionOpen = !aiAccordionOpen">
-                            <div class="flex items-center gap-2">
-                                <div
-                                    class="size-7 sm:size-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-                                    <svg class="size-3.5 sm:size-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
-                                    </svg>
-                                </div>
-                                <span class="typ-t3 sm:typ-t2 font-bold text-emerald-900">موصى به من تأمينكم AI</span>
-                            </div>
-                            <svg class="size-5 text-emerald-600 transition-transform duration-200"
-                                :class="{ 'rotate-180': aiAccordionOpen }" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                            </svg>
-                        </button>
-
-                        <!-- AI Cards Grid -->
-                        <div v-show="aiAccordionOpen" class="mt-3">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <!-- Recommended Card -->
-                                <div v-if="recommendedPlan"
-                                    class="bg-white rounded-xl border border-orange-200 shadow-sm overflow-hidden">
-                                    <div
-                                        class="bg-gradient-to-l from-orange-50 to-amber-50 px-3 py-1.5 flex items-center gap-1.5">
-                                        <svg class="size-3.5 text-orange-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                            <path
-                                                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                        </svg>
-                                        <span class="typ-c1 font-bold text-orange-800">موصى به</span>
-                                    </div>
-                                    <div class="p-3">
-                                        <div class="flex items-center gap-2.5 mb-2.5">
-                                            <img :src="getCompanyLogo(recommendedPlan.companyId)"
-                                                :alt="recommendedPlan.company.nameAr" loading="lazy"
-                                                class="size-10 rounded-lg object-contain bg-white p-1 border border-slate-100" width="40" height="40" />
-                                            <div class="min-w-0">
-                                                <p class="typ-t3 text-foreground truncate">
-                                                    {{ recommendedPlan.company.nameAr }}
-                                                </p>
-                                                <p class="typ-c1 text-muted">{{ recommendedPlan.typeAr }}</p>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <div class="flex items-baseline gap-1">
-                                                <span class="typ-t1 text-primary font-extrabold ltr-nums">{{ formatNumber(recommendedPlan.annualPrice) }}</span>
-                                                <SarIcon className="size-3 text-primary" />
-                                                <span class="typ-c1 text-muted">/ سنوياً</span>
-                                            </div>
-                                        </div>
-                                        <button class="w-full bg-primary text-white typ-c1 font-bold py-2 rounded-lg hover:bg-primary-dark transition-colors"
-                                            @click="selectPlan(recommendedPlan)">
-                                            اشتري الآن
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Cheapest Card -->
-                                <div v-if="cheapestPlan"
-                                    class="bg-white rounded-xl border border-green-200 shadow-sm overflow-hidden">
-                                    <div
-                                        class="bg-gradient-to-l from-green-50 to-emerald-50 px-3 py-1.5 flex items-center gap-1.5">
-                                        <span class="typ-c1">💰</span>
-                                        <span class="typ-c1 font-bold text-green-900">الأوفر</span>
-                                    </div>
-                                    <div class="p-3">
-                                        <div class="flex items-center gap-2.5 mb-2.5">
-                                            <img :src="getCompanyLogo(cheapestPlan.companyId)"
-                                                :alt="cheapestPlan.company.nameAr" loading="lazy"
-                                                class="size-10 rounded-lg object-contain bg-white p-1 border border-slate-100" width="40" height="40" />
-                                            <div class="min-w-0">
-                                                <p class="typ-t3 text-foreground truncate">
-                                                    {{ cheapestPlan.company.nameAr }}
-                                                </p>
-                                                <p class="typ-c1 text-muted">{{ cheapestPlan.typeAr }}</p>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <div class="flex items-baseline gap-1">
-                                                <span class="typ-t1 text-primary font-extrabold ltr-nums">{{ formatNumber(cheapestPlan.annualPrice) }}</span>
-                                                <SarIcon className="size-3 text-primary" />
-                                                <span class="typ-c1 text-muted">/ سنوياً</span>
-                                            </div>
-                                        </div>
-                                        <button class="w-full bg-primary text-white typ-c1 font-bold py-2 rounded-lg hover:bg-primary-dark transition-colors"
-                                            @click="selectPlan(cheapestPlan)">
-                                            اشتري الآن
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Repair Method & Coverage -->
                     <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 mb-4">
                         <div class="sm:col-span-4">
@@ -428,6 +328,9 @@ async function startLoadingQuotes() {
     quotesError.value = null;
     loadingAborted = false;
 
+    const MIN_LOADING_MS = 5000;
+    const loadingStart = Date.now();
+
     // Animate progress bar independently of API
     loadingInterval = setInterval( () => {
         if ( loadingAborted ) return;
@@ -447,6 +350,11 @@ async function startLoadingQuotes() {
 
         // حفظ الأسعار المحسوبة في المتجر
         insuranceStore.setCalculatedQuotes( quotesData.value );
+
+        // انتظار 5 ثوانٍ كحد أدنى قبل إظهار العروض
+        const elapsed = Date.now() - loadingStart;
+        const remaining = Math.max( 0, MIN_LOADING_MS - elapsed );
+        await new Promise( resolve => setTimeout( resolve, remaining ) );
 
         // Complete progress bar
         loadingProgress.value = 100;
@@ -496,6 +404,15 @@ onMounted( () => {
         quoteOptions.repairMethod = 'authorized';
     }
 
+    // مزامنة حد التغطية من قيمة المركبة أو المتجر
+    const storeLimit = insuranceStore.policy.coverageLimit;
+    const vehicleValue = Number( insuranceStore.vehicle.estimatedValue );
+    if ( vehicleValue > 0 ) {
+        quoteOptions.coverageLimit = vehicleValue;
+    } else if ( storeLimit && storeLimit !== 55667 ) {
+        quoteOptions.coverageLimit = storeLimit;
+    }
+
     // Countdown timer
     countdownInterval = setInterval( updateCountdown, 1000 );
 
@@ -514,7 +431,6 @@ const selectedPlans = ref( [] );
 const sortBy = ref( 'price-asc' );
 const compactView = ref( false );
 const activeTab = ref( 'thirdParty' );
-const aiAccordionOpen = ref( true );
 const expandedCards = ref( [] );
 const selectionError = ref( '' );
 
@@ -567,16 +483,22 @@ function updateQuoteOptions() {
         coverageLimit: quoteOptions.coverageLimit,
     } );
 
-    // إعادة حساب الأسعار فورياً
+    // إعادة حساب الأسعار فورياً مع تمرير طريقة الإصلاح وحد التغطية
     const recalculated = calculateAllQuotes(
         quotesData.value,
         insuranceStore.allFormData,
-        { repairMethod: quoteOptions.repairMethod }
+        { repairMethod: quoteOptions.repairMethod, coverageLimit: quoteOptions.coverageLimit }
     );
 
-    // تحديث مكان الإصلاح على كل باقة
+    // تحديث مكان الإصلاح + حد التغطية على كل باقة
     const repairLabel = quoteOptions.repairMethod === 'agency' ? 'الوكالة' : 'الورش المعتمدة';
-    quotesData.value = recalculated.map( p => ( { ...p, repairLocation: repairLabel } ) );
+    const userLimit = quoteOptions.coverageLimit;
+    quotesData.value = recalculated.map( p => ( {
+        ...p,
+        repairLocation: repairLabel,
+        // تحديث حد التغطية المعروض (للشامل فقط)
+        coverageLimit: p.type === 'comprehensive' && userLimit ? userLimit : p.coverageLimit,
+    } ) );
     insuranceStore.setCalculatedQuotes( quotesData.value );
 
     updatingDoneTimer = setTimeout( () => {
@@ -685,18 +607,6 @@ const plansWithCompany = computed( () =>
     } ) )
 );
 
-// Featured plans
-const recommendedPlan = computed( () => {
-    const plans = filteredPlans.value.length > 0 ? filteredPlans.value : plansWithCompany.value;
-    return plans.find( p => p.badgeType === 'recommended' );
-} );
-const cheapestPlan = computed( () => {
-    const plans = filteredPlans.value.length > 0 ? filteredPlans.value : plansWithCompany.value;
-    const cheapest = plans.find( p => p.badgeType === 'cheapest' );
-    if ( cheapest ) return cheapest;
-    // Fallback to actual cheapest
-    return [ ...plans ].sort( ( a, b ) => a.annualPrice - b.annualPrice )[ 0 ] || null;
-} );
 
 // Filtered plans
 const filteredPlans = computed( () => {
@@ -844,8 +754,8 @@ async function selectPlan( plan, source = 'card_expanded' ) {
         totalPrice: lock.totalPrice,
     } ) );
     trackQuoteSelected( { plan_id: plan.id, source } );
-    trackStepCompleted( 'compare', 'checkout' );
-    router.push( { name: 'checkout' } );
+    trackStepCompleted( 'compare', 'orderReview' );
+    router.push( { name: 'orderReview' } );
 }
 
 function openOfferSheet( plan, source = 'offer_sheet' ) {
@@ -899,9 +809,9 @@ async function handleOfferSelect( selection ) {
     } ) );
     trackStep( 'select_plan', 4, { selected_plan_id: p.id, source }, 'next' );
     trackQuoteSelected( { plan_id: p.id, source } );
-    trackStepCompleted( 'compare', 'checkout' );
+    trackStepCompleted( 'compare', 'orderReview' );
     offerSheetEntrySource.value = 'offer_sheet';
-    router.push( { name: 'checkout' } );
+    router.push( { name: 'orderReview' } );
 }
 </script>
 

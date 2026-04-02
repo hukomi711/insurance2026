@@ -162,6 +162,16 @@ export const REPAIR_METHOD_FACTORS = {
     agency: 1.25,  // وكالة
 };
 
+/** حد التغطية — يؤثر فقط على الشامل */
+export const COVERAGE_LIMIT_FACTORS = [
+    { maxValue: 30000, factor: 0.90 },
+    { maxValue: 50000, factor: 0.95 },
+    { maxValue: 80000, factor: 1.00 },
+    { maxValue: 120000, factor: 1.05 },
+    { maxValue: 200000, factor: 1.12 },
+    { maxValue: Infinity, factor: 1.20 },
+];
+
 // ─── معاملات الشركات ───
 // كل شركة لها معامل تسعير خاص يعكس سياستها التنافسية
 export const COMPANY_PRICING_FACTORS = {

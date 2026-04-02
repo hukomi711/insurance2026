@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-white min-h-screen">
+    <div class="bg-white min-h-screen" dir="rtl">
         <!-- Step Progress Bar — Mobile (colored bars only) -->
         <div class="sm:hidden w-full">
             <div class="flex items-center w-full">

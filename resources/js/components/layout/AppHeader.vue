@@ -70,7 +70,7 @@
             <Transition enter-active-class="transition-opacity duration-200" enter-from-class="opacity-0"
                 enter-to-class="opacity-100" leave-active-class="transition-opacity duration-200"
                 leave-from-class="opacity-100" leave-to-class="opacity-0">
-                <div v-if="mobileMenuOpen" class="fixed inset-0 bg-black/50 z-[9998] md:hidden" @click="toggleMobileMenu"></div>
+                <div v-if="mobileMenuOpen" class="fixed inset-0 bg-black/50 z-41 md:hidden" @click="toggleMobileMenu"></div>
             </Transition>
 
             <!-- Sidebar -->
@@ -78,7 +78,7 @@
                 enter-to-class="translate-x-0" leave-active-class="transition-transform duration-300 ease-in"
                 leave-from-class="translate-x-0" leave-to-class="translate-x-full">
                 <div v-if="mobileMenuOpen" ref="mobileMenuRef"
-                    class="fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-[9999] md:hidden overflow-y-auto safe-area-top"
+                    class="fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white shadow-2xl z-42 md:hidden overflow-y-auto safe-area-top"
                 dir="rtl" role="dialog" aria-modal="true" aria-label="القائمة الرئيسية"
                 @touchstart.passive="onTouchStart" @touchmove.passive="onTouchMove" @touchend.passive="onTouchEnd">
                 <div class="p-6">

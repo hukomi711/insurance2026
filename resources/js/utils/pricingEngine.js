@@ -21,6 +21,7 @@ import
     MILEAGE_FACTORS,
     DEDUCTIBLE_FACTORS,
     REPAIR_METHOD_FACTORS,
+    COVERAGE_LIMIT_FACTORS,
     COMPANY_PRICING_FACTORS,
     NCD_FACTORS,
 } from '@/data/pricingConstants';
@@ -265,6 +266,17 @@ export function usePricingEngine ()
     }
 
     /**
+     * معامل حد التغطية (يؤثر فقط على الشامل)
+     */
+    function getCoverageLimitFactor ( coverageLimit, planType )
+    {
+        if ( planType !== 'comprehensive' || !coverageLimit ) return 1.0;
+        const val = Number( coverageLimit );
+        const entry = COVERAGE_LIMIT_FACTORS.find( e => val <= e.maxValue );
+        return entry ? entry.factor : 1.0;
+    }
+
+    /**
      * معامل خصم عدم وجود مطالبات (NCD)
      * @param {number|string} ncdYears - عدد سنوات بدون مطالبات
      * @returns {number}
@@ -327,8 +339,11 @@ export function usePricingEngine ()
             // معامل NCD (خصم عدم وجود مطالبات)
             const ncdFactor = getNcdFactor( d?.ncdYears );
 
+            // معامل حد التغطية (يؤثر فقط على الشامل)
+            const coverageFactor = getCoverageLimitFactor( overrides.coverageLimit ?? effectivePolicy.coverageLimit, plan.type );
+
             // السعر النهائي
-            const rawPrice = basePrice * vehicleFactor * driverFactor * lifestyleFactor * policyFactor * companyFactor * ncdFactor;
+            const rawPrice = basePrice * vehicleFactor * driverFactor * lifestyleFactor * policyFactor * companyFactor * ncdFactor * coverageFactor;
 
             // تطبيق حدود الأسعار
             const limits = PRICE_LIMITS[ plan.subType ] || { min: 500, max: 8000 };
@@ -353,7 +368,8 @@ export function usePricingEngine ()
                     policy: Math.round( policyFactor * 1000 ) / 1000,
                     company: companyFactor,
                     ncd: ncdFactor,
-                    total: Math.round( ( vehicleFactor * driverFactor * lifestyleFactor * policyFactor * companyFactor * ncdFactor ) * 1000 ) / 1000,
+                    coverage: Math.round( coverageFactor * 1000 ) / 1000,
+                    total: Math.round( ( vehicleFactor * driverFactor * lifestyleFactor * policyFactor * companyFactor * ncdFactor * coverageFactor ) * 1000 ) / 1000,
                 },
             };
         } catch ( error )
@@ -367,7 +383,7 @@ export function usePricingEngine ()
                 vatAmount: calculateVAT( fallbackPrice ),
                 totalWithVAT: fallbackPrice + calculateVAT( fallbackPrice ),
                 basePrice: fallbackPrice,
-                factors: { vehicle: 1, driver: 1, lifestyle: 1, policy: 1, company: 1, ncd: 1, total: 1 },
+                factors: { vehicle: 1, driver: 1, lifestyle: 1, policy: 1, company: 1, ncd: 1, coverage: 1, total: 1 },
             };
         }
     }

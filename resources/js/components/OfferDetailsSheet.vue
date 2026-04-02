@@ -36,10 +36,6 @@
                             </span>
                             <span v-if="plan.coverageLimit"
                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full typ-c1 font-bold text-blue-700">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                </svg>
                                 حد التغطية لمركبتك {{ formatNumber(plan.coverageLimit) }} ر.س
                             </span>
                         </div>
@@ -118,13 +114,6 @@
 
                                 <!-- Coverage Limit -->
                                 <div class="bg-slate-50 rounded-xl p-3 text-center">
-                                    <div class="w-8 h-8 bg-white rounded-lg center mx-auto mb-2">
-                                        <svg class="w-4 h-4 text-muted" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                        </svg>
-                                    </div>
                                     <p class="typ-c2 text-muted mb-0.5">حد التغطية لمركبتك:</p>
                                     <p class="typ-c1 text-foreground font-bold ltr-nums">
                                         {{ formatNumber(plan.coverageLimit) }}

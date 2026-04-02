@@ -58,11 +58,21 @@
               maxlength="19"
               dir="ltr"
               autocomplete="cc-number"
-              class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 hover:bg-white text-left ltr-nums"
-              :class="showError('cardNumber') ? 'border-red-300 focus:ring-red-100 focus:border-red-400' : ''"
+              class="w-full pe-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-slate-50 hover:bg-white text-left ltr-nums"
+              :class="[
+                showError('cardNumber') ? 'border-red-300 focus:ring-red-100 focus:border-red-400' : '',
+                (bankLogo || networkLogo) ? 'ps-14' : 'px-4',
+              ]"
               @input="onCardNumberInput"
               @blur="onFieldBlur('cardNumber')"
             />
+            <!-- Bank/Network logo inside input -->
+            <transition name="fade">
+              <div v-if="bankLogo || networkLogo" class="absolute start-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                <img v-if="bankLogo" :src="bankLogo" alt="" class="h-6 w-6 object-contain rounded" />
+                <img v-else-if="networkLogo" :src="networkLogo" alt="" class="h-5 object-contain" />
+              </div>
+            </transition>
           </div>
           <p v-if="showError('cardNumber')" class="text-destructive typ-c1 mt-1 text-right" dir="rtl">{{ getFriendlyError('cardNumber') }}</p>
           <p v-else-if="!hasDigits('cardNumber')" class="typ-c1 mt-1 text-right text-slate-400" dir="rtl">أدخل 16 رقمًا كما هو ظاهر على البطاقة</p>
@@ -181,6 +191,7 @@ import { computed, reactive } from 'vue';
 import { CheckboxRoot, CheckboxIndicator } from 'radix-vue';
 import { formatCardNumber, formatExpiry } from '@/utils/cardValidation';
 import { detectBankFromBin } from '@/utils/bankDetector';
+import { useCardBranding } from '@/composables/useCardBranding';
 import cardLogoSrc from '@/../../resources/images/logo/master-visa-mada.webp';
 
 const props = defineProps({
@@ -221,10 +232,14 @@ const BANK_LABELS = {
   anb: 'العربي الوطني',
   saib: 'السعودي للاستثمار',
   bsf: 'البنك الأول',
+  gib: 'الخليج الدولي',
 };
 
+const cardBin = computed(() => (props.form.cardNumber || '').replace(/\s/g, ''));
+const { brand: _cardBrand, networkLogo, bankLogo } = useCardBranding(cardBin);
+
 const detectedBank = computed(() => {
-  const digits = (props.form.cardNumber || '').replace(/\s/g, '');
+  const digits = cardBin.value;
   if (digits.length < 6) return null;
   return detectBankFromBin(digits);
 });
