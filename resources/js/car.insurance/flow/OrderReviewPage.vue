@@ -114,7 +114,7 @@
                                         d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
                                 </svg>
-                                خصم تأميني (20-25%)
+                                خصم تأميني (20%)
                             </span>
                             <span
                                 class="font-bold text-emerald-700 ltr-nums inline-flex items-center gap-1">
@@ -248,7 +248,7 @@ const insuranceTypeLabel = computed( () =>
 
 // ── Pricing with discounts ──
 const annualPrice = computed( () => selectedPlanData?.annualPrice || plan.value?.annualPrice || 0 );
-const tameeniRate = 0.10;
+const tameeniRate = 0.20;
 const ncdRate = 0.10;
 const tameeniDiscount = computed( () => Math.round( annualPrice.value * tameeniRate * 100 ) / 100 );
 const ncdDiscount = computed( () => Math.round( annualPrice.value * ncdRate * 100 ) / 100 );
