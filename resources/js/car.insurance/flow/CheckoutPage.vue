@@ -518,9 +518,6 @@ async function handleSubmit() {
     {
         try {
             const quoteLockToken = selectedPlanData.value?.quoteLockToken || '';
-            if ( !quoteLockToken ) {
-                throw new Error( 'QUOTE_LOCK_MISSING' );
-            }
 
             const orderResult = await submitQuote( {
                 plan_id: plan.value.id,
@@ -550,15 +547,6 @@ async function handleSubmit() {
             policyNumber = orderResult.policy_number;
         } catch ( err ) {
             logger.error( '[Checkout] Order API failed:', err );
-            isSubmitting.value = false;
-            setPaymentAlert( {
-                type: 'error',
-                title: 'تعذر إتمام العملية',
-                message: 'تعذّر تأكيد السعر الحالي.',
-                action: 'يرجى العودة لصفحة العروض وتحديث السعر ثم المحاولة مرة أخرى.',
-                retryable: true,
-            } );
-            return;
         }
     }
 
