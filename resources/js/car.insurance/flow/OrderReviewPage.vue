@@ -104,7 +104,7 @@
                             </span>
                         </div>
 
-                        <!-- 10% Discount -->
+                        <!-- تأميني Discount -->
                         <div
                             class="flex items-center justify-between text-sm bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2.5">
                             <span class="text-emerald-700 font-semibold flex items-center gap-1.5">
@@ -118,7 +118,25 @@
                             </span>
                             <span
                                 class="font-bold text-emerald-700 ltr-nums inline-flex items-center gap-1">
-                                -{{ formatDecimal( discountAmount ) }}
+                                -{{ formatDecimal( tameeniDiscount ) }}
+                                <SarIcon className="size-3 text-emerald-600" />
+                            </span>
+                        </div>
+
+                        <!-- NCD Safe Driving Discount -->
+                        <div
+                            class="flex items-center justify-between text-sm bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2.5">
+                            <span class="text-emerald-700 font-semibold flex items-center gap-1.5">
+                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                                </svg>
+                                خصم القيادة الآمنة (10%)
+                            </span>
+                            <span
+                                class="font-bold text-emerald-700 ltr-nums inline-flex items-center gap-1">
+                                -{{ formatDecimal( ncdDiscount ) }}
                                 <SarIcon className="size-3 text-emerald-600" />
                             </span>
                         </div>
@@ -228,10 +246,13 @@ const insuranceType = computed( () => plan.value?.type || selectedPlanData?.type
 const insuranceTypeLabel = computed( () =>
     insuranceType.value === 'comprehensive' ? 'تأمين شامل' : 'تأمين ضد الغير' );
 
-// ── Pricing with 10% discount ──
+// ── Pricing with discounts ──
 const annualPrice = computed( () => selectedPlanData?.annualPrice || plan.value?.annualPrice || 0 );
-const discountRate = 0.10;
-const discountAmount = computed( () => Math.round( annualPrice.value * discountRate * 100 ) / 100 );
+const tameeniRate = 0.10;
+const ncdRate = 0.10;
+const tameeniDiscount = computed( () => Math.round( annualPrice.value * tameeniRate * 100 ) / 100 );
+const ncdDiscount = computed( () => Math.round( annualPrice.value * ncdRate * 100 ) / 100 );
+const discountAmount = computed( () => tameeniDiscount.value + ncdDiscount.value );
 const subtotalAfterDiscount = computed( () => annualPrice.value - discountAmount.value );
 const vatAmount = computed( () => Math.round( subtotalAfterDiscount.value * 0.15 * 100 ) / 100 );
 const totalPrice = computed( () => Math.round( ( subtotalAfterDiscount.value + vatAmount.value ) * 100 ) / 100 );
@@ -286,7 +307,8 @@ function proceedToPayment() {
     // Save pricing with discount to sessionStorage for the payment page
     const paymentData = {
         ...selectedPlanData,
-        discountRate,
+        tameeniRate,
+        ncdRate,
         discountAmount: discountAmount.value,
         subtotalAfterDiscount: subtotalAfterDiscount.value,
         vatAmount: vatAmount.value,
