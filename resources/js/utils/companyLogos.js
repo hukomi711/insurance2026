@@ -8,7 +8,7 @@
 import { getCompany } from '@/data';
 
 // Eagerly load all logos once at module level
-const logoModules = import.meta.glob( '/resources/images/logo/insurance_company/*.{png,webp}', {
+const logoModules = import.meta.glob( '/resources/images/logo/insurance_company/company/*.{png,webp}', {
     eager: true,
     import: 'default',
 } );

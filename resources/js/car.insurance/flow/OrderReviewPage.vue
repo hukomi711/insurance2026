@@ -82,27 +82,6 @@
                     </div>
                 </div>
 
-                <!-- ═══ Applicant Info Card ═══ -->
-                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                    <div class="bg-slate-50 px-4 sm:px-5 py-3 border-b border-slate-100">
-                        <h2 class="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
-                            <svg class="size-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                    d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                            </svg>
-                            بيانات مقدم الطلب
-                        </h2>
-                    </div>
-                    <div class="p-4 sm:p-5 space-y-2.5">
-                        <div v-for="item in applicantRows" :key="item.label"
-                            class="flex items-center justify-between text-sm">
-                            <span class="text-slate-500">{{ item.label }}</span>
-                            <span class="font-semibold text-foreground ltr-nums">{{ item.value }}</span>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- ═══ Price Summary Card ═══ -->
                 <div class="bg-white rounded-2xl border-2 border-primary overflow-hidden">
                     <div class="bg-primary/5 px-4 sm:px-5 py-3 border-b border-primary/10">
@@ -135,7 +114,7 @@
                                         d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
                                 </svg>
-                                خصم تأمينكم (10%)
+                                خصم تأميني (10%)
                             </span>
                             <span
                                 class="font-bold text-emerald-700 ltr-nums inline-flex items-center gap-1">
@@ -184,7 +163,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                         d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                وفّرت {{ formatDecimal( discountAmount ) }} ريال مع تأمينكم!
+                                وفّرت {{ formatDecimal( discountAmount ) }} ريال مع تأميني!
                             </span>
                         </div>
                     </div>
@@ -295,20 +274,6 @@ const vehicleRows = computed( () => {
     return rows;
 } );
 
-// ── Applicant data rows ──
-const applicantRows = computed( () => {
-    const d = insuranceStore.driver;
-    const rows = [];
-    if ( d.fullName ) rows.push( { label: 'الاسم الكامل', value: d.fullName } );
-    if ( d.nationalId ) rows.push( { label: 'رقم الهوية', value: d.nationalId } );
-    if ( d.phone ) rows.push( { label: 'رقم الجوال', value: d.phone } );
-    if ( d.email ) rows.push( { label: 'البريد الإلكتروني', value: d.email } );
-    if ( d.dateOfBirth ) rows.push( { label: 'تاريخ الميلاد', value: d.dateOfBirth } );
-    if ( d.city ) {
-        rows.push( { label: 'المدينة', value: d.city } );
-    }
-    return rows;
-} );
 
 function formatDecimal( num ) {
     return new Intl.NumberFormat( 'en-US', {

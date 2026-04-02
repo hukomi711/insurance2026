@@ -17,9 +17,9 @@ const bankLogoFiles = import.meta.glob( '../../images/logo/banks/*.svg', {
     import: 'default',
 } );
 
-import visaLogo from '../../images/logo/summary_logo/Visa_2021.svg';
-import mcLogo from '../../images/logo/summary_logo/ma_symbol.png';
-import madaLogo from '../../images/logo/summary_logo/Mada-01.png';
+import visaLogo from '../../images/logo/summary_logo/visa.png';
+import mcLogo from '../../images/logo/summary_logo/master.png';
+import madaLogo from '../../images/logo/summary_logo/mada.png';
 
 // ── Network logos ───────────────────────────────────────────────────
 const networkLogos = {

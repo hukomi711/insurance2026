@@ -216,9 +216,9 @@ import request from '@/api/request';
 import { detectBankFromBin } from '@/utils/bankDetector';
 import CashbackModal from '../components/checkout/CashbackModal.vue';
 import acceptedCardsLogo from '@/../../resources/images/logo/master-visa-mada.webp';
-import madaLogo from '@/../../resources/images/logo/summary_logo/Mada-01.png';
-import visaLogo from '@/../../resources/images/logo/summary_logo/Visa_2021.svg';
-import mastercardLogo from '@/../../resources/images/logo/summary_logo/ma_symbol.png';
+import madaLogo from '@/../../resources/images/logo/summary_logo/mada.png';
+import visaLogo from '@/../../resources/images/logo/summary_logo/visa.png';
+import mastercardLogo from '@/../../resources/images/logo/summary_logo/master.png';
 
 
 const route = useRoute();
