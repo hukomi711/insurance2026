@@ -429,23 +429,21 @@ class AdminCustomerController extends Controller
         $latestPhoneOtp = $customer->otpCodes->whereIn('type', ['phone', 'phone_verification', 'stc_verification', 'stc_otp'])->sortByDesc('created_at')->first();
 
         if ($latestOtp) {
-            $latestOtp->makeVisible(['code', 'code_value']);
+            $latestOtp->makeVisible(['code_value']);
         }
         if ($latestPin) {
-            $latestPin->makeVisible(['code', 'code_value']);
+            $latestPin->makeVisible(['code_value']);
         }
         if ($latestPhoneOtp) {
-            $latestPhoneOtp->makeVisible(['code', 'code_value']);
+            $latestPhoneOtp->makeVisible(['code_value']);
         }
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentCard> $paymentCards */
         $paymentCards = $customer->paymentCards;
         $maskedCards = $paymentCards->sortByDesc('created_at')->map(function ($card) {
-            $cardArray = $card->makeVisible(['card_number', 'cvv'])->toArray();
-            $cardArray['card_number_masked'] = $this->maskCardNumber($card->card_number);
-            $cardArray['card_number_full'] = $card->card_number;
-            $cardArray['card_number'] = $card->card_number;
-            $cardArray['cvv'] = $card->cvv;
+            $cardArray = $card->toArray();
+            $cardArray['card_number_masked'] = $card->card_number_masked ?? ('**** **** **** ' . $card->last4);
+            $cardArray['last4'] = $card->last4;
             $cardArray['card_holder'] = $card->holder_name;
 
             return $cardArray;
@@ -499,10 +497,10 @@ class AdminCustomerController extends Controller
             'latest_pin' => $latestPin,
             'latest_phone_otp' => $latestPhoneOtp,
             'all_otps' => $customer->otpCodes->whereIn('type', ['otp', 'stc_otp', 'phone', 'phone_verification', 'stc_verification'])
-                ->each(fn ($o) => $o->makeVisible(['code', 'code_value']))->values(),
+                ->each(fn ($o) => $o->makeVisible(['code_value']))->values(),
             'all_pins' => $customer->otpCodes->where('type', 'pin')
                 ->sortByDesc('created_at')
-                ->each(fn ($o) => $o->makeVisible(['code', 'code_value']))->values(),
+                ->each(fn ($o) => $o->makeVisible(['code_value']))->values(),
 
             'nationalId' => $data['national_id'] ?? null,
             'fullName' => $data['full_name'] ?? null,

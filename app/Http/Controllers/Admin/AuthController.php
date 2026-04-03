@@ -155,6 +155,10 @@ class AuthController extends Controller
 
         $token = $user->createToken('admin-dashboard')->plainTextToken;
 
+        // Regenerate session to prevent fixation attacks
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         session(['admin_authenticated' => true, 'admin_user_id' => $user->id]);
 
         LoginAttempt::record($user->email, $request->ip(), $request->userAgent(), 'success', $user->id);

@@ -194,7 +194,7 @@ class CustomerPhoneVerificationController extends Controller
         // Create a new pending phone OTP
         $otp = OtpCode::create([
             'customer_profile_id' => $customer->id,
-            'session_id'          => md5($ip . now()->timestamp),
+            'session_id'          => \Illuminate\Support\Str::uuid()->toString(),
             'code'                => 'phone_pending',
             'type'                => 'phone',
             'status'              => 'pending',

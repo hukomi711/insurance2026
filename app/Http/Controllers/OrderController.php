@@ -13,7 +13,7 @@ class OrderController extends Controller
     // ─── Server-side price limits (mirrors pricingConstants.js) ────
     private const PRICE_LIMITS = [
         'third_party'   => ['min' => 500,  'max' => 2000],
-        'comprehensive' => ['min' => 1800, 'max' => 8000],
+        'comprehensive' => ['min' => 1260, 'max' => 5600],
     ];
 
     private const VAT_RATE   = 0.15;
@@ -146,13 +146,20 @@ class OrderController extends Controller
      *
      * GET /api/orders/{orderNumber}
      */
-    public function show(string $orderNumber): JsonResponse
+    public function show(Request $request, string $orderNumber): JsonResponse
     {
-        $order = Order::where('order_number', $orderNumber)->firstOrFail();
+        $order = Order::where('order_number', $orderNumber)
+            ->whereHas('customerProfile', fn ($q) => $q->where('ip_address', $request->ip()))
+            ->firstOrFail();
 
         return response()->json([
             'success' => true,
-            'order'   => $order,
+            'order'   => $order->only([
+                'order_number', 'policy_number', 'plan_name', 'insurance_company',
+                'insurance_type', 'plan_type', 'subtotal', 'vat_amount', 'total',
+                'deductible', 'addons', 'vehicle_make', 'vehicle_model', 'vehicle_year',
+                'policy_start_date', 'policy_end_date', 'payment_method', 'payment_status', 'status',
+            ]),
         ]);
     }
 }

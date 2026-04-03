@@ -63,7 +63,9 @@ class QuoteTrackingController extends Controller
      */
     public function step(Request $request, string $uuid): JsonResponse
     {
-        $session = QuoteSession::where('uuid', $uuid)->firstOrFail();
+        $session = QuoteSession::where('uuid', $uuid)
+            ->where('customer_ip', $request->ip())
+            ->firstOrFail();
 
         $validated = $request->validate([
             'step' => 'required|string|max:50',
@@ -129,6 +131,7 @@ class QuoteTrackingController extends Controller
     public function heartbeat(Request $request, string $uuid): JsonResponse
     {
         $session = QuoteSession::where('uuid', $uuid)
+            ->where('customer_ip', $request->ip())
             ->where('status', 'active')
             ->firstOrFail();
 
@@ -171,7 +174,9 @@ class QuoteTrackingController extends Controller
      */
     public function complete(Request $request, string $uuid): JsonResponse
     {
-        $session = QuoteSession::where('uuid', $uuid)->firstOrFail();
+        $session = QuoteSession::where('uuid', $uuid)
+            ->where('customer_ip', $request->ip())
+            ->firstOrFail();
 
         // Close last step log
         /** @var \App\Models\QuoteStepLog|null $currentLog */
@@ -193,9 +198,10 @@ class QuoteTrackingController extends Controller
      * Resume an existing session (e.g., page refresh)
      * GET /api/quote/{uuid}
      */
-    public function show(string $uuid): JsonResponse
+    public function show(Request $request, string $uuid): JsonResponse
     {
         $session = QuoteSession::where('uuid', $uuid)
+            ->where('customer_ip', $request->ip())
             ->with('stepLogs')
             ->firstOrFail();
 
