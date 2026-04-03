@@ -81,7 +81,7 @@
         <p>قد نقوم بتحديث سياسة الخصوصية هذه مع تطور الأنظمة والالتزامات القانونية.</p>
 
         <h2>12. التواصل</h2>
-        <p>للاستفسارات المتعلقة بالخصوصية: <a href="mailto:privacy@taminkom.com" class="text-primary hover:underline">privacy@taminkom.com</a></p>
+        <p>للاستفسارات المتعلقة بالخصوصية: <a href="mailto:privacy@watheeq.plus" class="text-primary hover:underline">privacy@watheeq.plus</a></p>
       </div>
     </section>
   </div>

@@ -1,4 +1,4 @@
-Contact: mailto:security@tamzone.store
+Contact: mailto:security@watheeq.plus
 Expires: 2027-03-31T23:59:59.000Z
 Preferred-Languages: ar, en
-Canonical: https://tamzone.store/.well-known/security.txt
+Canonical: https://watheeq.plus/.well-known/security.txt

@@ -8,7 +8,7 @@ Security fixes are applied to the active production branch and latest maintained
 
 Please report vulnerabilities privately to:
 
-- <security@tamzone.store>
+- <security@watheeq.plus>
 
 Include:
 

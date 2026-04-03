@@ -32,7 +32,7 @@
         </ul>
 
         <h2>الإبلاغ عن الإساءة</h2>
-        <p>أرسل بلاغات الإساءة مع الأدلة إلى: <a href="mailto:abuse@taminkom.com" class="text-primary hover:underline">abuse@taminkom.com</a></p>
+        <p>أرسل بلاغات الإساءة مع الأدلة إلى: <a href="mailto:abuse@watheeq.plus" class="text-primary hover:underline">abuse@watheeq.plus</a></p>
         <p>يرجى تضمين:</p>
         <ul>
           <li>الطابع الزمني والمنطقة الزمنية</li>
