@@ -96,6 +96,11 @@ class FunnelAnalyticsController extends Controller
      */
     public function report(Request $request): JsonResponse
     {
+        $request->validate([
+            'from' => 'nullable|date_format:Y-m-d',
+            'to'   => 'nullable|date_format:Y-m-d',
+        ]);
+
         $from = $request->input('from', now()->subDays(7)->toDateString());
         $to   = $request->input('to', now()->toDateString());
 

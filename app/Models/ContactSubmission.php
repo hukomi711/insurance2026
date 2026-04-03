@@ -29,7 +29,6 @@ class ContactSubmission extends Model
         'phone',
         'subject',
         'message',
-        'status',
     ];
 
     /* ─── Scopes ─────────────────────────────────────────── */

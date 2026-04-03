@@ -85,10 +85,10 @@ const canResend = ref(false);
 
 let timer = null;
 
-const userId = route.query.uid;
+const pendingToken = route.query.pt;
 
-// Redirect to login if no user_id
-if (!userId) {
+// Redirect to login if no pending token
+if (!pendingToken) {
     router.replace('/login');
 }
 
@@ -110,7 +110,7 @@ async function handleVerify() {
     error.value = '';
     resendSuccess.value = '';
     try {
-        await userStore.verifyCode(userId, code.value);
+        await userStore.verifyCode(pendingToken, code.value);
         const redirect = route.query.redirect;
         router.push(redirect && typeof redirect === 'string' ? redirect : '/dashboard');
     } catch (e) {
@@ -126,7 +126,7 @@ async function handleResend() {
     error.value = '';
     resendSuccess.value = '';
     try {
-        await userStore.resendCode(userId);
+        await userStore.resendCode(pendingToken);
         resendSuccess.value = 'تم إعادة إرسال الرمز بنجاح';
         code.value = '';
         startCountdown();

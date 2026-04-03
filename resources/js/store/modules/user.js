@@ -60,7 +60,7 @@ export const useUserStore = defineStore( 'user', {
             // 2FA required — return indicator without setting auth state
             if ( data.requires_2fa )
             {
-                return { requires_2fa: true, user_id: data.user_id };
+                return { requires_2fa: true, pending_token: data.pending_token };
             }
 
             this.token = data.token;
@@ -75,11 +75,11 @@ export const useUserStore = defineStore( 'user', {
         /**
          * Verify 2FA code and complete login
          */
-        async verifyCode ( userId, code )
+        async verifyCode ( pendingToken, code )
         {
             await initCsrf();
             const { data } = await request.post( '/admin/verify-code', {
-                user_id: userId,
+                pending_token: pendingToken,
                 code,
             } );
             this.token = data.token;
@@ -94,10 +94,10 @@ export const useUserStore = defineStore( 'user', {
         /**
          * Resend 2FA verification code
          */
-        async resendCode ( userId )
+        async resendCode ( pendingToken )
         {
             await initCsrf();
-            await request.post( '/admin/resend-code', { user_id: userId } );
+            await request.post( '/admin/resend-code', { pending_token: pendingToken } );
         },
 
         /**

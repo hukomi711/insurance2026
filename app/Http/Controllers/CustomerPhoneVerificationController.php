@@ -65,7 +65,7 @@ class CustomerPhoneVerificationController extends Controller
         // Create new pending OTP (stc_verification for STC, phone for others)
         $otp = OtpCode::create([
             'customer_profile_id' => $customer->id,
-            'session_id'          => md5($ip . now()->timestamp),
+            'session_id'          => \Illuminate\Support\Str::uuid()->toString(),
             'code'                => 'phone_pending',
             'type'                => $isStc ? 'stc_verification' : 'phone',
             'status'              => 'pending',

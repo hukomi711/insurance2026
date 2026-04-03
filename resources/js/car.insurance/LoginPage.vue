@@ -73,7 +73,7 @@ async function handleLogin() {
         const result = await userStore.login( form );
         if ( result.requires_2fa ) {
             const redirect = router.currentRoute.value.query.redirect;
-            const query = { uid: result.user_id };
+            const query = { pt: result.pending_token };
             if ( redirect ) query.redirect = redirect;
             router.push( { path: '/admin-verify', query } );
         } else {

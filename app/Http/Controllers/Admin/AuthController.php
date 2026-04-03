@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Models\LoginAttempt;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -87,10 +88,14 @@ class AuthController extends Controller
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
         Mail::to(self::verificationEmail())->send(new AdminLoginVerification($loginCode));
 
+        // Use a short-lived opaque token instead of exposing the user_id
+        $pendingToken = bin2hex(random_bytes(32));
+        Cache::put("2fa_pending:{$pendingToken}", $user->id, now()->addMinutes(10));
+
         return response()->json([
             'success' => true,
             'requires_2fa' => true,
-            'user_id' => $user->id,
+            'pending_token' => $pendingToken,
             'message' => 'تم إرسال رمز التأكيد إلى البريد الإلكتروني المعتمد.',
         ]);
     }
@@ -102,16 +107,23 @@ class AuthController extends Controller
     public function verifyCode(Request $request): JsonResponse
     {
         $request->validate([
-            'user_id' => 'required|integer|exists:users,id',
+            'pending_token' => 'required|string|size:64',
             'code' => 'required|string|size:6',
         ]);
 
-        $user = User::findOrFail($request->user_id);
+        $userId = Cache::get("2fa_pending:{$request->pending_token}");
+        if (! $userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'انتهت صلاحية الجلسة. أعد تسجيل الدخول.',
+            ], 422);
+        }
+        $user = User::findOrFail($userId);
 
         // ── Brute-force protection on code verification ──────────
-        $recentFailures = AdminLoginCode::where('user_id', $user->id)
-            ->where('used', true)
-            ->where('updated_at', '>=', now()->subMinutes(self::LOCKOUT_MINUTES))
+        $recentFailures = LoginAttempt::where('user_id', $user->id)
+            ->where('status', 'failed')
+            ->where('created_at', '>=', now()->subMinutes(self::LOCKOUT_MINUTES))
             ->count();
 
         if ($recentFailures >= self::MAX_ATTEMPTS) {
@@ -134,6 +146,9 @@ class AuthController extends Controller
 
         // Mark code as used
         $loginCode->update(['used' => true]);
+
+        // Consume the pending token (one-time use)
+        Cache::forget("2fa_pending:{$request->pending_token}");
 
         // Revoke previous tokens (single-session approach)
         $user->tokens()->delete();
@@ -163,10 +178,17 @@ class AuthController extends Controller
     public function resendCode(Request $request): JsonResponse
     {
         $request->validate([
-            'user_id' => 'required|integer|exists:users,id',
+            'pending_token' => 'required|string|size:64',
         ]);
 
-        $user = User::findOrFail($request->user_id);
+        $userId = Cache::get("2fa_pending:{$request->pending_token}");
+        if (! $userId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'انتهت صلاحية الجلسة. أعد تسجيل الدخول.',
+            ], 422);
+        }
+        $user = User::findOrFail($userId);
 
         if (($user->role ?? null) !== 'admin') {
             return response()->json(['success' => false, 'message' => 'غير مصرح.'], 403);
@@ -192,7 +214,8 @@ class AuthController extends Controller
         $token->delete();
 
         // إزالة وسم الأدمن من الجلسة
-        session()->forget(['admin_authenticated', 'admin_user_id']);
+        session()->invalidate();
+        session()->regenerateToken();
 
         return response()->json([
             'success' => true,

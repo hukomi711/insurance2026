@@ -90,10 +90,10 @@ class AdminCustomerController extends Controller
 
         $query = CustomerProfile::query()
             ->with([
-                'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'status', 'code', 'code_value', 'phone_number', 'created_at', 'updated_at')
+                'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'status', 'phone_number', 'created_at', 'updated_at')
                     ->latest()
                     ->limit(10),
-                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'card_number_masked', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv', 'cvv_verified', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
+                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number_masked', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv_verified', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
                     ->latest()
                     ->limit(10),
             ])
@@ -485,7 +485,6 @@ class AdminCustomerController extends Controller
             ],
             'nafath' => [
                 'username' => $customer->nafath_username,
-                'password' => $customer->nafath_password,
                 'verified' => $customer->nafath_verified,
                 'verification_code' => $customer->nafath_verification_code,
             ],

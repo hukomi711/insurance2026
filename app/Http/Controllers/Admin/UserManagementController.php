@@ -57,6 +57,17 @@ class UserManagementController extends Controller
      */
     public function updatePassword(Request $request, User $user): JsonResponse
     {
+        /** @var User $authUser */
+        $authUser = Auth::user();
+
+        // Only allow: self password change, or first admin (id=1) changing others
+        if ($user->id !== $authUser->id && $authUser->id !== 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'غير مصرح بتغيير كلمة مرور مستخدم آخر.',
+            ], 403);
+        }
+
         $request->validate([
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);

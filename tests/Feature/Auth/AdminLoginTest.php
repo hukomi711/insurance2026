@@ -31,7 +31,7 @@ class AdminLoginTest extends TestCase
         ]);
 
         $response->assertOk()
-                 ->assertJsonStructure(['success', 'requires_2fa', 'user_id', 'message']);
+                 ->assertJsonStructure(['success', 'requires_2fa', 'pending_token', 'message']);
     }
 
     /**

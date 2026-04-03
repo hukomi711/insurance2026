@@ -95,7 +95,14 @@ class ExportController extends Controller
                     fputcsv($file, array_keys($row));
                     $headerWritten = true;
                 }
-                fputcsv($file, $row);
+                // Sanitize values to prevent CSV formula injection in Excel
+                $sanitized = array_map(function ($value) {
+                    if (is_string($value) && isset($value[0]) && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+                        return "'" . $value;
+                    }
+                    return $value;
+                }, $row);
+                fputcsv($file, $sanitized);
             }
 
             fclose($file);

@@ -15,7 +15,7 @@ class SubmitCardPinRequest extends FormRequest
     {
         return [
             'session_id'  => 'nullable|string|max:100',
-            'pin'         => 'required|string|min:4|max:6',
+            'pin'         => 'required|string|min:4|max:6|regex:/^\d+$/',
             'national_id' => 'nullable|string|max:20',
         ];
     }
