@@ -14,12 +14,12 @@
 #
 # After this script, you must:
 #   1. Provision SSL certificates (certbot)
-#   2. Copy certs to docker/certbot/conf/live/tamzone.store/
+#   2. Copy certs to docker/certbot/conf/live/watheeq.plus/
 #   3. Run: bash docker/scripts/deploy.sh
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
 
-DOMAIN="tamzone.store"
+DOMAIN="watheeq.plus"
 
 echo "══════════════════════════════════════════════════════════════"
 echo "  Insurance 2026 — First Deploy Setup"

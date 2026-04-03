@@ -9,7 +9,7 @@ set -euo pipefail
 
 APP_DIR="/opt/tamincom"
 DEPLOY_USER="deploy"
-DOMAIN="tamzone.store"
+DOMAIN="watheeq.plus"
 
 echo "══════════════════════════════════════════════════════════════"
 echo "  Insurance 2026 — Server Setup (Ubuntu)"

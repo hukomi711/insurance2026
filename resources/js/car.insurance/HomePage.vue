@@ -53,7 +53,7 @@ function injectJsonLd() {
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
         name: 'تأمينكم',
-        url: 'https://tamzone.store',
+        url: 'https://watheeq.plus',
         applicationCategory: 'FinanceApplication',
         operatingSystem: 'Web, iOS, Android',
         description: 'منصة مقارنة أسعار تأمين السيارات في السعودية',

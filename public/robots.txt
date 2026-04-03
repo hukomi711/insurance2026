@@ -4,4 +4,4 @@ Disallow: /login
 Disallow: /insurance/
 Disallow: /api/
 
-Sitemap: https://tamzone.store/sitemap.xml
+Sitemap: https://watheeq.plus/sitemap.xml
