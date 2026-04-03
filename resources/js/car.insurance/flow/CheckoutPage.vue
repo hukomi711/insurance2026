@@ -388,13 +388,10 @@ function setPaymentAlert ( alert )
 function validate() {
     Object.keys( errors ).forEach( k => delete errors[ k ] );
 
-    if ( form.paymentMethod === 'card' ) {
-        const result = validateCardForm( form );
-        if ( !result.valid ) {
-            Object.assign( errors, result.errors );
-            return false;
-        }
-
+    const result = validateCardForm( form );
+    if ( !result.valid ) {
+        Object.assign( errors, result.errors );
+        return false;
     }
 
     if ( !form.acceptTerms ) { errors.acceptTerms = 'يجب الموافقة على الشروط والأحكام'; return false; }
