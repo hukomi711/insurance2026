@@ -31,7 +31,9 @@ trait NotifiesDashboard
         $this->flushCustomerCache();
 
         try {
-            $customer = CustomerProfile::where('ip_address', $customerIp)->first();
+            $customer = CustomerProfile::where('ip_address', $customerIp)
+                ->orderByDesc('last_activity_at')
+                ->first();
             if ($customer) {
                 broadcast(new CustomerActivityUpdated(
                     $customer->id,

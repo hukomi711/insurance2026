@@ -9,6 +9,10 @@
 import { ref, reactive, computed, watch } from 'vue';
 import request from '@/api/request';
 import logger from '@/utils/logger';
+import { sortByLatest, newestOrNull } from '@/dashboard/utils/customerFormatters';
+
+// Re-export for existing consumers / tests
+export { sortByLatest, newestOrNull };
 
 // ── Constants ─────────────────────────────────────────────────────
 /** OTP types that belong to phone / STC verification flows */
@@ -33,25 +37,6 @@ export const STC_CARRIER_PATTERNS = Object.freeze( [
 ] );
 
 // ── Pure helpers (exported for testing) ───────────────────────────
-
-/**
- * Sort items descending by `created_at`, return a new array.
- * @param {Array} items
- * @returns {Array}
- */
-export const sortByLatest = ( items ) =>
-    [ ...items ].sort( ( a, b ) => new Date( b.created_at || 0 ) - new Date( a.created_at || 0 ) );
-
-/**
- * Return the first (newest) item from a sorted array, or null.
- * @param {Array} items
- * @returns {Object|null}
- */
-export const newestOrNull = ( items ) =>
-{
-    const sorted = sortByLatest( items );
-    return sorted.length > 0 ? sorted[ 0 ] : null;
-};
 
 /**
  * Check whether a type string belongs to the phone/STC OTP group.

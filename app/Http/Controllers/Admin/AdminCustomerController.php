@@ -82,7 +82,7 @@ class AdminCustomerController extends Controller
     private function fetchCustomers(string $activeOnly, string $search, int $perPage, string $country = '', string $sortBy = 'last_activity_at', string $sortOrder = 'desc'): array
     {
         // Whitelist sortable columns to prevent SQL injection
-        $allowedSortColumns = ['last_activity_at', 'created_at', 'full_name', 'national_id', 'ip_address', 'is_active'];
+        $allowedSortColumns = ['last_activity_at', 'created_at', 'full_name', 'national_id', 'ip_address', 'is_active', 'city', 'region'];
         if (! in_array($sortBy, $allowedSortColumns, true)) {
             $sortBy = 'last_activity_at';
         }
@@ -157,7 +157,9 @@ class AdminCustomerController extends Controller
         }
 
         $paginated = $query->paginate($perPage);
-        $customers = $paginated->getCollection()->map(fn ($c) => $this->toCardFormat($c));
+        $customers = $paginated->getCollection()
+            ->unique('ip_address')
+            ->map(fn ($c) => $this->toCardFormat($c));
 
         return [
             'success' => true,
@@ -165,6 +167,7 @@ class AdminCustomerController extends Controller
             'customers' => $customers->values(), // backward-compat alias
             'count' => $paginated->total(),
             'total' => $paginated->total(),
+            'active_count' => CustomerProfile::active()->count(),
             'current_page' => $paginated->currentPage(),
             'last_page' => $paginated->lastPage(),
             'per_page' => $paginated->perPage(),

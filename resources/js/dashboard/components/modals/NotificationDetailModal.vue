@@ -70,7 +70,7 @@
           </div>
           <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الوقت</p>
-            <p class="text-sm font-medium text-gray-200">{{ formatTime(customer.latest_otp.created_at) }}</p>
+            <p class="text-sm font-medium text-gray-200">{{ formatDateTimeAR(customer.latest_otp.created_at) }}</p>
           </div>
         </div>
       </div>
@@ -91,7 +91,7 @@
           </div>
           <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الوقت</p>
-            <p class="text-sm font-medium text-gray-200">{{ formatTime(customer.latest_pin.created_at) }}</p>
+            <p class="text-sm font-medium text-gray-200">{{ formatDateTimeAR(customer.latest_pin.created_at) }}</p>
           </div>
         </div>
       </div>
@@ -152,7 +152,7 @@
           </div>
           <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الوقت</p>
-            <p class="text-sm font-medium text-gray-200">{{ formatTime(customer.latest_phone_otp.created_at) }}</p>
+            <p class="text-sm font-medium text-gray-200">{{ formatDateTimeAR(customer.latest_phone_otp.created_at) }}</p>
           </div>
         </div>
       </div>
@@ -249,6 +249,9 @@ import { ref, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { ModalShell } from '../ui';
 import { getCustomers } from '@/api/dashboard';
+import { useCustomerFormatters } from '@/dashboard/utils/customerFormatters';
+
+const { formatDateTimeAR } = useCustomerFormatters();
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -344,15 +347,7 @@ function statusLabel(status) {
   return map[status] || status || '—';
 }
 
-function formatTime(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleString('ar-SA', { dateStyle: 'short', timeStyle: 'short' });
-  } catch {
-    return dateStr;
-  }
-}
+
 
 function goToDashboard() {
   emit('close');
