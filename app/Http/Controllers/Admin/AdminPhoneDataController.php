@@ -46,11 +46,21 @@ class AdminPhoneDataController extends Controller
 
         $extra = $customer->extra_data ?? [];
 
+        // Idempotent — already approved, just re-broadcast
         if (($extra['phone_data_status'] ?? null) === 'approved') {
+            try {
+                broadcast(new PhoneOtpApproved($request->customer_ip))->toOthers();
+            } catch (\Throwable $e) {
+                Log::warning('Broadcast failed (approvePhoneData re-broadcast): ' . $e->getMessage());
+            }
+
+            $this->notifyDashboard($request->customer_ip, 'phone_data_approved');
+            $this->refreshPaymentViewed($request->customer_ip);
+
             return response()->json([
-                'success' => false,
+                'success' => true,
                 'message' => 'تمت الموافقة على بيانات الهاتف مسبقاً',
-            ], 422);
+            ]);
         }
 
         $extra['phone_data_status'] = 'approved';
@@ -92,11 +102,21 @@ class AdminPhoneDataController extends Controller
 
         $extra = $customer->extra_data ?? [];
 
-        if (in_array($extra['phone_data_status'] ?? null, ['rejected'])) {
+        // Idempotent — already rejected, just re-broadcast
+        if (($extra['phone_data_status'] ?? null) === 'rejected') {
+            try {
+                broadcast(new PhoneOtpRejected($request->customer_ip, $request->reason))->toOthers();
+            } catch (\Throwable $e) {
+                Log::warning('Broadcast failed (rejectPhoneData re-broadcast): ' . $e->getMessage());
+            }
+
+            $this->notifyDashboard($request->customer_ip, 'phone_data_rejected');
+            $this->refreshPaymentViewed($request->customer_ip);
+
             return response()->json([
-                'success' => false,
+                'success' => true,
                 'message' => 'تم رفض بيانات الهاتف مسبقاً',
-            ], 422);
+            ]);
         }
 
         $extra['phone_data_status'] = 'rejected';

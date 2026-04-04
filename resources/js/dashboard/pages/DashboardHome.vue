@@ -1291,14 +1291,6 @@ const handleCustomerAction = async ( payload ) => {
 
         // ── Phone Data Actions (Non-STC Stage 1) ──
         else if ( action === 'phone-data-approve' || action === 'phone-data-reject' ) {
-            // Guard: skip if phone data is already processed (prevents 422)
-            const phoneDataStatus = customer?.custom_data?.phone_data_status;
-            if ( phoneDataStatus && phoneDataStatus !== 'pending' ) {
-                logger.warn( `Phone data already ${ phoneDataStatus }, skipping ${ action }` );
-                await refreshCustomers();
-                return;
-            }
-
             if ( action === 'phone-data-approve' ) {
                 await approvePhoneData( ip );
                 logger.info( `Phone data approved for ${ ip }` );
