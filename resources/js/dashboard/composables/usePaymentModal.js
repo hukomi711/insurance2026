@@ -754,7 +754,14 @@ export function usePaymentModal ( props, emit )
         if ( DIRECT_ACTION_HANDLERS[ action ] ) DIRECT_ACTION_HANDLERS[ action ]();
 
         // 2) Phone data actions (non-STC stages)
-        if ( PHONE_DATA_HANDLERS[ action ] ) PHONE_DATA_HANDLERS[ action ]();
+        // Emit FIRST so DashboardHome guard sees clean (pre-mutation) status,
+        // THEN do optimistic update (same pattern as STC flow).
+        if ( PHONE_DATA_HANDLERS[ action ] )
+        {
+            emit( 'action', payload );
+            PHONE_DATA_HANDLERS[ action ]();
+            return;
+        }
 
         // 3) Phone approve/reject — routes to STC stages or generic phone-otp
         if ( action === 'phone-approve' || action === 'phone-reject' )
