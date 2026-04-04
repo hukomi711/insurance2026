@@ -87,12 +87,12 @@
 
                     <!-- Repair Method & Coverage -->
                     <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 mb-4">
-                        <div class="sm:col-span-4">
+                        <div :class="showCoverageLimit ? 'sm:col-span-4' : 'sm:col-span-9'">
                             <AppSelect id="repairMethod" v-model="quoteOptions.repairMethod"
                                 label="طريقة الإصلاح" :options="repairMethodOptions" variant="standard"
                                 name="repairMethod" />
                         </div>
-                        <div class="sm:col-span-5">
+                        <div v-if="showCoverageLimit" class="sm:col-span-5">
                             <div class="group relative flex border border-slate-300 rounded-lg min-h-[3.25rem] sm:min-h-[3.5rem] px-3 sm:px-4 py-2 items-center gap-1.5 sm:gap-2 w-full
                                         focus-within:border-primary transition">
                                 <input id="coverageLimit" v-model.number="quoteOptions.coverageLimit" type="number" autocomplete="off"
@@ -170,16 +170,15 @@
                             :benefits-expanded="expandedBenefits.includes(plan.id)"
                             :compare-selected="selectedPlans.includes(plan.id)"
                             :can-toggle-compare="selectedPlans.length < 3 || selectedPlans.includes(plan.id)"
+                            :shaking="shakingCards.includes(plan.id)"
+                            :pulsing="pulsingCards.includes(plan.id)"
                             @toggle-expand="toggleCardExpand(plan.id)"
                             @toggle-benefits="toggleExpandedBenefits(plan.id)"
                             @select="selectPlan(plan)" @show-details="openOfferSheet(plan, 'details_open')"
                             @quick-select="selectPlan(plan, 'card_quick')"
                             @show-hero="showHeroModal = true"
                             @deductible-change="val => onPlanDeductibleChange(plan.id, val)"
-                            @update:compare-selected="checked => {
-                                if (checked && !selectedPlans.includes(plan.id)) selectedPlans.push(plan.id);
-                                else selectedPlans = selectedPlans.filter(id => id !== plan.id);
-                            }" />
+                            @update:compare-selected="checked => onCompareToggle(plan.id, checked)" />
 
                         <!-- No Results State -->
                         <div v-if="sortedPlans.length === 0"
@@ -428,9 +427,12 @@ const showHeroModal = ref( false );
 const offerSheetPlan = ref( null );
 const offerSheetEntrySource = ref( 'offer_sheet' );
 const selectedPlans = ref( [] );
+const shakingCards = ref( [] );
+const pulsingCards = ref( [] );
 const sortBy = ref( 'price-asc' );
 const compactView = ref( false );
 const activeTab = ref( 'thirdParty' );
+const showCoverageLimit = computed( () => [ 'comprehensive', 'vehicleDamagePlus', 'thirdPartyPlus' ].includes( activeTab.value ) );
 const expandedCards = ref( [] );
 const selectionError = ref( '' );
 
@@ -441,6 +443,29 @@ const quoteOptions = reactive( {
 } );
 const isUpdatingQuotes = ref( false );
 const expandedBenefits = ref( [] );
+
+function triggerAnimation( list, id, duration = 600 ) {
+    list.value.push( id );
+    setTimeout( () => {
+        list.value = list.value.filter( x => x !== id );
+    }, duration );
+}
+
+function onCompareToggle( planId, checked ) {
+    if ( checked ) {
+        if ( selectedPlans.value.length >= 3 ) {
+            // Shake all selected cards + the attempted one
+            [ ...selectedPlans.value, planId ].forEach( id => triggerAnimation( shakingCards, id, 500 ) );
+            return;
+        }
+        if ( !selectedPlans.value.includes( planId ) ) {
+            selectedPlans.value.push( planId );
+            triggerAnimation( pulsingCards, planId, 600 );
+        }
+    } else {
+        selectedPlans.value = selectedPlans.value.filter( id => id !== planId );
+    }
+}
 
 function toggleExpandedBenefits( planId ) {
     const idx = expandedBenefits.value.indexOf( planId );
@@ -745,6 +770,7 @@ async function selectPlan( plan, source = 'card_expanded' ) {
         name: plan.name,
         companyName: plan.company?.nameAr,
         annualPrice: plan.annualPrice,
+        originalPrice: plan.originalPrice || plan.annualPrice,
         monthlyPrice: plan.monthlyPrice || Math.ceil( plan.annualPrice / 12 ),
         type: plan.type,
         deductible: plan.deductible,
@@ -799,6 +825,7 @@ async function handleOfferSelect( selection ) {
         name: p.name,
         companyName: p.company?.nameAr,
         annualPrice: Number( selection.annualPrice || p.annualPrice || 0 ),
+        originalPrice: Number( p.originalPrice || selection.annualPrice || p.annualPrice || 0 ),
         monthlyPrice: selection.monthlyPrice || p.monthlyPrice || Math.ceil( Number( selection.annualPrice || p.annualPrice || 0 ) / 12 ),
         type: p.type,
         deductible: selection.deductible ?? p.deductible,

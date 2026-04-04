@@ -15,35 +15,41 @@ return [
 
     // ─── Base premiums per insurance sub-type (SAR) ───
     'base_premiums' => [
-        'thirdParty'       => 600,
-        'thirdPartyPlus'   => 900,
-        'vehicleDamagePlus'=> 980,
-        'comprehensive'    => 1540,
+        'thirdParty'       => 700,
+        'thirdPartyPlus'   => 1100,
+        'vehicleDamagePlus'=> 1300,
+        'comprehensive'    => 2000,
     ],
 
     // ─── Price limits (min/max per sub-type) ───
     'price_limits' => [
-        'thirdParty'        => ['min' => 500,  'max' => 2000],
-        'thirdPartyPlus'    => ['min' => 750,  'max' => 3000],
-        'vehicleDamagePlus' => ['min' => 840,  'max' => 3500],
-        'comprehensive'     => ['min' => 1260, 'max' => 5600],
+        'thirdParty'        => ['min' => 400,  'max' => 3000],
+        'thirdPartyPlus'    => ['min' => 600,  'max' => 5000],
+        'vehicleDamagePlus' => ['min' => 700,  'max' => 6000],
+        'comprehensive'     => ['min' => 900,  'max' => 9000],
     ],
 
     // ─── Vehicle risk factors ───
 
     'vehicle_age_factors' => [
-        ['maxAge' => 2,  'factor' => 1.00],  // New (0-2 years)
-        ['maxAge' => 5,  'factor' => 1.00],  // Medium (3-5 years)
+        ['maxAge' => 1,  'factor' => 0.90],  // New (0-1 year) — discount
+        ['maxAge' => 3,  'factor' => 0.95],  // Recent (2-3 years)
+        ['maxAge' => 5,  'factor' => 1.00],  // Medium (4-5 years)
         ['maxAge' => 8,  'factor' => 1.10],  // Somewhat old (6-8 years)
-        ['maxAge' => 99, 'factor' => 1.25],  // Old (9+ years)
+        ['maxAge' => 12, 'factor' => 1.25],  // Old (9-12 years)
+        ['maxAge' => 99, 'factor' => 1.40],  // Very old (13+ years)
     ],
 
 
     'vehicle_value_factors' => [
-        ['maxValue' => 50000,    'factor' => 1.00],
-        ['maxValue' => 100000,   'factor' => 1.00],
-        ['maxValue' => 200000,   'factor' => 1.15],
-        ['maxValue' => PHP_FLOAT_MAX, 'factor' => 1.30],
+        ['maxValue' => 15000,         'factor' => 0.60],  // Very economy — big discount
+        ['maxValue' => 30000,         'factor' => 0.72],  // Economy
+        ['maxValue' => 50000,         'factor' => 0.85],  // Low-mid
+        ['maxValue' => 80000,         'factor' => 1.00],  // Mid — baseline
+        ['maxValue' => 120000,        'factor' => 1.18],  // Above mid
+        ['maxValue' => 180000,        'factor' => 1.35],  // Luxury
+        ['maxValue' => 250000,        'factor' => 1.55],  // High luxury
+        ['maxValue' => PHP_FLOAT_MAX, 'factor' => 1.80],  // Super luxury
     ],
 
     'purpose_factors' => [
@@ -101,47 +107,47 @@ return [
     // ─── Lifestyle / location factors ───
 
     'city_factors' => [
-        'الرياض'          => 1.10,
-        'جدة'             => 1.10,
-        'مكة المكرمة'     => 1.05,
+        'الرياض'          => 1.15,
+        'جدة'             => 1.12,
+        'مكة المكرمة'     => 1.08,
         'المدينة المنورة' => 1.03,
-        'الدمام'          => 1.05,
-        'الخبر'           => 1.05,
-        'الظهران'         => 1.03,
+        'الدمام'          => 1.08,
+        'الخبر'           => 1.06,
+        'الظهران'         => 1.04,
         '_default'         => 1.00,
     ],
 
     'parking_factors' => [
-        '1' => 1.10,  // Street
+        '1' => 1.12,  // Street — higher risk
         '2' => 1.00,  // Driveway
-        '3' => 1.00,  // Garage
+        '3' => 0.93,  // Garage — discount
     ],
 
     'mileage_factors' => [
-        '1' => 1.20,  // < 5,000 km
-        '2' => 1.20,  // 5,000 - 10,000
-        '3' => 1.20,  // 10,000 - 20,000
-        '4' => 1.20,  // 20,000 - 30,000
-        '5' => 1.20,  // > 30,000
+        '1' => 0.90,  // < 5,000 km — low usage discount
+        '2' => 0.95,  // 5,000 - 10,000
+        '3' => 1.00,  // 10,000 - 20,000 — baseline
+        '4' => 1.08,  // 20,000 - 30,000
+        '5' => 1.18,  // > 30,000 — higher risk
     ],
 
     // ─── Policy factors ───
 
     'deductible_factors' => [
-        0    => 1.05,  // No deductible (third party)
-        500  => 1.10,
-        1000 => 1.00,
-        1500 => 1.00,
-        2000 => 1.00,
-        2500 => 1.00,
-        3000 => 1.00,
-        5000 => 1.00,
+        0    => 1.15,  // No deductible — most expensive
+        500  => 1.08,  // Low deductible
+        1000 => 1.00,  // Baseline
+        1500 => 0.95,  // Slight discount
+        2000 => 0.90,  // Good discount
+        2500 => 0.85,  // Great discount
+        3000 => 0.80,  // Big discount
+        5000 => 0.72,  // Maximum discount
     ],
 
     'repair_method_factors' => [
         'workshop'   => 1.00,
         'authorized' => 1.00,  // Alias for workshop
-        'agency'     => 1.25,
+        'agency'     => 1.35,  // 35% premium for agency repair
     ],
 
     // ─── Coverage limit factors (comprehensive, vehicleDamagePlus, thirdPartyPlus) ───
@@ -181,13 +187,13 @@ return [
 
     'ncd_factors' => [
         '0' => 1.00,  // No discount
-        '1' => 1.00,  // 1 year — no discount
-        '2' => 1.00,  // 2 years — no discount
-        '3' => 1.00,  // 3 years — no discount
-        '4' => 1.00,  // 4 years — no discount
-        '5' => 1.00,  // 5 years — no discount
-        '6' => 1.00,  // 6 years — no discount
-        '7' => 1.00,  // 7+ years — no discount
+        '1' => 0.97,  // 1 year — 3% discount
+        '2' => 0.93,  // 2 years — 7% discount
+        '3' => 0.88,  // 3 years — 12% discount
+        '4' => 0.82,  // 4 years — 18% discount
+        '5' => 0.75,  // 5 years — 25% discount
+        '6' => 0.72,  // 6 years — 28% discount
+        '7' => 0.70,  // 7+ years — 30% max discount
     ],
 
     // ─── VAT rate ───

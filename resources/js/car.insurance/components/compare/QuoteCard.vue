@@ -1,8 +1,12 @@
 <template>
-    <div class="bg-white rounded-2xl border overflow-hidden transition-all"
+    <div class="bg-white rounded-2xl border overflow-hidden transition-all duration-300"
         :class="[
-            plan.badgeType === 'recommended' ? 'border-primary/30 shadow-md ring-1 ring-primary/10' : 'border-slate-200',
+            compareSelected
+                ? 'border-primary shadow-md ring-2 ring-primary/20'
+                : plan.badgeType === 'recommended' ? 'border-primary/30 shadow-md ring-1 ring-primary/10' : 'border-slate-200',
             expanded ? 'shadow-md' : 'shadow-sm hover:shadow-md',
+            shaking ? 'animate-card-shake' : '',
+            pulsing ? 'animate-card-pulse' : '',
         ]">
 
         <!-- ═══ Top Badge Strip ═══ -->
@@ -101,10 +105,16 @@
             </div>
 
             <!-- Row 3: Price + CTA -->
-            <div class="mt-3 rounded-xl bg-slate-50 border border-slate-100 p-3">
+            <div class="mt-3 rounded-xl bg-slate-50 border border-slate-100 p-3 price-highlight">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
                     <!-- Price -->
                     <div class="min-w-0">
+                        <!-- Original price (before discount) -->
+                        <div v-if="plan.originalPrice && plan.originalPrice !== plan.annualPrice" class="flex items-center gap-1.5 mb-0.5">
+                            <span class="text-sm line-through text-slate-400 ltr-nums">{{ formatNumber( plan.originalPrice ) }}</span>
+                            <SarIcon className="size-2.5 text-slate-400" />
+                            <span class="text-[10px] bg-red-100 text-red-600 font-bold px-1.5 py-0.5 rounded-full">خصم 20%</span>
+                        </div>
                         <div class="flex items-baseline gap-1.5">
                             <span class="text-xl sm:text-2xl font-extrabold ltr-nums text-primary">{{ formatNumber( plan.annualPrice ) }}</span>
                             <SarIcon className="size-3 sm:size-3.5 text-primary" />
@@ -139,6 +149,7 @@
         </div>
 
         <!-- ═══ Expandable Details Section ═══ -->
+        <Transition name="slide-down">
         <div v-if="expanded && !compactView" class="border-t border-slate-100">
 
             <!-- Coverage Details Grid -->
@@ -278,6 +289,7 @@
                 </button>
             </div>
         </div>
+        </Transition>
     </div>
 </template>
 
@@ -294,6 +306,8 @@ const _props = defineProps( {
     benefitsExpanded: { type: Boolean, default: false },
     compareSelected: { type: Boolean, default: false },
     canToggleCompare: { type: Boolean, default: true },
+    shaking: { type: Boolean, default: false },
+    pulsing: { type: Boolean, default: false },
 } );
 
 const emit = defineEmits( [

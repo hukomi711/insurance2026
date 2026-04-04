@@ -867,6 +867,71 @@ input:-webkit-autofill:active {
     animation: slide-in-right 0.5s ease-out both;
 }
 
+/* ── Quote Card Animations ── */
+
+/* Slide-down for expandable details */
+.slide-down-enter-active {
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+    overflow: hidden;
+}
+.slide-down-leave-active {
+    transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+    overflow: hidden;
+}
+.slide-down-enter-from {
+    max-height: 0;
+    opacity: 0;
+}
+.slide-down-enter-to {
+    max-height: 800px;
+    opacity: 1;
+}
+.slide-down-leave-from {
+    max-height: 800px;
+    opacity: 1;
+}
+.slide-down-leave-to {
+    max-height: 0;
+    opacity: 0;
+}
+
+/* Pulse on compare selection */
+@keyframes card-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(0, 136, 235, 0.4); }
+    70%  { box-shadow: 0 0 0 10px rgba(0, 136, 235, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 136, 235, 0); }
+}
+.animate-card-pulse {
+    animation: card-pulse 0.6s ease-out;
+}
+
+/* Shake on compare limit exceeded */
+@keyframes card-shake {
+    0%, 100% { transform: translateX(0); }
+    15%      { transform: translateX(-6px); }
+    30%      { transform: translateX(5px); }
+    45%      { transform: translateX(-4px); }
+    60%      { transform: translateX(3px); }
+    75%      { transform: translateX(-2px); }
+}
+.animate-card-shake {
+    animation: card-shake 0.5s ease-in-out;
+}
+
+/* Price highlight on touch/hover */
+@keyframes price-pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+.price-highlight {
+    transition: transform 0.15s ease;
+}
+.price-highlight:active,
+.price-highlight:hover {
+    animation: price-pop 0.3s ease-out;
+}
+
 /* Infinite marquee scroll */
 @keyframes marquee {
     0% {

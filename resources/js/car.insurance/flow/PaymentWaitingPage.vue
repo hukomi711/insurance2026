@@ -1,10 +1,6 @@
 <template>
     <div class="min-h-screen bg-slate-50 flex flex-col" dir="rtl">
         <div class="flex-1 flex flex-col items-center justify-center py-6 sm:py-10 px-4 relative overflow-hidden">
-        <!-- Subtle Saudi map background -->
-        <img :src="bannerBg" alt="" aria-hidden="true"
-            class="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[750px] select-none"
-            style="opacity: 0.5" />
 
         <div class="relative bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden w-full"
             style="max-width: 440px">
@@ -151,11 +147,9 @@ import { safeRedirect } from '@/utils/safeRedirect';
 import SarIcon from '@/components/SarIcon.vue';
 import { formatPaymentFailure } from '@/constants/rejectionReasons';
 import { BANK_LOGOS } from '@/constants/bankLogos';
-import { CASHBACK_SUMMARY_IMAGE } from '@/constants/cashbackImage';
 import { detectBankFromBin } from '@/utils/bankDetector';
 
 const router = useRouter();
-const bannerBg = CASHBACK_SUMMARY_IMAGE;
 
 // Track this page
 useVisitorTracking( 'payment/waiting' );

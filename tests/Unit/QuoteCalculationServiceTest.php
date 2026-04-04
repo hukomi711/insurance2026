@@ -58,9 +58,9 @@ class QuoteCalculationServiceTest extends TestCase
 
         $this->assertIsInt($result['annualPrice']);
         $this->assertEquals(0, $result['annualPrice'] % 10, 'Price must be rounded to nearest 10');
-        // Verify it's within third-party limits
-        $this->assertGreaterThanOrEqual(500, $result['annualPrice']);
-        $this->assertLessThanOrEqual(2000, $result['annualPrice']);
+        // Verify it's within third-party limits (after 20% discount)
+        $this->assertGreaterThanOrEqual(320, $result['annualPrice']);
+        $this->assertLessThanOrEqual(2400, $result['annualPrice']);
         // Verify response shape
         $this->assertArrayHasKey('pricingFactors', $result);
         $this->assertArrayHasKey('vehicle', $result['pricingFactors']);
@@ -106,10 +106,10 @@ class QuoteCalculationServiceTest extends TestCase
         );
 
         $this->assertIsInt($result['annualPrice']);
-        $this->assertGreaterThanOrEqual(1260, $result['annualPrice']);
-        $this->assertLessThanOrEqual(5600, $result['annualPrice']);
+        $this->assertGreaterThanOrEqual(700, $result['annualPrice']);
+        $this->assertLessThanOrEqual(7200, $result['annualPrice']);
         $this->assertEquals('applied', $result['notes']['ncdYears']);
-        $this->assertEquals(1.0, $result['pricingFactors']['ncd']);
+        $this->assertEquals(0.75, $result['pricingFactors']['ncd']);
     }
 
     /**
@@ -135,10 +135,10 @@ class QuoteCalculationServiceTest extends TestCase
             ['repairMethod' => 'workshop']
         );
 
-        // High risk profile should hit or approach the max price limit
+        // High risk profile should hit or approach the max price limit (after 20% discount)
         $this->assertIsInt($result['annualPrice']);
-        $this->assertGreaterThanOrEqual(750, $result['annualPrice']);
-        $this->assertLessThanOrEqual(3000, $result['annualPrice']);
+        $this->assertGreaterThanOrEqual(480, $result['annualPrice']);
+        $this->assertLessThanOrEqual(4000, $result['annualPrice']);
         // Vehicle factor should be > 1.0 (old, modified, trailer, commercial)
         $this->assertGreaterThan(1.0, $result['pricingFactors']['vehicle']);
         // Driver factor should be > 1.0 (young, inexperienced, accidents, violations)
@@ -175,8 +175,8 @@ class QuoteCalculationServiceTest extends TestCase
         $this->assertEquals(1.0, $result['pricingFactors']['ncd']);
         $this->assertEquals('neutral (missing)', $result['notes']['drivingExperience']);
         $this->assertEquals('neutral (missing)', $result['notes']['ncdYears']);
-        // Unknown city is neutral, but mileage '3' currently applies 1.20
-        $this->assertEquals(1.2, $result['pricingFactors']['lifestyle']);
+        // Unknown city (أبها) → 1.00, parking 2 → 1.00, mileage 3 → 1.00
+        $this->assertEquals(1.0, $result['pricingFactors']['lifestyle']);
     }
 
     /**
@@ -212,9 +212,9 @@ class QuoteCalculationServiceTest extends TestCase
             ['repairMethod' => 'workshop', 'deductible' => 3000]
         );
 
-        // Deductible discounts are disabled — both paths should remain equal
-        $this->assertEquals($result1['annualPrice'], $result2['annualPrice']);
-        $this->assertEquals($result1['pricingFactors']['policy'], $result2['pricingFactors']['policy']);
+        // Policy override with higher deductible → lower factor → lower price
+        $this->assertLessThan($result1['annualPrice'], $result2['annualPrice']);
+        $this->assertLessThan($result1['pricingFactors']['policy'], $result2['pricingFactors']['policy']);
     }
 
     /**

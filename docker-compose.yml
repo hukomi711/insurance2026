@@ -9,7 +9,10 @@
 services:
   # ── Nginx reverse-proxy ──────────────────────────────────────
   nginx:
-    image: nginx:1.27-alpine
+    build:
+      context: ./docker/nginx
+      dockerfile: Dockerfile
+    image: ins2026-nginx:brotli
     container_name: ins2026-nginx
     restart: unless-stopped
     ulimits:

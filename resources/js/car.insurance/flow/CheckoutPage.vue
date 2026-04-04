@@ -305,9 +305,13 @@ const dynamicPrice = computed( () => {
     return calculatePremium( plan.value, insuranceStore.allFormData );
 } );
 
-// التسعير — prefer discounted values from OrderReviewPage
+// التسعير — prefer values from OrderReviewPage
 const subtotal = computed( () => {
-    // If OrderReviewPage saved discounted subtotal, use it
+    // If OrderReviewPage saved subtotal before VAT, use it
+    if ( selectedPlanData.value?.subtotalBeforeVAT != null ) {
+        return selectedPlanData.value.subtotalBeforeVAT;
+    }
+    // Fallback: old key from previous versions
     if ( selectedPlanData.value?.subtotalAfterDiscount != null ) {
         return selectedPlanData.value.subtotalAfterDiscount;
     }

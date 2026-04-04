@@ -78,7 +78,12 @@ class QuoteCalculationService
         $clampedPrice = max($limits['min'], min($limits['max'], $rawPrice));
 
         // Round to nearest 10
-        $annualPrice  = (int) (round($clampedPrice / 10) * 10);
+        $annualBeforeDiscount = (int) (round($clampedPrice / 10) * 10);
+
+        // 20% promotional discount
+        $annualPrice  = (int) (round(($annualBeforeDiscount * 0.80) / 10) * 10);
+        $originalPrice = $annualBeforeDiscount;
+
         $monthlyPrice = (int) ceil($annualPrice / 12);
         $vatRate      = $this->config['vat_rate'];
         $vatAmount    = (int) round($annualPrice * $vatRate);
@@ -99,6 +104,7 @@ class QuoteCalculationService
             'companyId'      => $plan['companyId'],
             'subType'        => $plan['subType'],
             'annualPrice'    => $annualPrice,
+            'originalPrice'  => $originalPrice,
             'monthlyPrice'   => $monthlyPrice,
             'vatAmount'      => $vatAmount,
             'totalWithVAT'   => $totalWithVAT,

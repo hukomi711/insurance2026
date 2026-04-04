@@ -351,13 +351,19 @@ export function usePricingEngine ()
             const clampedPrice = Math.max( limits.min, Math.min( limits.max, rawPrice ) );
 
             // تقريب لأقرب 10
-            const annualPrice = Math.round( clampedPrice / 10 ) * 10;
+            const annualBeforeDiscount = Math.round( clampedPrice / 10 ) * 10;
+
+            // خصم 20% ترويجي
+            const annualPrice = Math.round( ( annualBeforeDiscount * 0.80 ) / 10 ) * 10;
+            const originalPrice = annualBeforeDiscount;
+
             const monthlyPrice = calculateMonthlyPrice( annualPrice );
             const vatAmount = calculateVAT( annualPrice );
             const totalWithVAT = annualPrice + vatAmount;
 
             return {
                 annualPrice,
+                originalPrice,
                 monthlyPrice,
                 vatAmount,
                 totalWithVAT,
@@ -380,6 +386,7 @@ export function usePricingEngine ()
             const fallbackPrice = plan?.annualPrice || plan?.basePrice || 800;
             return {
                 annualPrice: fallbackPrice,
+                originalPrice: fallbackPrice,
                 monthlyPrice: calculateMonthlyPrice( fallbackPrice ),
                 vatAmount: calculateVAT( fallbackPrice ),
                 totalWithVAT: fallbackPrice + calculateVAT( fallbackPrice ),
@@ -405,6 +412,7 @@ export function usePricingEngine ()
             return {
                 ...plan,
                 annualPrice: pricing.annualPrice,
+                originalPrice: pricing.originalPrice,
                 monthlyPrice: pricing.monthlyPrice,
                 basePrice: pricing.basePrice,
                 pricingFactors: pricing.factors,
@@ -533,6 +541,7 @@ export function usePricingEngine ()
         return {
             ...plan,
             annualPrice: pricing.annualPrice,
+            originalPrice: pricing.originalPrice,
             monthlyPrice: pricing.monthlyPrice,
             pricingFactors: pricing.factors,
         };

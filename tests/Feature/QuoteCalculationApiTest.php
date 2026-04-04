@@ -156,12 +156,12 @@ class QuoteCalculationApiTest extends TestCase
         $response1 = $this->postJson('/api/quotes/calculate', $payload);
         $price1 = $response1->json('quotes.0.annualPrice');
 
-        // With policy deductible override (deductible discounts are currently neutral)
+        // With policy deductible override — higher deductible → lower price
         $payload['policy']['deductible'] = 5000;
         $response2 = $this->postJson('/api/quotes/calculate', $payload);
         $price2 = $response2->json('quotes.0.annualPrice');
 
-        $this->assertEquals($price1, $price2);
+        $this->assertLessThan($price1, $price2);
     }
 
     public function test_single_plan_request(): void

@@ -10,10 +10,10 @@ use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
-    // ─── Server-side price limits (mirrors pricingConstants.js) ────
+    // ─── Server-side price limits (post-20% discount, mirrors pricingConstants.js) ─
     private const PRICE_LIMITS = [
-        'third_party'   => ['min' => 500,  'max' => 2000],
-        'comprehensive' => ['min' => 1260, 'max' => 5600],
+        'third_party'   => ['min' => 300,  'max' => 2500],
+        'comprehensive' => ['min' => 450,  'max' => 7500],
     ];
 
     private const VAT_RATE   = 0.15;

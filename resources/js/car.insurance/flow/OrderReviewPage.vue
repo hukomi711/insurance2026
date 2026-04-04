@@ -95,17 +95,17 @@
                         </h2>
                     </div>
                     <div class="p-4 sm:p-5 space-y-3">
-                        <!-- Original Price -->
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-slate-500">سعر الوثيقة</span>
-                            <span class="font-semibold text-foreground ltr-nums inline-flex items-center gap-1">
-                                {{ formatDecimal( annualPrice ) }}
-                                <SarIcon className="size-3 text-slate-400" />
+                        <!-- Original Price (before 20% discount) -->
+                        <div v-if="hasDiscount" class="flex items-center justify-between text-sm">
+                            <span class="text-slate-500">سعر الوثيقة الأساسي</span>
+                            <span class="font-semibold text-slate-400 line-through ltr-nums inline-flex items-center gap-1">
+                                {{ formatDecimal( originalPrice ) }}
+                                <SarIcon className="size-3 text-slate-300" />
                             </span>
                         </div>
 
                         <!-- تأميني Discount -->
-                        <div
+                        <div v-if="hasDiscount"
                             class="flex items-center justify-between text-sm bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2.5">
                             <span class="text-emerald-700 font-semibold flex items-center gap-1.5">
                                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -114,38 +114,47 @@
                                         d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
                                 </svg>
-                                خصم تأميني (20%)
+                                خصم تأمينكم (20%)
                             </span>
                             <span
                                 class="font-bold text-emerald-700 ltr-nums inline-flex items-center gap-1">
-                                -{{ formatDecimal( tameeniDiscount ) }}
+                                -{{ formatDecimal( discountAmount ) }}
                                 <SarIcon className="size-3 text-emerald-600" />
                             </span>
                         </div>
 
-                        <!-- NCD Safe Driving Discount -->
-                        <div
-                            class="flex items-center justify-between text-sm bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2.5">
-                            <span class="text-emerald-700 font-semibold flex items-center gap-1.5">
-                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                                </svg>
-                                خصم القيادة الآمنة (10%)
-                            </span>
-                            <span
-                                class="font-bold text-emerald-700 ltr-nums inline-flex items-center gap-1">
-                                -{{ formatDecimal( ncdDiscount ) }}
-                                <SarIcon className="size-3 text-emerald-600" />
-                            </span>
-                        </div>
-
-                        <!-- Subtotal after discount -->
+                        <!-- Discounted annual price -->
                         <div class="flex items-center justify-between text-sm">
-                            <span class="text-slate-500">المجموع بعد الخصم</span>
+                            <span class="text-slate-500">سعر الوثيقة{{ hasDiscount ? ' بعد الخصم' : '' }}</span>
                             <span class="font-semibold text-foreground ltr-nums inline-flex items-center gap-1">
-                                {{ formatDecimal( subtotalAfterDiscount ) }}
+                                {{ formatDecimal( annualPrice ) }}
+                                <SarIcon className="size-3 text-slate-400" />
+                            </span>
+                        </div>
+
+                        <!-- Add-ons (each as a line item) -->
+                        <template v-if="addons.length > 0">
+                            <div v-for="( addon, idx ) in addons" :key="idx"
+                                class="flex items-center justify-between text-sm bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
+                                <span class="text-blue-700 font-semibold flex items-center gap-1.5">
+                                    <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    {{ addon.name }}
+                                </span>
+                                <span class="font-bold text-blue-700 ltr-nums inline-flex items-center gap-1 shrink-0">
+                                    +{{ formatDecimal( addon.price ) }}
+                                    <SarIcon className="size-3 text-blue-600" />
+                                </span>
+                            </div>
+                        </template>
+
+                        <!-- Subtotal before VAT -->
+                        <div v-if="addons.length > 0" class="flex items-center justify-between text-sm">
+                            <span class="text-slate-500">المجموع قبل الضريبة</span>
+                            <span class="font-semibold text-foreground ltr-nums inline-flex items-center gap-1">
+                                {{ formatDecimal( subtotalBeforeVAT ) }}
                                 <SarIcon className="size-3 text-slate-400" />
                             </span>
                         </div>
@@ -173,7 +182,7 @@
                         </div>
 
                         <!-- Savings badge -->
-                        <div class="text-center">
+                        <div v-if="hasDiscount" class="text-center">
                             <span
                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">
                                 <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -181,7 +190,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                         d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                وفّرت {{ formatDecimal( discountAmount ) }} ريال مع تأميني!
+                                وفّرت {{ formatDecimal( discountAmount ) }} ريال مع تأمينكم!
                             </span>
                         </div>
                     </div>
@@ -246,16 +255,16 @@ const insuranceType = computed( () => plan.value?.type || selectedPlanData?.type
 const insuranceTypeLabel = computed( () =>
     insuranceType.value === 'comprehensive' ? 'تأمين شامل' : 'تأمين ضد الغير' );
 
-// ── Pricing with discounts ──
+// ── Pricing with real data from selectedPlan ──
 const annualPrice = computed( () => selectedPlanData?.annualPrice || plan.value?.annualPrice || 0 );
-const tameeniRate = 0.20;
-const ncdRate = 0.10;
-const tameeniDiscount = computed( () => Math.round( annualPrice.value * tameeniRate * 100 ) / 100 );
-const ncdDiscount = computed( () => Math.round( annualPrice.value * ncdRate * 100 ) / 100 );
-const discountAmount = computed( () => tameeniDiscount.value + ncdDiscount.value );
-const subtotalAfterDiscount = computed( () => annualPrice.value - discountAmount.value );
-const vatAmount = computed( () => Math.round( subtotalAfterDiscount.value * 0.15 * 100 ) / 100 );
-const totalPrice = computed( () => Math.round( ( subtotalAfterDiscount.value + vatAmount.value ) * 100 ) / 100 );
+const originalPrice = computed( () => selectedPlanData?.originalPrice || annualPrice.value );
+const hasDiscount = computed( () => originalPrice.value > annualPrice.value );
+const discountAmount = computed( () => Math.round( ( originalPrice.value - annualPrice.value ) * 100 ) / 100 );
+const addons = computed( () => selectedPlanData?.addons || [] );
+const addonsTotal = computed( () => addons.value.reduce( ( sum, a ) => sum + Number( a?.price || 0 ), 0 ) );
+const subtotalBeforeVAT = computed( () => annualPrice.value + addonsTotal.value );
+const vatAmount = computed( () => Math.round( subtotalBeforeVAT.value * 0.15 * 100 ) / 100 );
+const totalPrice = computed( () => Math.round( ( subtotalBeforeVAT.value + vatAmount.value ) * 100 ) / 100 );
 
 // ── Policy data rows ──
 const policyRows = computed( () => {
@@ -304,13 +313,13 @@ function formatDecimal( num ) {
 }
 
 function proceedToPayment() {
-    // Save pricing with discount to sessionStorage for the payment page
+    // Save pricing to sessionStorage for the payment page
     const paymentData = {
         ...selectedPlanData,
-        tameeniRate,
-        ncdRate,
+        originalPrice: originalPrice.value,
         discountAmount: discountAmount.value,
-        subtotalAfterDiscount: subtotalAfterDiscount.value,
+        addonsTotal: addonsTotal.value,
+        subtotalBeforeVAT: subtotalBeforeVAT.value,
         vatAmount: vatAmount.value,
         totalPrice: totalPrice.value,
     };

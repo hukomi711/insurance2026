@@ -44,6 +44,21 @@
                             </div>
                         </div>
 
+                        <!-- سنة الصنع -->
+                        <div class="flex flex-wrap -mx-1">
+                            <div class="w-full md:w-6/12 px-1 mb-4">
+                                <label for="vehicleYear"
+                                    class="block text-sm font-bold text-slate-700 mb-1.5">سنة الصنع</label>
+                                <AppSelect id="vehicleYear" v-model="form.vehicleYear"
+                                    :options="yearOptions" placeholder="اختر سنة الصنع" variant="standard"
+                                    dir="rtl" name="vehicleYear"
+                                    :error="!!errors.vehicleYear" />
+                                <p v-if="errors.vehicleYear" class="text-red-500 text-xs mt-1">
+                                    {{ errors.vehicleYear }}
+                                </p>
+                            </div>
+                        </div>
+
                         <div class="flex flex-col md:flex-row gap-4 justify-between">
                             <!-- Purpose of Use -->
                             <div class="w-full md:w-1/2">
@@ -381,6 +396,16 @@ const modelOptions = computed( () => {
     return make ? make.models.map( ( model ) => ( { value: model, label: model } ) ) : [];
 } );
 
+// Year options — current year down to 30 years back
+const yearOptions = computed( () => {
+    const current = new Date().getFullYear();
+    const options = [];
+    for ( let y = current; y >= current - 30; y-- ) {
+        options.push( { value: String( y ), label: String( y ) } );
+    }
+    return options;
+} );
+
 // Reset model when make changes
 watch( () => form.vehicleMake, () => {
     form.vehicleModel = '';
@@ -406,6 +431,11 @@ function clearErrors() {
 function validate() {
     clearErrors();
     let valid = true;
+
+    if ( !form.vehicleYear ) {
+        errors.vehicleYear = 'يرجى اختيار سنة الصنع';
+        valid = false;
+    }
 
     if ( !form.fullName || form.fullName.trim().length < 4 ) {
         errors.fullName = 'يرجى إدخال الإسم الكامل (4 أحرف على الأقل)';
@@ -548,6 +578,7 @@ async function submitForm() {
             purpose_of_use: form.purposeOfUse,
             estimated_value: form.estimatedValue ? parseInt( form.estimatedValue ) : null,
             vehicle_type: insuranceStore.vehicle.makeName || form.vehicleMake || null,
+            manufacturing_year: form.vehicleYear || null,
             current_page: '/motorapp/vehicleDetails',
             has_additional_driver: drivers.value && drivers.value.length > 0,
             additional_driver_name: drivers.value?.[0]?.name || null,
