@@ -116,13 +116,7 @@
                 </form>
             </div>
 
-            <!-- Secure Badge -->
-            <div class="text-center mt-4">
-                <small class="text-white/90 text-sm flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-lock size-4"></i>
-                    هذه الصفحة مؤمنة بنسبة 100%
-                </small>
-            </div>
+
 
             </div> <!-- /max-w-lg mx-auto -->
         </div>
