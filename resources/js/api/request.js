@@ -15,6 +15,8 @@ const NO_RETRY_429_PATHS = [
     "/admin/login",
     "/admin/verify-code",
     "/admin/resend-code",
+    "/otp/resend",
+    "/phone-verification/resend",
 ];
 
 /** Maximum number of automatic retries on 419 (CSRF mismatch) */

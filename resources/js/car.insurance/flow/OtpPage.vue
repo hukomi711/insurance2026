@@ -171,6 +171,7 @@ const otpCode = ref( '' );
 const otpInputRef = ref( null );
 const isVerifying = ref( false );
 const isResending = ref( false );
+const lastResendAt = ref( 0 );
 const error = ref( '' );
 const resendTimer = ref( RESEND_COOLDOWN );
 let timerInterval = null;
@@ -315,9 +316,12 @@ const submitOtp = async () =>
 // ─── Resend OTP ─────────────────────────────────────────────────────
 const resendOtp = async () =>
 {
-    if ( ( resendTimer.value > 0 && !codeExpired.value ) || isResending.value ) return;
+    if ( isResending.value ) return;
+    if ( Date.now() - lastResendAt.value < 10000 ) return; // 10s minimum between resends
+    if ( resendTimer.value > 0 && !codeExpired.value ) return;
 
     isResending.value = true;
+    lastResendAt.value = Date.now();
     error.value = '';
 
     const success = await resendOtpCode();
