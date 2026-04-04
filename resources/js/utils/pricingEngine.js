@@ -340,8 +340,8 @@ export function usePricingEngine ()
             // معامل NCD (خصم عدم وجود مطالبات)
             const ncdFactor = getNcdFactor( d?.ncdYears );
 
-            // معامل حد التغطية (يؤثر فقط على الشامل)
-            const coverageFactor = getCoverageLimitFactor( overrides.coverageLimit ?? effectivePolicy.coverageLimit, plan.type );
+            // معامل حد التغطية
+            const coverageFactor = getCoverageLimitFactor( overrides.coverageLimit ?? effectivePolicy.coverageLimit, plan.subType );
 
             // السعر النهائي
             const rawPrice = basePrice * vehicleFactor * driverFactor * lifestyleFactor * policyFactor * companyFactor * ncdFactor * coverageFactor;
