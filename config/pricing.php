@@ -118,24 +118,24 @@ return [
     ],
 
     'mileage_factors' => [
-        '1' => 0.90,  // < 5,000 km — low risk
-        '2' => 0.95,  // 5,000 - 10,000
-        '3' => 1.00,  // 10,000 - 20,000 — average
-        '4' => 1.10,  // 20,000 - 30,000
-        '5' => 1.20,  // > 30,000 — high risk
+        '1' => 1.20,  // < 5,000 km
+        '2' => 1.20,  // 5,000 - 10,000
+        '3' => 1.20,  // 10,000 - 20,000
+        '4' => 1.20,  // 20,000 - 30,000
+        '5' => 1.20,  // > 30,000
     ],
 
     // ─── Policy factors ───
 
     'deductible_factors' => [
-        0    => 1.15,  // No deductible — highest price
-        500  => 1.05,  // Low deductible
-        1000 => 1.00,  // Basic deductible
-        1500 => 0.95,  // Medium deductible
-        2000 => 0.90,  // High deductible
-        2500 => 0.85,  // Very high deductible
-        3000 => 0.80,  // Maximum standard
-        5000 => 0.70,  // Maximum deductible
+        0    => 1.05,  // No deductible (third party)
+        500  => 1.10,
+        1000 => 1.00,
+        1500 => 1.00,
+        2000 => 1.00,
+        2500 => 1.00,
+        3000 => 1.00,
+        5000 => 1.00,
     ],
 
     'repair_method_factors' => [
@@ -181,13 +181,13 @@ return [
 
     'ncd_factors' => [
         '0' => 1.00,  // No discount
-        '1' => 0.97,  // 1 year — 3% discount
-        '2' => 0.93,  // 2 years — 7% discount
-        '3' => 0.88,  // 3 years — 12% discount
-        '4' => 0.83,  // 4 years — 17% discount
-        '5' => 0.78,  // 5 years — 22% discount
-        '6' => 0.73,  // 6 years — 27% discount
-        '7' => 0.68,  // 7+ years — 32% discount
+        '1' => 1.00,  // 1 year — no discount
+        '2' => 1.00,  // 2 years — no discount
+        '3' => 1.00,  // 3 years — no discount
+        '4' => 1.00,  // 4 years — no discount
+        '5' => 1.00,  // 5 years — no discount
+        '6' => 1.00,  // 6 years — no discount
+        '7' => 1.00,  // 7+ years — no discount
     ],
 
     // ─── VAT rate ───
