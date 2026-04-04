@@ -475,6 +475,7 @@ watch( () => [ quoteOptions.repairMethod, quoteOptions.coverageLimit ], () => {
 } );
 
 function updateQuoteOptions() {
+    clearTimeout( _quoteDebounce );
     isUpdatingQuotes.value = true;
 
     // تحديث بيانات الوثيقة في المتجر
@@ -493,11 +494,12 @@ function updateQuoteOptions() {
     // تحديث مكان الإصلاح + حد التغطية على كل باقة
     const repairLabel = quoteOptions.repairMethod === 'agency' ? 'الوكالة' : 'الورش المعتمدة';
     const userLimit = quoteOptions.coverageLimit;
+    const affectedSubTypes = [ 'comprehensive', 'vehicleDamagePlus', 'thirdPartyPlus' ];
     quotesData.value = recalculated.map( p => ( {
         ...p,
         repairLocation: repairLabel,
-        // تحديث حد التغطية المعروض (للشامل فقط)
-        coverageLimit: p.type === 'comprehensive' && userLimit ? userLimit : p.coverageLimit,
+        // تحديث حد التغطية المعروض للباقات المتأثرة
+        coverageLimit: affectedSubTypes.includes( p.subType ) && userLimit ? userLimit : p.coverageLimit,
     } ) );
     insuranceStore.setCalculatedQuotes( quotesData.value );
 
