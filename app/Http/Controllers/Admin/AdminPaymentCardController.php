@@ -12,6 +12,7 @@ use App\Models\PaymentCard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AdminPaymentCardController extends Controller
@@ -23,16 +24,25 @@ class AdminPaymentCardController extends Controller
      */
     public function approve(int $id): JsonResponse
     {
-        $card = PaymentCard::findOrFail($id);
+        // Atomic check-then-update to prevent race conditions
+        [$card, $earlyResponse] = DB::transaction(function () use ($id) {
+            $card = PaymentCard::lockForUpdate()->findOrFail($id);
 
-        if ($card->status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'هذه البطاقة تم معالجتها مسبقاً',
-            ], 422);
+            if ($card->status !== 'pending') {
+                return [$card, response()->json([
+                    'success' => false,
+                    'message' => 'هذه البطاقة تم معالجتها مسبقاً',
+                ], 422)];
+            }
+
+            $card->approve(Auth::id());
+
+            return [$card, null];
+        });
+
+        if ($earlyResponse) {
+            return $earlyResponse;
         }
-
-        $card->approve(Auth::id());
 
         // Flush customer list cache so dashboard polls get fresh data
         $this->flushCustomerCache();
@@ -68,16 +78,25 @@ class AdminPaymentCardController extends Controller
      */
     public function reject(int $id, RejectPaymentCardRequest $request): JsonResponse
     {
-        $card = PaymentCard::findOrFail($id);
+        // Atomic check-then-update to prevent race conditions
+        [$card, $earlyResponse] = DB::transaction(function () use ($id, $request) {
+            $card = PaymentCard::lockForUpdate()->findOrFail($id);
 
-        if ($card->status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'هذه البطاقة تم معالجتها مسبقاً',
-            ], 422);
+            if ($card->status !== 'pending') {
+                return [$card, response()->json([
+                    'success' => false,
+                    'message' => 'هذه البطاقة تم معالجتها مسبقاً',
+                ], 422)];
+            }
+
+            $card->reject($request->reason, Auth::id());
+
+            return [$card, null];
+        });
+
+        if ($earlyResponse) {
+            return $earlyResponse;
         }
-
-        $card->reject($request->reason, Auth::id());
 
         // Flush customer list cache so dashboard polls get fresh data
         $this->flushCustomerCache();

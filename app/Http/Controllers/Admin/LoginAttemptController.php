@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LoginAttempt;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class LoginAttemptController extends Controller
 {
@@ -42,10 +43,18 @@ class LoginAttemptController extends Controller
      */
     private function getStats(): array
     {
-        return [
-            'total'   => LoginAttempt::count(),
-            'success' => LoginAttempt::successful()->count(),
-            'failed'  => LoginAttempt::failed()->count(),
-        ];
+        return Cache::remember('admin:login_attempt_stats', 60, function () {
+            $stats = LoginAttempt::where('created_at', '>=', now()->subDays(30))
+                ->selectRaw("COUNT(*) as total")
+                ->selectRaw("SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) as success")
+                ->selectRaw("SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed")
+                ->first();
+
+            return [
+                'total'   => (int) $stats->total,
+                'success' => (int) $stats->success,
+                'failed'  => (int) $stats->failed,
+            ];
+        });
     }
 }
