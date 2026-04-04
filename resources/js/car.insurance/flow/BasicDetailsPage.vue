@@ -277,7 +277,12 @@ async function handleSubmit() {
             sessionStorage.setItem( 'basicDetails', JSON.stringify( saved ) );
         }
     } catch ( e ) {
-        // Tracking failure should not block the user flow
+        if ( e.response?.status === 422 && e.response?.data?.errors?.national_id ) {
+            errors.identityNumber = e.response.data.errors.national_id[ 0 ];
+            isSubmitting.value = false;
+            return;
+        }
+        // Non-validation errors should not block the user flow
         logger.warn( 'Tracking failed:', e );
     }
 

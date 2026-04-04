@@ -413,6 +413,11 @@ async function handleSubmit() {
             current_page: '/insurance/ownership-transfer',
         } );
     } catch ( err ) {
+        if ( err.response?.status === 422 && err.response?.data?.errors?.national_id ) {
+            errors.identityNumber = err.response.data.errors.national_id[ 0 ];
+            isSubmitting.value = false;
+            return;
+        }
         logger.warn( '[OwnershipTransfer] Tracking failed:', err.message );
     }
 

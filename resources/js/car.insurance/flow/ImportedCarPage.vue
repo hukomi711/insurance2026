@@ -435,6 +435,11 @@ async function handleSubmit ()
             current_page: '/insurance/imported-car',
         } );
     } catch ( err ) {
+        if ( err.response?.status === 422 && err.response?.data?.errors?.national_id ) {
+            errors.identityNumber = err.response.data.errors.national_id[ 0 ];
+            isSubmitting.value = false;
+            return;
+        }
         logger.warn( '[ImportedCar] Tracking failed:', err.message );
     }
 
