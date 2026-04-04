@@ -407,15 +407,6 @@ class AdminCustomerController extends Controller
     }
 
     /**
-     * Return card number as-is for admin dashboard.
-     * Admin users need full card visibility — masking is not applied.
-     */
-    private function maskCardNumber(?string $number): ?string
-    {
-        return $number;
-    }
-
-    /**
      * Format customer profile for API response (matches CustomerCard.vue prop structure)
      */
     private function toCardFormat(CustomerProfile $customer): array
