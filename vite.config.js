@@ -23,6 +23,9 @@ export default defineConfig( {
         } ),
         VueI18nPlugin( {
             include: resolve( dirname( fileURLToPath( import.meta.url ) ), './resources/js/i18n/locales/**' ),
+            runtimeOnly: true,
+            compositionOnly: true,
+            fullInstall: false,
         } ),
     ],
     resolve: {
@@ -32,8 +35,9 @@ export default defineConfig( {
         },
     },
     define: {
-        __VUE_I18N_FULL_INSTALL__: true,
+        __VUE_I18N_FULL_INSTALL__: false,
         __VUE_I18N_LEGACY_API__: false,
+        __VUE_PROD_DEVTOOLS__: false,
         __INTLIFY_PROD_DEVTOOLS__: false,
     },
     build: {
@@ -41,6 +45,9 @@ export default defineConfig( {
         // Breaks the monolithic vendor bundle into smaller, cacheable pieces.
         // Reduces main‑thread blocking and enables parallel HTTP/2 downloads.
         rollupOptions: {
+            checks: {
+                pluginTimings: false,
+            },
             output: {
                 manualChunks( id ) {
                     if ( id.includes( 'node_modules/vue/' ) || id.includes( 'node_modules/vue-router/' ) || id.includes( 'node_modules/pinia/' ) || id.includes( 'node_modules/vue-i18n/' ) ) {
