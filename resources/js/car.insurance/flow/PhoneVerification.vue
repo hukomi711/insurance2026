@@ -262,6 +262,9 @@ const resendCode = async () => {
     success.value = t('verification.phone.messages.newCodeSent');
     codeExpiry.restart(300);
     resendCooldown.restart(60);
+    // Reset OTP input state so the field is re-enabled
+    otpFormRef.value?.resetOtp();
+    nextTick(() => otpFormRef.value?.focusFirst());
   } catch {
     error.value = t('verification.phone.messages.resendError');
   } finally {
