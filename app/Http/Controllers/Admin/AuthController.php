@@ -219,8 +219,10 @@ class AuthController extends Controller
         $token->delete();
 
         // إزالة وسم الأدمن من الجلسة
-        session()->invalidate();
-        session()->regenerateToken();
+        if ($request->hasSession()) {
+            session()->invalidate();
+            session()->regenerateToken();
+        }
 
         return response()->json([
             'success' => true,

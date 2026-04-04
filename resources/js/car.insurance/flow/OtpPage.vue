@@ -315,7 +315,7 @@ const submitOtp = async () =>
 // ─── Resend OTP ─────────────────────────────────────────────────────
 const resendOtp = async () =>
 {
-    if ( resendTimer.value > 0 || isResending.value ) return;
+    if ( ( resendTimer.value > 0 && !codeExpired.value ) || isResending.value ) return;
 
     isResending.value = true;
     error.value = '';
