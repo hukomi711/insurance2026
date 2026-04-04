@@ -209,6 +209,8 @@ const submitPhoneNumber = async () => {
 };
 
 const verifyCode = async (otpCode) => {
+  if (processing.value) return;
+
   if (!otpCode || otpCode.length !== 6) {
     error.value = t('verification.phone.messages.enterAllDigits');
     return;

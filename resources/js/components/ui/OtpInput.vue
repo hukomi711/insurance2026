@@ -107,7 +107,11 @@ function handleInput ( e )
 
 function handleKeydown ( e )
 {
-    if ( e.key === 'Enter' && isComplete.value ) emit( 'submit' );
+    if ( e.key === 'Enter' && isComplete.value )
+    {
+        e.preventDefault();
+        emit( 'submit' );
+    }
 }
 
 function focusFirstEmpty ()
