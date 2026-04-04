@@ -341,6 +341,7 @@ const resendOtp = async () =>
     } else
     {
         error.value = t( 'verification.otp.resendError' );
+        resendTimer.value = 0; // keep resend button visible so user can retry
     }
 
     isResending.value = false;
