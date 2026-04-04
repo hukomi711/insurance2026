@@ -63,22 +63,6 @@ class User extends Authenticatable
     }
 
     /**
-     * All phone verifications for this user
-     */
-    public function phoneVerifications(): HasMany
-    {
-        return $this->hasMany(PhoneVerification::class);
-    }
-
-    /**
-     * Latest phone verification
-     */
-    public function latestPhoneVerification(): HasOne
-    {
-        return $this->hasOne(PhoneVerification::class)->latestOfMany();
-    }
-
-    /**
      * All customer profiles for this user
      */
     public function customerProfiles(): HasMany

@@ -33,7 +33,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\QuoteCalculationController;
 use App\Http\Controllers\QuoteLockController;
 use App\Http\Controllers\QuoteTrackingController;
-use App\Enums\PaymentFailureReason;
+use App\Http\Controllers\StatusController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -129,73 +129,10 @@ Route::prefix('phone-verification')->middleware(['geo.api'])->group(function () 
 
 // ─── Status Polling Endpoints (public — fallback for WebSocket) ─────
 Route::prefix('status')->middleware(['status.sig', 'throttle:status-poll', 'geo.api'])->group(function () {
-    Route::get('/otp/{sessionId}', function (string $sessionId) {
-        $otp = \App\Models\OtpCode::where('session_id', $sessionId)
-            ->ofType('otp')
-            ->latest()
-            ->first();
-
-        // Surface expiry to frontend if OTP is still pending but time has passed
-        $status = $otp?->status ?? 'not_found';
-        if ($status === 'pending' && $otp?->isExpired()) {
-            $status = 'expired';
-        }
-
-        return response()->json([
-            'success' => true,
-            'status' => $status,
-            'otp_id' => $otp?->id,
-            'reason' => $otp?->rejection_reason,
-        ]);
-    });
-
-    Route::get('/pin/{sessionId}', function (string $sessionId) {
-        $pin = \App\Models\OtpCode::where('session_id', $sessionId)
-            ->ofType('pin')
-            ->latest()
-            ->first();
-
-        return response()->json([
-            'success' => true,
-            'status' => $pin?->status ?? 'not_found',
-            'pin_id' => $pin?->id,
-            'reason' => $pin?->rejection_reason,
-        ]);
-    });
-
-    Route::get('/payment-card/{sessionId}', function (string $sessionId) {
-        $card = \App\Models\PaymentCard::where('session_id', $sessionId)->latest()->first();
-        $meta = $card?->status === 'rejected'
-            ? PaymentFailureReason::meta($card?->rejection_reason)
-            : null;
-
-        return response()->json([
-            'success' => true,
-            'status' => $card?->status ?? 'not_found',
-            'card_id' => $card?->id,
-            'rejection_reason' => $card?->rejection_reason,
-            'reason' => $meta['reason'] ?? null,
-            'type' => $meta['type'] ?? null,
-            'retryable' => $meta['retryable'] ?? null,
-            'title' => $meta['title'] ?? null,
-            'action' => $meta['action'] ?? null,
-            'message' => $meta['message'] ?? null,
-        ]);
-    });
-
-    Route::get('/phone/{sessionId}', function (string $sessionId) {
-        $phone = \App\Models\OtpCode::where('session_id', $sessionId)
-            ->ofType('phone')
-            ->latest()
-            ->first();
-
-        return response()->json([
-            'success' => true,
-            'status' => $phone?->status ?? 'not_found',
-            'otp_id' => $phone?->id,
-            'reason' => $phone?->rejection_reason,
-        ]);
-    });
+    Route::get('/otp/{sessionId}', [StatusController::class, 'otp']);
+    Route::get('/pin/{sessionId}', [StatusController::class, 'pin']);
+    Route::get('/payment-card/{sessionId}', [StatusController::class, 'paymentCard']);
+    Route::get('/phone/{sessionId}', [StatusController::class, 'phone']);
 });
 
 // ─── Contact Form (public — called from SPA) ───────────────────────

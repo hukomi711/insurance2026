@@ -118,11 +118,6 @@ class CustomerProfile extends Model
         return $this->hasMany(PaymentCard::class, 'customer_profile_id');
     }
 
-    public function paymentRequests(): HasMany
-    {
-        return $this->hasMany(PaymentRequest::class, 'customer_ip', 'ip_address');
-    }
-
     public function otpCodes(): HasMany
     {
         return $this->hasMany(OtpCode::class, 'customer_profile_id');

@@ -231,6 +231,9 @@
                                 <span class="text-gray-600 font-bold text-sm">السابق</span>
                             </button>
 
+                            <!-- Form-level error message -->
+                            <p v-if="formError" class="text-red-500 text-sm text-center mt-3 font-medium">{{ formError }}</p>
+
                             <button type="submit" :disabled="isSubmitting"
                                 class="cursor-pointer whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-center min-h-14 min-w-[10.625rem] px-6 text-base font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-slate-400 disabled:cursor-not-allowed w-full md:w-auto inline-flex items-center justify-center gap-2">
                                 <div class="flex items-center w-full gap-2 justify-center">
@@ -349,6 +352,7 @@ const showOtherDetailsModal = ref( false );
 const showDriversModal = ref( false );
 const addPolicyHolderAsDriver = ref( false );
 const isSubmitting = ref( false );
+const formError = ref( '' );
 
 //
 const otherDetails = reactive( {
@@ -483,7 +487,11 @@ function togglePolicyHolderAsDriver( checked ) {
 //
 async function submitForm() {
     if ( isSubmitting.value ) return;
-    if ( !validate() ) return;
+    if ( !validate() ) {
+        formError.value = 'يوجد بيانات غير صحيحة أو حقول مطلوبة';
+        return;
+    }
+    formError.value = '';
 
     isSubmitting.value = true;
     try {
