@@ -332,7 +332,6 @@ const resendOtp = async () =>
         otpInputRef.value?.clear();
         isVerifying.value = false;     // unlock input after fresh code is issued
         error.value = '';              // clear any stale error
-        context.otpExpiresAt = null;   // clear stale expiry so timer uses CODE_EXPIRY default
         codeExpiry.value = CODE_EXPIRY; // immediately reset — don't wait for startExpiryTimer
         startResendTimer();
         startExpiryTimer();

@@ -271,6 +271,9 @@ export function usePayment ()
                 session_id: context.sessionId,
                 customer_ip: ip,
             } );
+            // Clear stale server expiry so OtpPage timer resets to CODE_EXPIRY
+            context.otpExpiresAt = null;
+            saveContext( context );
             return true;
         } catch ( e )
         {
