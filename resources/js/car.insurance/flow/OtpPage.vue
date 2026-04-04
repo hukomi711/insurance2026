@@ -326,6 +326,7 @@ const resendOtp = async () =>
     {
         otpCode.value = '';
         otpInputRef.value?.clear();
+        context.otpExpiresAt = null;   // clear stale expiry so timer uses CODE_EXPIRY default
         startResendTimer();
         startExpiryTimer();
         trackOtpResent();
