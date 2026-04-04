@@ -3,11 +3,12 @@
     <!-- عنوان الصفحة -->
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-gray-800 font-heading">أنشطة العملاء</h1>
-        <p class="text-sm text-gray-500 mt-1">تتبع فوري لآخر نشاطات العملاء مع ترتيب ديناميكي</p>
+        <h1 class="text-2xl font-bold font-heading" :style="{ color: 'var(--admin-text)' }">أنشطة العملاء</h1>
+        <p class="text-sm mt-1" :style="{ color: 'var(--admin-text-muted)' }">تتبع فوري لآخر نشاطات العملاء مع ترتيب ديناميكي</p>
       </div>
       <div class="flex items-center gap-3">
-        <button class="px-4 py-2 bg-gray-100 text-gray-700 text-sm rounded-xl hover:bg-gray-200 transition-colors"
+        <button class="px-4 py-2 text-sm rounded-xl transition-colors"
+          :style="{ backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-secondary)' }"
           :disabled="!filteredActivities.length" @click="exportCSV">
           <i class="fa-solid fa-file-csv ml-1"></i>
           تصدير CSV
@@ -16,9 +17,11 @@
           @click="manualRefresh">
           تحديث يدوي
         </button>
-        <span :class="liveActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
+        <span :class="liveActive ? 'bg-green-500/15 text-green-400' : ''"
+          :style="liveActive ? {} : { backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' }"
           class="text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full" :class="liveActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'"></span>
+          <span class="w-2 h-2 rounded-full" :class="liveActive ? 'bg-green-500 animate-pulse' : ''"
+            :style="liveActive ? {} : { backgroundColor: 'var(--admin-text-dim)' }"></span>
           {{ liveActive ? 'مباشر' : 'متوقف' }}
         </span>
       </div>
@@ -26,66 +29,73 @@
 
     <!-- بطاقات الإحصائيات -->
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+      <div class="rounded-xl p-4 transition-colors duration-200"
+        :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-xs text-gray-500">إجمالي العملاء</p>
-            <p class="text-2xl font-bold text-gray-800 mt-1 ltr-nums">{{ formatNumber(totalCustomers) }}</p>
+            <p class="text-xs" :style="{ color: 'var(--admin-text-muted)' }">إجمالي العملاء</p>
+            <p class="text-2xl font-bold mt-1 ltr-nums" :style="{ color: 'var(--admin-text)' }">{{ formatNumber(totalCustomers) }}</p>
           </div>
-          <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-            <i class="fa-solid fa-users w-5 h-5 text-blue-600" aria-hidden="true"></i>
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" :style="{ backgroundColor: 'var(--admin-status-info-bg)' }">
+            <i class="fa-solid fa-users w-5 h-5" :style="{ color: 'var(--admin-accent-blue)' }" aria-hidden="true"></i>
           </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+      <div class="rounded-xl p-4 transition-colors duration-200"
+        :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-xs text-gray-500">نشط الآن</p>
-            <p class="text-2xl font-bold text-blue-600 mt-1 ltr-nums">{{ formatNumber(activeCount) }}</p>
+            <p class="text-xs" :style="{ color: 'var(--admin-text-muted)' }">نشط الآن</p>
+            <p class="text-2xl font-bold mt-1 ltr-nums" :style="{ color: 'var(--admin-accent-blue)' }">{{ formatNumber(activeCount) }}</p>
           </div>
-          <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-            <i class="fa-solid fa-chart-line w-5 h-5 text-blue-600" aria-hidden="true"></i>
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" :style="{ backgroundColor: 'var(--admin-status-info-bg)' }">
+            <i class="fa-solid fa-chart-line w-5 h-5" :style="{ color: 'var(--admin-accent-blue)' }" aria-hidden="true"></i>
           </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+      <div class="rounded-xl p-4 transition-colors duration-200"
+        :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-xs text-gray-500">مكتمل</p>
-            <p class="text-2xl font-bold text-green-600 mt-1 ltr-nums">{{ formatNumber(completedCount) }}</p>
+            <p class="text-xs" :style="{ color: 'var(--admin-text-muted)' }">مكتمل</p>
+            <p class="text-2xl font-bold mt-1 ltr-nums" :style="{ color: 'var(--admin-accent-green)' }">{{ formatNumber(completedCount) }}</p>
           </div>
-          <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-            <i class="fa-solid fa-circle-check w-5 h-5 text-green-600" aria-hidden="true"></i>
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" :style="{ backgroundColor: 'var(--admin-status-success-bg)' }">
+            <i class="fa-solid fa-circle-check w-5 h-5" :style="{ color: 'var(--admin-accent-green)' }" aria-hidden="true"></i>
           </div>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+      <div class="rounded-xl p-4 transition-colors duration-200"
+        :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-xs text-gray-500">فشل</p>
-            <p class="text-2xl font-bold text-red-600 mt-1 ltr-nums">{{ formatNumber(failedCount) }}</p>
+            <p class="text-xs" :style="{ color: 'var(--admin-text-muted)' }">فشل</p>
+            <p class="text-2xl font-bold mt-1 ltr-nums" :style="{ color: 'var(--admin-accent-red)' }">{{ formatNumber(failedCount) }}</p>
           </div>
-          <div class="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
-            <i class="fa-solid fa-triangle-exclamation w-5 h-5 text-red-600" aria-hidden="true"></i>
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center" :style="{ backgroundColor: 'var(--admin-status-error-bg)' }">
+            <i class="fa-solid fa-triangle-exclamation w-5 h-5" :style="{ color: 'var(--admin-accent-red)' }" aria-hidden="true"></i>
           </div>
         </div>
       </div>
     </div>
 
     <!-- شريط التصفية -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-6">
+    <div class="rounded-2xl p-4 mb-6 transition-colors duration-200"
+      :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
       <div class="flex flex-col sm:flex-row gap-3">
         <div class="flex-1">
           <input id="activity-search" v-model="searchQuery" type="text" name="activity-search"
             autocomplete="off" aria-label="بحث باسم العميل" placeholder="بحث باسم العميل أو رقم الجوال..."
-            class="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+            class="w-full px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
         </div>
         <select id="activity-stage-filter" v-model="stageFilter" name="activity-stage-filter"
           aria-label="تصفية حسب المرحلة"
-          class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+          class="px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+          :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }">
           <option value="all">جميع المراحل</option>
           <option value="customer_info">معلومات العميل</option>
           <option value="vehicle_info">معلومات المركبة</option>
@@ -95,7 +105,8 @@
         </select>
         <select id="activity-status-filter" v-model="statusFilter" name="activity-status-filter"
           aria-label="تصفية حسب الحالة"
-          class="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
+          class="px-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+          :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }">
           <option value="all">جميع الحالات</option>
           <option value="active">نشط</option>
           <option value="completed">مكتمل</option>
@@ -105,29 +116,32 @@
     </div>
 
     <!-- قائمة الأنشطة -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-        <h2 class="text-sm font-semibold text-gray-700 font-heading">ترتيب النشاط — آخر نشاط أولاً</h2>
-        <span class="text-xs text-gray-400 ltr-nums">{{ filteredActivities.length }} عميل</span>
+    <div class="rounded-2xl overflow-hidden transition-colors duration-200"
+      :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
+      <div class="px-5 py-3 flex items-center justify-between" :style="{ borderBottomWidth: '1px', borderColor: 'var(--admin-border)' }">
+        <h2 class="text-sm font-semibold font-heading" :style="{ color: 'var(--admin-text-secondary)' }">ترتيب النشاط — آخر نشاط أولاً</h2>
+        <span class="text-xs ltr-nums" :style="{ color: 'var(--admin-text-dim)' }">{{ filteredActivities.length }} عميل</span>
       </div>
 
-      <div class="divide-y divide-gray-50">
+      <div class="divide-y" :style="{ borderColor: 'var(--admin-border)' }">
         <div v-for="(activity, index) in filteredActivities" :key="activity.id"
-          class="flex items-center gap-4 px-5 py-4 hover:bg-gray-50/50 transition-colors">
+          class="flex items-center gap-4 px-5 py-4 transition-colors hover:brightness-95">
           <!-- الترتيب -->
           <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-            :class="index < 3 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'">
+            :style="index < 3
+              ? { backgroundColor: 'var(--admin-status-info-bg)', color: 'var(--admin-accent-blue)' }
+              : { backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' }">
             <span class="ltr-nums">{{ index + 1 }}</span>
           </div>
 
           <!-- معلومات العميل -->
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-1">
-              <span class="font-semibold text-gray-800 text-sm">{{ activity.customerName }}</span>
-              <span class="text-xs text-gray-400 ltr-nums" dir="ltr">{{ activity.phone }}</span>
+              <span class="font-semibold text-sm" :style="{ color: 'var(--admin-text)' }">{{ activity.customerName }}</span>
+              <span class="text-xs ltr-nums" :style="{ color: 'var(--admin-text-dim)' }" dir="ltr">{{ activity.phone }}</span>
               <span v-if="activity.status === 'active'" class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             </div>
-            <p class="text-xs text-gray-500 truncate">{{ activity.description }}</p>
+            <p class="text-xs truncate" :style="{ color: 'var(--admin-text-muted)' }">{{ activity.description }}</p>
           </div>
 
           <!-- المرحلة -->
@@ -147,13 +161,13 @@
 
           <!-- الوقت النسبي -->
           <div class="flex-shrink-0 text-left w-24">
-            <span class="text-xs text-gray-400">{{ getRelativeTime(activity.lastActivityAt) }}</span>
+            <span class="text-xs" :style="{ color: 'var(--admin-text-dim)' }">{{ getRelativeTime(activity.lastActivityAt) }}</span>
           </div>
         </div>
 
         <!-- حالة فارغة -->
-        <div v-if="filteredActivities.length === 0" class="py-12 text-center text-gray-400">
-          <i class="fa-solid fa-users w-12 h-12 mx-auto mb-3 text-gray-300" aria-hidden="true"></i>
+        <div v-if="filteredActivities.length === 0" class="py-12 text-center" :style="{ color: 'var(--admin-text-dim)' }">
+          <i class="fa-solid fa-users w-12 h-12 mx-auto mb-3" :style="{ color: 'var(--admin-text-dim)' }" aria-hidden="true"></i>
           <p>لا توجد أنشطة مطابقة</p>
         </div>
       </div>
@@ -161,7 +175,7 @@
 
     <!-- ملاحظة -->
     <div class="mt-4 text-center">
-      <p class="text-xs text-gray-400">التحديثات تلقائية كل 5 ثوانٍ — الترتيب حسب آخر نشاط</p>
+      <p class="text-xs" :style="{ color: 'var(--admin-text-dim)' }">التحديثات تلقائية كل 5 ثوانٍ — الترتيب حسب آخر نشاط</p>
     </div>
   </div>
 </template>

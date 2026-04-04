@@ -1,7 +1,7 @@
 <template>
   <div class="customer-data-table" dir="rtl">
     <div class="overflow-x-auto rounded-lg bg-gray-900 shadow">
-      <table class="min-w-[1400px] w-full table-fixed text-sm">
+      <table class="min-w-[1620px] w-full table-fixed text-sm">
         <thead class="border-b border-gray-700 bg-gray-800">
           <tr>
             <th class="w-[50px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">حذف</th>
@@ -9,12 +9,35 @@
             <th class="w-[170px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">المسار الحالي</th>
             <th class="w-[100px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">الدفع</th>
             <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">بيانات التأمين</th>
-            <th class="w-[130px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">الاسم</th>
+            <th class="w-[130px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('full_name')">
+              الاسم
+              <i v-if="sortBy === 'full_name'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
+            </th>
             <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">البيانات الأساسية</th>
-            <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">رقم الهوية</th>
-            <th class="w-[90px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">الموقع</th>
-            <th class="w-[120px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">IP</th>
-            <th class="w-[50px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">الحالة</th>
+            <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('national_id')">
+              رقم الهوية
+              <i v-if="sortBy === 'national_id'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
+            </th>
+            <th class="w-[90px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('city')">
+              الموقع
+              <i v-if="sortBy === 'city'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
+            </th>
+            <th class="w-[90px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('region')">
+              المنطقة
+              <i v-if="sortBy === 'region'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
+            </th>
+            <th class="w-[120px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('ip_address')">
+              IP
+              <i v-if="sortBy === 'ip_address'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
+            </th>
+            <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('last_activity_at')">
+              آخر نشاط
+              <i v-if="sortBy === 'last_activity_at'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
+            </th>
+            <th class="w-[50px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('is_active')">
+              الحالة
+              <i v-if="sortBy === 'is_active'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
+            </th>
             <th class="w-[40px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">#</th>
           </tr>
         </thead>
@@ -23,10 +46,6 @@
             v-for="(customer, index) in customers"
             :key="customer.id"
             class="transition-colors hover:bg-gray-700"
-            :class="{
-              'bg-amber-900/30': customer.has_new_vehicle || customer.has_new_insurance || customer.has_new_payment,
-              'row-changed': isFieldChanged(customer, 'is_active', 'current_page', 'full_name', 'nationalId', 'national_id', 'city', 'country', 'ip'),
-            }"
           >
             <!-- حذف -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
@@ -53,7 +72,7 @@
             </td>
 
             <!-- المسار الحالي -->
-            <td class="px-3 py-2 text-center whitespace-nowrap" :class="{ 'cell-changed': isFieldChanged(customer, 'current_page') }">
+            <td class="px-3 py-2 text-center whitespace-nowrap">
               <div class="relative flex justify-center">
                 <button
                   :ref="(el) => setButtonRef(customer.ip, el)"
@@ -129,7 +148,7 @@
             </td>
 
             <!-- الاسم -->
-            <td class="px-3 py-2 font-medium text-white whitespace-nowrap" :class="{ 'cell-changed': isFieldChanged(customer, 'full_name') }">{{ getCustomerName(customer) || '\u2014' }}</td>
+            <td class="px-3 py-2 font-medium text-white whitespace-nowrap">{{ getCustomerName(customer) || '\u2014' }}</td>
 
             <!-- البيانات الأساسية -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
@@ -161,32 +180,44 @@
             </td>
 
             <!-- رقم الهوية -->
-            <td class="px-3 py-2 font-mono text-xs text-white whitespace-nowrap" :class="{ 'cell-changed': isFieldChanged(customer, 'nationalId', 'national_id') }">{{ customer.nationalId || '\u2014' }}</td>
+            <td class="px-3 py-2 font-mono text-xs text-white whitespace-nowrap">{{ customer.nationalId || '\u2014' }}</td>
 
             <!-- الموقع -->
-            <td class="px-3 py-2 text-center whitespace-nowrap" :class="{ 'cell-changed': isFieldChanged(customer, 'city', 'country') }">
+            <td class="px-3 py-2 text-center whitespace-nowrap">
               <div
-                v-if="customer.city || customer.country"
+                v-if="getDisplayCity(customer) || customer.country"
                 class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium"
                 :class="isSaudi(customer.country)
                     ? 'bg-green-500/20 text-green-400'
                     : 'bg-amber-500/20 text-amber-400'
                 "
-                :title="(customer.city || '') + ', ' + (customer.country || '')"
+                :title="(getDisplayCity(customer) || '') + ', ' + (customer.country || '')"
               >
                 <span>{{ getCountryFlag(customer.country) }}</span>
                 <span class="max-w-16 truncate">{{
-                  customer.city || customer.country || '—'
+                  getDisplayCity(customer) || customer.country || '—'
                 }}</span>
               </div>
               <span v-else class="text-gray-400 text-xs">—</span>
             </td>
 
+            <!-- المنطقة -->
+            <td class="px-2 py-2 text-center text-xs text-gray-300 whitespace-nowrap">
+              <span class="max-w-20 truncate inline-block" :title="customer.region || ''">
+                {{ customer.region || '—' }}
+              </span>
+            </td>
+
             <!-- IP -->
-            <td class="px-3 py-2 font-mono text-xs text-white whitespace-nowrap" :class="{ 'cell-changed': isFieldChanged(customer, 'ip') }">{{ customer.ip }}</td>
+            <td class="px-3 py-2 font-mono text-xs text-white whitespace-nowrap">{{ customer.ip }}</td>
+
+            <!-- آخر نشاط -->
+            <td class="px-2 py-2 text-center text-xs text-gray-400 whitespace-nowrap" :title="customer.last_activity_at">
+              {{ formatRelativeTime(customer.last_activity_at) }}
+            </td>
 
             <!-- الحالة -->
-            <td class="px-2 py-2 text-center whitespace-nowrap" :class="{ 'cell-changed': isFieldChanged(customer, 'is_active') }">
+            <td class="px-2 py-2 text-center whitespace-nowrap">
               <span
                 class="inline-block h-3 w-3 rounded-full"
                 :class="
@@ -255,6 +286,7 @@
 
     <!-- Info Modal (Card Control) -->
     <InfoModal
+      v-if="selectedCustomer"
       v-model:active-tab="activeTab"
       :open="showModal"
       :customer="selectedCustomer"
@@ -264,6 +296,7 @@
 
     <!-- Vehicle Quote Modal -->
     <BasicDataModal
+      v-if="selectedVQCustomer"
       v-model:active-tab="activeVQTab"
       :open="showVQModal"
       :customer="selectedVQCustomer"
@@ -272,6 +305,7 @@
 
     <!-- Insurance Data Modal -->
     <InsuranceDataModal
+      v-if="selectedInsuranceCustomer"
       :open="showInsuranceModal"
       :customer="selectedInsuranceCustomer"
       @close="closeInsuranceModal"
@@ -279,6 +313,7 @@
 
     <!-- Payment Modal -->
     <PaymentModal
+      v-if="selectedPaymentCustomer"
       :open="showPaymentModal"
       :customer="selectedPaymentCustomer"
       :current-card="currentCard"
@@ -338,21 +373,39 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  changedFields: {
-    // Map<ip, Set<fieldName>> — injected by DashboardHome after each refresh
-    type: Object,
-    default: () => new Map(),
+  sortBy: {
+    type: String,
+    default: 'last_activity_at',
+  },
+  sortOrder: {
+    type: String,
+    default: 'desc',
   },
 });
 
-const emit = defineEmits(['delete-card', 'show-details', 'action', 'redirect', 'modal-opened', 'modal-closed']);
+const emit = defineEmits(['delete-card', 'show-details', 'action', 'redirect', 'modal-opened', 'modal-closed', 'sort']);
 
-// Returns true when a tracked field changed for this customer in the latest refresh.
-const isFieldChanged = ( customer, ...fields ) => {
-  const set = props.changedFields.get( customer.ip );
-  if ( !set ) return false;
-  return fields.some( f => set.has( f ) );
-};
+function toggleSort ( column ) {
+    const order = props.sortBy === column && props.sortOrder === 'desc' ? 'asc' : 'desc';
+    emit( 'sort', { column, order } );
+}
+
+function formatRelativeTime ( isoString ) {
+    if ( !isoString ) return '—';
+    const diff = Date.now() - new Date( isoString ).getTime();
+    const seconds = Math.floor( diff / 1000 );
+    if ( seconds < 60 ) return 'الآن';
+    const minutes = Math.floor( seconds / 60 );
+    if ( minutes < 60 ) return `${ minutes } د`;
+    const hours = Math.floor( minutes / 60 );
+    if ( hours < 24 ) return `${ hours } س`;
+    const days = Math.floor( hours / 24 );
+    return `${ days } ي`;
+}
+
+function getDisplayCity ( customer ) {
+    return customer.city || customer.location?.city || null;
+}
 
 // ── Payment Modal (composable) ──────────────────────────────────
 const {
@@ -595,24 +648,7 @@ onUnmounted(() => {
   direction: ltr;
 }
 
-/* ── Cell change highlight ── */
-@keyframes cell-flash {
-  0%   { background-color: rgba(234, 179, 8, 0.30); }
-  70%  { background-color: rgba(234, 179, 8, 0.12); }
-  100% { background-color: transparent; }
-}
-.cell-changed {
-  animation: cell-flash 3.5s ease-out forwards;
-}
 
-/* ── Row change highlight (tracked fields: status, page, name, ID, location, IP) ── */
-@keyframes row-flash {
-  0%   { background-color: rgba(59, 130, 246, 0.10); }
-  100% { background-color: transparent; }
-}
-.row-changed {
-  animation: row-flash 3.5s ease-out forwards;
-}
 
 .customer-data-table table td,
 .customer-data-table table th {

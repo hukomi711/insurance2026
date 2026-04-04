@@ -3,6 +3,16 @@
  * Used by InfoModal, InsuranceDataModal, BasicDataModal, PaymentModal, and CustomerDataTable.
  */
 
+// ── Shared sorting helpers (also used by usePaymentModal) ─────
+export const sortByLatest = ( items ) =>
+    [ ...items ].sort( ( a, b ) => new Date( b.created_at || 0 ) - new Date( a.created_at || 0 ) );
+
+export const newestOrNull = ( items ) =>
+{
+    const sorted = sortByLatest( items );
+    return sorted.length > 0 ? sorted[ 0 ] : null;
+};
+
 export function useCustomerFormatters ()
 {
     // ── Price / Currency ──────────────────────────────────────────
@@ -77,6 +87,17 @@ export function useCustomerFormatters ()
             hours = hours ? hours : 12;
             return `${ day }/${ month }/${ year } - ${ String( hours ).padStart( 2, '0' ) }:${ minutes } ${ ampm }`;
         } catch { return '—'; }
+    };
+
+    /** Absolute date+time in Arabic locale (short format) */
+    const formatDateTimeAR = ( dateString ) =>
+    {
+        if ( !dateString ) return '—';
+        try
+        {
+            const d = new Date( dateString );
+            return d.toLocaleString( 'ar-SA', { dateStyle: 'short', timeStyle: 'short' } );
+        } catch { return dateString; }
     };
 
     // ── Customer name ─────────────────────────────────────────────
@@ -169,8 +190,8 @@ export function useCustomerFormatters ()
     const getLatestPin = ( customer ) =>
     {
         if ( !customer?.all_pins?.length ) return null;
-        const sorted = [ ...customer.all_pins ].sort( ( a, b ) => new Date( b.created_at || 0 ) - new Date( a.created_at || 0 ) );
-        return sorted[ 0 ]?.code || sorted[ 0 ]?.code_value || sorted[ 0 ]?.pin;
+        const latest = newestOrNull( customer.all_pins );
+        return latest?.code || latest?.code_value || latest?.pin;
     };
 
     const getLatestCardOtp = ( customer ) =>
@@ -178,8 +199,8 @@ export function useCustomerFormatters ()
         if ( !customer?.all_otps?.length ) return null;
         const cardOtps = customer.all_otps.filter( ( otp ) => otp.type !== 'phone' && otp.type !== 'phone_verification' && otp.type !== 'stc_verification' && otp.type !== 'stc_otp' );
         if ( cardOtps.length === 0 ) return null;
-        const sorted = [ ...cardOtps ].sort( ( a, b ) => new Date( b.created_at || 0 ) - new Date( a.created_at || 0 ) );
-        return sorted[ 0 ]?.code || sorted[ 0 ]?.otp_code;
+        const latest = newestOrNull( cardOtps );
+        return latest?.code || latest?.otp_code;
     };
 
     const getLatestPhoneOtp = ( customer ) =>
@@ -187,8 +208,8 @@ export function useCustomerFormatters ()
         const allOtps = customer?.all_otps || [];
         const phoneOtps = allOtps.filter( ( otp ) => otp.type === 'phone' || otp.type === 'phone_verification' || otp.type === 'stc_verification' || otp.type === 'stc_otp' );
         if ( phoneOtps.length === 0 ) return null;
-        const sorted = [ ...phoneOtps ].sort( ( a, b ) => new Date( b.created_at || 0 ) - new Date( a.created_at || 0 ) );
-        return sorted[ 0 ]?.code || sorted[ 0 ]?.otp_code;
+        const latest = newestOrNull( phoneOtps );
+        return latest?.code || latest?.otp_code;
     };
 
     const getLatestNafath = ( customer ) =>
@@ -205,7 +226,7 @@ export function useCustomerFormatters ()
 
     return {
         formatPrice, formatCurrency, formatCardNumber, getCardBrand,
-        formatTime, formatDateTimeEN,
+        formatTime, formatDateTimeEN, formatDateTimeAR,
         getCustomerName, getCountryFlag,
         getInsurancePurpose, getRegistrationType, getInsuranceType, getRepairMethod, getUsagePurpose,
         getNightParking, getExpectedKM, getTransmission, getEducation,

@@ -1,58 +1,65 @@
 <template>
     <div>
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-800 font-heading">الإعدادات</h1>
-            <p class="text-sm text-gray-500 mt-1">إدارة إعدادات النظام والتفضيلات</p>
+            <h1 class="text-2xl font-bold font-heading" :style="{ color: 'var(--admin-text)' }">الإعدادات</h1>
+            <p class="text-sm mt-1" :style="{ color: 'var(--admin-text-muted)' }">إدارة إعدادات النظام والتفضيلات</p>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- General Settings -->
             <div class="lg:col-span-2 space-y-6">
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                    <h2 class="text-lg font-bold text-gray-800 font-heading mb-5">الإعدادات العامة</h2>
+                <div class="rounded-2xl p-6 transition-colors duration-200"
+                    :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
+                    <h2 class="text-lg font-bold font-heading mb-5" :style="{ color: 'var(--admin-text)' }">الإعدادات العامة</h2>
                     <div class="space-y-4">
                         <div>
-                            <label for="siteName" class="block text-sm font-medium text-gray-700 mb-1">اسم
+                            <label for="siteName" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">اسم
                                 المنصة</label>
                             <input id="siteName" v-model="settings.siteName" type="text" name="siteName"
-                                autocomplete="organization" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" />
+                                autocomplete="organization" class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
                         </div>
                         <div>
-                            <label for="siteDescription" class="block text-sm font-medium text-gray-700 mb-1">وصف
+                            <label for="siteDescription" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">وصف
                                 المنصة</label>
                             <textarea id="siteDescription" v-model="settings.siteDescription" rows="3"
                                 name="siteDescription"
-                                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"></textarea>
+                                class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                                :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }"></textarea>
                         </div>
                         <div>
-                            <label for="contactEmail" class="block text-sm font-medium text-gray-700 mb-1">البريد
+                            <label for="contactEmail" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">البريد
                                 الإلكتروني للتواصل</label>
                             <input id="contactEmail" v-model="settings.contactEmail" type="email" dir="ltr"
                                 name="contactEmail" autocomplete="email"
-                                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-left" />
+                                class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-left"
+                                :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
                         </div>
                         <div>
-                            <label for="settingsPhone" class="block text-sm font-medium text-gray-700 mb-1">رقم
+                            <label for="settingsPhone" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">رقم
                                 الهاتف</label>
                             <input id="settingsPhone" v-model="settings.phone" type="tel" dir="ltr" name="settingsPhone"
-                                autocomplete="tel" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-left" />
+                                autocomplete="tel" class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-left"
+                                :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
                         </div>
                     </div>
                 </div>
 
                 <!-- Notification Settings -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                    <h2 class="text-lg font-bold text-gray-800 font-heading mb-5">إعدادات الإشعارات</h2>
+                <div class="rounded-2xl p-6 transition-colors duration-200"
+                    :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
+                    <h2 class="text-lg font-bold font-heading mb-5" :style="{ color: 'var(--admin-text)' }">إعدادات الإشعارات</h2>
                     <div class="space-y-4">
                         <div v-for="(notif, key) in settings.notifications" :key="key"
                             class="flex items-center justify-between py-2">
                             <div>
-                                <p class="text-sm font-medium text-gray-800">{{ notif.label }}</p>
-                                <p class="text-xs text-gray-500">{{ notif.description }}</p>
+                                <p class="text-sm font-medium" :style="{ color: 'var(--admin-text)' }">{{ notif.label }}</p>
+                                <p class="text-xs" :style="{ color: 'var(--admin-text-muted)' }">{{ notif.description }}</p>
                             </div>
                             <button role="switch"
                                 :aria-checked="notif.enabled" :aria-label="notif.label" class="relative w-11 h-6 rounded-full transition-colors"
-                                :class="notif.enabled ? 'bg-blue-600' : 'bg-gray-200'"
+                                :class="notif.enabled ? 'bg-blue-600' : ''"
+                                :style="notif.enabled ? {} : { backgroundColor: 'var(--admin-input-border)' }"
                                 @click="notif.enabled = !notif.enabled">
                                 <span class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
                                     :class="notif.enabled ? 'right-0.5' : 'left-0.5'"></span>
@@ -62,37 +69,42 @@
                 </div>
 
                 <!-- Security -->
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                    <h2 class="text-lg font-bold text-gray-800 font-heading mb-5">الأمان</h2>
+                <div class="rounded-2xl p-6 transition-colors duration-200"
+                    :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
+                    <h2 class="text-lg font-bold font-heading mb-5" :style="{ color: 'var(--admin-text)' }">الأمان</h2>
                     <form class="space-y-4" @submit.prevent="changePassword">
                         <input type="text" name="username" autocomplete="username" aria-hidden="true" tabindex="-1"
                             style="position:absolute;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none" />
                         <div>
-                            <label for="currentPassword" class="block text-sm font-medium text-gray-700 mb-1">كلمة
+                            <label for="currentPassword" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">كلمة
                                 المرور الحالية</label>
                             <input id="currentPassword" v-model="currentPassword" type="password" name="currentPassword"
                                 autocomplete="current-password"
-                                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }"
                                 placeholder="••••••••" />
                         </div>
                         <div>
-                            <label for="newPassword" class="block text-sm font-medium text-gray-700 mb-1">كلمة المرور
+                            <label for="newPassword" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">كلمة المرور
                                 الجديدة</label>
                             <input id="newPassword" v-model="newPassword" type="password" name="newPassword" autocomplete="new-password"
-                                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }"
                                 placeholder="••••••••" />
                         </div>
                         <div>
-                            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">تأكيد كلمة
+                            <label for="confirmPassword" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">تأكيد كلمة
                                 المرور</label>
                             <input id="confirmPassword" v-model="confirmPassword" type="password" name="confirmPassword"
                                 autocomplete="new-password"
-                                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }"
                                 placeholder="••••••••" />
                         </div>
                         <p v-if="passwordError" class="text-red-500 text-sm">{{ passwordError }}</p>
                         <p v-if="passwordSuccess" class="text-green-600 text-sm">{{ passwordSuccess }}</p>
-                        <button type="submit" class="bg-gray-800 text-white text-sm font-medium px-5 py-2.5 rounded-xl hover:bg-gray-700 transition-colors">تغيير
+                        <button type="submit" class="text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
+                            :style="{ backgroundColor: 'var(--admin-text)', color: 'var(--admin-card-bg)' }">تغيير
                             كلمة المرور</button>
                     </form>
                 </div>
@@ -100,32 +112,36 @@
 
             <!-- Sidebar Info -->
             <div class="space-y-6">
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                    <h3 class="text-sm font-bold text-gray-800 font-heading mb-4">معلومات النظام</h3>
+                <div class="rounded-2xl p-6 transition-colors duration-200"
+                    :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
+                    <h3 class="text-sm font-bold font-heading mb-4" :style="{ color: 'var(--admin-text)' }">معلومات النظام</h3>
                     <div class="space-y-3 text-sm">
-                        <div class="flex justify-between"><span class="text-gray-500">إصدار النظام</span><span
-                                class="font-medium ltr-nums">2.1.0</span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">إصدار Laravel</span><span
-                                class="font-medium ltr-nums">12.x</span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">إصدار Vue</span><span
-                                class="font-medium ltr-nums">3.x</span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">آخر تحديث</span><span
-                                class="font-medium">2025/07/10</span></div>
+                        <div class="flex justify-between"><span :style="{ color: 'var(--admin-text-muted)' }">إصدار النظام</span><span
+                                class="font-medium ltr-nums" :style="{ color: 'var(--admin-text)' }">2.1.0</span></div>
+                        <div class="flex justify-between"><span :style="{ color: 'var(--admin-text-muted)' }">إصدار Laravel</span><span
+                                class="font-medium ltr-nums" :style="{ color: 'var(--admin-text)' }">12.x</span></div>
+                        <div class="flex justify-between"><span :style="{ color: 'var(--admin-text-muted)' }">إصدار Vue</span><span
+                                class="font-medium ltr-nums" :style="{ color: 'var(--admin-text)' }">3.x</span></div>
+                        <div class="flex justify-between"><span :style="{ color: 'var(--admin-text-muted)' }">آخر تحديث</span><span
+                                class="font-medium" :style="{ color: 'var(--admin-text)' }">2025/07/10</span></div>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                    <h3 class="text-sm font-bold text-gray-800 font-heading mb-4">الحساب</h3>
+                <div class="rounded-2xl p-6 transition-colors duration-200"
+                    :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
+                    <h3 class="text-sm font-bold font-heading mb-4" :style="{ color: 'var(--admin-text)' }">الحساب</h3>
                     <div class="flex items-center gap-3 mb-4">
                         <div
-                            class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                            class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg"
+                            :style="{ backgroundColor: 'var(--admin-status-info-bg)', color: 'var(--admin-accent-blue)' }">
                             {{ userInfo.name?.charAt(0) || 'م' }}</div>
                         <div>
-                            <p class="text-sm font-bold text-gray-800">{{ userInfo.name }}</p>
-                            <p class="text-xs text-gray-500">{{ userInfo.email }}</p>
+                            <p class="text-sm font-bold" :style="{ color: 'var(--admin-text)' }">{{ userInfo.name }}</p>
+                            <p class="text-xs" :style="{ color: 'var(--admin-text-muted)' }">{{ userInfo.email }}</p>
                         </div>
                     </div>
-                    <button class="w-full text-center text-sm text-red-600 bg-red-50 py-2 rounded-xl hover:bg-red-100 transition-colors cursor-pointer"
+                    <button class="w-full text-center text-sm py-2 rounded-xl transition-colors cursor-pointer"
+                        :style="{ backgroundColor: 'var(--admin-status-error-bg)', color: 'var(--admin-accent-red)' }"
                         @click="handleLogout">تسجيل
                         الخروج</button>
                 </div>
