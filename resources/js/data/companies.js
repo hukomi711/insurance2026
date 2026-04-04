@@ -1,6 +1,6 @@
 // شركات التأمين — الأسماء الرسمية المعتمدة
 export const companies = [
-    { id: 1, nameAr: 'التعاونية للتأمين', logo: '', rating: 4.5, color: '#00539C', image: 'treeLogo.png' },
+    { id: 1, nameAr: 'تري للتأمين', logo: '', rating: 4.5, color: '#00539C', image: 'treeLogo.png' },
     { id: 2, nameAr: 'العربية للتأمين التعاوني', logo: '', rating: 4.6, color: '#2B5797', image: 'aicc.png' },
     { id: 3, nameAr: 'ولاء للتأمين', logo: '', rating: 4.4, color: '#1B6B3A', image: 'walaa.png' },
     { id: 4, nameAr: 'ميدغلف للتأمين', logo: '', rating: 4.3, color: '#0072CE', image: 'medgulf.png' },
