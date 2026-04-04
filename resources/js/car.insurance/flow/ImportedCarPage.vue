@@ -190,6 +190,7 @@
                                 </div>
                             </button>
                         </div>
+                        <p v-if="formError" class="text-red-500 text-sm text-center mt-3 font-medium">{{ formError }}</p>
                     </form>
                 </div>
 
@@ -255,6 +256,7 @@ const errors = reactive( {
 } );
 
 const isSubmitting = ref( false );
+const formError = ref( '' );
 
 // Birth month options (Hijri months)
 const birthMonthOptions = [
@@ -404,7 +406,11 @@ async function handleSubmit ()
     const isCustomsCardValid = validateCustomsCard();
     const isYearValid = validateManufacturingYear();
 
-    if ( !isIdentityValid || !isBirthValid || !isCustomsCardValid || !isYearValid ) return;
+    if ( !isIdentityValid || !isBirthValid || !isCustomsCardValid || !isYearValid ) {
+        formError.value = 'يوجد بيانات غير صحيحة أو حقول مطلوبة';
+        return;
+    }
+    formError.value = '';
 
     isSubmitting.value = true;
 

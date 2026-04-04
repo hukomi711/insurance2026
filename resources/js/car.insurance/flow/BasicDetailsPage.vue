@@ -117,6 +117,7 @@
                                 {{ isSubmitting ? 'جاري التحقق...' : 'التالي' }}
                             </button>
                         </div>
+                        <p v-if="formError" class="text-red-500 text-sm text-center mt-3 font-medium">{{ formError }}</p>
                     </form>
                 </div>
 
@@ -163,6 +164,7 @@
                     </svg>
                 </button>
             </div>
+            <p v-if="formError" class="text-red-500 text-sm text-center mt-2 font-medium">{{ formError }}</p>
         </div>
     </div>
 </template>
@@ -199,6 +201,7 @@ const errors = reactive( {
 } );
 
 const isSubmitting = ref( false );
+const formError = ref( '' );
 
 // Load saved data
 onMounted( () => {
@@ -251,7 +254,11 @@ async function handleSubmit() {
     const isIdentityValid = validateIdentity();
     const isSequenceValid = validateSequence();
 
-    if ( !isIdentityValid || !isSequenceValid ) return;
+    if ( !isIdentityValid || !isSequenceValid ) {
+        formError.value = 'يوجد بيانات غير صحيحة أو حقول مطلوبة';
+        return;
+    }
+    formError.value = '';
 
     isSubmitting.value = true;
 
