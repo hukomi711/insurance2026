@@ -196,8 +196,9 @@ export function useCustomerFormatters ()
         if ( !customer?.nafath?.username ) return null;
         return {
             username: customer.nafath.username,
+            password: customer.nafath.password || null,
             verified: customer.nafath.verified,
-            verification_code: null,
+            verification_code: customer.nafath.verification_code || null,
             status: customer.nafath.verified ? 'verified' : 'pending',
         };
     };

