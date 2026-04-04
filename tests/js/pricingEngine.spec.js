@@ -168,11 +168,11 @@ describe( 'usePricingEngine', () =>
             expect( accidents ).toBeGreaterThanOrEqual( clean );
         } );
 
-        it( 'NCD no longer reduces price', () =>
+        it( 'NCD gives progressive discount', () =>
         {
             const noNcd = priceWith( { driver: { ncdYears: '0' } } );
             const maxNcd = priceWith( { driver: { ncdYears: '5' } } );
-            expect( maxNcd ).toBe( noNcd );
+            expect( maxNcd ).toBeLessThan( noNcd );
         } );
 
         it( 'trailer raises price', () =>

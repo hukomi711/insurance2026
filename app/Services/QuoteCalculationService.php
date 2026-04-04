@@ -63,9 +63,15 @@ class QuoteCalculationService
         // NCD factor
         $ncdFactor = $this->getNcdFactor($driver['ncdYears'] ?? null);
 
+        // Coverage limit factor (comprehensive, vehicleDamagePlus, thirdPartyPlus)
+        $coverageFactor = $this->getCoverageLimitFactor(
+            $policy['coverageLimit'] ?? null,
+            $plan['subType'] ?? null
+        );
+
         // Raw price
         $rawPrice = $basePrice * $vehicleFactor * $driverFactor * $lifestyleFactor
-                    * $policyFactor * $companyFactor * $ncdFactor;
+                    * $policyFactor * $companyFactor * $ncdFactor * $coverageFactor;
 
         // Clamp to limits
         $limits = $this->config['price_limits'][$plan['subType']] ?? ['min' => 500, 'max' => 8000];
@@ -104,9 +110,10 @@ class QuoteCalculationService
                 'policy'    => round($policyFactor, 3),
                 'company'   => $companyFactor,
                 'ncd'       => $ncdFactor,
+                'coverage'  => round($coverageFactor, 3),
                 'total'     => round(
                     $vehicleFactor * $driverFactor * $lifestyleFactor
-                    * $policyFactor * $companyFactor * $ncdFactor,
+                    * $policyFactor * $companyFactor * $ncdFactor * $coverageFactor,
                     3
                 ),
             ],
@@ -322,5 +329,24 @@ class QuoteCalculationService
     {
         if ($ncdYears === null || $ncdYears === '') return 1.0;
         return $this->config['ncd_factors'][(string) $ncdYears] ?? 1.0;
+    }
+
+    // ═══════════════════════════════════════════════
+    //  Coverage Limit Factor
+    // ═══════════════════════════════════════════════
+
+    private function getCoverageLimitFactor(mixed $coverageLimit, ?string $planType): float
+    {
+        $affectedTypes = ['comprehensive', 'vehicleDamagePlus', 'thirdPartyPlus'];
+        if (!in_array($planType, $affectedTypes, true) || !$coverageLimit) {
+            return 1.0;
+        }
+        $val = (int) $coverageLimit;
+        foreach ($this->config['coverage_limit_factors'] as $entry) {
+            if ($val <= $entry['maxValue']) {
+                return $entry['factor'];
+            }
+        }
+        return 1.0;
     }
 }

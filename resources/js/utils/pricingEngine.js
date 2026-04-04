@@ -266,11 +266,12 @@ export function usePricingEngine ()
     }
 
     /**
-     * معامل حد التغطية (يؤثر فقط على الشامل)
+     * معامل حد التغطية (يؤثر على الشامل وأضرار المركبة بلس وضد الغير بلس)
      */
     function getCoverageLimitFactor ( coverageLimit, planType )
     {
-        if ( planType !== 'comprehensive' || !coverageLimit ) return 1.0;
+        const affectedTypes = [ 'comprehensive', 'vehicleDamagePlus', 'thirdPartyPlus' ];
+        if ( !affectedTypes.includes( planType ) || !coverageLimit ) return 1.0;
         const val = Number( coverageLimit );
         const entry = COVERAGE_LIMIT_FACTORS.find( e => val <= e.maxValue );
         return entry ? entry.factor : 1.0;
