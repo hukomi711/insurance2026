@@ -171,6 +171,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import logger from '@/utils/logger';
+import { validateNationalId } from '@/utils/nationalIdValidation';
 
 const router = useRouter();
 
@@ -227,20 +228,9 @@ function onSequenceInput( e ) {
 
 // Validators
 function validateIdentity() {
-    if ( !form.identityNumber ) {
-        errors.identityNumber = 'رقم الهوية مطلوب';
-        return false;
-    }
-    if ( form.identityNumber.length !== 10 ) {
-        errors.identityNumber = 'رقم الهوية يجب أن يكون 10 أرقام';
-        return false;
-    }
-    if ( !/^[12]/.test( form.identityNumber ) ) {
-        errors.identityNumber = 'رقم الهوية يجب أن يبدأ بـ 1 أو 2';
-        return false;
-    }
-    errors.identityNumber = '';
-    return true;
+    const { valid, error } = validateNationalId( form.identityNumber );
+    errors.identityNumber = error;
+    return valid;
 }
 
 function validateSequence() {

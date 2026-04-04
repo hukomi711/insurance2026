@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\SaudiNationalId;
 
 class SubmitOtpRequest extends FormRequest
 {
@@ -18,7 +19,7 @@ class SubmitOtpRequest extends FormRequest
             'otp'         => 'required|string|min:4|max:6|regex:/^\d+$/',
             'type'        => 'nullable|string|in:otp,stc_otp',
             'phone'       => 'nullable|string|max:20',
-            'national_id' => 'nullable|string|max:20',
+            'national_id' => ['nullable', 'string', 'max:20', new SaudiNationalId],
         ];
     }
 

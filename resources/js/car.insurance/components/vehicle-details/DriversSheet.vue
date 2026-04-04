@@ -86,7 +86,9 @@
                                                 :aria-label="`رقم هوية السائق ${index + 1}`" class="w-full text-sm text-slate-600 bg-slate-50 border border-slate-200
                                                        rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-400
                                                        focus:border-blue-400 transition-all placeholder:text-slate-400"
-                                                placeholder="رقم الهوية" />
+                                                placeholder="رقم الهوية"
+                                                @blur="onDriverNationalIdBlur( index, driver.nationalId )" />
+                                            <p v-if="driverErrors[ index ]" class="text-red-500 text-xs mt-1">{{ driverErrors[ index ] }}</p>
                                         </div>
                                     </div>
                                     <button v-if="!driver.isPolicyHolder" type="button"
@@ -163,11 +165,13 @@
 </template>
 
 <script setup>
+import { reactive } from 'vue';
 import {
     CheckboxRoot, CheckboxIndicator,
     DialogRoot, DialogPortal, DialogOverlay, DialogContent,
     DialogTitle, DialogDescription, DialogClose,
 } from 'radix-vue';
+import { validateNationalId } from '@/utils/nationalIdValidation';
 
 defineProps( {
     drivers: { type: Array, required: true },
@@ -178,4 +182,17 @@ defineProps( {
 const open = defineModel( 'open', { type: Boolean, default: false } );
 
 const emit = defineEmits( [ 'add-driver', 'remove-driver', 'toggle-policy-holder' ] );
+
+// Per-driver validation errors keyed by driver index
+const driverErrors = reactive( {} );
+
+function onDriverNationalIdBlur ( index, value )
+{
+    if ( !value ) {
+        driverErrors[ index ] = '';
+        return;
+    }
+    const { error } = validateNationalId( value, { context: 'blur' } );
+    driverErrors[ index ] = error;
+}
 </script>

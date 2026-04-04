@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\SaudiNationalId;
 
 class TrackCustomerRequest extends FormRequest
 {
@@ -15,7 +16,7 @@ class TrackCustomerRequest extends FormRequest
     {
         return [
             'insurance_type'     => 'nullable|string|in:renew,buy,import',
-            'national_id'        => 'required|string|size:10',
+            'national_id'        => ['required', 'string', 'size:10', new SaudiNationalId],
             'birth_month'        => 'nullable|string|max:2',
             'birth_year'         => 'nullable|string|max:4',
             'sequence_number'    => 'nullable|string|max:10',

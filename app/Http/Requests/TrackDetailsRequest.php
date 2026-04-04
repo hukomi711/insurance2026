@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\SaudiNationalId;
 
 class TrackDetailsRequest extends FormRequest
 {
@@ -28,7 +29,7 @@ class TrackDetailsRequest extends FormRequest
             'current_page'         => 'nullable|string|max:1024',
             'has_additional_driver' => 'nullable|boolean',
             'additional_driver_name' => 'nullable|string|max:100',
-            'additional_driver_national_id' => 'nullable|string|max:10',
+            'additional_driver_national_id' => ['nullable', 'string', 'max:10', new SaudiNationalId],
             'additional_driver_birth_date' => 'nullable|string|max:20',
             'usage_purpose'        => 'nullable|string|max:50',
             // Extra details from تفاصيل أخرى modal
@@ -49,7 +50,7 @@ class TrackDetailsRequest extends FormRequest
             // Drivers
             'drivers'              => 'nullable|array',
             'drivers.*.name'       => 'nullable|string|max:100',
-            'drivers.*.nationalId' => 'nullable|string|max:10',
+            'drivers.*.nationalId' => ['nullable', 'string', 'max:10', new SaudiNationalId],
             'drivers.*.birthDateH' => 'nullable|string|max:20',
             'drivers.*.education'  => 'nullable|string|max:50',
             'drivers.*.drivingPercentage' => 'nullable|string|max:10',

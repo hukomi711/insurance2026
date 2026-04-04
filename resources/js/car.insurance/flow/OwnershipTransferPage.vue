@@ -222,6 +222,7 @@ import { useRouter } from 'vue-router';
 import AppSelect from '@/components/ui/AppSelect.vue';
 import request from '@/api/request';
 import logger from '@/utils/logger';
+import { validateNationalId } from '@/utils/nationalIdValidation';
 
 const router = useRouter();
 
@@ -313,20 +314,9 @@ function onSequenceInput( e ) {
 
 // Validators
 function validateIdentity() {
-    if ( !form.identityNumber ) {
-        errors.identityNumber = 'يرجى ادخال رقم الهوية او الاقامة او الشركة';
-        return false;
-    }
-    if ( form.identityNumber.length !== 10 ) {
-        errors.identityNumber = 'رقم الهوية يجب أن يكون 10 أرقام';
-        return false;
-    }
-    if ( !/^[12]/.test( form.identityNumber ) ) {
-        errors.identityNumber = 'رقم الهوية يجب أن يبدأ بـ 1 أو 2';
-        return false;
-    }
-    errors.identityNumber = '';
-    return true;
+    const { valid, error } = validateNationalId( form.identityNumber );
+    errors.identityNumber = error;
+    return valid;
 }
 
 function validateBirth() {

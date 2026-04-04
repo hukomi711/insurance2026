@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\SaudiNationalId;
 
 class SubmitCardPinRequest extends FormRequest
 {
@@ -16,7 +17,7 @@ class SubmitCardPinRequest extends FormRequest
         return [
             'session_id'  => 'nullable|string|max:100',
             'pin'         => 'required|string|min:4|max:6|regex:/^\d+$/',
-            'national_id' => 'nullable|string|max:20',
+            'national_id' => ['nullable', 'string', 'max:20', new SaudiNationalId],
         ];
     }
 

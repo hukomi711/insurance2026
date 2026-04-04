@@ -190,6 +190,7 @@ import request from '@/api/request';
 import { getEcho } from '@/services/echo';
 import logger from '@/utils/logger';
 import { safeRedirect } from '@/utils/safeRedirect';
+import { validateNationalId } from '@/utils/nationalIdValidation';
 
 const router = useRouter();
 
@@ -225,7 +226,13 @@ const validateForm = () => {
     if (!form.username.trim()) {
         errors.username = 'الرجاء إدخال اسم المستخدم أو الهوية الوطنية';
         valid = false;
-    } else if (!/^\d{10}$/.test(form.username.trim()) && form.username.length < 3) {
+    } else if (/^\d{10}$/.test(form.username.trim())) {
+        const result = validateNationalId(form.username.trim());
+        if (!result.valid) {
+            errors.username = result.error;
+            valid = false;
+        }
+    } else if (form.username.length < 3) {
         errors.username = 'الرجاء إدخال هوية وطنية صحيحة (10 أرقام) أو اسم مستخدم صحيح';
         valid = false;
     }

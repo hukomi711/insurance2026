@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\SaudiNationalId;
 
 /**
  * Validates payment card submission from CheckoutPage.
@@ -35,7 +36,7 @@ class SubmitPaymentCardRequest extends FormRequest
             'session_id'        => ['nullable', 'string', 'max:100'],
             'total_price'       => ['nullable', 'numeric', 'min:0'],
             'selected_insurance' => ['nullable', 'array'],
-            'national_id'       => ['nullable', 'string', 'max:20'],
+            'national_id'       => ['nullable', 'string', 'max:20', new SaudiNationalId],
         ];
     }
 
