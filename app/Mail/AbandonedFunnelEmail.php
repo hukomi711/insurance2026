@@ -27,24 +27,56 @@ class AbandonedFunnelEmail extends Mailable
 
     public function content(): Content
     {
+        $profile = $this->log->customerProfile;
+
+        if ($this->step === 'compare') {
+            return new Content(
+                view: 'emails.abandoned-funnel-promotional',
+                with: [
+                    'logId'        => $this->log->id,
+                    'customerName' => $profile?->full_name,
+                ],
+            );
+        }
+
+        $selectedInsurance = $profile?->selected_insurance;
+
         return new Content(
             view: 'emails.abandoned-funnel',
             with: [
-                'step'       => $this->step,
-                'logId'      => $this->log->id,
-                'customerName' => $this->log->customerProfile?->full_name,
+                'logId'            => $this->log->id,
+                'customerName'     => $profile?->full_name,
+                'vehicleMake'      => $profile?->vehicle_make,
+                'vehicleModel'     => $profile?->vehicle_model,
+                'vehicleYear'      => $profile?->manufacturing_year,
+                'totalPrice'       => $profile?->total_price,
+                'insuranceCompany' => $selectedInsurance['name'] ?? null,
+                'insuranceType'    => $profile?->insurance_type,
             ],
         );
     }
 
     private function getSubject(): string
     {
-        return match ($this->step) {
-            'compare'         => 'عروض التأمين بانتظارك - وثيقة',
-            'checkout'        => 'عرضك مازال متاح 🔥 أكمل طلبك الآن',
-            'payment_waiting' => 'الدفع لم يكتمل ⚠️ أكمل العملية',
-            'otp'             => 'خطوة واحدة تفصلك عن التأمين',
-            default           => 'أكمل طلب التأمين الآن - وثيقة',
-        };
+        $profile = $this->log->customerProfile;
+        $name = $profile?->full_name;
+
+        if ($this->step === 'compare') {
+            return $name
+                ? "{$name}، خصم 30% بانتظارك على تأميني"
+                : 'خصم 30% على باقات التأمين - اختر باقتك الآن';
+        }
+
+        $price = $profile?->total_price;
+
+        if ($name && $price) {
+            return "{$name}، وثيقتك بـ " . number_format((float) $price, 2) . ' ر.س محجوزة على اسمك';
+        }
+
+        if ($name) {
+            return "{$name}، أكمل الدفع - وثيقتك محجوزة";
+        }
+
+        return 'وثيقتك محجوزة - أكمل الدفع قبل انتهاء العرض';
     }
 }

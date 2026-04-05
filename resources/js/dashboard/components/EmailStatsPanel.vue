@@ -1,6 +1,19 @@
 <template>
   <section class="mb-8" dir="rtl">
     <SectionCard title="إحصائيات البريد الإلكتروني" emoji="📧" color="blue">
+      <template #header-actions>
+        <button
+          class="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg transition-all hover:bg-white/[0.06]"
+          :style="{ color: 'var(--admin-text-dim)' }"
+          @click="collapsed = !collapsed"
+        >
+          <span>{{ collapsed ? 'عرض' : 'إخفاء' }}</span>
+          <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" :class="{ 'rotate-180': !collapsed }" />
+        </button>
+      </template>
+
+      <transition name="collapse">
+        <div v-show="!collapsed">
 
       <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center py-8 gap-2">
@@ -106,6 +119,9 @@
         </p>
       </template>
 
+      </div>
+      </transition>
+
     </SectionCard>
   </section>
 </template>
@@ -115,6 +131,7 @@ import { ref, computed, onMounted } from 'vue';
 import request from '@/api/request';
 import { StatCard, SectionCard } from '../components/ui';
 
+const collapsed = ref(false);
 const stats = ref(null);
 const byStep = ref({});
 const loading = ref(true);
@@ -184,3 +201,21 @@ function changePeriod(d) {
 
 onMounted(fetchStats);
 </script>
+
+<style scoped>
+.collapse-enter-active,
+.collapse-leave-active {
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+.collapse-enter-from,
+.collapse-leave-to {
+  opacity: 0;
+  max-height: 0;
+}
+.collapse-enter-to,
+.collapse-leave-from {
+  opacity: 1;
+  max-height: 800px;
+}
+</style>

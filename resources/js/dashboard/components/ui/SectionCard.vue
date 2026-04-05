@@ -2,6 +2,7 @@
   <div :class="['section-card', borderClass]">
     <h4 v-if="title" :class="['mb-3 flex items-center gap-2 text-sm font-bold', titleColorClass]">
       <span v-if="emoji" class="text-base">{{ emoji }}</span>{{ title }}
+      <span v-if="$slots['header-actions']" class="ms-auto"><slot name="header-actions" /></span>
     </h4>
     <slot />
   </div>

@@ -37,12 +37,20 @@ class EmailTrackingController extends Controller
      */
     public function trackClick(int $id)
     {
-        EmailLog::where('id', $id)
+        $log = EmailLog::where('id', $id)
             ->where('status', EmailLog::STATUS_SENT)
-            ->update([
-                'clicked_at'  => DB::raw('COALESCE(clicked_at, NOW())'),
-                'click_count' => DB::raw('click_count + 1'),
+            ->first();
+
+        if ($log) {
+            $log->update([
+                'clicked_at'  => $log->clicked_at ?? now(),
+                'click_count' => $log->click_count + 1,
             ]);
+
+            $destination = '/motorapp';
+
+            return redirect()->to(url($destination) . '?utm_source=email&utm_medium=recovery&utm_campaign=abandoned');
+        }
 
         return redirect()->to(url('/') . '?utm_source=email&utm_medium=recovery&utm_campaign=abandoned');
     }

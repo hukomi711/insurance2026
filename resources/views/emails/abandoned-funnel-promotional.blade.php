@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="color-scheme" content="light dark">
     <meta name="supported-color-schemes" content="light dark">
-    <title>تأميني - وثيقتك محجوزة</title>
+    <title>تأميني - خصم 30% على باقات التأمين</title>
     <!--[if mso]>
     <noscript>
     <xml>
@@ -39,18 +39,12 @@
 <body class="body" style="margin: 0; padding: 0; background-color: #0f172a; direction: rtl; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; mso-line-height-rule: exactly;">
     {{-- Preheader text --}}
     <div style="display: none; font-size: 1px; line-height: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all;">
-        وثيقة التأمين محجوزة على اسمك ومركبتك — أكمل الدفع قبل انتهاء العرض
+        خصم 30% على باقات التأمين - قارن بين أفضل العروض واختر الباقة المناسبة لسيارتك
         &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847;
     </div>
 
     @php
         $clickUrl = url('/api/email/click/' . $logId);
-        $insuranceLabel = match($insuranceType ?? '') {
-            'comprehensive' => 'تأمين شامل',
-            'third_party'   => 'تأمين ضد الغير',
-            'thirdParty'    => 'تأمين ضد الغير',
-            default          => null,
-        };
     @endphp
 
     {{-- Outer wrapper --}}
@@ -87,77 +81,33 @@
                             </p>
 
                             {{-- Headline --}}
-                            <h2 style="color: #ffffff; font-size: 24px; margin: 0 0 14px; font-weight: 700; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">وثيقتك محجوزة على اسمك</h2>
+                            <h2 style="color: #ffffff; font-size: 24px; margin: 0 0 14px; font-weight: 700; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">خصم 30% على باقات التأمين</h2>
 
                             {{-- Body text --}}
                             <p style="color: #94a3b8; font-size: 15px; line-height: 1.8; margin: 0 0 28px; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">
-                                تم حجز وثيقة التأمين على اسمك ومركبتك. أكمل عملية الدفع الآن قبل انتهاء العرض لإصدار الوثيقة بشكل فوري.
+                                احصل على خصم يصل إلى 30% على باقات التأمين المختلفة. قارن بين أفضل العروض من شركات التأمين الرائدة واختر الباقة المناسبة لسيارتك بأقل الأسعار.
                             </p>
 
-                            {{-- Insurance details card --}}
-                            @if($vehicleMake && $insuranceCompany)
-                                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 20px;">
-                                    <tr>
-                                        <td style="background-color: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; direction: rtl;">
-                                            <p style="margin: 0 0 10px; color: #64748b; font-size: 11px; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">تفاصيل الوثيقة</p>
-                                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                                                <tr>
-                                                    <td style="color: #94a3b8; font-size: 14px; padding: 5px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">السيارة</td>
-                                                    <td style="color: #ffffff; font-size: 14px; padding: 5px 0; text-align: left; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">{{ $vehicleMake }} {{ $vehicleModel }}</td>
-                                                </tr>
-                                                @if($vehicleYear)
-                                                <tr>
-                                                    <td style="color: #94a3b8; font-size: 14px; padding: 5px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">سنة الصنع</td>
-                                                    <td style="color: #ffffff; font-size: 14px; padding: 5px 0; text-align: left; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">{{ $vehicleYear }}</td>
-                                                </tr>
-                                                @endif
-                                                <tr>
-                                                    <td style="color: #94a3b8; font-size: 14px; padding: 5px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">شركة التأمين</td>
-                                                    <td style="color: #ffffff; font-size: 14px; padding: 5px 0; text-align: left; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">{{ $insuranceCompany }}</td>
-                                                </tr>
-                                                @if($insuranceLabel)
-                                                <tr>
-                                                    <td style="color: #94a3b8; font-size: 14px; padding: 5px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">نوع التأمين</td>
-                                                    <td style="color: #ffffff; font-size: 14px; padding: 5px 0; text-align: left; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">{{ $insuranceLabel }}</td>
-                                                </tr>
-                                                @endif
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </table>
-                            @endif
-
-                            {{-- Price box --}}
-                            @if($totalPrice)
-                                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 18px;">
-                                    <tr>
-                                        <td style="background-color: #052e16; border-right: 4px solid #22c55e; padding: 16px; text-align: center;">
-                                            <p style="margin: 0; color: #86efac; font-size: 12px; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">قيمة الوثيقة</p>
-                                            <p style="margin: 6px 0 0; font-size: 26px; font-weight: 700; color: #ffffff; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">{{ number_format((float) $totalPrice, 2) }} ر.س</p>
-                                        </td>
-                                    </tr>
-                                </table>
-                            @endif
-
-                            {{-- Urgency notice --}}
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 20px;">
-                                <tr>
-                                    <td style="background-color: #3b0a0a; border-right: 4px solid #ef4444; padding: 12px 16px;">
-                                        <p style="margin: 0; color: #fecaca; font-size: 13px; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">الوثيقة محجوزة مؤقتاً وقد يتم تحريرها في حال عدم إتمام الدفع.</p>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            {{-- Benefits --}}
+                            {{-- Features card --}}
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 28px;">
                                 <tr>
-                                    <td style="color: #22c55e; font-size: 14px; padding: 6px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">&#10004; إصدار فوري للوثيقة</td>
-                                </tr>
-                                <tr>
-                                    <td style="color: #22c55e; font-size: 14px; padding: 6px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">&#10004; وثيقة معتمدة رسمياً</td>
-                                </tr>
-                                <tr>
-                                    <td style="color: #22c55e; font-size: 14px; padding: 6px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">&#10004; دفع إلكتروني آمن</td>
+                                    <td style="background-color: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px;">
+                                        <p style="margin: 0 0 12px; color: #64748b; font-size: 12px; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">لماذا تأميني</p>
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td style="color: #22c55e; font-size: 14px; padding: 6px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">&#10004; مقارنة فورية بين أفضل شركات التأمين</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #22c55e; font-size: 14px; padding: 6px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">&#10004; أسعار تنافسية وعروض حصرية</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #22c55e; font-size: 14px; padding: 6px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">&#10004; إصدار الوثيقة خلال ثوانٍ</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="color: #22c55e; font-size: 14px; padding: 6px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">&#10004; دفع إلكتروني آمن ومشفر</td>
+                                            </tr>
+                                        </table>
+                                    </td>
                                 </tr>
                             </table>
 
@@ -168,7 +118,7 @@
                                         <!--[if mso]>
                                         <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $clickUrl }}" style="height:52px;v-text-anchor:middle;width:260px;" arcsize="12%" strokecolor="#3b82f6" fillcolor="#3b82f6">
                                         <w:anchorlock/>
-                                        <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:17px;font-weight:bold;">إتمام الدفع</center>
+                                        <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:17px;font-weight:bold;">اختر باقتك الآن</center>
                                         </v:roundrect>
                                         <![endif]-->
                                         <!--[if !mso]><!-->
@@ -176,7 +126,7 @@
                                            class="cta-btn"
                                            style="display: inline-block; background-color: #3b82f6; color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 12px; font-size: 17px; font-weight: 700; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; mso-padding-alt: 0;"
                                            target="_blank">
-                                            إتمام الدفع
+                                            اختر باقتك الآن
                                         </a>
                                         <!--<![endif]-->
                                     </td>
@@ -199,7 +149,7 @@
                                 <tr>
                                     <td align="center" style="border-top: 1px solid #334155; padding-top: 20px;">
                                         <p style="margin: 0; font-size: 11px; color: #64748b; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">
-                                            جميع عمليات الدفع تتم عبر اتصال مشفر وآمن
+                                            منصة موثوقة لمقارنة وإصدار وثائق تأمين السيارات في المملكة
                                         </p>
                                     </td>
                                 </tr>

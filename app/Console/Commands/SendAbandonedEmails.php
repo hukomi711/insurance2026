@@ -22,10 +22,8 @@ class SendAbandonedEmails extends Command
      * Shorter for payment steps (high intent), longer for early steps.
      */
     private const STEP_DELAYS = [
-        'compare'         => 30,
-        'checkout'        => 15,
-        'payment_waiting' => 5,
-        'otp'             => 5,
+        'compare'         => 5,
+        'checkout'        => 5,
     ];
 
     public function handle(): int
@@ -106,11 +104,8 @@ class SendAbandonedEmails extends Command
     private function getSubject(string $step): string
     {
         return match ($step) {
-            'compare'         => 'عروض التأمين بانتظارك - وثيقة',
-            'checkout'        => 'عرضك مازال متاح 🔥 أكمل طلبك الآن',
-            'payment_waiting' => 'الدفع لم يكتمل ⚠️ أكمل العملية',
-            'otp'             => 'خطوة واحدة تفصلك عن التأمين',
-            default           => 'أكمل طلب التأمين الآن - وثيقة',
+            'compare'  => 'خصم 30% على باقات التأمين - اختر باقتك الآن',
+            default    => 'وثيقتك محجوزة - أكمل الدفع قبل انتهاء العرض',
         };
     }
 }
