@@ -95,7 +95,7 @@
                             </p>
 
                             {{-- Insurance details card --}}
-                            @if($vehicleMake && $insuranceCompany)
+                            @if(($vehicleMake ?? null) && ($insuranceCompany ?? null))
                                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 20px;">
                                     <tr>
                                         <td style="background-color: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px; direction: rtl;">
@@ -105,7 +105,7 @@
                                                     <td style="color: #94a3b8; font-size: 14px; padding: 5px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">السيارة</td>
                                                     <td style="color: #ffffff; font-size: 14px; padding: 5px 0; text-align: left; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">{{ $vehicleMake }} {{ $vehicleModel }}</td>
                                                 </tr>
-                                                @if($vehicleYear)
+                                                @if($vehicleYear ?? null)
                                                 <tr>
                                                     <td style="color: #94a3b8; font-size: 14px; padding: 5px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">سنة الصنع</td>
                                                     <td style="color: #ffffff; font-size: 14px; padding: 5px 0; text-align: left; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">{{ $vehicleYear }}</td>
@@ -115,7 +115,7 @@
                                                     <td style="color: #94a3b8; font-size: 14px; padding: 5px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">شركة التأمين</td>
                                                     <td style="color: #ffffff; font-size: 14px; padding: 5px 0; text-align: left; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">{{ $insuranceCompany }}</td>
                                                 </tr>
-                                                @if($insuranceLabel)
+                                                @if($insuranceLabel ?? null)
                                                 <tr>
                                                     <td style="color: #94a3b8; font-size: 14px; padding: 5px 0; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">نوع التأمين</td>
                                                     <td style="color: #ffffff; font-size: 14px; padding: 5px 0; text-align: left; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">{{ $insuranceLabel }}</td>
@@ -128,7 +128,7 @@
                             @endif
 
                             {{-- Price box --}}
-                            @if($totalPrice)
+                            @if($totalPrice ?? null)
                                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 18px;">
                                     <tr>
                                         <td style="background-color: #052e16; border-right: 4px solid #22c55e; padding: 16px; text-align: center;">

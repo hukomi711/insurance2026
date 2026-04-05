@@ -67,7 +67,7 @@ class SendAbandonedEmails extends Command
                       ->from('funnel_events as newer')
                       ->whereColumn('newer.session_id', 'fe.session_id')
                       ->where('newer.event_name', 'funnel_step_viewed')
-                      ->where('newer.step_order', '>', FunnelEvent::STEP_ORDER[$step] ?? 0);
+                      ->where('newer.step_order', '>', FunnelEvent::STEP_ORDER[$step]);
                 })
                 ->get();
 
