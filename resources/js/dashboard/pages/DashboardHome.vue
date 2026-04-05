@@ -11,6 +11,9 @@
             @clear-cache="clearCache"
         />
 
+        <!-- Email Marketing Stats -->
+        <EmailStatsPanel />
+
         <!-- Connected Customers Section -->
         <section class="mb-8" dir="rtl" aria-labelledby="connected-customers-title">
             <!-- ─── Header Card ─── -->
@@ -168,9 +171,6 @@
                 <p class="text-sm" style="color: var(--admin-text-dim);">لا يوجد عملاء متصلون حالياً</p>
             </div>
         </section>
-
-        <!-- Email Marketing Stats -->
-        <EmailStatsPanel />
 
     </div>
 </template>
