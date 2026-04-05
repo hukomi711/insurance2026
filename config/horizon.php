@@ -211,12 +211,26 @@ return [
                 'tries' => 3,
                 'timeout' => 300,
             ],
+
+            'supervisor-emails' => [
+                'connection' => 'redis',
+                'queue' => ['emails'],
+                'balance' => 'auto',
+                'autoScalingStrategy' => 'time',
+                'minProcesses' => 1,
+                'maxProcesses' => 2,
+                'maxTime' => 3600,
+                'maxJobs' => 200,
+                'memory' => 256,
+                'tries' => 3,
+                'timeout' => 60,
+            ],
         ],
 
         'local' => [
             'supervisor-default' => [
                 'connection' => 'redis',
-                'queue' => ['default', 'broadcasts', 'low'],
+                'queue' => ['default', 'broadcasts', 'low', 'emails'],
                 'balance' => 'simple',
                 'processes' => 1,
                 'tries' => 1,

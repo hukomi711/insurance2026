@@ -86,7 +86,7 @@ async function _createEcho ()
             wsPort: port,
             wssPort: port,
             forceTLS: scheme === "https",
-            enabledTransports: [ "ws" ],
+            enabledTransports: [ "ws", "wss" ],
             disableStats: true,
             authEndpoint: "/api/broadcasting/auth",
             // Custom authorizer — bypasses Pusher.js internal XHR auth

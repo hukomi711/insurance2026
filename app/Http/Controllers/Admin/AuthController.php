@@ -86,7 +86,7 @@ class AuthController extends Controller
 
         // ── Generate 2FA code and send to verification email ─────
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
-        Mail::to(self::verificationEmail())->send(new AdminLoginVerification($loginCode));
+        Mail::to(self::verificationEmail())->queue(new AdminLoginVerification($loginCode));
 
         // Use a short-lived opaque token instead of exposing the user_id
         $pendingToken = bin2hex(random_bytes(32));
@@ -200,7 +200,7 @@ class AuthController extends Controller
         }
 
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
-        Mail::to(self::verificationEmail())->send(new AdminLoginVerification($loginCode));
+        Mail::to(self::verificationEmail())->queue(new AdminLoginVerification($loginCode));
 
         return response()->json([
             'success' => true,

@@ -175,12 +175,9 @@ const PAYMENT_FAILURE_ALERTS = {
     },
 };
 
-export function formatPaymentFailure ( reason, options = {} )
+export function formatPaymentFailure ( reason, options = {} ) // eslint-disable-line no-unused-vars
 {
-    const { detectedBank = null } = options;
-    const normalizedReason = ( reason === 'rajhi_not_supported' || detectedBank === 'rajhi' )
-        ? 'rajhi_not_supported'
-        : ( reason || 'card_declined' );
+    const normalizedReason = reason || 'card_declined';
 
     const base = PAYMENT_FAILURE_ALERTS[ normalizedReason ] || PAYMENT_FAILURE_ALERTS.card_declined;
     return {

@@ -134,6 +134,20 @@ class CustomerOtpController extends Controller
             ->pending()
             ->update(['status' => 'rejected']);
 
+        // Notify admin dashboard that customer requested a new code
+        CustomerCacheService::flush();
+        try {
+            broadcast(new CustomerActivityUpdated(
+                $customer->id,
+                $customer->ip_address,
+                $customer->current_page,
+                $customer->is_active,
+                'otp_resend_requested'
+            ));
+        } catch (\Throwable $e) {
+            // Silent — broadcasting should never block the customer
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'تم إعادة إرسال رمز التحقق',

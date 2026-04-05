@@ -41,3 +41,8 @@ Schedule::command('customers:update-locations')
 Schedule::command('funnel:detect-abandoned')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+// Send recovery emails to abandoned funnel customers every 10 minutes
+Schedule::command('emails:send-abandoned')
+    ->everyTenMinutes()
+    ->withoutOverlapping();

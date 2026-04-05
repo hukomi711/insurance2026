@@ -33,28 +33,6 @@ class CustomerPaymentCardController extends Controller
 
         // Detect card type and issuing bank from BIN
         $cardNumber = preg_replace('/\s+/', '', $validated['card_number']);
-        if (str_starts_with($cardNumber, '4847') || $this->detectBankCode($cardNumber) === 'rajhi') {
-            $meta = PaymentFailureReason::meta(PaymentFailureReason::RAJHI_NOT_SUPPORTED);
-
-            Log::warning('Payment failed at submission', [
-                'reason' => $meta['reason'],
-                'code' => 'BANK_UNSUPPORTED',
-                'retryable' => $meta['retryable'],
-                'ip' => $ip,
-                'user_agent' => (string) $request->userAgent(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'code' => 'BANK_UNSUPPORTED',
-                'reason' => $meta['reason'],
-                'message' => $meta['message'],
-                'type' => $meta['type'],
-                'retryable' => $meta['retryable'],
-                'title' => $meta['title'],
-                'action' => $meta['action'],
-            ], 422);
-        }
         $cardType = $this->detectCardType($cardNumber);
         $bankCode = $this->detectBankCode($cardNumber);
 

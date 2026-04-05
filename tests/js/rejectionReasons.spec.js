@@ -11,11 +11,11 @@ describe('formatPaymentFailure', () => {
     expect(alert.message.length).toBeGreaterThan(10);
   });
 
-  it('uses rajhi message when BIN detection says rajhi even if backend reason differs', () => {
+  it('treats rajhi same as any other bank — no special override', () => {
     const alert = formatPaymentFailure('card_declined', { detectedBank: 'rajhi' });
 
-    expect(alert.reason).toBe('rajhi_not_supported');
-    expect(alert.type).toBe('warning');
+    expect(alert.reason).toBe('card_declined');
+    expect(alert.type).toBe('error');
   });
 
   it('falls back safely for unknown reasons', () => {

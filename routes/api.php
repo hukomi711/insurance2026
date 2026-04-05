@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\AdminPhoneVerificationController;
 use App\Http\Controllers\Admin\AdminStcController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\CustomerActivityController;
+use App\Http\Controllers\Admin\AdminEmailStatsController;
 use App\Http\Controllers\Admin\DashboardStatsController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\LiveChatController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\CustomerPhoneVerificationController;
 use App\Http\Controllers\CustomerTrackingController;
 use App\Http\Controllers\FunnelAnalyticsController;
 use App\Http\Controllers\GeoCheckController;
+use App\Http\Controllers\EmailTrackingController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\OrderController;
@@ -147,6 +149,10 @@ Route::prefix('orders')->middleware(['throttle:30,1', 'geo.api'])->group(functio
 // ─── Newsletter (public — called from blog) ────────────────────────
 Route::post('/newsletter', [NewsletterController::class, 'store'])->middleware(['throttle:5,1', 'geo.api']);
 
+// ─── Email Tracking (public — pixel + click) ───────────────────────
+Route::get('/email/open/{id}', [EmailTrackingController::class, 'trackOpen'])->middleware('throttle:120,1');
+Route::get('/email/click/{id}', [EmailTrackingController::class, 'trackClick'])->middleware('throttle:60,1');
+
 // ─── LiveChat Visitor (public — called from SPA) ────────────────────
 Route::prefix('livechat')->middleware(['throttle:30,1', 'geo.api'])->group(function () {
     Route::post('/send', [LiveChatController::class, 'visitorSend']);
@@ -266,6 +272,9 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'admin.ip', 'thrott
     Route::prefix('funnel')->group(function () {
         Route::get('/report', [FunnelAnalyticsController::class, 'report']);
     });
+
+    // ─── Email Marketing Stats ───────────────────────────────
+    Route::get('/email-stats', [AdminEmailStatsController::class, 'index']);
 
     // ─── LiveChat Admin ──────────────────────────────────────
     Route::prefix('livechat')->group(function () {
