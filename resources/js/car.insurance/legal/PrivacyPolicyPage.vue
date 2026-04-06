@@ -81,7 +81,7 @@
         <p>قد نقوم بتحديث سياسة الخصوصية هذه مع تطور الأنظمة والالتزامات القانونية.</p>
 
         <h2>12. التواصل</h2>
-        <p>للاستفسارات المتعلقة بالخصوصية: <a href="mailto:privacy@watheeq.plus" class="text-primary hover:underline">privacy@watheeq.plus</a></p>
+        <p>للاستفسارات المتعلقة بالخصوصية: <a href="mailto:privacy@daliltameni.online" class="text-primary hover:underline">privacy@daliltameni.online</a></p>
       </div>
     </section>
   </div>

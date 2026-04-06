@@ -152,13 +152,13 @@ onMounted( () =>
                 '@type': 'ListItem',
                 position: 1,
                 name: 'الرئيسية',
-                item: 'https://watheeq.plus',
+                item: 'https://daliltameni.online',
             },
             {
                 '@type': 'ListItem',
                 position: 2,
                 name: 'المدونة',
-                item: 'https://watheeq.plus/blog',
+                item: 'https://daliltameni.online/blog',
             },
         ],
     } );

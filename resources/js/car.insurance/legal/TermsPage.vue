@@ -57,8 +57,8 @@
         <p>قد نقوم بتحديث هذه الشروط من وقت لآخر. يُعتبر استمرار الاستخدام بعد التحديثات قبولًا بها.</p>
 
         <h2>10. التواصل</h2>
-        <p>للاستفسارات القانونية: <a href="mailto:legal@watheeq.plus" class="text-primary hover:underline">legal@watheeq.plus</a></p>
-        <p>لبلاغات الإساءة: <a href="mailto:abuse@watheeq.plus" class="text-primary hover:underline">abuse@watheeq.plus</a></p>
+        <p>للاستفسارات القانونية: <a href="mailto:legal@daliltameni.online" class="text-primary hover:underline">legal@daliltameni.online</a></p>
+        <p>لبلاغات الإساءة: <a href="mailto:abuse@daliltameni.online" class="text-primary hover:underline">abuse@daliltameni.online</a></p>
       </div>
     </section>
   </div>
