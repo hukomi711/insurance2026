@@ -2,6 +2,7 @@
     <div>
         <!-- Admin Header -->
         <DashboardHeader
+            ref="headerRef"
             :system-status="systemStatus"
             :ws-enabled="wsConnected"
             :auto-refresh="autoRefreshEnabled"
@@ -196,6 +197,7 @@ const notificationsStore = useNotificationsStore();
 const badgeStore = useBadgeStore();
 
 // --- Dashboard Header State ---
+const headerRef = ref( null );
 const systemStatus = ref( 'healthy' );
 const wsConnected = ref( false );
 const autoRefreshEnabled = ref( true );
@@ -1093,6 +1095,7 @@ const refreshCustomers = async () => {
         loadError.value = false;
         initialLoading.value = false;
         markInitialLoadComplete();
+        headerRef.value?.markRefreshed();
         logger.debug( `[Dashboard] refreshCustomers success: ${ rows.length } rows` );
         return true;
     } catch ( error ) {
