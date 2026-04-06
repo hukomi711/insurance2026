@@ -165,7 +165,7 @@
 
                     <!-- ═══ Quote Cards ═══ -->
                     <div class="space-y-3">
-                        <QuoteCard v-for="plan in sortedPlans" :key="plan.id" :plan="plan"
+                        <QuoteCard v-for="plan in displayedPlans" :key="plan.id" :plan="plan"
                             :expanded="expandedCards.includes(plan.id)" :compact-view="compactView"
                             :benefits-expanded="expandedBenefits.includes(plan.id)"
                             :compare-selected="selectedPlans.includes(plan.id)"
@@ -179,6 +179,13 @@
                             @show-hero="showHeroModal = true"
                             @deductible-change="val => onPlanDeductibleChange(plan.id, val)"
                             @update:compare-selected="checked => onCompareToggle(plan.id, checked)" />
+
+                        <!-- Show More Button -->
+                        <button v-if="sortedPlans.length > 5 && !showAllPlans"
+                            class="w-full py-3 text-primary font-bold text-sm rounded-xl border border-primary/20 hover:bg-primary/5 transition-colors"
+                            @click="showAllPlans = true">
+                            عرض {{ sortedPlans.length - 5 }} عروض إضافية
+                        </button>
 
                         <!-- No Results State -->
                         <div v-if="sortedPlans.length === 0"
@@ -443,6 +450,9 @@ const quoteOptions = reactive( {
 } );
 const isUpdatingQuotes = ref( false );
 const expandedBenefits = ref( [] );
+const showAllPlans = ref( false );
+
+watch( activeTab, () => { showAllPlans.value = false; } );
 
 function triggerAnimation( list, id, duration = 600 ) {
     list.value.push( id );
@@ -662,6 +672,12 @@ const sortedPlans = computed( () => {
     }
 } );
 
+// Display limit (show top 5 by default)
+const displayedPlans = computed( () => {
+    const plans = sortedPlans.value;
+    return showAllPlans.value ? plans : plans.slice( 0, 5 );
+} );
+
 // Compared plans
 const comparedPlans = computed( () =>
     plansWithCompany.value.filter( p => selectedPlans.value.includes( p.id ) )
@@ -712,6 +728,7 @@ function resetFilters() {
     filters.maxDeductible = 5000;
     filters.companies = [];
     activeTab.value = 'thirdParty';
+    showAllPlans.value = false;
 }
 
 async function issueQuoteLock ( selection ) {

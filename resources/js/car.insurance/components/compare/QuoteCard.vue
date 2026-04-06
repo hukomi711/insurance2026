@@ -30,15 +30,6 @@
 
             <!-- Row 1: Company identity -->
             <div class="flex items-center gap-3">
-                <!-- Compare Checkbox -->
-                <label class="flex items-center cursor-pointer shrink-0" @click.stop>
-                    <input :id="`compare-${plan.id}`" type="checkbox"
-                        :checked="compareSelected"
-                        :name="`compare-${plan.id}`" :disabled="!canToggleCompare && !compareSelected"
-                        class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary"
-                        @change="emit( 'update:compareSelected', $event.target.checked )" />
-                    <span class="sr-only">مقارنة {{ plan.company.nameAr }}</span>
-                </label>
                 <!-- Company Logo -->
                 <div class="size-11 sm:size-12 shrink-0 rounded-xl border border-slate-100 overflow-hidden flex items-center justify-center bg-white p-1">
                     <img :src="getCompanyLogo( plan.companyId )" :alt="plan.company.nameAr" loading="lazy"
@@ -133,7 +124,7 @@
                             <svg class="size-4 hidden sm:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
-                            اختر العرض
+                            اشترِ الآن ⚡
                         </button>
                         <button class="h-10 sm:h-11 w-10 sm:w-11 rounded-xl border border-slate-200 text-slate-400 inline-flex items-center justify-center shrink-0 cursor-pointer hover:bg-slate-100 hover:text-slate-600 transition-colors"
                             @click="emit( 'toggle-expand' )">
@@ -151,6 +142,18 @@
         <!-- ═══ Expandable Details Section ═══ -->
         <Transition name="slide-down">
         <div v-if="expanded && !compactView" class="border-t border-slate-100">
+
+            <!-- Compare Checkbox (inside expanded only) -->
+            <div class="px-3 sm:px-4 pt-3 pb-1">
+                <label class="inline-flex items-center gap-2 cursor-pointer text-xs text-slate-500" @click.stop>
+                    <input :id="`compare-${plan.id}`" type="checkbox"
+                        :checked="compareSelected"
+                        :name="`compare-${plan.id}`" :disabled="!canToggleCompare && !compareSelected"
+                        class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary"
+                        @change="emit( 'update:compareSelected', $event.target.checked )" />
+                    أضف للمقارنة
+                </label>
+            </div>
 
             <!-- Coverage Details Grid -->
             <div class="px-3 sm:px-4 py-3">
@@ -243,18 +246,6 @@
                 </div>
             </div>
 
-            <!-- Additional Coverages -->
-            <div v-if="plan.additionalCoverages?.length" class="px-3 sm:px-4 pb-3">
-                <div class="border-t border-slate-100 pt-3">
-                    <p class="text-xs font-bold text-slate-500 mb-2">تغطيات إضافية اختيارية</p>
-                    <div v-for="( addon, i ) in plan.additionalCoverages" :key="i"
-                        class="flex items-center justify-between py-1.5 text-xs">
-                        <span class="text-slate-600">{{ addon.name }}</span>
-                        <span class="font-bold text-slate-700 ltr-nums whitespace-nowrap">+{{ formatNumber( addon.price ) }} <SarIcon className="size-2 inline text-slate-400" /></span>
-                    </div>
-                </div>
-            </div>
-
             <!-- What's NOT Covered -->
             <div v-if="plan.exclusions?.length" class="px-3 sm:px-4 pb-3">
                 <div class="border-t border-slate-100 pt-3">
@@ -285,7 +276,7 @@
                     <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
-                    اختر هذا العرض
+                    أكمل الشراء
                 </button>
             </div>
         </div>
