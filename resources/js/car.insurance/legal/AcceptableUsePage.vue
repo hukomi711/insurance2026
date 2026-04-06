@@ -32,7 +32,7 @@
         </ul>
 
         <h2>الإبلاغ عن الإساءة</h2>
-        <p>أرسل بلاغات الإساءة مع الأدلة إلى: <a href="mailto:abuse@daliltameni.online" class="text-primary hover:underline">abuse@daliltameni.online</a></p>
+        <p>أرسل بلاغات الإساءة مع الأدلة إلى: <a href="mailto:abuse@wathiqah.store" class="text-primary hover:underline">abuse@wathiqah.store</a></p>
         <p>يرجى تضمين:</p>
         <ul>
           <li>الطابع الزمني والمنطقة الزمنية</li>

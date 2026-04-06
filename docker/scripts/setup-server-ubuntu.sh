@@ -9,7 +9,7 @@ set -euo pipefail
 
 APP_DIR="/opt/tamincom"
 DEPLOY_USER="deploy"
-DOMAIN="daliltameni.online"
+DOMAIN="wathiqah.store"
 
 echo "══════════════════════════════════════════════════════════════"
 echo "  Insurance 2026 — Server Setup (Ubuntu)"

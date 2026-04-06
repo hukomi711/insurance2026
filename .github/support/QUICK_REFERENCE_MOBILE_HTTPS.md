@@ -6,7 +6,7 @@
 ## 30-Second Diagnosis
 
 ```
-┌─ User: "I can't access daliltameni.online on my phone"
+┌─ User: "I can't access wathiqah.store on my phone"
 │
 ├─ Q1: Error message?
 │  ├─ ERR_SSL_PROTOCOL_ERROR → Step A
@@ -32,13 +32,13 @@
 
 ```bash
 # Test 1: Server responding?
-curl -sI https://daliltameni.online | head -1
+curl -sI https://wathiqah.store | head -1
 
 # Test 2: Certificate valid?
-openssl s_client -connect daliltameni.online:443 -servername daliltameni.online </dev/null 2>/dev/null | grep -E "(subject=|notAfter=)"
+openssl s_client -connect wathiqah.store:443 -servername wathiqah.store </dev/null 2>/dev/null | grep -E "(subject=|notAfter=)"
 
 # Test 3: Reverb working?
-curl -s https://daliltameni.online/api/customer/ip | head -c 50
+curl -s https://wathiqah.store/api/customer/ip | head -c 50
 ```
 
 **If all 3 pass:**
@@ -60,7 +60,7 @@ Hi! Let's try a quick test:
 
 1. Go to Settings → [Your Name] → iCloud → Private Relay
 2. Turn it OFF
-3. Go to Safari and reload daliltameni.online
+3. Go to Safari and reload wathiqah.store
 4. Does it work now?
 
 Let me know what happens! 👍
@@ -84,7 +84,7 @@ Let's test with Cloudflare WARP (free VPN):
 
 1. Download "1.1.1.1: Faster Internet" from App Store / Play Store
 2. Open the app and toggle the switch ON
-3. Then try daliltameni.online again
+3. Then try wathiqah.store again
 4. Does it work now?
 
 (It's totally safe — just uses a different network path)
@@ -119,7 +119,7 @@ Thanks for reporting! 🎯
 Got it! This is an iOS issue with iCloud Private Relay on .sbs domains.
 
 **Two options:**
-1. Keep Private Relay disabled for daliltameni.online
+1. Keep Private Relay disabled for wathiqah.store
 2. Use Cloudflare WARP instead (free, protects and speeds up)
 
 Either way, you're all set! Let us know if it happens again. 👍
@@ -133,7 +133,7 @@ I'm escalating this to our engineering team for deeper investigation.
 **To help them investigate, can you:**
 1. Open Chrome on your phone
 2. Press F12 → Console
-3. Paste: fetch('https://daliltameni.online').catch(e => console.log(e))
+3. Paste: fetch('https://wathiqah.store').catch(e => console.log(e))
 4. Screenshot and reply with the error
 
 We'll get back to you within 24 hours! 🔧

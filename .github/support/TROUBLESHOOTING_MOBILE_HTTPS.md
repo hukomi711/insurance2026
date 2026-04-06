@@ -58,7 +58,7 @@ On iOS, **iCloud Private Relay** intercepts HTTPS requests through Apple's CDN e
    
 3. **Close Safari completely** (swipe up from task switcher)
    
-4. **Hard refresh:** Open daliltameni.online again
+4. **Hard refresh:** Open wathiqah.store again
    - If on Safari: Cmd+Shift+R or hold refresh button → "Hard Refresh"
    
 5. **Does the domain load now?**
@@ -66,7 +66,7 @@ On iOS, **iCloud Private Relay** intercepts HTTPS requests through Apple's CDN e
 #### ✅ **Result: YES, loaded!**
 → **Root cause: iOS privacy layer + CDN edge routing incompatibility**
 
-- **Solution for user:** Keep Private Relay OFF for daliltameni.online, or use Cloudflare WARP (see Step 3)
+- **Solution for user:** Keep Private Relay OFF for wathiqah.store, or use Cloudflare WARP (see Step 3)
 - **Document:** "iOS Private Relay conflict with .sbs domain"
 - **Close ticket** ✅
 
@@ -92,7 +92,7 @@ On iOS, **iCloud Private Relay** intercepts HTTPS requests through Apple's CDN e
 3. **Toggle the switch: ON**
    - Wait 5 seconds for connection
    
-4. **Open Safari/Chrome → Visit daliltameni.online**
+4. **Open Safari/Chrome → Visit wathiqah.store**
    
 5. **Does it load?**
 
@@ -119,7 +119,7 @@ On iOS, **iCloud Private Relay** intercepts HTTPS requests through Apple's CDN e
    
 2. **Copy-paste this into Console:**
    ```javascript
-   fetch('https://daliltameni.online/api/customer/ip')
+   fetch('https://wathiqah.store/api/customer/ip')
      .then(r => { console.log('✅ Status:', r.status); return r.text() })
      .then(t => console.log('Response:', t))
      .catch(e => console.error('❌ Error:', e.message))
@@ -207,7 +207,7 @@ Run this every morning to confirm server is healthy:
 
 ```bash
 # From your terminal:
-curl -sI https://daliltameni.online | head -5
+curl -sI https://wathiqah.store | head -5
 
 # Expected output:
 # HTTP/2 200 

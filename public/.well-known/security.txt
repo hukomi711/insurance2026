@@ -1,4 +1,4 @@
-Contact: mailto:security@daliltameni.online
+Contact: mailto:security@wathiqah.store
 Expires: 2027-03-31T23:59:59.000Z
 Preferred-Languages: ar, en
-Canonical: https://daliltameni.online/.well-known/security.txt
+Canonical: https://wathiqah.store/.well-known/security.txt

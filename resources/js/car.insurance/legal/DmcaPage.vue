@@ -13,7 +13,7 @@
         <p>تحترم تأمينكم حقوق الملكية الفكرية وتستجيب لشكاوى حقوق النشر الصحيحة.</p>
 
         <h2>كيفية تقديم إشعار</h2>
-        <p>أرسل الإشعارات إلى: <a href="mailto:legal@daliltameni.online" class="text-primary hover:underline">legal@daliltameni.online</a></p>
+        <p>أرسل الإشعارات إلى: <a href="mailto:legal@wathiqah.store" class="text-primary hover:underline">legal@wathiqah.store</a></p>
         <p>يجب أن يتضمن الإشعار الصحيح:</p>
         <ol>
           <li>تحديد العمل المحمي بحقوق النشر.</li>

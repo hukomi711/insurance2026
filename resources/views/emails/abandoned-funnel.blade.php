@@ -188,7 +188,7 @@
                                 <tr>
                                     <td align="center" style="padding: 0 0 24px;">
                                         <p style="margin: 0; font-size: 12px; color: #475569; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">
-                                            أو انسخ الرابط: <a href="{{ $clickUrl }}" style="color: #60a5fa; text-decoration: underline; word-break: break-all;">daliltameni.online</a>
+                                            أو انسخ الرابط: <a href="{{ $clickUrl }}" style="color: #60a5fa; text-decoration: underline; word-break: break-all;">wathiqah.store</a>
                                         </p>
                                     </td>
                                 </tr>
@@ -211,7 +211,7 @@
                     <tr>
                         <td style="background-color: #0f172a; padding: 24px 40px; border-top: 1px solid #1e293b;" class="mobile-padding">
                             <p style="color: #475569; font-size: 12px; text-align: center; margin: 0 0 8px; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">
-                                &copy; {{ date('Y') }} تأميني &mdash; <a href="https://daliltameni.online" style="color: #3b82f6; text-decoration: none;">daliltameni.online</a>
+                                &copy; {{ date('Y') }} تأميني &mdash; <a href="https://wathiqah.store" style="color: #3b82f6; text-decoration: none;">wathiqah.store</a>
                             </p>
                             <p style="color: #334155; font-size: 11px; text-align: center; margin: 0; font-family: 'Segoe UI', Tahoma, Arial, sans-serif;">
                                 تصلك هذه الرسالة لأنك بدأت طلب تأمين على موقعنا.

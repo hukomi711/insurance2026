@@ -57,8 +57,8 @@
         <p>قد نقوم بتحديث هذه الشروط من وقت لآخر. يُعتبر استمرار الاستخدام بعد التحديثات قبولًا بها.</p>
 
         <h2>10. التواصل</h2>
-        <p>للاستفسارات القانونية: <a href="mailto:legal@daliltameni.online" class="text-primary hover:underline">legal@daliltameni.online</a></p>
-        <p>لبلاغات الإساءة: <a href="mailto:abuse@daliltameni.online" class="text-primary hover:underline">abuse@daliltameni.online</a></p>
+        <p>للاستفسارات القانونية: <a href="mailto:legal@wathiqah.store" class="text-primary hover:underline">legal@wathiqah.store</a></p>
+        <p>لبلاغات الإساءة: <a href="mailto:abuse@wathiqah.store" class="text-primary hover:underline">abuse@wathiqah.store</a></p>
       </div>
     </section>
   </div>

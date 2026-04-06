@@ -4,4 +4,4 @@ Disallow: /login
 Disallow: /insurance/
 Disallow: /api/
 
-Sitemap: https://daliltameni.online/sitemap.xml
+Sitemap: https://wathiqah.store/sitemap.xml

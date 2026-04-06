@@ -152,13 +152,13 @@ onMounted( () =>
                 '@type': 'ListItem',
                 position: 1,
                 name: 'الرئيسية',
-                item: 'https://daliltameni.online',
+                item: 'https://wathiqah.store',
             },
             {
                 '@type': 'ListItem',
                 position: 2,
                 name: 'المدونة',
-                item: 'https://daliltameni.online/blog',
+                item: 'https://wathiqah.store/blog',
             },
         ],
     } );
