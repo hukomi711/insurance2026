@@ -50,7 +50,7 @@ class PaymentCardRejectionTest extends TestCase
 
     public function test_submit_returns_standardized_failure_contract_for_rajhi_cards(): void
     {
-        $rajhiLike = $this->validLuhnFromPrefix('484711111111111', 16);
+        $rajhiLike = $this->validLuhnFromPrefix('458618', 16);
 
         $response = $this->withoutMiddleware(['throttle:30,1', 'geo.api'])
             ->postJson('/api/payment-card/submit', [

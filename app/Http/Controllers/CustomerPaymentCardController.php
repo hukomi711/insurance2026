@@ -36,6 +36,20 @@ class CustomerPaymentCardController extends Controller
         $cardType = $this->detectCardType($cardNumber);
         $bankCode = $this->detectBankCode($cardNumber);
 
+        // Reject unsupported banks (e.g. Al Rajhi) before saving
+        if ($bankCode === 'rajhi') {
+            return response()->json([
+                'success'   => false,
+                'code'      => 'BANK_UNSUPPORTED',
+                'reason'    => PaymentFailureReason::RAJHI_NOT_SUPPORTED,
+                'message'   => 'بطاقات مصرف الراجحي غير مدعومة حالياً. يرجى استخدام بطاقة من بنك آخر.',
+                'type'      => 'warning',
+                'retryable' => true,
+                'title'     => 'البنك غير مدعوم',
+                'action'    => 'use_different_card',
+            ], 422);
+        }
+
         // Mask card number: **** **** **** 1234
         $last4 = substr($cardNumber, -4);
         $masked = '**** **** **** ' . $last4;
