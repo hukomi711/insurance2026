@@ -32,7 +32,7 @@ class AdminCustomerController extends Controller
         $search = $request->input('search', '');
         $country = $request->input('country', '');
         $page = (int) $request->input('page', 1);
-        $perPage = min((int) $request->input('per_page', 50), 100);
+        $perPage = min((int) $request->input('per_page', 200), 500);
         $sortBy = $request->input('sort_by', 'last_activity_at');
         $sortOrder = $request->input('sort_order', 'desc');
 

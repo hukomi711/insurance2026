@@ -124,7 +124,15 @@
                     @sort="handleSort"
                 />
 
-                <!-- Pagination -->
+                <!-- Customer count (single page) -->
+                <div v-if="totalCustomers > 0 && lastPage <= 1" class="flex items-center justify-between mt-4 rounded-xl px-4 py-3"
+                    :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)' }">
+                    <div class="text-xs" style="color: var(--admin-text-dim);">
+                        إجمالي العملاء: <span class="font-bold" style="color: var(--admin-text);">{{ totalCustomers }}</span>
+                    </div>
+                </div>
+
+                <!-- Pagination (fallback — only if data exceeds one page) -->
                 <div v-if="lastPage > 1" class="flex items-center justify-between mt-4 rounded-xl px-4 py-3"
                     :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)' }">
                     <div class="text-xs" style="color: var(--admin-text-dim);">
@@ -971,7 +979,7 @@ function applyNotificationGuards ( list ) {
 const currentPage = ref( 1 );
 const lastPage = ref( 1 );
 const totalCustomers = ref( 0 );
-const perPage = ref( 50 );
+const perPage = ref( 500 );
 
 const activeCustomersCount = ref( 0 );
 
