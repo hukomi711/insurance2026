@@ -655,6 +655,7 @@ onUnmounted(() => {
 /* ── Priority queue animation — rows slide smoothly when reordered ── */
 .customer-row-move {
   transition: transform 0.45s ease;
+  will-change: transform;
 }
 .customer-row-enter-active {
   transition: opacity 0.3s ease, transform 0.3s ease;
