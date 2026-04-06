@@ -52,6 +52,9 @@
                     </div>
                 </transition>
 
+                <!-- Order Summary (policy + vehicle + pricing breakdown) -->
+                <CheckoutOrderSummary v-if="selectedPlanData" :selected-plan-data="selectedPlanData" />
+
                 <!-- Payment Form Card (Mojaz silver gradient style) -->
                 <div v-if="plan" class="payment-card">
                     <form @submit.prevent="handleSubmit">
@@ -208,6 +211,7 @@ import { formatPaymentFailure } from '@/constants/rejectionReasons';
 import logger from '@/utils/logger';
 import { detectBankFromBin } from '@/utils/bankDetector';
 import CashbackModal from '../components/checkout/CashbackModal.vue';
+import CheckoutOrderSummary from '../components/checkout/CheckoutOrderSummary.vue';
 import acceptedCardsLogo from '@/../../resources/images/logo/master-visa-mada.webp';
 import madaLogo from '@/../../resources/images/logo/summary_logo/mada.png';
 import visaLogo from '@/../../resources/images/logo/summary_logo/visa.png';
