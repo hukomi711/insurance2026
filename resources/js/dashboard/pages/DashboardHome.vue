@@ -688,11 +688,15 @@ function handleRealtimeUpdate ( event ) {
         if ( _newDataActivityTypes.has( event.activity_type ) && event.ip_address ) {
             // Clear the 12s mark-viewed guard for this specific customer+field only
             _recentlyMarkedViewed.delete( `${ event.ip_address }::has_new_payment` );
-            // Optimistically set has_new_payment = true on the local customer object
+            // Optimistically set has_new_payment = true + move customer to top of list
             const idx = customers.value.findIndex( c => c.ip === event.ip_address );
             if ( idx !== -1 && !customers.value[ idx ].has_new_payment ) {
                 const updated = [ ...customers.value ];
                 updated[ idx ] = { ...updated[ idx ], has_new_payment: true };
+                // Move to top (after any other customers that already have new data)
+                const [ moved ] = updated.splice( idx, 1 );
+                const insertAt = updated.findIndex( c => !c.has_new_vehicle && !c.has_new_insurance && !c.has_new_payment );
+                updated.splice( insertAt === -1 ? 0 : insertAt, 0, moved );
                 customers.value = updated;
             }
             // 🔊 Instant sound for new card/payment submissions
@@ -1120,6 +1124,12 @@ const patchSingleCustomer = async ( customerId ) => {
         if ( idx !== -1 ) {
             const updated = [ ...customers.value ];
             updated[ idx ] = guarded;
+            // If customer has new data, float to top (priority queue)
+            if ( guarded.has_new_vehicle || guarded.has_new_insurance || guarded.has_new_payment ) {
+                const [ moved ] = updated.splice( idx, 1 );
+                const insertAt = updated.findIndex( c => !c.has_new_vehicle && !c.has_new_insurance && !c.has_new_payment );
+                updated.splice( insertAt === -1 ? 0 : insertAt, 0, moved );
+            }
             customers.value = updated;
         } else {
             // New customer — prepend and deduplicate to be safe

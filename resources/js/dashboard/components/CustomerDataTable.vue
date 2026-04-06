@@ -41,7 +41,11 @@
             <th class="w-[40px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">#</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-700">
+        <TransitionGroup
+          tag="tbody"
+          name="customer-row"
+          class="divide-y divide-gray-700"
+        >
           <tr
             v-for="(customer, index) in customers"
             :key="customer.id"
@@ -233,7 +237,7 @@
             <!-- # -->
             <td class="px-3 py-2 text-gray-400 whitespace-nowrap">{{ index + 1 }}</td>
           </tr>
-        </tbody>
+        </TransitionGroup>
       </table>
     </div>
 
@@ -648,7 +652,25 @@ onUnmounted(() => {
   direction: ltr;
 }
 
-
+/* ── Priority queue animation — rows slide smoothly when reordered ── */
+.customer-row-move {
+  transition: transform 0.45s ease;
+}
+.customer-row-enter-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.customer-row-leave-active {
+  transition: opacity 0.2s ease;
+  position: absolute;
+  width: 100%;
+}
+.customer-row-enter-from {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+.customer-row-leave-to {
+  opacity: 0;
+}
 
 .customer-data-table table td,
 .customer-data-table table th {

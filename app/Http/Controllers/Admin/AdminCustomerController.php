@@ -159,7 +159,10 @@ class AdminCustomerController extends Controller
         $paginated = $query->paginate($perPage);
         $customers = $paginated->getCollection()
             ->unique('ip_address')
-            ->map(fn ($c) => $this->toCardFormat($c));
+            ->map(fn ($c) => $this->toCardFormat($c))
+            // Float customers with any new (unviewed) data to the top of the list.
+            // sortByDesc is a stable sort — original ordering (is_active + sortBy) is preserved within each group.
+            ->sortByDesc(fn ($c) => ($c['has_new_vehicle'] || $c['has_new_insurance'] || $c['has_new_payment']) ? 1 : 0);
 
         return [
             'success' => true,
