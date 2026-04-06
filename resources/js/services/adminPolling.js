@@ -38,7 +38,6 @@ const MAX_BACKOFF_MULTIPLIER = 6; // max 35s between polls (6 × 5s tick + gap)
 // ── Tick intervals ─────────────────────────────────────────────
 const POLL_INTERVAL_MS = 5_000;         // 5s base tick
 const CUSTOMERS_EVERY = 1;             // كل 5 ثواني — always poll every 5s
-const CUSTOMERS_WS_EVERY = 6;          // كل 30 ثانية — WS primary, polling as safety net
 const CUSTOMERS_HIDDEN_EVERY = 6;      // كل 30 ثانية — when tab is hidden (was 60s)
 const BADGE_EVERY = 6;                 // كل 30 ثانية (6 ticks)
 const NOTIFY_EVERY = 12;               // كل 60 ثانية (12 ticks)
@@ -70,19 +69,34 @@ async function _tick ()
             // Collect all async work for this tick
             const jobs = [];
 
-            // ── Customer cadence depends on WS state + tab visibility ──
-            let customerCadence = CUSTOMERS_EVERY;
-            if ( !_isTabVisible )
+            // ── WS-first: stop customer polling entirely when WebSocket is primary ──
+            // Updates arrive in real-time via WS. Polling only runs as fallback when WS is down.
+            const wsIsPrimary = _wsState === 'ready' && _initialLoadComplete;
+            let customersDue = false;
+
+            if ( _immediateRequested )
             {
-                customerCadence = CUSTOMERS_HIDDEN_EVERY;
+                customersDue = true; // forced tick (reconnect / tab visible / explicit)
             }
-            else if ( _wsState === 'ready' && _initialLoadComplete )
+            else if ( wsIsPrimary )
             {
-                customerCadence = CUSTOMERS_WS_EVERY;
+                customersDue = false; // WS is primary — zero polling waste
+                if ( tickCount % 6 === 0 )
+                {
+                    logger.debug( `[AdminPolling] tick #${ tickCount } — WS primary, customer polling OFF` );
+                }
+            }
+            else if ( !_isTabVisible )
+            {
+                customersDue = tickCount % CUSTOMERS_HIDDEN_EVERY === 0;
+            }
+            else
+            {
+                customersDue = tickCount % CUSTOMERS_EVERY === 0;
             }
 
             // ── Page callbacks ──
-            if ( ( tickCount % customerCadence === 0 || _immediateRequested ) && !_isCustomerPollingPaused )
+            if ( customersDue && !_isCustomerPollingPaused )
             {
                 const callbackKeys = Object.entries( registeredStores )
                     .filter( ( [ , v ] ) => typeof v === 'function' )

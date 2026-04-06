@@ -221,6 +221,7 @@ let _lastRefreshAt = 0;
 let _throttledRefreshTimer = null;    // trailing refresh timer – ensures last throttled event is never lost
 let _throttledRefreshPayload = null;  // stores the latest throttled event for trailing refresh
 let _isRefreshing = false;
+let _lastDataHash = '';                 // fingerprint of last rendered data — skip identical re-renders
 let _pendingPageUpdates = [];         // batch in-place page_view updates
 let _batchTimer = null;
 let _retryTimer = null;               // retry timer for failed initial load
@@ -452,7 +453,7 @@ async function connectDashboardWebSocket () {
             if ( pusher.connection?.state === 'connected' ) {
                 wsConnected.value = true;
                 setWsConnected( true );
-                logger.info( '[Dashboard WS] Pusher already connected — polling demoted to fallback' );
+                logger.info( '[Dashboard WS] Pusher already connected — polling stopped (WS primary)' );
             }
 
             const _bind = ( event, handler ) => {
@@ -469,7 +470,7 @@ async function connectDashboardWebSocket () {
                 setWsConnected( true );
                 // Catch up on any events missed during disconnection
                 refreshCustomers();
-                logger.info( '[Dashboard WS] Pusher connected — polling demoted to fallback' );
+                logger.info( '[Dashboard WS] Pusher connected — polling stopped (WS primary)' );
             } );
             _bind( 'disconnected', () => {
                 wsConnected.value = false;
@@ -1082,6 +1083,16 @@ const refreshCustomers = async () => {
         }
         const { data } = await getCustomers( params );
         const rows = data.data || [];
+        // ── Smart refresh: skip re-render when data hasn't changed ──
+        const fingerprint = `${ data.total }:${ data.active_count }:` +
+            rows.map( r => `${ r.id }|${ r.updated_at }|${ r.is_active ? 1 : 0 }|${ r.current_page }|${ r.has_new_vehicle ? 1 : 0 }|${ r.has_new_insurance ? 1 : 0 }|${ r.has_new_payment ? 1 : 0 }` ).join( ';' );
+        if ( fingerprint === _lastDataHash && !initialLoading.value ) {
+            logger.debug( `[Dashboard] refreshCustomers — no changes, skip render (${ rows.length } rows)` );
+            loadError.value = false;
+            headerRef.value?.markRefreshed();
+            return true;
+        }
+        _lastDataHash = fingerprint;
         const guarded = applyNotificationGuards( rows );
         detectAndPlaySounds( guarded );
         customers.value = deduplicateByIp( guarded );
