@@ -396,7 +396,9 @@ function teardownChannelListeners () {
 // --- WebSocket Real-Time Updates ---
 let _wsReconnectTimer = null;
 let _wsConnecting = false; // prevents concurrent connectDashboardWebSocket() calls
+let _wsDisconnectGrace = null; // grace timer: tolerate brief Pusher reconnect cycles
 const WS_RECONNECT_DELAY = 5_000; // retry connection every 5s on failure
+const WS_DISCONNECT_GRACE_MS = 3_000; // wait 3s before treating disconnect as real
 
 async function connectDashboardWebSocket () {
     // Clear any pending reconnect timer
@@ -466,6 +468,12 @@ async function connectDashboardWebSocket () {
                     clearTimeout( _wsReconnectTimer );
                     _wsReconnectTimer = null;
                 }
+                // Cancel disconnect grace timer — connection restored before grace expired
+                if ( _wsDisconnectGrace ) {
+                    clearTimeout( _wsDisconnectGrace );
+                    _wsDisconnectGrace = null;
+                    logger.debug( '[Dashboard WS] Reconnected within grace period — polling never resumed' );
+                }
                 wsConnected.value = true;
                 setWsConnected( true );
                 // Catch up on any events missed during disconnection
@@ -473,14 +481,21 @@ async function connectDashboardWebSocket () {
                 logger.info( '[Dashboard WS] Pusher connected — polling stopped (WS primary)' );
             } );
             _bind( 'disconnected', () => {
-                wsConnected.value = false;
-                setWsConnected( false );
-                logger.warn( '[Dashboard WS] Pusher disconnected — polling resumed, Pusher will auto-reconnect' );
-                // Don't schedule manual reconnect here — Pusher has built-in
-                // reconnection with exponential backoff. Manual reconnect only
-                // on 'unavailable' (Pusher gave up) to avoid conflicting strategies.
+                // Don't immediately demote to polling — Pusher often briefly disconnects
+                // during private channel auth or reconnection cycles. Wait 3s before
+                // treating it as a real disconnect.
+                if ( _wsDisconnectGrace ) return; // grace already running
+                _wsDisconnectGrace = setTimeout( () => {
+                    _wsDisconnectGrace = null;
+                    wsConnected.value = false;
+                    setWsConnected( false );
+                    logger.warn( '[Dashboard WS] Pusher disconnected (grace expired) — polling resumed' );
+                }, WS_DISCONNECT_GRACE_MS );
+                logger.debug( '[Dashboard WS] Pusher disconnected — grace period started (' + WS_DISCONNECT_GRACE_MS + 'ms)' );
             } );
             _bind( 'unavailable', () => {
+                // Cancel grace timer — this is a real disconnect
+                if ( _wsDisconnectGrace ) { clearTimeout( _wsDisconnectGrace ); _wsDisconnectGrace = null; }
                 wsConnected.value = false;
                 setWsConnected( false );
                 logger.warn( '[Dashboard WS] Pusher unavailable (gave up) — scheduling forced reconnect' );
@@ -489,6 +504,8 @@ async function connectDashboardWebSocket () {
                 scheduleReconnect();
             } );
             _bind( 'failed', () => {
+                // Cancel grace timer — this is a real disconnect
+                if ( _wsDisconnectGrace ) { clearTimeout( _wsDisconnectGrace ); _wsDisconnectGrace = null; }
                 wsConnected.value = false;
                 setWsConnected( false );
                 logger.error( '[Dashboard WS] Pusher connection failed — scheduling forced reconnect' );
@@ -629,6 +646,11 @@ function disconnectDashboardWebSocket () {
     if ( _wsReconnectTimer ) {
         clearTimeout( _wsReconnectTimer );
         _wsReconnectTimer = null;
+    }
+    // Cancel any pending disconnect grace timer
+    if ( _wsDisconnectGrace ) {
+        clearTimeout( _wsDisconnectGrace );
+        _wsDisconnectGrace = null;
     }
 
     // ✅ Unbind all Pusher connection handlers to prevent memory leaks
