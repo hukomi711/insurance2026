@@ -20,7 +20,7 @@
         </div>
 
         <div class="why-grid">
-            <div v-for="(card, idx) in cards" :key="idx" class="why-grid__item">
+            <router-link v-for="(card, idx) in cards" :key="idx" to="/car-insurance" class="why-grid__item">
                 <div class="why-card">
                     <div class="why-card__inner">
                         <!-- Decorative SVG -->
@@ -49,7 +49,7 @@
                         <span class="why-card__desc">{{ card.description }}</span>
                     </div>
                 </div>
-            </div>
+            </router-link>
         </div>
     </section>
 </template>
@@ -167,6 +167,8 @@ const cards = [
 .why-grid__item {
     height: 100%;
     animation: whyFadeIn 500ms ease-out both;
+    text-decoration: none;
+    color: inherit;
 }
 
 /* ===== CARD ===== */
