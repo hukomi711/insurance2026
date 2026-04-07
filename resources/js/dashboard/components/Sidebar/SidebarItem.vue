@@ -18,9 +18,9 @@
 import { computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBadgeStore } from '@/store/modules/badges';
-import { IconHome, IconActivity, IconLogin, IconSettings, IconQuoteMonitor, IconFunnel } from '@/icons';
+import { IconHome, IconActivity, IconLogin, IconSettings, IconQuoteMonitor, IconFunnel, IconRanking, IconEmail } from '@/icons';
 
-const ICON_MAP = { home: IconHome, activity: IconActivity, login: IconLogin, settings: IconSettings, 'quote-monitor': IconQuoteMonitor, funnel: IconFunnel };
+const ICON_MAP = { home: IconHome, activity: IconActivity, login: IconLogin, settings: IconSettings, 'quote-monitor': IconQuoteMonitor, funnel: IconFunnel, ranking: IconRanking, email: IconEmail };
 
 const props = defineProps( {
     /** @type {{ path: string, meta: { title: string, icon: string, badgeKey?: string, activeMenu?: string } }} */

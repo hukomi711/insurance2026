@@ -12,8 +12,8 @@
             @clear-cache="clearCache"
         />
 
-        <!-- Email Marketing Stats -->
-        <EmailStatsPanel />
+        <!-- Email Marketing Stats — moved to standalone /dashboard/email-stats page -->
+        <!-- <EmailStatsPanel /> -->
 
         <!-- Connected Customers Section -->
         <section class="mb-8" dir="rtl" aria-labelledby="connected-customers-title">
@@ -196,8 +196,6 @@ import { useNotificationsStore } from '@/store/modules/notifications';
 import { useBadgeStore } from '@/store/modules/badges';
 import CustomerDataTable from '../components/CustomerDataTable.vue';
 import DashboardHeader from '../components/DashboardHeader.vue';
-import EmailStatsPanel from '../components/EmailStatsPanel.vue';
-
 import logger from '@/utils/logger';
 import { enableSounds, playBasicSound, playInsuranceSound, playPaymentSound, playNewCardSound } from '../composables/useNotificationSounds';
 

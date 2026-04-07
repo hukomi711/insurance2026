@@ -5,3 +5,5 @@ export { default as IconActivity } from './IconActivity.vue';
 export { default as IconLogout } from './IconLogout.vue';
 export { default as IconQuoteMonitor } from './IconQuoteMonitor.vue';
 export { default as IconFunnel } from './IconFunnel.vue';
+export { default as IconRanking } from './IconRanking.vue';
+export { default as IconEmail } from './IconEmail.vue';

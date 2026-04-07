@@ -59,6 +59,18 @@ const dashboardRoutes = {
             meta: { title: 'تحليل التحويل', icon: 'funnel' },
         },
         {
+            path: 'activity-ranking',
+            name: 'dashboard-activity-ranking',
+            component: lazyWithReload( () => import( '../pages/DynamicActivityRanking.vue' ) ),
+            meta: { title: 'ترتيب النشاطات', icon: 'ranking' },
+        },
+        {
+            path: 'email-stats',
+            name: 'dashboard-email-stats',
+            component: lazyWithReload( () => import( '../pages/EmailStatsPage.vue' ) ),
+            meta: { title: 'إحصائيات البريد', icon: 'email' },
+        },
+        {
             path: 'settings',
             name: 'dashboard-settings',
             component: lazyWithReload( () => import( '../pages/SettingsPage.vue' ) ),

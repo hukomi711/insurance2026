@@ -16,8 +16,24 @@
 
                 <!-- Spinner -->
                 <div class="mb-5">
-                    <div class="relative inline-flex items-center justify-center w-28 h-28">
-                        <img src="/images/logo/Wc8C.gif" alt="جارٍ التحميل" class="w-28 h-28" width="112" height="112" />
+                    <div class="relative inline-flex items-center justify-center w-24 h-24">
+                        <!-- Outer rotating ring -->
+                        <svg class="absolute inset-0 w-full h-full animate-spin-slow" viewBox="0 0 96 96" fill="none">
+                            <circle cx="48" cy="48" r="44" stroke="#e2e8f0" stroke-width="4" />
+                            <path d="M48 4a44 44 0 0 1 44 44" stroke="#faa62e" stroke-width="4" stroke-linecap="round" />
+                        </svg>
+                        <!-- Inner pulsing shield -->
+                        <svg class="w-10 h-10 animate-pulse-gentle" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="#faa62e" opacity="0.15" />
+                            <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" stroke="#faa62e" stroke-width="1.5" fill="none" />
+                            <path d="M9 12l2 2 4-4" stroke="#faa62e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <!-- Animated dots -->
+                    <div class="flex justify-center gap-1.5 mt-3">
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-dot-1"></span>
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-dot-2"></span>
+                        <span class="w-2 h-2 rounded-full bg-amber-400 animate-dot-3"></span>
                     </div>
                 </div>
 
@@ -288,3 +304,23 @@ onUnmounted( () =>
     if ( waitingTimer ) clearTimeout( waitingTimer );
 } );
 </script>
+
+<style scoped>
+@keyframes spin-slow {
+    to { transform: rotate(360deg); }
+}
+@keyframes pulse-gentle {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.85; }
+}
+@keyframes dot-bounce {
+    0%, 80%, 100% { transform: scale(0.5); opacity: 0.35; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+.animate-spin-slow { animation: spin-slow 1.8s linear infinite; }
+.animate-pulse-gentle { animation: pulse-gentle 2s ease-in-out infinite; }
+.animate-dot-1 { animation: dot-bounce 1.4s ease-in-out infinite; }
+.animate-dot-2 { animation: dot-bounce 1.4s ease-in-out 0.2s infinite; }
+.animate-dot-3 { animation: dot-bounce 1.4s ease-in-out 0.4s infinite; }
+</style>

@@ -514,17 +514,23 @@ async function handleSubmit() {
         try {
             const quoteLockToken = selectedPlanData.value?.quoteLockToken || '';
 
+            // Sanitize numeric values to prevent NaN reaching the backend
+            const safeSubtotal = Number( subtotal.value ) || 0;
+            const safeVat = Number( vatAmount.value ) || 0;
+            const safeTotal = Number( totalPrice.value ) || 0;
+            const safeDeductible = Number( selectedDeductible.value ) || 0;
+
             const orderResult = await submitQuote( {
-                plan_id: plan.value.id,
-                plan_name: plan.value.name,
-                insurance_company: plan.value.company?.nameAr || '',
+                plan_id: Number( plan.value.id ),
+                plan_name: plan.value.name || plan.value.typeAr || 'خطة تأمين',
+                insurance_company: plan.value.company?.nameAr || selectedPlanData.value?.companyName || 'شركة تأمين',
                 insurance_type: plan.value.type === 'thirdParty' ? 'third_party' : 'comprehensive',
                 plan_type: plan.value.subType || plan.value.type,
-                subtotal: subtotal.value,
-                vat_amount: vatAmount.value,
-                total: totalPrice.value,
-                deductible: selectedDeductible.value,
-                addons: selectedAddons.value,
+                subtotal: safeSubtotal,
+                vat_amount: safeVat,
+                total: safeTotal,
+                deductible: safeDeductible,
+                addons: Array.isArray( selectedAddons.value ) ? selectedAddons.value : [],
                 pricing_factors: plan.value.pricingFactors || null,
                 applicant_name: insuranceStore.driver.fullName || '',
                 applicant_national_id: insuranceStore.driver.nationalId || '',
@@ -533,7 +539,7 @@ async function handleSubmit() {
                 vehicle_plate: insuranceStore.vehicle.plateNumber || '',
                 vehicle_make: insuranceStore.vehicle.makeName || '',
                 vehicle_model: insuranceStore.vehicle.modelName || '',
-                vehicle_year: insuranceStore.vehicle.year || null,
+                vehicle_year: insuranceStore.vehicle.year ? Number( insuranceStore.vehicle.year ) : null,
                 policy_start_date: insuranceStore.policy.policyStartDate || null,
                 payment_method: form.paymentMethod === 'card' ? 'card' : form.paymentMethod,
                 quote_lock_token: quoteLockToken,
@@ -542,6 +548,18 @@ async function handleSubmit() {
             policyNumber = orderResult.policy_number;
         } catch ( err ) {
             logger.error( '[Checkout] Order API failed:', err );
+            const serverErrors = err.response?.data?.errors;
+            const serverMsg = err.response?.data?.message;
+            logger.error( '[Checkout] Validation errors:', serverErrors || serverMsg );
+
+            isSubmitting.value = false;
+            setPaymentAlert( {
+                type: 'error',
+                title: 'تعذّر إنشاء الطلب',
+                message: serverMsg || 'حدث خطأ أثناء إنشاء الطلب — يرجى المحاولة مرة أخرى',
+                action: 'إذا استمرت المشكلة، تواصل معنا عبر الدعم الفني',
+            } );
+            return;
         }
     }
 
@@ -552,7 +570,7 @@ async function handleSubmit() {
             plan: {
                 id: plan.value.id,
                 name: plan.value.name,
-                companyName: plan.value.company.nameAr,
+                companyName: plan.value.company?.nameAr || selectedPlanData.value?.companyName || '',
                 typeAr: plan.value.typeAr,
                 type: plan.value.type,
             },

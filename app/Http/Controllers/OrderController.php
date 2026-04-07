@@ -27,6 +27,7 @@ class OrderController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        try {
         $validated = $request->validate([
             // Plan
             'plan_id'           => 'required|integer',
@@ -64,6 +65,18 @@ class OrderController extends Controller
             // Quote lock
             'quote_lock_token' => 'nullable|string|max:64',
         ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::warning('Order validation failed', [
+                'errors'         => $e->errors(),
+                'input_keys'     => array_keys($request->all()),
+                'insurance_type' => $request->input('insurance_type'),
+                'plan_id'        => $request->input('plan_id'),
+                'subtotal'       => $request->input('subtotal'),
+                'vat_amount'     => $request->input('vat_amount'),
+                'total'          => $request->input('total'),
+            ]);
+            throw $e;
+        }
 
         // ── Server-side price validation ──
         $pricingError = $this->validatePricing($validated);
