@@ -12,6 +12,13 @@ export const companies = [
     { id: 10, nameAr: 'أمانة للتأمين', logo: '', rating: 4.0, color: '#004C8E', image: 'amana.png' },
     { id: 11, nameAr: 'الدرع العربي للتأمين', logo: '', rating: 4.1, color: '#1A5276', image: 'der3.png' },
     { id: 12, nameAr: 'الصقر للتأمين', logo: '', rating: 4.3, color: '#8B0000', image: 'saqr.png' },
+    { id: 13, nameAr: 'التعاونية للتأمين', logo: '', rating: 4.7, color: '#003D7A', image: 'tawuniya.png' },
     { id: 14, nameAr: 'اتحاد الخليج الأهلية', logo: '', rating: 3.9, color: '#1C4E80', image: 'gulfunion.png' },
     { id: 15, nameAr: 'المتحدة للتأمين التعاوني', logo: '', rating: 4.1, color: '#2C3E50', image: 'tuci.png' },
+    { id: 16, nameAr: 'الراجحي للتأمين', logo: '', rating: 4.6, color: '#006835', image: 'alrajhi.png' },
+    { id: 17, nameAr: 'الوطنية للتأمين', logo: '', rating: 4.2, color: '#D4A017', image: 'wataniya.png' },
+    { id: 18, nameAr: 'الخليج العامة للتأمين', logo: '', rating: 4.0, color: '#0D4F8B', image: 'gulf_general.png' },
+    { id: 19, nameAr: 'GIG للتأمين', logo: '', rating: 4.3, color: '#E31937', image: 'gig.png' },
+    { id: 20, nameAr: 'الإنماء طوكيو مارين', logo: '', rating: 4.4, color: '#00468B', image: 'alinma_tokio.png' },
+    { id: 21, nameAr: 'ليفا للتأمين', logo: '', rating: 4.1, color: '#FF6B00', image: 'liva.png' },
 ];
