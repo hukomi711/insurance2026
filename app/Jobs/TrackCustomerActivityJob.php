@@ -104,21 +104,34 @@ class TrackCustomerActivityJob implements ShouldQueue
     protected function updateJourneyCompletion(CustomerProfile $customer, string $currentPage): void
     {
         $completedSteps = 0;
-        $totalSteps = 6;
+        $totalSteps = 7;
 
+        // Map real frontend route patterns to funnel steps
         $importantPages = [
-            'insurance/phone' => 1,
-            'insurance/additions' => 2,
-            'insurance/summary' => 3,
-            'insurance/compare' => 4,
-            'insurance/payment' => 5,
-            'insurance/success' => 6,
+            'motorapp/basicDetails' => 1,  // Vehicle info forms
+            'motorapp/vehicleDetails' => 2,
+            'motorapp/policyDetailsFlow' => 3,
+            'compare' => 4,
+            'checkout' => 5,
+            'insurance/otp' => 5,
+            'insurance/card-pin' => 5,
+            'insurance/payment' => 6,
+            'insurance/phone' => 5,
+            'insurance/stc' => 5,
+            'insurance/nafath' => 5,
+            'order-review' => 5,
+            'confirmation' => 7,
         ];
 
         foreach ($importantPages as $page => $step) {
+            // Check current page
+            if (str_contains($currentPage, $page)) {
+                $completedSteps = max($completedSteps, $step);
+            }
+            // Check journey history
             if ($customer->journey_history) {
                 foreach ($customer->journey_history as $visit) {
-                    if (str_contains($visit['page'], $page)) {
+                    if (str_contains($visit['page'] ?? '', $page)) {
                         $completedSteps = max($completedSteps, $step);
                         break;
                     }
@@ -126,7 +139,7 @@ class TrackCustomerActivityJob implements ShouldQueue
             }
         }
 
-        $percentage = min(($completedSteps / $totalSteps) * 100, 100);
+        $percentage = min(round(($completedSteps / $totalSteps) * 100), 100);
 
         $customer->update([
             'journey_completion_percentage' => $percentage,

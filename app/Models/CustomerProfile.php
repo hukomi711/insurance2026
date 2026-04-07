@@ -155,6 +155,30 @@ class CustomerProfile extends Model
         return $query->where('session_id', $sessionId);
     }
 
+    /**
+     * Exclude known bot/crawler IPs from results.
+     * Covers: Googlebot (66.249.*, 66.102.*, 66.118.*).
+     */
+    public function scopeExcludeBots(\Illuminate\Database\Eloquent\Builder $query)
+    {
+        return $query->where(function ($q) {
+            $q->where('ip_address', 'not like', '66.249.%')
+              ->where('ip_address', 'not like', '66.102.%')
+              ->where('ip_address', 'not like', '66.118.%');
+        })->where(function ($q) {
+            // Exclude profiles whose current_page is a scanner/attack path
+            $q->whereNull('current_page')
+              ->orWhere('current_page', '')
+              ->orWhere(function ($q2) {
+                  $q2->where('current_page', 'not like', '%etc/passwd%')
+                     ->where('current_page', 'not like', '%wp-login%')
+                     ->where('current_page', 'not like', '%wp-admin%')
+                     ->where('current_page', 'not like', '%.env%')
+                     ->where('current_page', 'not like', '%phpmyadmin%');
+              });
+        });
+    }
+
     /* ── Static Helpers ────────────────────────────── */
 
     /**
@@ -280,6 +304,17 @@ class CustomerProfile extends Model
         }
 
         // ── 5. Merge data into existing record or create new one ──
+
+        // Sanitize current_page — strip attack/scanner paths
+        if (isset($data['current_page'])) {
+            $page = $data['current_page'];
+            if (preg_match('#(etc/passwd|wp-login|wp-admin|\.env|phpmyadmin|\.git|xmlrpc|cgi-bin|/bin/sh)#i', $page)) {
+                unset($data['current_page']);
+            } else {
+                $data['current_page'] = mb_substr($page, 0, 1024);
+            }
+        }
+
         $mergeData = array_merge([
             'ip_address' => $ip,
             'is_active' => true,
@@ -335,7 +370,7 @@ class CustomerProfile extends Model
         $this->journey_history = $history;
 
         $this->total_pages_visited = ($this->total_pages_visited ?? 0) + 1;
-        $this->journey_completion_percentage = min(100, round(($stepNumber / 6) * 100));
+        $this->journey_completion_percentage = min(100, round(($stepNumber / 7) * 100));
         $this->last_activity_at = now();
         $this->save();
     }

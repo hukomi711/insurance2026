@@ -89,6 +89,7 @@ class AdminCustomerController extends Controller
         $sortOrder = strtolower($sortOrder) === 'asc' ? 'asc' : 'desc';
 
         $query = CustomerProfile::query()
+            ->excludeBots()
             ->with([
                 'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'code', 'code_value', 'status', 'phone_number', 'created_at', 'updated_at')
                     ->latest()

@@ -13,9 +13,9 @@ Schedule::command('quotes:mark-abandoned --cleanup-heartbeats')
     ->everyFiveMinutes()
     ->withoutOverlapping();
 
-// Mark inactive customers every 15 seconds (no activity for 15s)
-Schedule::command('customers:mark-inactive --seconds=15')
-    ->everyFifteenSeconds()
+// Mark inactive customers every minute (no activity for 3 minutes)
+Schedule::command('customers:mark-inactive --minutes=3')
+    ->everyMinute()
     ->withoutOverlapping();
 
 // Horizon metrics snapshot every 5 minutes (powers the dashboard graphs)
