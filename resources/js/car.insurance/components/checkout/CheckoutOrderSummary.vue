@@ -85,7 +85,24 @@
                     </span>
                 </div>
 
-                <!-- تأمينكم Discount -->
+                <!-- Safe Driving Discount (10%) -->
+                <div v-if="hasDiscount"
+                    class="flex items-center justify-between text-xs bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-2">
+                    <span class="text-emerald-700 font-semibold flex items-center gap-1">
+                        <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                        </svg>
+                        خصم القيادة الآمنة (10%)
+                    </span>
+                    <span class="font-bold text-emerald-700 ltr-nums inline-flex items-center gap-1">
+                        -{{ formatDecimal( safeDrivingDiscount ) }}
+                        <SarIcon className="size-2.5 text-emerald-600" />
+                    </span>
+                </div>
+
+                <!-- تأميني Discount (20%) -->
                 <div v-if="hasDiscount"
                     class="flex items-center justify-between text-xs bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-2">
                     <span class="text-emerald-700 font-semibold flex items-center gap-1">
@@ -95,10 +112,10 @@
                                 d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
                         </svg>
-                        خصم تأمينكم (20%)
+                        خصم تأميني (20%)
                     </span>
                     <span class="font-bold text-emerald-700 ltr-nums inline-flex items-center gap-1">
-                        -{{ formatDecimal( discountAmount ) }}
+                        -{{ formatDecimal( taminiDiscount ) }}
                         <SarIcon className="size-2.5 text-emerald-600" />
                     </span>
                 </div>
@@ -169,7 +186,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        وفّرت {{ formatDecimal( discountAmount ) }} ريال مع تأمينكم!
+                        وفّرت {{ formatDecimal( discountAmount ) }} ريال مع تأميني!
                     </span>
                 </div>
             </div>
@@ -207,6 +224,8 @@ const annualPrice = computed( () => props.selectedPlanData?.annualPrice || plan.
 const originalPrice = computed( () => props.selectedPlanData?.originalPrice || annualPrice.value );
 const hasDiscount = computed( () => originalPrice.value > annualPrice.value );
 const discountAmount = computed( () => Math.round( ( originalPrice.value - annualPrice.value ) * 100 ) / 100 );
+const safeDrivingDiscount = computed( () => Math.round( originalPrice.value * 0.10 * 100 ) / 100 );
+const taminiDiscount = computed( () => Math.round( ( discountAmount.value - safeDrivingDiscount.value ) * 100 ) / 100 );
 const addons = computed( () => props.selectedPlanData?.addons || [] );
 const addonsTotal = computed( () => addons.value.reduce( ( sum, a ) => sum + Number( a?.price || 0 ), 0 ) );
 const subtotalBeforeVAT = computed( () => {

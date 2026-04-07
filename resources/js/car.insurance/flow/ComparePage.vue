@@ -78,7 +78,7 @@
                     <div class="flex gap-2 items-center justify-between cursor-pointer rounded-lg p-4 mb-4 hover:opacity-80 transition-opacity bg-green-600 text-white">
                         <div class="flex gap-2 items-center">
                             <img :src="ncdBannerImg" alt="ncd-discount-clap" class="max-w-full w-5 h-5" loading="lazy" width="20" height="20" />
-                            <span class="text-sm font-medium">مبروك عليك خصم يبدأ من 20% نتيجة قيادتك الآمنة</span>
+                            <span class="text-sm font-medium">مبروك عليك خصم يبدأ من 10% نتيجة قيادتك الآمنة + خصم تأميني 20%</span>
                         </div>
                         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -220,40 +220,6 @@
                     :filters="filters" :companies="companies" @update:sort-by="sortBy = $event"
                     @update:filters="Object.assign(filters, $event)"
                     @reset-filters="resetFilters" @show-hero="showHeroModal = true" />
-            </div>
-        </div>
-
-        <!-- Fixed Mobile Bottom Bar -->
-        <div class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 p-3 xl:hidden z-40 safe-area-bottom">
-            <div class="flex items-center justify-between gap-3">
-                <div class="flex items-center gap-2 typ-s2 text-muted">
-                    <span>عرض مختصر</span>
-                    <SwitchRoot id="compact-toggle-mobile" v-model:checked="compactView" name="compactViewMobile"
-                        class="w-9 h-5 bg-slate-300 rounded-full relative data-[state=checked]:bg-primary transition-colors">
-                        <SwitchThumb
-                            class="block w-4 h-4 bg-white rounded-full shadow transition-transform translate-x-[2px] data-[state=checked]:translate-x-[18px]" />
-                    </SwitchRoot>
-                </div>
-
-                <!-- Compare Selected -->
-                <button v-if="selectedPlans.length >= 2" class="flex items-center gap-2 px-4 py-2 bg-secondary text-white typ-s2 font-bold rounded-xl"
-                    @click="showCompareModal = true">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    مقارنة ({{ selectedPlans.length }})
-                </button>
-
-                <!-- Mobile Filter Trigger -->
-                <button class="flex items-center gap-1.5 px-4 py-2 border border-slate-200 typ-s2 text-foreground font-bold rounded-xl"
-                    @click="showMobileFilters = true">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                    </svg>
-                    تصفية
-                </button>
             </div>
         </div>
 
