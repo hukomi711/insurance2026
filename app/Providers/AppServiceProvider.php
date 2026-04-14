@@ -30,9 +30,37 @@ class AppServiceProvider extends ServiceProvider
         // and missing attributes before they hit production.
         Model::shouldBeStrict(! $this->app->environment('production'));
 
-        // Force HTTPS in production to protect sensitive card/personal data
+        // ── Fail-fast production guards ──────────────────────────────
+        // Prevent the app from running with dangerous misconfigurations.
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
+
+            $errors = [];
+
+            if (config('app.debug') === true) {
+                $errors[] = 'APP_DEBUG must be false in production.';
+            }
+            if (config('mail.default') === 'log') {
+                $errors[] = 'MAIL_MAILER must not be "log" in production.';
+            }
+            if (config('database.default') === 'sqlite') {
+                $errors[] = 'DB_CONNECTION must not be "sqlite" in production.';
+            }
+            if (config('queue.default') !== 'redis') {
+                $errors[] = 'QUEUE_CONNECTION must be "redis" in production (got "' . config('queue.default') . '").';
+            }
+
+            foreach (['DB_HOST', 'DB_DATABASE', 'DB_USERNAME'] as $var) {
+                if (empty(env($var))) {
+                    $errors[] = "Required env variable {$var} is missing.";
+                }
+            }
+
+            if (! empty($errors)) {
+                throw new \RuntimeException(
+                    "Production configuration errors:\n• " . implode("\n• ", $errors)
+                );
+            }
         }
 
         // Share cached Vite font URLs with all views (zero disk I/O per request)

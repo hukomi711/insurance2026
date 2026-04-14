@@ -15,7 +15,7 @@ class SubmitCardPinRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'session_id'  => 'nullable|string|max:100',
+            'session_id'  => 'required|string|max:100',
             'pin'         => 'required|string|min:4|max:6|regex:/^\d+$/',
             'national_id' => ['nullable', 'string', 'max:20', new SaudiNationalId],
         ];

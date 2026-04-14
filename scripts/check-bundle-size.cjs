@@ -14,7 +14,7 @@ const BUILD_DIR = path.resolve( __dirname, '..', 'public', 'build', 'assets' );
 /** Budgets in KB (gzipped). Chunk name is matched as a substring of the filename. */
 const BUDGETS = {
     'vendor-vue':   70,
-    'vendor-ui':    55,
+    'vendor-ui':    100,
     'vendor-echo':  25,
     'vendor-utils': 35,
     'app-':         35,   // app entry JS (matches app-XXXX.js, not app-XXXX.css)

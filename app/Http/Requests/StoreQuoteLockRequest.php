@@ -28,7 +28,7 @@ class StoreQuoteLockRequest extends FormRequest
             'addons.*.name'     => 'nullable|string|max:255',
             'addons.*.price'    => 'nullable|numeric|min:0',
 
-            'session_id'        => 'nullable|string|max:255',
+            'session_id'        => 'required|string|max:255',
         ];
     }
 }

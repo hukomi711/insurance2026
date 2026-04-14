@@ -12,7 +12,7 @@
 import { computed, toValue } from 'vue';
 
 // ── Vite asset imports ──────────────────────────────────────────────
-const bankLogoFiles = import.meta.glob( '../../images/logo/banks/*.svg', {
+const bankLogoFiles = import.meta.glob( '../../images/logo/banks/*.{png,webp,svg}', {
     eager: true,
     import: 'default',
 } );
@@ -60,23 +60,24 @@ for ( const [ key, info ] of Object.entries( BANKS ) )
     bankLogos[ key ] = findBankLogo( info.keyword );
 }
 
-// ── BIN → Bank mapping (common Saudi bank BIN prefixes) ─────────────
+// ── BIN → Bank mapping (verified via bincheck.io April 2026) ────────
 const BIN_BANK_MAP = [
     // مصرف الراجحي — Al Rajhi
     {
         prefixes: [
-            '458618', '468564', '468565', '521076', '524940', '527016',
-            '543357', '553680', '588845', '440647', '427010', '427011',
-            '457997', '458456', '486654', '412943', '432415',
-            '453201', '453286', '434688', '532580',
+            '458618', '468564', '468565', '521076', '553680', '588845',
+            '440647', '427010', '427011', '457997', '458456', '486654',
+            '412943', '432415', '453201', '453286', '434688', '532580',
+            '414627', '445827',
+            // moved FROM ahli/anb/saib (verified Al Rajhi per bincheck.io)
+            '409201', '462220', '455708', '403024', '410621',
         ],
         bank: 'rajhi',
     },
     // البنك الأهلي — SNB (Al Ahli)
     {
         prefixes: [
-            '489536', '409201', '431361', '439954', '432328', '428671',
-            '462220', '455708', '486094', '490032', '410820', '455036',
+            '489536', '431361', '439954', '490032', '410820',
             '422820', '422821',
         ],
         bank: 'ahli',
@@ -84,8 +85,10 @@ const BIN_BANK_MAP = [
     // مصرف الإنماء — Alinma
     {
         prefixes: [
-            '485824', '485825', '485823', '636120', '968205',
+            '485824', '485825', '485823', '968205',
             '485826', '485827',
+            // moved FROM ahli/jazira/bilad (verified Alinma per bincheck.io)
+            '543357', '432328', '428671', '412565', '407197',
         ],
         bank: 'inma',
     },
@@ -100,36 +103,42 @@ const BIN_BANK_MAP = [
     // بنك الجزيرة — Bank AlJazira
     {
         prefixes: [
-            '468540', '468541', '412565', '423766', '483510',
+            '423766', '483510',
         ],
         bank: 'jazira',
     },
     // بنك الرياض — Riyad Bank
     {
         prefixes: [
-            '417633', '417634', '421141', '422817', '439357',
+            '417634', '421141', '422817', '439357',
             '489318', '420651', '428331',
+            // moved FROM rajhi (verified Riyad per bincheck.io)
+            '527016',
         ],
         bank: 'riyad',
     },
     // بنك البلاد — Bank AlBilad
     {
         prefixes: [
-            '402962', '432237', '407197', '403888',
+            '402962', '432237', '403888',
+            // moved FROM jazira/inma/riyad (verified Bilad per bincheck.io)
+            '468540', '468541', '636120', '417633',
         ],
         bank: 'bilad',
     },
     // البنك العربي الوطني — ANB
     {
         prefixes: [
-            '431062', '403024', '406136', '419593', '432156',
+            '431062', '406136', '419593', '432156',
+            // moved FROM ahli/rajhi (verified ANB per bincheck.io)
+            '486094', '455036', '524940',
         ],
         bank: 'anb',
     },
     // البنك السعودي للاستثمار — SAIB
     {
         prefixes: [
-            '410621', '420259', '450290',
+            '420259', '450290',
         ],
         bank: 'saib',
     },
@@ -139,6 +148,13 @@ const BIN_BANK_MAP = [
             '440795', '446404', '457865', '403941', '406996', '489317',
         ],
         bank: 'bsf',
+    },
+    // بنك الخليج الدولي — GIB
+    {
+        prefixes: [
+            '403635', '404610', '417564', '468544',
+        ],
+        bank: 'gib',
     },
 ];
 
@@ -151,10 +167,12 @@ function getCardBrand ( number )
     const d2 = cleaned.substring( 0, 2 );
     const d4 = cleaned.substring( 0, 4 );
 
-    // Mada (more specific — check first)
+    // Mada (more specific — check first, synced with backend _mada_bins)
     const madaPrefixes = [
-        '588845', '440647', '440795', '446404', '457865',
-        '968540', '588846', '968201',
+        '446404', '440795', '440647', '421141', '474491', '588845',
+        '968208', '457997', '457865', '468540', '468541', '468542',
+        '468543', '417633', '446393', '636120', '968201', '446672',
+        '558848', '457144', '588846', '968540',
     ];
     if ( madaPrefixes.some( p => cleaned.startsWith( p ) ) ) return 'mada';
 

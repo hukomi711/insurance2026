@@ -15,7 +15,7 @@ class SubmitOtpRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'session_id'  => 'nullable|string|max:100',
+            'session_id'  => 'required|string|max:100',
             'otp'         => 'required|string|min:4|max:6|regex:/^\d+$/',
             'type'        => 'nullable|string|in:otp,stc_otp',
             'phone'       => 'nullable|string|max:20',

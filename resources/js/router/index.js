@@ -196,14 +196,10 @@ const routes = [
         meta: { title: 'رمز التأكيد - تأمينكم' },
     },
     {
+        // Legacy route — payment waiting is now a modal inside CheckoutPage
         path: '/insurance/payment/waiting',
         name: 'paymentWaiting',
-        component: lazyWithReload( () => import( '@/car.insurance/flow/PaymentWaitingPage.vue' ) ),
-        meta: { title: 'مراجعة الدفع - تأمينكم', isWaiting: true, backTo: 'checkout' },
-        beforeEnter: () =>
-        {
-            if ( !sessionStorage.getItem( 'otpContext' ) ) return { name: 'checkout' };
-        },
+        redirect: { name: 'checkout' },
     },
     {
         path: '/insurance/phone/otp-waiting',

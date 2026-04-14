@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CustomerProfile;
+use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class DashboardStatsController extends Controller
 {
@@ -52,13 +54,32 @@ class DashboardStatsController extends Controller
                 9 => 'سبتمبر', 10 => 'أكتوبر', 11 => 'نوفمبر', 12 => 'ديسمبر',
             ];
 
+            // Query real order data grouped by month for current year
+            $year = now()->year;
+            $driver = DB::getDriverName();
+            $monthExpr = $driver === 'sqlite'
+                ? "CAST(strftime('%m', created_at) AS INTEGER)"
+                : 'MONTH(created_at)';
+
+            $rows = Order::whereYear('created_at', $year)
+                ->select([
+                    DB::raw("{$monthExpr} as m"),
+                    DB::raw("SUM(CASE WHEN insurance_type = 'comprehensive' THEN 1 ELSE 0 END) as comprehensive"),
+                    DB::raw("SUM(CASE WHEN insurance_type != 'comprehensive' THEN 1 ELSE 0 END) as third_party"),
+                    DB::raw('COALESCE(SUM(total), 0) as revenue'),
+                ])
+                ->groupBy('m')
+                ->get()
+                ->keyBy('m');
+
             $data = [];
             foreach ($months as $num => $name) {
+                $row = $rows->get($num);
                 $data[] = [
                     'month'         => $name,
-                    'comprehensive' => 0,
-                    'thirdParty'    => 0,
-                    'revenue'       => 0,
+                    'comprehensive' => (int) ($row->comprehensive ?? 0),
+                    'thirdParty'    => (int) ($row->third_party ?? 0),
+                    'revenue'       => (float) ($row->revenue ?? 0),
                 ];
             }
 

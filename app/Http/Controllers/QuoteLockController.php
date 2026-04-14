@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 class QuoteLockController extends Controller
 {
-    private const LOCK_TTL_MINUTES = 15;
+    private const LOCK_TTL_MINUTES = 60;
 
     /**
      * Issue a short-lived quote lock token for checkout consistency.

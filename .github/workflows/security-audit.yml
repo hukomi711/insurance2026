@@ -41,3 +41,9 @@ jobs:
 
       - name: NPM security audit (prod deps)
         run: npm audit --omit=dev --audit-level=high
+
+      - name: Full dependency governance check
+        run: node scripts/check-deps-health.cjs
+
+      - name: Check for outdated packages
+        run: npm outdated || true

@@ -18,6 +18,7 @@ class QuoteMonitorController extends Controller
     public function live(Request $request): JsonResponse
     {
         $sessions = QuoteSession::active()
+            ->with('stepLogs')
             ->where('last_heartbeat_at', '>=', now()->subMinutes(5))
             ->orderByDesc('last_heartbeat_at')
             ->get()
@@ -54,7 +55,8 @@ class QuoteMonitorController extends Controller
             $query->whereDate('created_at', '<=', $to);
         }
 
-        $sessions = $query->orderByDesc('created_at')
+        $sessions = $query->with('stepLogs')
+            ->orderByDesc('created_at')
             ->paginate($request->input('per_page', 20));
 
         return response()->json($sessions);

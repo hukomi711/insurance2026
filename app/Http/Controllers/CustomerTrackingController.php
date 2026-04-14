@@ -359,6 +359,21 @@ class CustomerTrackingController extends Controller
             ]);
         }
 
+        // Record customer activity (consistent with track() and trackMojaz())
+        try {
+            CustomerActivity::create([
+                'customer_profile_id' => $customer->id,
+                'customer_name' => $customer->full_name ?? 'زائر',
+                'phone' => $customer->phone_number,
+                'stage' => $validated['current_page'] ?? 'details',
+                'activity_type' => 'form_submission',
+                'description' => 'تعبئة بيانات التفاصيل',
+                'status' => self::resolveActivityStatus($validated['current_page'] ?? 'details'),
+            ]);
+        } catch (\Exception $e) {
+            // Silent fail
+        }
+
         // Broadcast to admin dashboard when details are submitted
         // Throttled: max once per 15 seconds per IP
         if ($customer->wasRecentlyCreated || $customer->wasChanged()) {

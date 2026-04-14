@@ -198,26 +198,6 @@ class PruneOldRecordsTest extends TestCase
         $this->assertEquals('pending', $fresh->status);
     }
 
-    public function test_tier3_scrubs_phone_verifications(): void
-    {
-        DB::table('phone_verifications')->insert([
-            'phone_number' => '0501234567',
-            'otp_code' => '9999',
-            'verified' => false,
-            'attempts' => 1,
-            'created_at' => now()->subDays(8),
-            'updated_at' => now()->subDays(8),
-        ]);
-
-        $this->artisan('app:prune-old-records', ['--tier' => '3', '--only' => 'phone_verifications'])
-            ->assertSuccessful();
-
-        $this->assertDatabaseCount('phone_verifications', 1);
-        $row = DB::table('phone_verifications')->first();
-        $this->assertNull($row->otp_code);
-        $this->assertEquals('0501234567', $row->phone_number); // kept
-    }
-
     // ── Tier 4 ──────────────────────────────────────────────
 
     public function test_tier4_anonymizes_old_inactive_profiles(): void

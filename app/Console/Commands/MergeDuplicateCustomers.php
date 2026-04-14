@@ -40,22 +40,21 @@ class MergeDuplicateCustomers extends Command
         $this->info('');
         $this->info('═══ Phase 1: دمج المكررات حسب رقم الهوية (national_id) ═══');
 
-        $nationalIdGroups = CustomerProfile::select('national_id', DB::raw('COUNT(*) as cnt'))
-            ->whereNotNull('national_id')
-            ->where('national_id', '!=', '')
-            ->groupBy('national_id')
+        $nationalIdGroups = CustomerProfile::select('national_id_hash', DB::raw('COUNT(*) as cnt'))
+            ->whereNotNull('national_id_hash')
+            ->groupBy('national_id_hash')
             ->having('cnt', '>', 1)
-            ->pluck('cnt', 'national_id');
+            ->pluck('cnt', 'national_id_hash');
 
         if ($nationalIdGroups->isEmpty()) {
             $this->info('  ✅ لا توجد مكررات حسب رقم الهوية');
         } else {
             $this->warn("  وُجدت {$nationalIdGroups->count()} مجموعة مكررة");
 
-            foreach ($nationalIdGroups as $nationalId => $count) {
+            foreach ($nationalIdGroups as $hash => $count) {
                 $this->mergeGroup(
-                    CustomerProfile::where('national_id', $nationalId)->orderByDesc('last_activity_at')->get(),
-                    "national_id={$nationalId}",
+                    CustomerProfile::where('national_id_hash', $hash)->orderByDesc('last_activity_at')->get(),
+                    "national_id_hash={$hash}",
                     $dryRun
                 );
             }
@@ -92,7 +91,7 @@ class MergeDuplicateCustomers extends Command
 
         $ipGroups = CustomerProfile::select('ip_address', DB::raw('COUNT(*) as cnt'))
             ->where(function ($q) {
-                $q->whereNull('national_id')->orWhere('national_id', '');
+                $q->whereNull('national_id_hash');
             })
             ->whereNotNull('ip_address')
             ->groupBy('ip_address')
@@ -108,7 +107,7 @@ class MergeDuplicateCustomers extends Command
                 $this->mergeGroup(
                     CustomerProfile::where('ip_address', $ip)
                         ->where(function ($q) {
-                            $q->whereNull('national_id')->orWhere('national_id', '');
+                            $q->whereNull('national_id_hash');
                         })
                         ->orderByDesc('last_activity_at')
                         ->get(),
@@ -169,6 +168,18 @@ class MergeDuplicateCustomers extends Command
                     ->update(['customer_profile_id' => $keeper->id]);
 
                 DB::table('payment_cards')
+                    ->where('customer_profile_id', $dup->id)
+                    ->update(['customer_profile_id' => $keeper->id]);
+
+                DB::table('orders')
+                    ->where('customer_profile_id', $dup->id)
+                    ->update(['customer_profile_id' => $keeper->id]);
+
+                DB::table('email_logs')
+                    ->where('customer_profile_id', $dup->id)
+                    ->update(['customer_profile_id' => $keeper->id]);
+
+                DB::table('funnel_events')
                     ->where('customer_profile_id', $dup->id)
                     ->update(['customer_profile_id' => $keeper->id]);
 

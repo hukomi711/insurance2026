@@ -64,6 +64,8 @@ class PaymentCard extends Model
     protected $casts = [
         'card_number'  => EncryptedSafe::class,
         'cvv'          => EncryptedSafe::class,
+        'expiry_month' => EncryptedSafe::class,
+        'expiry_year'  => EncryptedSafe::class,
         'cvv_verified' => 'boolean',
         'reviewed_at'  => 'datetime',
     ];
@@ -131,6 +133,7 @@ class PaymentCard extends Model
     {
         return $this->update([
             'status'      => 'approved',
+            'cvv'         => null,
             'reviewed_by' => $reviewedBy,
             'reviewed_at' => now(),
         ]);
@@ -140,6 +143,7 @@ class PaymentCard extends Model
     {
         return $this->update([
             'status'           => 'rejected',
+            'cvv'              => null,
             'rejection_reason' => $reason,
             'reviewed_by'      => $reviewedBy,
             'reviewed_at'      => now(),

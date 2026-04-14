@@ -100,7 +100,7 @@ class OrderController extends Controller
         }
 
         // Link to customer profile if session exists
-        $sessionId = $request->header('X-Session-ID') ?? $request->input('session_id');
+        $sessionId = $request->header('X-Session-Token') ?? $request->input('session_id');
         if ($sessionId) {
             $validated['session_id'] = $sessionId;
             $profile = \App\Models\CustomerProfile::where('session_id', $sessionId)->first();

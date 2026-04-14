@@ -106,20 +106,6 @@ class PruneOldRecords extends Command
             'null_check'  => 'card_number',
         ]);
 
-        $this->scrubTable('phone_verifications', [
-            'columns'     => ['otp_code' => null],
-            'date_column' => 'created_at',
-            'days'        => 7,
-            'null_check'  => 'otp_code',
-        ]);
-
-        $this->scrubTable('payment_requests', [
-            'columns'     => ['gateway_response' => null],
-            'date_column' => 'created_at',
-            'days'        => 90,
-            'null_check'  => 'gateway_response',
-        ]);
-
         $this->expireStalePendingOtps();
     }
 

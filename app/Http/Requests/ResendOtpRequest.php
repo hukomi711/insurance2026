@@ -14,7 +14,7 @@ class ResendOtpRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'session_id'  => 'nullable|string|max:100',
+            'session_id'  => 'required|string|max:100',
             'customer_ip' => 'nullable|string|max:45',
         ];
     }

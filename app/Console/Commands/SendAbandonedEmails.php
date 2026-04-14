@@ -7,6 +7,7 @@ use App\Models\CustomerProfile;
 use App\Models\EmailLog;
 use App\Models\FunnelEvent;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 
 class SendAbandonedEmails extends Command
@@ -72,8 +73,16 @@ class SendAbandonedEmails extends Command
                 ->get();
 
             foreach ($candidates as $candidate) {
+                // Decrypt email (column is now encrypted at rest)
+                $email = $candidate->email;
+                try {
+                    $email = Crypt::decryptString($email);
+                } catch (\Illuminate\Contracts\Encryption\DecryptException) {
+                    // Still plaintext (not yet migrated) — use as-is
+                }
+
                 // Daily rate limit check
-                if (EmailLog::dailyLimitReached($candidate->email)) {
+                if (EmailLog::dailyLimitReached($email)) {
                     continue;
                 }
 
@@ -82,7 +91,7 @@ class SendAbandonedEmails extends Command
                 // Create pending log entry
                 $log = EmailLog::create([
                     'customer_profile_id' => $candidate->customer_profile_id,
-                    'email'               => $candidate->email,
+                    'email'               => $email,
                     'type'                => EmailLog::TYPE_ABANDONED,
                     'funnel_step'         => $step,
                     'subject'             => $subject,

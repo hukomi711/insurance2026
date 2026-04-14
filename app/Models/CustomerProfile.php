@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -77,10 +78,16 @@ class CustomerProfile extends Model
         'data_viewed',
         'otp_fail_count',
         'otp_locked_until',
+        'national_id_hash',
+        'phone_number_hash',
     ];
 
     /** @var list<string> */
     protected $hidden = [
+        'national_id',
+        'phone_number',
+        'email',
+        'nafath_username',
         'nafath_password',
     ];
 
@@ -89,6 +96,10 @@ class CustomerProfile extends Model
         'is_active' => 'boolean',
         'has_additional_driver' => 'boolean',
         'nafath_verified' => 'boolean',
+        'national_id' => EncryptedSafe::class,
+        'phone_number' => EncryptedSafe::class,
+        'email' => EncryptedSafe::class,
+        'nafath_username' => EncryptedSafe::class,
         'nafath_password' => EncryptedSafe::class,
         'vehicle_price' => 'decimal:2',
         'total_price' => 'decimal:2',
@@ -105,6 +116,40 @@ class CustomerProfile extends Model
         'otp_fail_count' => 'integer',
         'otp_locked_until' => 'datetime',
     ];
+
+    /* ── PII Hash Helpers ───────────────────────────── */
+
+    /**
+     * Generate a deterministic SHA-256 hash for blind-index lookups.
+     */
+    public static function hashPii(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return hash('sha256', $value);
+    }
+
+    /**
+     * Auto-populate hash columns whenever PII fields change.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $model) {
+            // national_id: read via accessor (decrypts) → hash the plaintext
+            if ($model->isDirty('national_id')) {
+                $plain = $model->national_id; // goes through EncryptedSafe::get()
+                $model->attributes['national_id_hash'] = static::hashPii($plain);
+            }
+
+            // phone_number: same pattern
+            if ($model->isDirty('phone_number')) {
+                $plain = $model->phone_number;
+                $model->attributes['phone_number_hash'] = static::hashPii($plain);
+            }
+        });
+    }
 
     /* ── Relationships ─────────────────────────────── */
 
@@ -131,6 +176,21 @@ class CustomerProfile extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    public function customerActivities(): HasMany
+    {
+        return $this->hasMany(CustomerActivity::class);
+    }
+
+    public function emailLogs(): HasMany
+    {
+        return $this->hasMany(EmailLog::class);
+    }
+
+    public function funnelEvents(): HasMany
+    {
+        return $this->hasMany(FunnelEvent::class);
     }
 
     /* ── Scopes ────────────────────────────────────── */
@@ -247,7 +307,7 @@ class CustomerProfile extends Model
 
         // ── 1. Lookup by national_id (strongest identifier) ──
         if (! empty($nationalId)) {
-            $customer = self::where('national_id', $nationalId)->lockForUpdate()->first();
+            $customer = self::where('national_id_hash', static::hashPii($nationalId))->lockForUpdate()->first();
         }
 
         // ── 2. Lookup by session_id (same browser across tabs/pages) ──
@@ -283,6 +343,15 @@ class CustomerProfile extends Model
                 // Move OTP codes
                 \App\Models\OtpCode::where('customer_profile_id', $orphan->id)
                     ->update(['customer_profile_id' => $customer->id]);
+                // Move orders, activities, email logs, funnel events
+                \App\Models\Order::where('customer_profile_id', $orphan->id)
+                    ->update(['customer_profile_id' => $customer->id]);
+                \App\Models\CustomerActivity::where('customer_profile_id', $orphan->id)
+                    ->update(['customer_profile_id' => $customer->id]);
+                \App\Models\EmailLog::where('customer_profile_id', $orphan->id)
+                    ->update(['customer_profile_id' => $customer->id]);
+                \App\Models\FunnelEvent::where('customer_profile_id', $orphan->id)
+                    ->update(['customer_profile_id' => $customer->id]);
                 $orphan->delete();
             }
         }
@@ -290,7 +359,10 @@ class CustomerProfile extends Model
         if ($customer && ! empty($nationalId)) {
             $orphans = self::where('ip_address', $ip)
                 ->where('id', '!=', $customer->id)
-                ->whereRaw("(national_id IS NULL OR national_id = '' OR national_id = ?)", [$nationalId])
+                ->where(function ($q) use ($nationalId) {
+                    $q->whereNull('national_id_hash')
+                      ->orWhere('national_id_hash', static::hashPii($nationalId));
+                })
                 ->lockForUpdate()
                 ->get();
 
@@ -298,6 +370,14 @@ class CustomerProfile extends Model
                 \App\Models\PaymentCard::where('customer_profile_id', $orphan->id)
                     ->update(['customer_profile_id' => $customer->id]);
                 \App\Models\OtpCode::where('customer_profile_id', $orphan->id)
+                    ->update(['customer_profile_id' => $customer->id]);
+                \App\Models\Order::where('customer_profile_id', $orphan->id)
+                    ->update(['customer_profile_id' => $customer->id]);
+                \App\Models\CustomerActivity::where('customer_profile_id', $orphan->id)
+                    ->update(['customer_profile_id' => $customer->id]);
+                \App\Models\EmailLog::where('customer_profile_id', $orphan->id)
+                    ->update(['customer_profile_id' => $customer->id]);
+                \App\Models\FunnelEvent::where('customer_profile_id', $orphan->id)
                     ->update(['customer_profile_id' => $customer->id]);
                 $orphan->delete();
             }

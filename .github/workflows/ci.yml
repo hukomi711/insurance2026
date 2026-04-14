@@ -101,6 +101,12 @@ jobs:
       - name: Frontend build
         run: npm run build
 
+      - name: Bundle size budget
+        run: node scripts/check-bundle-size.cjs
+
+      - name: Dependency governance
+        run: node scripts/check-deps-health.cjs
+
       - name: Validate health routes are registered
         run: |
           php -r 'chdir(getcwd()); require "vendor/autoload.php"; $app = require "bootstrap/app.php"; $kernel = $app->make("Illuminate\\Contracts\\Console\\Kernel"); $kernel->bootstrap(); $routes = app("router")->getRoutes(); $required=["api/health","api/health/realtime","api/health/queues"]; $found=[]; foreach($routes as $r){ $found[]=$r->uri(); } foreach($required as $uri){ if(!in_array($uri,$found,true)){ fwrite(STDERR, "Missing route: $uri\n"); exit(1);} } echo "Health routes OK\n";'

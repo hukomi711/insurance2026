@@ -270,6 +270,7 @@ const CompareModal = defineAsyncComponent( () => import( '@/car.insurance/compon
 const MobileFiltersSheet = defineAsyncComponent( () => import( '@/car.insurance/components/compare/MobileFiltersSheet.vue' ) );
 import CompareSidebar from '@/car.insurance/components/compare/CompareSidebar.vue';
 import logger from '@/utils/logger';
+import { getSessionToken } from '@/utils/sessionToken';
 
 const ncdBannerImg = new URL( '../../../images/motorapp/mabruk.webp', import.meta.url ).href;
 
@@ -713,7 +714,7 @@ async function issueQuoteLock ( selection ) {
         total,
         deductible: Number( selection.deductible || 0 ),
         addons: selection.addons || [],
-        session_id: sessionStorage.getItem( 'sessionToken' ) || null,
+        session_id: getSessionToken(),
     };
 
     const { data } = await request.post( '/quotes/lock', payload );

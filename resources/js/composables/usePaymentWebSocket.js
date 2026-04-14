@@ -48,6 +48,8 @@ export function usePaymentWebSocket ( options )
      */
     async function setup ( customerIp )
     {
+        // Reset unmounted flag so composable can be reused (e.g. modal reopen)
+        isUnmounted = false;
         customerIpValue = customerIp;
 
         if ( !customerIp )

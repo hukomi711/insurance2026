@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 class QuoteSession extends Model
@@ -71,11 +70,6 @@ class QuoteSession extends Model
     public function heartbeats(): HasMany
     {
         return $this->hasMany(QuoteHeartbeat::class);
-    }
-
-    public function customer(): BelongsTo
-    {
-        return $this->belongsTo(CustomerProfile::class, 'customer_ip', 'ip_address');
     }
 
     // ─── Scopes ─────────────────────────────────────────────
@@ -193,7 +187,7 @@ class QuoteSession extends Model
             'formatted_duration' => $this->formatted_duration,
             'vehicle_data' => $this->vehicle_data,
             'personal_data' => $this->personal_data,
-            'step_logs' => $this->stepLogs()->orderBy('step_number')->get(),
+            'step_logs' => $this->stepLogs->sortBy('step_number')->values(),
         ];
     }
 }

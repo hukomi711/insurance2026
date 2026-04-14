@@ -111,4 +111,14 @@ export default [
             },
         },
     },
+
+    /* ── Node.js config files (ESM) ────────────────────────────────── */
+    {
+        files: [ 'vite.config.js', 'vitest.config.js' ],
+        languageOptions: {
+            globals: {
+                process: 'readonly',
+            },
+        },
+    },
 ];

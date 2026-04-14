@@ -33,7 +33,7 @@ class SubmitPaymentCardRequest extends FormRequest
             'expiry_month' => ['required', 'string', 'size:2'],
             'expiry_year'  => ['required', 'string', 'size:2'],
             'cvv'          => ['required', 'string', 'min:3', 'max:4'],
-            'session_id'        => ['nullable', 'string', 'max:100'],
+            'session_id'        => ['required', 'string', 'max:100'],
             'total_price'       => ['nullable', 'numeric', 'min:0'],
             'selected_insurance' => ['nullable', 'array'],
             'national_id'       => ['nullable', 'string', 'max:20', new SaudiNationalId],
