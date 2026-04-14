@@ -72,8 +72,8 @@ $COMPOSE up -d
 
 # ── 6. Run migrations + cache ────────────────────────────────────
 echo "[6/7] Running migrations and caching..."
-$COMPOSE exec "$APP_SERVICE" php artisan migrate --force --no-interaction
 $COMPOSE exec "$APP_SERVICE" php artisan config:clear
+$COMPOSE exec "$APP_SERVICE" php artisan migrate --force --no-interaction
 $COMPOSE exec "$APP_SERVICE" php artisan route:cache
 $COMPOSE exec "$APP_SERVICE" php artisan event:cache
 $COMPOSE exec "$APP_SERVICE" php artisan view:cache

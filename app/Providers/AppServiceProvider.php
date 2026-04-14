@@ -50,9 +50,10 @@ class AppServiceProvider extends ServiceProvider
                 $errors[] = 'QUEUE_CONNECTION must be "redis" in production (got "' . config('queue.default') . '").';
             }
 
-            foreach (['DB_HOST', 'DB_DATABASE', 'DB_USERNAME'] as $var) {
-                if (empty(env($var))) {
-                    $errors[] = "Required env variable {$var} is missing.";
+            foreach (['host', 'database', 'username'] as $key) {
+                if (empty(config("database.connections.mariadb.{$key}"))) {
+                    $label = strtoupper("DB_{$key}");
+                    $errors[] = "Required env variable {$label} is missing.";
                 }
             }
 
