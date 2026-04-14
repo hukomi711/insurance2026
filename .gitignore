@@ -27,6 +27,7 @@ Thumbs.db
 _*.py
 _diag_result.json
 _deploy_diff.json
+.build-sha
 
 # ── IDE / generated helpers ───────────────────────────────────────
 _ide_helper.php

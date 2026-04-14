@@ -37,6 +37,11 @@ echo "  Project root: $PROJECT_ROOT"
 echo "  Target: ${SERVER_USER}@${SERVER_IP}:${SERVER_DIR}"
 echo ""
 
+# ── 0. Capture git SHA for build tracking ────────────────────
+GIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+echo "$GIT_SHA" > .build-sha
+echo "  Build SHA: $GIT_SHA"
+
 # ── 1. Create archive ───────────────────────────────────────────
 echo "[1/3] Creating archive (excluding dev files)..."
 tar -czf "/tmp/$ARCHIVE" \
