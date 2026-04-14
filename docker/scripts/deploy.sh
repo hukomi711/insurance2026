@@ -72,6 +72,34 @@ echo "  -> Built tamincom-app image (commit: $GIT_SHA)"
 echo "[5/7] Starting services (force-recreate to pick up new image)..."
 $COMPOSE up -d --force-recreate --remove-orphans
 
+# ── 5b. Assert image-ID consistency (drift guard) ────────────────
+echo "[5b] Verifying all PHP services use the same image..."
+sleep 5
+APP_IMAGE_ID=$(docker inspect --format='{{.Image}}' ins2026-app 2>/dev/null || echo "MISSING")
+DRIFT_FOUND=0
+for svc in ins2026-horizon ins2026-reverb ins2026-scheduler; do
+    SVC_IMAGE_ID=$(docker inspect --format='{{.Image}}' "$svc" 2>/dev/null || echo "MISSING")
+    if [ "$SVC_IMAGE_ID" != "$APP_IMAGE_ID" ]; then
+        echo "  !! DRIFT: $svc image ($SVC_IMAGE_ID) ≠ app ($APP_IMAGE_ID)"
+        echo "  -> Forcing recreate of ${svc#ins2026-}..."
+        $COMPOSE up -d --force-recreate "${svc#ins2026-}"
+        DRIFT_FOUND=1
+    fi
+done
+if [ "$DRIFT_FOUND" -eq 0 ]; then
+    echo "  -> All services on same image: ${APP_IMAGE_ID:0:16}"
+else
+    # Re-verify after healing
+    for svc in ins2026-horizon ins2026-reverb ins2026-scheduler; do
+        SVC_IMAGE_ID=$(docker inspect --format='{{.Image}}' "$svc" 2>/dev/null || echo "MISSING")
+        if [ "$SVC_IMAGE_ID" != "$APP_IMAGE_ID" ]; then
+            echo "  !! FATAL: $svc still on wrong image after retry. Deploy FAILED."
+            exit 1
+        fi
+    done
+    echo "  -> Drift healed. All services now consistent."
+fi
+
 # ── 6. Run migrations + cache ────────────────────────────────────
 echo "[6/7] Running migrations and caching..."
 $COMPOSE exec "$APP_SERVICE" php artisan config:clear
