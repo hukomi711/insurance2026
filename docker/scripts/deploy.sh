@@ -62,13 +62,15 @@ for secret_file in docker/secrets/db_password.txt docker/secrets/db_root_passwor
 done
 echo "  -> Secrets validated."
 
-# ── 4. Build images ──────────────────────────────────────────────
-echo "[4/7] Building Docker images..."
-$COMPOSE build --no-cache
+# ── 4. Build single application image ────────────────────────────
+echo "[4/7] Building application image (zero-drift: one image → all roles)..."
+GIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+$COMPOSE build --no-cache --build-arg APP_BUILD_SHA="$GIT_SHA" app
+echo "  -> Built tamincom-app image (commit: $GIT_SHA)"
 
-# ── 5. Start/restart services ────────────────────────────────────
-echo "[5/7] Starting services..."
-$COMPOSE up -d
+# ── 5. Start/restart ALL services from the same image ────────────
+echo "[5/7] Starting services (force-recreate to pick up new image)..."
+$COMPOSE up -d --force-recreate --remove-orphans
 
 # ── 6. Run migrations + cache ────────────────────────────────────
 echo "[6/7] Running migrations and caching..."
@@ -80,9 +82,15 @@ $COMPOSE exec "$APP_SERVICE" php artisan view:cache
 $COMPOSE exec "$APP_SERVICE" php artisan storage:link 2>/dev/null || true
 
 # ── 7. Restart Horizon to pick up new code ───────────────────────
-echo "[7/7] Restarting Horizon..."
+echo "[7/7] Terminating old Horizon workers..."
 $COMPOSE exec "$APP_SERVICE" php artisan horizon:terminate 2>/dev/null || true
-$COMPOSE restart horizon
+echo "  -> Horizon will auto-restart with new code."
+
+# ── 8. Verify all containers are healthy ─────────────────────
+echo ""
+echo "[✓] Waiting 15s for health checks..."
+sleep 15
+$COMPOSE ps
 
 echo ""
 echo "══════════════════════════════════════════════════════════════"

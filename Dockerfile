@@ -40,6 +40,10 @@ RUN composer dump-autoload --optimize --no-dev --no-scripts
 # ── Stage 3: Production runtime ──────────────────────────────────
 FROM php:8.4-fpm-alpine AS runtime
 
+# Build-time version tracking (passed from deploy.sh)
+ARG APP_BUILD_SHA=unknown
+ENV APP_BUILD_SHA=${APP_BUILD_SHA}
+
 # Install system deps + PHP extensions
 RUN apk add --no-cache \
     icu-libs \

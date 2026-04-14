@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -34,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
         // Prevent the app from running with dangerous misconfigurations.
         if ($this->app->environment('production')) {
             URL::forceScheme('https');
+
+            Log::info('App boot', ['build' => config('app.build')]);
 
             $errors = [];
 
