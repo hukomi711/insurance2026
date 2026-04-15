@@ -9,8 +9,10 @@
 								<meta name="mobile-web-app-capable" content="yes">
 								<meta name="apple-mobile-web-app-status-bar-style" content="default">
 								<meta name="robots" content="index, follow">
+								@production
 								<meta http-equiv="Content-Security-Policy"
 												content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' wss://{{ parse_url(config('app.url'), PHP_URL_HOST) }} ws://localhost:*; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
+								@endproduction
 								<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
 								<link rel="manifest" href="/manifest.json">
 								<title>تأمينكم - مقارنة أسعار التأمين في السعودية</title>
