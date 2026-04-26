@@ -67,9 +67,9 @@ Route::prefix('legal')->middleware('throttle:30,1')->group(function () {
                 ['slug' => 'dmca', 'title' => 'حقوق الملكية الفكرية', 'url' => '/dmca'],
             ],
             'contact' => [
-                'legal' => 'legal@wathiqah.store',
-                'abuse' => 'abuse@wathiqah.store',
-                'privacy' => 'privacy@wathiqah.store',
+                'legal' => 'legal@daliltameni.online',
+                'abuse' => 'abuse@daliltameni.online',
+                'privacy' => 'privacy@daliltameni.online',
             ],
         ]);
     });
