@@ -3,6 +3,10 @@
 .env
 .env.backup
 .env.production
+.env.production.local
+.env.shared-hosting
+.env.build-temp
+.env.*.local
 .phpactor.json
 .phpunit.result.cache
 /.fleet
@@ -64,9 +68,20 @@ deploy.tar.gz
 # Windows artifact
 nul
 
-# SSH keys
-9Nhe5m38FnE5Wa4MxJ
-9Nhe5m38FnE5Wa4MxJ.pub
+# ── SSL / private keys (NEVER commit) ────────────────────────
+*.pem
+*.key
+*.crt
+ssl_*.pem
+cabundle*.pem
+cert_only.pem
 
-# Windows artifact
-nul
+# ── One-time setup / web-shell scripts (BANNED in public/) ──
+public/*setup*.php
+public/*fix*.php
+public/show-log.php
+public/run-seeder.php
+public/create-admin.php
+public/cleanup.php
+public/acme-helper.php
+public/mk-symlink.php

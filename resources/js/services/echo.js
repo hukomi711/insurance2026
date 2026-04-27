@@ -48,6 +48,13 @@ export async function getEcho ( _authOptions )
 
 async function _createEcho ()
 {
+    // On deployments without Reverb (e.g. shared hosting), skip WebSocket entirely.
+    if ( !import.meta.env.VITE_REVERB_APP_KEY )
+    {
+        logger.info( "[Echo] VITE_REVERB_APP_KEY not set — WebSocket disabled" );
+        return null;
+    }
+
     try
     {
         const [ echoMod, pusherMod ] = await Promise.all( [

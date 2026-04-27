@@ -20,7 +20,10 @@ class HealthController extends Controller
             'redis' => $this->checkRedis(),
         ];
 
-        return $this->respond($checks);
+        // On shared hosting without Redis, exclude it from health gate
+        $filtered = array_filter($checks, fn ($v) => $v !== 'not_configured');
+
+        return $this->respond($filtered);
     }
 
     /**
@@ -104,6 +107,18 @@ class HealthController extends Controller
 
     private function checkRedis(): string
     {
+        // Skip Redis check entirely when not configured as the cache/session/queue driver
+        $usesRedis = in_array('redis', [
+            config('cache.default'),
+            config('session.driver'),
+            config('queue.default'),
+            config('broadcasting.default'),
+        ], true);
+
+        if (! $usesRedis) {
+            return 'not_configured';
+        }
+
         try {
             Redis::connection()->ping();
 

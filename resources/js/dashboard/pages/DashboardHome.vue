@@ -449,8 +449,14 @@ async function connectDashboardWebSocket () {
         } );
 
         if ( !dashboardEcho ) {
-            logger.warn( '[Dashboard WS] Echo not available' );
-            scheduleReconnect();
+            // If VITE_REVERB_APP_KEY is not set, WebSocket is permanently disabled
+            // (e.g. shared hosting). No reconnect needed — avoid infinite retry loop.
+            if ( import.meta.env.VITE_REVERB_APP_KEY ) {
+                logger.warn( '[Dashboard WS] Echo not available — scheduling reconnect' );
+                scheduleReconnect();
+            } else {
+                logger.info( '[Dashboard WS] WebSocket disabled (no VITE_REVERB_APP_KEY) — skipping' );
+            }
             return;
         }
 

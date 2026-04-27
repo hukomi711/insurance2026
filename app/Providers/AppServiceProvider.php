@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -26,6 +27,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Fix for shared hosting MySQL < 5.7.7 — utf8mb4 key length limit
+        Schema::defaultStringLength(191);
+
         // ── Eloquent strict mode (dev/testing only) ──────────────────
         // Catches lazy loading (N+1), silently discarded attributes,
         // and missing attributes before they hit production.
@@ -49,12 +53,13 @@ class AppServiceProvider extends ServiceProvider
             if (config('database.default') === 'sqlite') {
                 $errors[] = 'DB_CONNECTION must not be "sqlite" in production.';
             }
-            if (config('queue.default') !== 'redis') {
-                $errors[] = 'QUEUE_CONNECTION must be "redis" in production (got "' . config('queue.default') . '").';
+            if (! in_array(config('queue.default'), ['redis', 'database'])) {
+                $errors[] = 'QUEUE_CONNECTION must be "redis" or "database" in production (got "' . config('queue.default') . '").';
             }
 
+            $dbDriver = config('database.default', 'mysql');
             foreach (['host', 'database', 'username'] as $key) {
-                if (empty(config("database.connections.mariadb.{$key}"))) {
+                if (empty(config("database.connections.{$dbDriver}.{$key}"))) {
                     $label = strtoupper("DB_{$key}");
                     $errors[] = "Required env variable {$label} is missing.";
                 }

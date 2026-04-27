@@ -44,7 +44,8 @@ return new class extends Migration
                 ->nullOnDelete();
 
             // ── Composite indexes for rate limiting + dedup ──
-            $table->index(['email', 'type', 'created_at']);
+            // Note: email limited to 191 chars (shared hosting MySQL utf8mb4 key length limit)
+            $table->index(['type', 'created_at']);
             $table->index(['customer_profile_id', 'type', 'created_at']);
         });
     }
