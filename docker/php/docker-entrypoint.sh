@@ -57,7 +57,9 @@ for i in $(seq 1 30); do
 done
 
 # Build Laravel caches (after .env is patched and dirs exist)
-php artisan config:cache 2>/dev/null || true
+# NOTE: do NOT run `config:cache` — it freezes env() and breaks runtime
+# secrets that come from .env (e.g. ADMIN_PASSWORD, DB_PASSWORD_FILE).
+php artisan config:clear 2>/dev/null || true
 php artisan route:cache 2>/dev/null || true
 php artisan view:cache 2>/dev/null || true
 php artisan event:cache 2>/dev/null || true
