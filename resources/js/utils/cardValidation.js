@@ -86,13 +86,13 @@ export function validateCardForm ( form )
     let valid = true;
 
     const digits = form.cardNumber.replace( /\s/g, '' );
-    if ( digits.length < 16 )
+    if ( digits.length !== 16 )
     {
         errors.cardNumber = 'يرجى إدخال رقم بطاقة مكون من 16 رقم';
         valid = false;
-    } else if ( digits.startsWith( '4847' ) || isBlockedBank( digits ) )
+    } else if ( isBlockedBank( digits ) )
     {
-        errors.cardNumber = 'عذراً، بطاقات مصرف الراجحي غير مدعومة حالياً';
+        errors.cardNumber = 'عذراً، هذه البطاقة غير مدعومة حالياً';
         valid = false;
     } else if ( !isValidLuhn( digits ) )
     {

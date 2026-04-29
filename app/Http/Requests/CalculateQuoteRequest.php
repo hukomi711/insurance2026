@@ -16,7 +16,7 @@ class CalculateQuoteRequest extends FormRequest
         return [
             // ─── Plans (batch) ───
             'plans' => 'required|array|min:1',
-            'plans.*.companyId' => 'required|integer|between:1,17',
+            'plans.*.companyId' => 'required|integer|between:1,21',
             'plans.*.subType' => 'required|string|in:thirdParty,thirdPartyPlus,vehicleDamagePlus,comprehensive',
             'plans.*.deductible' => 'required|integer|in:0,500,1000,1500,2000,2500,3000,5000',
 

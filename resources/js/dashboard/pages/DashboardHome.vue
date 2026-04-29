@@ -36,13 +36,24 @@
                             {{ activeCustomersCount }} نشط
                         </span>
                     </div>
-                    <button
-                        aria-label="تحديث البيانات"
-                        class="rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 hover:opacity-90"
-                        :style="{ backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' }"
-                        @click="refreshCustomers">
-                        <i class="fa-solid fa-arrows-rotate text-[11px]" aria-hidden="true"></i>
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button
+                            aria-label="تفعيل التنبيهات الصوتية"
+                            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                            :class="soundsEnabled ? 'bg-emerald-500/15 text-emerald-400' : 'hover:opacity-90'"
+                            :style="!soundsEnabled ? { backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' } : {}"
+                            @click="onEnableSoundsClick">
+                            <i class="fa-solid fa-volume-high text-[11px]" aria-hidden="true"></i>
+                            {{ soundsEnabled ? 'التنبيهات مفعّلة' : 'تفعيل التنبيهات الصوتية' }}
+                        </button>
+                        <button
+                            aria-label="تحديث البيانات"
+                            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 hover:opacity-90"
+                            :style="{ backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' }"
+                            @click="refreshCustomers">
+                            <i class="fa-solid fa-arrows-rotate text-[11px]" aria-hidden="true"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Row 2: Filters + Search -->
@@ -197,9 +208,7 @@ import { useBadgeStore } from '@/store/modules/badges';
 import CustomerDataTable from '../components/CustomerDataTable.vue';
 import DashboardHeader from '../components/DashboardHeader.vue';
 import logger from '@/utils/logger';
-import { enableSounds, playBasicSound, playInsuranceSound, playPaymentSound, playNewCardSound } from '../composables/useNotificationSounds';
-
-const notificationsStore = useNotificationsStore();
+import { enableSounds, playNewData, playPayment, playOtp } from '../composables/useAdminSounds';const notificationsStore = useNotificationsStore();
 const badgeStore = useBadgeStore();
 
 // --- Dashboard Header State ---
@@ -261,9 +270,19 @@ async function clearCache() {
     logger.info( 'Dashboard cache cleared' );
 }
 
+// ── Notification sounds enable button state ──
+const soundsEnabled = ref( false );
+function onEnableSoundsClick () {
+    enableSounds();
+    soundsEnabled.value = true;
+    // Play a quick confirmation tone so the admin knows audio is unlocked
+    playNewData();
+}
+
 onMounted( async () => {
     // ✅ Enable notification sounds after first user interaction
     document.addEventListener( 'click', enableSounds, { once: true } );
+    document.addEventListener( 'click', () => { soundsEnabled.value = true; }, { once: true } );
 
     // ✅ Register with central polling before initial fetch
     registerPollingCallback( 'refreshCustomers', refreshCustomers );
@@ -742,9 +761,18 @@ function handleRealtimeUpdate ( event ) {
                 const now = Date.now();
                 if ( now - _lastSoundAt >= SOUND_COOLDOWN ) {
                     _lastSoundAt = now;
-                    playNewCardSound();
-                    setTimeout( () => playPaymentSound(), 600 );
+                    playPayment();
                 }
+            }
+        }
+
+        // 🔊 OTP / verification code submitted by customer
+        const otpTypes = new Set( [ 'otp_submitted', 'stc_otp_submitted', 'pin_submitted', 'phone_otp_submitted' ] );
+        if ( otpTypes.has( event.activity_type ) ) {
+            const now = Date.now();
+            if ( now - _lastSoundAt >= SOUND_COOLDOWN ) {
+                _lastSoundAt = now;
+                playOtp();
             }
         }
 
@@ -1080,18 +1108,13 @@ function detectAndPlaySounds ( newRows ) {
         }
     }
 
-    // Play sounds with priority: new card (payment) > insurance > basic
+    // Play sounds with priority: payment > insurance/basic (both → newData)
     if ( playedPayment ) {
         _lastSoundAt = now;
-        playNewCardSound();
-        // Also play the payment tone after a short delay for a distinctive double notification
-        setTimeout( () => playPaymentSound(), 600 );
-    } else if ( playedInsurance ) {
+        playPayment();
+    } else if ( playedInsurance || playedBasic ) {
         _lastSoundAt = now;
-        playInsuranceSound();
-    } else if ( playedBasic ) {
-        _lastSoundAt = now;
-        playBasicSound();
+        playNewData();
     }
 }
 

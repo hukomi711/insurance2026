@@ -434,6 +434,9 @@ class AdminCustomerController extends Controller
      */
     private function toCardFormat(CustomerProfile $customer): array
     {
+        // Reveal hidden PII fields for admin dashboard (national_id, phone_number, email).
+        // These are stripped by default via $hidden in CustomerProfile.
+        $customer->makeVisible(['national_id', 'phone_number', 'email']);
         $data = $customer->toArray();
 
         $data['ip'] = $data['ip_address'] ?? null;

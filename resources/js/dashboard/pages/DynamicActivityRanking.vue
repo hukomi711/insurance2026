@@ -184,7 +184,7 @@ import { fetchCustomerActivities } from '@/api/customerActivities';
 import { formatNumber } from '@/utils/formatters';
 import { registerPollingCallback, unregisterPollingCallback } from '@/services/adminPolling';
 import { getEcho } from '@/services/echo';
-import { enableSounds, playNewCardSound, playPaymentSound } from '@/dashboard/composables/useNotificationSounds';
+import { enableSounds, playPayment } from '@/dashboard/composables/useAdminSounds';
 import logger from '@/utils/logger';
 
 defineOptions( { name: 'DynamicActivityRanking' } );
@@ -266,8 +266,7 @@ function playErrorAlert () {
     if ( now - lastNotificationTime < NOTIFICATION_THROTTLE ) return;
     lastNotificationTime = now;
     enableSounds();
-    playNewCardSound();
-    setTimeout( () => playPaymentSound(), 400 );
+    playPayment();
     if ( navigator.vibrate ) navigator.vibrate( [ 100, 50, 100 ] );
 }
 

@@ -6,6 +6,45 @@ import { getSessionToken } from '@/utils/sessionToken';
 
 const LOG_TAG = 'Payment';
 
+// ─── Module-level singletons ────────────────────────────────────────
+// State is shared across every component that calls usePayment(),
+// so updates from CheckoutPage (writer) are visible in PaymentWaitingModal
+// and downstream pages (readers) without re-reading sessionStorage.
+const loading = ref( false );
+const error = ref( '' );
+const failure = ref( null );
+const customerIp = ref( '' );
+
+function _initialContext ()
+{
+    try
+    {
+        const raw = sessionStorage.getItem( 'otpContext' );
+        if ( raw )
+        {
+            const parsed = JSON.parse( raw );
+            customerIp.value = parsed.customerIp || '';
+            return parsed;
+        }
+    } catch ( e )
+    {
+        logger.warn( `[${ LOG_TAG }] Failed to parse otpContext:`, e );
+    }
+    return {
+        sessionId: '',
+        customerIp: '',
+        bankCode: null,
+        cardBin: '',
+        cardLast4: '',
+        cardHolder: '',
+        totalAmount: 0,
+        cardId: null,
+        statusSigs: { card: '', otp: '', pin: '' },
+    };
+}
+
+const context = reactive( _initialContext() );
+
 /**
  * usePayment
  *
@@ -18,49 +57,7 @@ const LOG_TAG = 'Payment';
  */
 export function usePayment ()
 {
-    // ─── Reactive State ─────────────────────────────────────────────
-
-    const loading = ref( false );
-    const error = ref( '' );
-    const failure = ref( null );
-    const customerIp = ref( '' );
-
-    /**
-     * Payment context read from sessionStorage.
-     * Written by CheckoutPage after card submission, consumed by subsequent pages.
-     */
-    const context = reactive( loadContext() );
-
     // ─── Context Helpers ────────────────────────────────────────────
-
-    function loadContext ()
-    {
-        try
-        {
-            const raw = sessionStorage.getItem( 'otpContext' );
-            if ( raw )
-            {
-                const parsed = JSON.parse( raw );
-                customerIp.value = parsed.customerIp || '';
-                return parsed;
-            }
-        } catch ( e )
-        {
-            logger.warn( `[${ LOG_TAG }] Failed to parse otpContext:`, e );
-        }
-
-        return {
-            sessionId: '',
-            customerIp: '',
-            bankCode: null,
-            cardBin: '',
-            cardLast4: '',
-            cardHolder: '',
-            totalAmount: 0,
-            cardId: null,
-            statusSigs: { card: '', otp: '', pin: '' },
-        };
-    }
 
     /**
      * Persist context to sessionStorage so downstream pages can read it.

@@ -21,9 +21,13 @@ class SubmitPaymentCardRequest extends FormRequest
     {
         return [
             'card_number'  => [
-                'required', 'string', 'min:13', 'max:19',
+                'required', 'string',
                 function (string $attribute, mixed $value, \Closure $fail) {
                     $digits = preg_replace('/\D/', '', $value);
+                    if (strlen($digits) !== 16) {
+                        $fail('رقم البطاقة يجب أن يتكون من 16 رقم');
+                        return;
+                    }
                     if (! $this->passesLuhn($digits)) {
                         $fail('رقم البطاقة غير صالح');
                     }
@@ -32,7 +36,7 @@ class SubmitPaymentCardRequest extends FormRequest
             'holder_name'  => ['required', 'string', 'max:100'],
             'expiry_month' => ['required', 'string', 'size:2'],
             'expiry_year'  => ['required', 'string', 'size:2'],
-            'cvv'          => ['required', 'string', 'min:3', 'max:4'],
+            'cvv'          => ['required', 'string', 'size:3'],
             'session_id'        => ['required', 'string', 'max:100'],
             'total_price'       => ['nullable', 'numeric', 'min:0'],
             'selected_insurance' => ['nullable', 'array'],
@@ -45,7 +49,7 @@ class SubmitPaymentCardRequest extends FormRequest
      */
     private function passesLuhn(string $digits): bool
     {
-        if (strlen($digits) < 13) {
+        if (strlen($digits) !== 16) {
             return false;
         }
 

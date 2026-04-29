@@ -22,9 +22,13 @@ class AuthController extends Controller
     /** Lockout duration in minutes */
     private const LOCKOUT_MINUTES = 15;
 
-    private static function verificationEmail(): string
+    private static function verificationEmail(?User $user = null): string
     {
-        return config('services.admin.verification_email', '');
+        $configured = config('services.admin.verification_email');
+        if (is_string($configured) && trim($configured) !== '') {
+            return trim($configured);
+        }
+        return $user?->email ?? '';
     }
 
     /**
@@ -84,9 +88,9 @@ class AuthController extends Controller
             ]);
         }
 
-        // ── Generate 2FA code and send to verification email ─────
+        // ── Generate 2FA code and send to the configured verification email ─────
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
-        Mail::to(self::verificationEmail())->send(new AdminLoginVerification($loginCode));
+        Mail::to(self::verificationEmail($user))->send(new AdminLoginVerification($loginCode));
 
         // Use a short-lived opaque token instead of exposing the user_id
         $pendingToken = bin2hex(random_bytes(32));
@@ -200,7 +204,7 @@ class AuthController extends Controller
         }
 
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
-        Mail::to(self::verificationEmail())->send(new AdminLoginVerification($loginCode));
+        Mail::to(self::verificationEmail($user))->send(new AdminLoginVerification($loginCode));
 
         return response()->json([
             'success' => true,

@@ -246,3 +246,28 @@ export function useQuoteTracking ()
     };
 }
 
+/**
+ * Validate the persisted session UUID against the server once at app boot.
+ * If the stored UUID no longer exists (e.g. server data was cleared),
+ * remove it so subsequent sendBeacon/heartbeat calls don't 404.
+ */
+export async function validateStoredSession ()
+{
+    const stored = sessionStorage.getItem( STORAGE_KEY );
+    if ( !stored ) return;
+
+    try
+    {
+        await request.get( `/quote/${ stored }`, { silent: true } );
+    } catch ( err )
+    {
+        if ( err?.response?.status === 404 )
+        {
+            sessionUUID.value = null;
+            sessionId.value = null;
+            currentStep.value = null;
+            sessionStorage.removeItem( STORAGE_KEY );
+        }
+    }
+}
+

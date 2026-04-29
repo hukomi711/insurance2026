@@ -8,6 +8,7 @@ import i18n, { i18nReady } from './i18n';
 import App from './App.vue';
 import router from './router/index';
 import { initGlobalTracking, cleanupVisitorTracking } from './composables/useVisitorTracking';
+import { validateStoredSession } from './composables/useQuoteTracking';
 import { fetchGeoStatus } from './utils/geoCheck';
 
 // Start geo-check early so the result is ready by the time the router guard runs.
@@ -41,6 +42,10 @@ app.use( Toast, toastOptions );
 
 // ─── Global customer activity tracking (all pages) ─────
 initGlobalTracking( router );
+
+// Drop any stale quote UUID left in sessionStorage from a prior server reset.
+// Prevents 404 spam from heartbeat / sendBeacon on the old session.
+validateStoredSession();
 
 /**
  * Global error handler — safety net for unhandled Vue errors.
