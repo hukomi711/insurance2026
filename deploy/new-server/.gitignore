@@ -1,0 +1,5 @@
+# Never commit secrets or DB dumps
+.env.production.template
+.env.old.reference
+*.sql.gz
+*.sql
