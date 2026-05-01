@@ -1,12 +1,52 @@
 <template>
   <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+    <!-- ─── Visual Card Preview (live) ─── -->
+    <div v-if="showPreview" class="px-4 sm:px-6 pt-5 sm:pt-6">
+      <div class="card-preview" :class="[`card-preview--${themeKey}`, { 'is-flipped': flipped }]" aria-hidden="true">
+        <!-- Front face -->
+        <div class="card-preview__face card-preview__face--front">
+          <div class="card-preview__top">
+            <div class="card-preview__bank">
+              <img v-if="previewBankLogo" :src="previewBankLogo" alt="" class="card-preview__bank-logo" />
+              <span v-if="previewBankName" class="card-preview__bank-name">{{ previewBankName }}</span>
+            </div>
+            <div class="card-preview__network">
+              <img v-if="previewNetworkLogo" :src="previewNetworkLogo" :alt="previewNetworkName" class="card-preview__network-logo" />
+            </div>
+          </div>
+          <div class="card-preview__pan ltr-nums" dir="ltr">{{ maskedPan }}</div>
+          <div class="card-preview__bottom">
+            <div class="card-preview__holder">
+              <span class="card-preview__label">CARD HOLDER</span>
+              <span class="card-preview__value">{{ displayHolder || 'YOUR NAME' }}</span>
+            </div>
+            <div class="card-preview__expiry">
+              <span class="card-preview__label">EXPIRES</span>
+              <span class="card-preview__value ltr-nums" dir="ltr">{{ displayExpiry || 'MM/YY' }}</span>
+            </div>
+          </div>
+        </div>
+        <!-- Back face -->
+        <div class="card-preview__face card-preview__face--back">
+          <div class="card-preview__stripe"></div>
+          <div class="card-preview__cvv-box">
+            <span class="card-preview__label">CVV</span>
+            <span class="card-preview__cvv-dots">•••</span>
+          </div>
+          <div class="card-preview__back-foot">
+            <img v-if="previewNetworkLogo" :src="previewNetworkLogo" :alt="previewNetworkName" class="card-preview__network-logo card-preview__network-logo--back" />
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Header -->
-    <div class="px-4 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-slate-100">
+    <div v-if="showForm" class="px-4 sm:px-6 pt-5 sm:pt-6 pb-4 border-b border-slate-100">
       <h5 class="text-lg sm:text-xl font-bold text-foreground mb-1">إتمام الدفع</h5>
       <p class="text-sm text-muted">أدخل بيانات البطاقة لإتمام العملية بشكل آمن</p>
     </div>
 
-    <div class="flex flex-col gap-3 sm:gap-4 p-4 sm:p-6">
+    <div v-if="showForm" class="flex flex-col gap-3 sm:gap-4 p-4 sm:p-6">
       <!-- طريقة الدفع -->
       <div>
         <div
@@ -202,6 +242,13 @@ const props = defineProps({
   rejectionTitle: { type: String, default: '' },
   rejectionAction: { type: String, default: '' },
   acceptTerms: { type: Boolean, default: false },
+  // ── Preview controls ─────────────────────────────────────────────
+  /** Render the visual card preview at the top. */
+  showPreview: { type: Boolean, default: true },
+  /** Render the form (input fields + terms + security notice). */
+  showForm: { type: Boolean, default: true },
+  /** Flip the preview to its back face (e.g. while CVV input is focused). */
+  flipped: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:method', 'update:form', 'blur:field', 'update:acceptTerms']);
@@ -242,6 +289,49 @@ const detectedBank = computed(() => {
   const digits = cardBin.value;
   if (digits.length < 6) return null;
   return detectBankFromBin(digits);
+});
+
+// ── Visual preview computeds ────────────────────────────────────────
+// SECURITY: The preview NEVER renders form.cvv. The middle 6 digits of the
+// PAN are masked even when the user has typed them. The back face shows a
+// literal "•••" string — not the typed CVV.
+const previewBranding = useCardBranding(cardBin);
+const previewNetworkLogo = previewBranding.networkLogo;
+const previewNetworkName = previewBranding.networkName;
+const previewBankLogo = previewBranding.bankLogo;
+const previewBankName = previewBranding.bankName;
+
+const themeKey = computed(() => {
+  const b = previewBranding.brand.value;
+  return ['mada', 'visa', 'mastercard', 'amex', 'discover'].includes(b) ? b : 'unknown';
+});
+
+const maskedPan = computed(() => {
+  const digits = cardBin.value;
+  if (!digits) return '•••• •••• •••• ••••';
+  if (digits.length < 13) {
+    // Show typed digits in groups of 4, pad remainder with dots
+    const padded = digits.padEnd(16, '•');
+    return padded.replace(/(.{4})(?=.)/g, '$1 ');
+  }
+  // Reveal first 6 + last 4, mask middle (PCI-safe rendering)
+  const len = digits.length;
+  const first = digits.slice(0, 6);
+  const last = digits.slice(-4);
+  const middleLen = Math.max(0, len - 10);
+  const middle = '•'.repeat(middleLen);
+  const full = (first + middle + last).padEnd(16, '•');
+  return full.replace(/(.{4})(?=.)/g, '$1 ');
+});
+
+const displayHolder = computed(() => {
+  const raw = String(props.form.cardHolder || '').trim().toUpperCase();
+  return raw.length > 26 ? raw.slice(0, 26) : raw;
+});
+
+const displayExpiry = computed(() => {
+  const raw = String(props.form.expiry || '').trim();
+  return raw;
 });
 
 const onCardNumberInput = (e) => {
@@ -300,3 +390,195 @@ const onFieldBlur = (fieldName) => {
   emit('blur:field', fieldName);
 };
 </script>
+
+<style scoped>
+/* ── Card Preview (visual only — never renders sensitive data) ────── */
+.card-preview {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  aspect-ratio: 1.586 / 1; /* ISO 7810 ID-1 */
+  border-radius: 16px;
+  perspective: 1200px;
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+}
+
+.card-preview__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 18px 20px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 12px 28px -8px rgba(15, 23, 42, 0.35), 0 4px 10px -4px rgba(15, 23, 42, 0.18);
+  background: linear-gradient(135deg, #475569 0%, #1e293b 100%);
+}
+
+.card-preview__face--back {
+  transform: rotateY(180deg);
+  padding: 18px 0 0;
+}
+
+.card-preview.is-flipped .card-preview__face--front {
+  transform: rotateY(-180deg);
+}
+
+.card-preview.is-flipped .card-preview__face--back {
+  transform: rotateY(0deg);
+}
+
+/* ── Themes ──────────────────────────────────────────────────────── */
+.card-preview--mada .card-preview__face {
+  background: linear-gradient(135deg, #84a98c 0%, #2d6a4f 60%, #1b4332 100%);
+}
+.card-preview--visa .card-preview__face {
+  background: linear-gradient(135deg, #1a4ba8 0%, #0d2c6b 100%);
+}
+.card-preview--mastercard .card-preview__face {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+}
+.card-preview--amex .card-preview__face {
+  background: linear-gradient(135deg, #1e7fbf 0%, #0a4870 100%);
+}
+.card-preview--discover .card-preview__face {
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+}
+
+/* ── Front face elements ─────────────────────────────────────────── */
+.card-preview__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-preview__bank {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.card-preview__bank-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 6px;
+  padding: 3px;
+}
+
+.card-preview__bank-name {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'Noto Kufi Arabic', system-ui, sans-serif;
+}
+
+.card-preview__network-logo {
+  height: 28px;
+  max-width: 70px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+.card-preview__pan {
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  text-align: left;
+}
+
+@media (max-width: 380px) {
+  .card-preview__pan { font-size: 17px; letter-spacing: 0.05em; }
+}
+
+.card-preview__bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.card-preview__holder,
+.card-preview__expiry {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.card-preview__expiry { text-align: right; flex-shrink: 0; }
+
+.card-preview__label {
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.65;
+  font-family: system-ui, sans-serif;
+}
+
+.card-preview__value {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+/* ── Back face elements ──────────────────────────────────────────── */
+.card-preview__stripe {
+  height: 40px;
+  background: #000;
+  margin-top: 8px;
+}
+
+.card-preview__cvv-box {
+  margin: 16px 20px 0;
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+  border-radius: 4px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.card-preview__cvv-box .card-preview__label { color: #475569; opacity: 1; }
+
+.card-preview__cvv-dots {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+}
+
+.card-preview__back-foot {
+  margin-top: auto;
+  padding: 0 20px 18px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.card-preview__network-logo--back {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.ltr-nums {
+  font-variant-numeric: tabular-nums;
+}
+</style>

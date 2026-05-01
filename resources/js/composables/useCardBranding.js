@@ -225,4 +225,16 @@ export function useCardBranding ( bin )
     };
 }
 
-export { getCardBrand, getBankByBin, networkLogos, bankLogos, BANKS };
+/**
+ * Pure helper — get bank key by BIN.
+ * Alias of getBankByBin with a clearer name for non-Vue callers (e.g. utils/bankDetector.js).
+ *
+ * @param {string} bin
+ * @returns {string|null} bank key (rajhi, ahli, inma, …) or null
+ */
+function detectBankKey ( bin )
+{
+    return getBankByBin( bin );
+}
+
+export { getCardBrand, getBankByBin, detectBankKey, networkLogos, bankLogos, BANKS };

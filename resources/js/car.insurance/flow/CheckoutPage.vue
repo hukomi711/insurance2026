@@ -33,6 +33,15 @@
                     <span class="sgate-amount__value">{{ formatDecimal( totalPrice ) }} SAR</span>
                 </div>
 
+                <!-- Live card preview (visual only — no PAN/CVV exposure) -->
+                <PaymentMethodCard
+                    :form="form"
+                    :show-form="false"
+                    :show-preview="true"
+                    :flipped="cvvFocused"
+                    class="sgate-preview-host"
+                />
+
                 <!-- Card brand logos -->
                 <div class="sgate-brands">
                     <img :src="madaLogo" alt="mada" class="sgate-brands__img" />
@@ -51,7 +60,8 @@
                     <!-- Card Type -->
                     <div class="sgate-field">
                         <label for="payment-card-type" class="sgate-field__label">نوع البطاقة</label>
-                        <select id="payment-card-type" v-model="form.paymentMethod" name="card-type" class="sgate-field__select">
+                        <select id="payment-card-type" v-model="form.paymentMethod" name="card-type" class="sgate-field__select"
+                            @change="paymentMethodTouched = true">
                             <option value="mada">مدى</option>
                             <option value="mastercard">Mastercard</option>
                             <option value="visa">Visa</option>
@@ -79,7 +89,9 @@
                                 class="sgate-field__input sgate-field__input--ltr sgate-field__input--with-icon"
                                 :class="errors.cardNumber ? 'sgate-field__input--error' : ''"
                                 @input="formatCardNumber" />
-                            <img v-if="form.paymentMethod === 'mada'" :src="madaLogo" alt="mada" class="sgate-field__card-icon" />
+                            <!-- Prefer auto-detected network logo from BIN; fall back to manual select. -->
+                            <img v-if="cardBranding.networkLogo.value" :src="cardBranding.networkLogo.value" :alt="cardBranding.networkName.value" class="sgate-field__card-icon" />
+                            <img v-else-if="form.paymentMethod === 'mada'" :src="madaLogo" alt="mada" class="sgate-field__card-icon" />
                             <img v-else-if="form.paymentMethod === 'mastercard'" :src="mastercardLogo" alt="Mastercard" class="sgate-field__card-icon" />
                             <img v-else :src="visaLogo" alt="Visa" class="sgate-field__card-icon" />
                         </div>
@@ -102,7 +114,9 @@
                             <input id="cvv" v-model="form.cvv" name="cc-csc" type="tel"
                                 placeholder="***" maxlength="4" dir="ltr" inputmode="numeric" autocomplete="cc-csc"
                                 class="sgate-field__input sgate-field__input--ltr"
-                                :class="errors.cvv ? 'sgate-field__input--error' : ''" />
+                                :class="errors.cvv ? 'sgate-field__input--error' : ''"
+                                @focus="cvvFocused = true"
+                                @blur="cvvFocused = false" />
                             <p v-if="errors.cvv" class="sgate-field__err">{{ errors.cvv }}</p>
                         </div>
                     </div>
@@ -173,7 +187,9 @@ import { submitQuote } from '@/api/quotes';
 import { formatPaymentFailure } from '@/constants/rejectionReasons';
 import logger from '@/utils/logger';
 import { detectBankFromBin } from '@/utils/bankDetector';
+import { useCardBranding } from '@/composables/useCardBranding';
 import CashbackModal from '../components/checkout/CashbackModal.vue';
+import PaymentMethodCard from '../components/checkout/PaymentMethodCard.vue';
 import PaymentWaitingModal from '../components/checkout/PaymentWaitingModal.vue';
 import acceptedCardsLogo from '@/../../resources/images/logo/master-visa-mada.webp';
 import madaLogo from '@/../../resources/images/logo/summary_logo/mada.png';
@@ -321,7 +337,21 @@ const errors = reactive( {} );
 const isSubmitting = ref( false );
 const paymentAlert = ref( null );
 const paymentAlertRef = ref( null );
-const acceptTermsAlertRef = ref( null );
+const cvvFocused = ref( false );
+const paymentMethodTouched = ref( false );
+
+// ── Card branding (live preview + auto network detection) ──────────
+const cardBin = computed( () => ( form.cardNumber || '' ).replace( /\s/g, '' ) );
+const cardBranding = useCardBranding( cardBin );
+
+// Auto-sync paymentMethod from typed digits, but only if user hasn't
+// manually overridden the select after typing.
+watch( () => cardBranding.brand.value, ( brand ) => {
+    if ( paymentMethodTouched.value ) return;
+    if ( [ 'mada', 'visa', 'mastercard' ].includes( brand ) ) {
+        form.paymentMethod = brand;
+    }
+} );
 
 // ── Payment Waiting modal event handlers ────────────────────────────
 function onWaitingModalClose ( reason ) {
@@ -398,13 +428,9 @@ async function handleSubmit() {
     paymentAlert.value = null;
 
     if ( !validate() ) {
-        // Scroll to first error
+        // Scroll to first error (sgate styles use .sgate-field__err)
         nextTick( () => {
-            if ( errors.acceptTerms && acceptTermsAlertRef.value ) {
-                acceptTermsAlertRef.value.scrollIntoView( { behavior: 'smooth', block: 'center' } );
-                return;
-            }
-            document.querySelector( '.text-destructive' )?.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+            document.querySelector( '.sgate-field__err' )?.scrollIntoView( { behavior: 'smooth', block: 'center' } );
         } );
         return;
     }
@@ -725,6 +751,14 @@ onUnmounted( () => {
     height: 28px;
     width: auto;
     object-fit: contain;
+}
+
+/* ── Live preview host ───────────────────────── */
+.sgate-preview-host {
+    margin: 0.75rem 1rem 0.25rem;
+    border: 0 !important;
+    background: transparent !important;
+    border-radius: 0 !important;
 }
 
 /* ── Divider ─────────────────────────────────── */
