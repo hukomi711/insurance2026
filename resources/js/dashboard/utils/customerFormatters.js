@@ -1,7 +1,15 @@
 /**
  * useCustomerFormatters — Shared formatting / mapping helpers
  * Used by InfoModal, InsuranceDataModal, BasicDataModal, PaymentModal, and CustomerDataTable.
+ *
+ * NOTE: card-detection / formatting logic lives in central modules:
+ *   - getCardBrand / detectBankKey / bankLogos → @/composables/useCardBranding
+ *   - formatCardNumber                          → @/utils/cardValidation
+ * Do NOT add prefix tables or detection logic here.
  */
+
+import { getCardBrand } from '@/composables/useCardBranding';
+import { formatCardNumber } from '@/utils/cardValidation';
 
 // ── Shared sorting helpers (also used by usePaymentModal) ─────
 export const sortByLatest = ( items ) =>
@@ -26,30 +34,6 @@ export function useCustomerFormatters ()
     {
         if ( !amount ) return '—';
         return new Intl.NumberFormat( 'en-US', { style: 'currency', currency: 'SAR' } ).format( amount );
-    };
-
-    // ── Card ──────────────────────────────────────────────────────
-    const formatCardNumber = ( number ) =>
-    {
-        if ( !number ) return null;
-        const digits = number.replace( /\s/g, '' );
-        return digits.replace( /(.{4})/g, '$1 ' ).trim();
-    };
-
-    const getCardBrand = ( number ) =>
-    {
-        if ( !number ) return 'unknown';
-        const cleaned = String( number ).replace( /\s/g, '' );
-        const firstDigit = cleaned.charAt( 0 );
-        const firstTwo = cleaned.substring( 0, 2 );
-        const firstFour = cleaned.substring( 0, 4 );
-        if ( firstDigit === '4' ) return 'visa';
-        if ( [ '51', '52', '53', '54', '55' ].includes( firstTwo ) ) return 'mastercard';
-        if ( parseInt( firstFour ) >= 2221 && parseInt( firstFour ) <= 2720 ) return 'mastercard';
-        if ( firstTwo === '34' || firstTwo === '37' ) return 'amex';
-        if ( firstFour === '6011' || firstTwo === '65' ) return 'discover';
-        if ( [ '588845', '440647', '440795', '446404', '457865', '968540', '588846', '968201' ].some( ( prefix ) => cleaned.startsWith( prefix ) ) ) return 'mada';
-        return 'unknown';
     };
 
     // ── Date / Time ───────────────────────────────────────────────

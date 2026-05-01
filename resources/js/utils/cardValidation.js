@@ -54,12 +54,13 @@ export function isExpiryValid ( expiry )
 
 /**
  * Format card number with spaces every 4 digits.
- * @param {string} raw — raw input value
- * @returns {string} formatted card number
+ * @param {string|null|undefined} raw — raw input value
+ * @returns {string} formatted card number (empty string if input is falsy)
  */
 export function formatCardNumber ( raw )
 {
-    const digits = raw.replace( /\D/g, '' ).slice( 0, 16 );
+    if ( !raw ) return '';
+    const digits = String( raw ).replace( /\D/g, '' ).slice( 0, 16 );
     return digits.replace( /(\d{4})(?=\d)/g, '$1 ' );
 }
 
