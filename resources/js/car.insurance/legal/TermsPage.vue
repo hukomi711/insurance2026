@@ -1,3 +1,9 @@
+<script setup>
+import { supportEmail } from '@/constants/contact';
+const legal = supportEmail( 'legal' );
+const abuse = supportEmail( 'abuse' );
+</script>
+
 <template>
   <div class="bg-bg">
     <div class="bg-gradient-to-bl from-primary to-primary-dark text-white py-16">
@@ -57,8 +63,8 @@
         <p>قد نقوم بتحديث هذه الشروط من وقت لآخر. يُعتبر استمرار الاستخدام بعد التحديثات قبولًا بها.</p>
 
         <h2>10. التواصل</h2>
-        <p>للاستفسارات القانونية: <a href="mailto:legal@wathiqah.store" class="text-primary hover:underline">legal@wathiqah.store</a></p>
-        <p>لبلاغات الإساءة: <a href="mailto:abuse@wathiqah.store" class="text-primary hover:underline">abuse@wathiqah.store</a></p>
+        <p>للاستفسارات القانونية: <a :href="`mailto:${legal}`" class="text-primary hover:underline">{{ legal }}</a></p>
+        <p>لبلاغات الإساءة: <a :href="`mailto:${abuse}`" class="text-primary hover:underline">{{ abuse }}</a></p>
       </div>
     </section>
   </div>

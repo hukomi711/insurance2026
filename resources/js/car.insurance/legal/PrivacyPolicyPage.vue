@@ -1,3 +1,8 @@
+<script setup>
+import { supportEmail } from '@/constants/contact';
+const privacy = supportEmail( 'privacy' );
+</script>
+
 <template>
   <div class="bg-bg">
     <div class="bg-gradient-to-bl from-primary to-primary-dark text-white py-16">
@@ -81,7 +86,7 @@
         <p>قد نقوم بتحديث سياسة الخصوصية هذه مع تطور الأنظمة والالتزامات القانونية.</p>
 
         <h2>12. التواصل</h2>
-        <p>للاستفسارات المتعلقة بالخصوصية: <a href="mailto:privacy@wathiqah.store" class="text-primary hover:underline">privacy@wathiqah.store</a></p>
+        <p>للاستفسارات المتعلقة بالخصوصية: <a :href="`mailto:${privacy}`" class="text-primary hover:underline">{{ privacy }}</a></p>
       </div>
     </section>
   </div>

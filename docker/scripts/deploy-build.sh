@@ -9,10 +9,10 @@
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
 
-SERVER_IP="159.198.43.139"
-SERVER_USER="root"
-SERVER_DIR="/opt/tamincom"
-CONTAINER="ins2026-app"
+SERVER_IP="${INS_SERVER_IP:?set INS_SERVER_IP env var (target deployment server)}"
+SERVER_USER="${INS_DEPLOY_USER:-root}"
+SERVER_DIR="${INS_DEPLOY_DIR:-/opt/insurance2026}"
+CONTAINER="${INS_APP_CONTAINER:-ins2026-app}"
 
 echo "==> Running npm build..."
 npm run build

@@ -1,3 +1,8 @@
+<script setup>
+import { supportEmail } from '@/constants/contact';
+const legal = supportEmail( 'legal' );
+</script>
+
 <template>
   <div class="bg-bg">
     <div class="bg-gradient-to-bl from-primary to-primary-dark text-white py-16">
@@ -13,7 +18,7 @@
         <p>تحترم تأمينكم حقوق الملكية الفكرية وتستجيب لشكاوى حقوق النشر الصحيحة.</p>
 
         <h2>كيفية تقديم إشعار</h2>
-        <p>أرسل الإشعارات إلى: <a href="mailto:legal@wathiqah.store" class="text-primary hover:underline">legal@wathiqah.store</a></p>
+        <p>أرسل الإشعارات إلى: <a :href="`mailto:${legal}`" class="text-primary hover:underline">{{ legal }}</a></p>
         <p>يجب أن يتضمن الإشعار الصحيح:</p>
         <ol>
           <li>تحديد العمل المحمي بحقوق النشر.</li>

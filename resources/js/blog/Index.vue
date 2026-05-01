@@ -6,6 +6,7 @@ import { switchLocale } from '@/i18n';
 import request from '@/api/request';
 import logger from '@/utils/logger';
 import { useJsonLd } from '@/composables/useJsonLd';
+import { publicOrigin } from '@/constants/contact';
 
 const { locale, t } = useI18n( { useScope: 'global' } );
 
@@ -144,6 +145,7 @@ onMounted( () =>
 {
     document.title = t( 'blog.title' ) + ' - تأمينكم';
 
+    const origin = publicOrigin();
     injectJsonLd( 'seo-breadcrumb', {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
@@ -152,13 +154,13 @@ onMounted( () =>
                 '@type': 'ListItem',
                 position: 1,
                 name: 'الرئيسية',
-                item: 'https://wathiqah.store',
+                item: origin,
             },
             {
                 '@type': 'ListItem',
                 position: 2,
                 name: 'المدونة',
-                item: 'https://wathiqah.store/blog',
+                item: `${origin}/blog`,
             },
         ],
     } );

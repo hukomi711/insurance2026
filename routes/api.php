@@ -59,6 +59,8 @@ Route::prefix('health')->middleware('throttle:60,1')->group(function () {
 // ─── Legal / Policy (public — cacheable, light throttle) ────────────
 Route::prefix('legal')->middleware('throttle:30,1')->group(function () {
     Route::get('/', function () {
+        $emailDomain = env('SUPPORT_EMAIL_DOMAIN', parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost');
+
         return response()->json([
             'policies' => [
                 ['slug' => 'privacy', 'title' => 'سياسة الخصوصية', 'url' => '/privacy'],
@@ -67,9 +69,9 @@ Route::prefix('legal')->middleware('throttle:30,1')->group(function () {
                 ['slug' => 'dmca', 'title' => 'حقوق الملكية الفكرية', 'url' => '/dmca'],
             ],
             'contact' => [
-                'legal' => 'legal@taminsurnce.site',
-                'abuse' => 'abuse@taminsurnce.site',
-                'privacy' => 'privacy@taminsurnce.site',
+                'legal' => "legal@{$emailDomain}",
+                'abuse' => "abuse@{$emailDomain}",
+                'privacy' => "privacy@{$emailDomain}",
             ],
         ]);
     });

@@ -6,11 +6,15 @@
 
 | Key | Value |
 | --- | ----- |
-| Server | `root@<SERVER_IP>` |
-| Path | `/opt/tamincom/` |
-| Domain | `wathiqah.store` |
+| Server | `${INS_DEPLOY_USER:-root}@${INS_SERVER_IP}` |
+| Path | `${INS_DEPLOY_DIR:-/opt/insurance2026}` |
+| Domain | `${INS_DOMAIN}` |
 | App container | `ins2026-app` |
 | Nginx container | `ins2026-nginx` |
+
+> All values come from environment variables. Never hardcode an IP or
+> domain in this repo. Set them locally before running deploy scripts:
+> `export INS_SERVER_IP=… INS_DOMAIN=…`.
 
 ## Deploy by File Type
 

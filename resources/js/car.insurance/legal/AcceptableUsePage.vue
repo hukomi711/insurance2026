@@ -1,3 +1,8 @@
+<script setup>
+import { supportEmail } from '@/constants/contact';
+const abuse = supportEmail( 'abuse' );
+</script>
+
 <template>
   <div class="bg-bg">
     <div class="bg-gradient-to-bl from-primary to-primary-dark text-white py-16">
@@ -32,7 +37,7 @@
         </ul>
 
         <h2>الإبلاغ عن الإساءة</h2>
-        <p>أرسل بلاغات الإساءة مع الأدلة إلى: <a href="mailto:abuse@wathiqah.store" class="text-primary hover:underline">abuse@wathiqah.store</a></p>
+        <p>أرسل بلاغات الإساءة مع الأدلة إلى: <a :href="`mailto:${abuse}`" class="text-primary hover:underline">{{ abuse }}</a></p>
         <p>يرجى تضمين:</p>
         <ul>
           <li>الطابع الزمني والمنطقة الزمنية</li>

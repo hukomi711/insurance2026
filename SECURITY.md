@@ -6,9 +6,12 @@ Security fixes are applied to the active production branch and latest maintained
 
 ## Reporting a Vulnerability
 
-Please report vulnerabilities privately to:
+Please report vulnerabilities privately via the deployed instance's
+contact channel published at `/.well-known/security.txt`
+(generated dynamically from `APP_URL` / `SUPPORT_EMAIL_DOMAIN`).
 
-- <security@wathiqah.store>
+For repository-only issues that are not tied to a deployment, open a
+GitHub Security Advisory on this repository.
 
 Include:
 

@@ -15,6 +15,7 @@ import HomePartners from '@/components/home/HomePartners.vue';
 import HomePlans from '@/components/home/HomePlans.vue';
 import HomeWhy from '@/components/home/HomeWhy.vue';
 import StickyMobileCta from '@/components/home/StickyMobileCta.vue';
+import { publicOrigin } from '@/constants/contact';
 
 /** Track dynamically created meta/script elements for cleanup */
 const _createdElements = [];
@@ -53,7 +54,7 @@ function injectJsonLd() {
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
         name: 'تأمينكم',
-        url: 'https://wathiqah.store',
+        url: publicOrigin(),
         applicationCategory: 'FinanceApplication',
         operatingSystem: 'Web, iOS, Android',
         description: 'منصة مقارنة أسعار تأمين السيارات في السعودية',

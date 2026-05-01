@@ -1,7 +1,0 @@
-User-agent: *
-Disallow: /dashboard
-Disallow: /login
-Disallow: /insurance/
-Disallow: /api/
-
-Sitemap: https://wathiqah.store/sitemap.xml

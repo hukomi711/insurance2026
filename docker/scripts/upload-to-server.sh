@@ -7,14 +7,15 @@
 #
 # Prerequisites:
 #   - SSH access to the server (root or deploy user)
-#   - Server setup already done (setup-server-ubuntu.sh)
+#   - Server setup already done (setup-server.sh)
+#   - INS_SERVER_IP env var exported (no hardcoded IPs in repo)
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
 
 # ── Configuration ────────────────────────────────────────────────
-SERVER_IP="159.198.43.139"
-SERVER_USER="root"
-SERVER_DIR="/opt/tamincom"
+SERVER_IP="${INS_SERVER_IP:?set INS_SERVER_IP env var (target deployment server)}"
+SERVER_USER="${INS_DEPLOY_USER:-root}"
+SERVER_DIR="${INS_DEPLOY_DIR:-/opt/insurance2026}"
 ARCHIVE="insurance2026.tar.gz"
 
 echo "══════════════════════════════════════════════════════════════"

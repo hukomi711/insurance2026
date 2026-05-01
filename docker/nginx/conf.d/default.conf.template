@@ -1,6 +1,10 @@
 # ═══════════════════════════════════════════════════════════════════
-# Nginx — Insurance 2026 Production (taminsurnce.site)
+# Nginx — Insurance 2026 Production (template, env-driven)
 # ═══════════════════════════════════════════════════════════════════
+# Processed by nginx:1.27-alpine entrypoint via envsubst on container start.
+# Required env vars (set via docker-compose):
+#   DOMAIN — primary domain (e.g. example.com)
+#
 # HTTPS with Let's Encrypt. HTTP serves ACME challenge + redirects.
 # Proxies PHP to the app container via FastCGI, WebSocket to Reverb.
 # ═══════════════════════════════════════════════════════════════════
@@ -8,14 +12,14 @@
 # ── Redirect www → non-www (HTTP) ────────────────────────────────
 server {
     listen 80;
-    server_name www.taminsurnce.site;
+    server_name www.${DOMAIN};
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
 
     location / {
-        return 301 https://taminsurnce.site$request_uri;
+        return 301 https://${DOMAIN}$request_uri;
     }
 }
 
@@ -23,18 +27,18 @@ server {
 server {
     listen 443 ssl;
     http2 on;
-    server_name www.taminsurnce.site;
+    server_name www.${DOMAIN};
 
-    ssl_certificate     /etc/nginx/ssl/live/taminsurnce.site/fullchain.pem;
-    ssl_certificate_key /etc/nginx/ssl/live/taminsurnce.site/privkey.pem;
+    ssl_certificate     /etc/nginx/ssl/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/live/${DOMAIN}/privkey.pem;
 
-    return 301 https://taminsurnce.site$request_uri;
+    return 301 https://${DOMAIN}$request_uri;
 }
 
 # ── HTTP → HTTPS redirect + ACME challenge ───────────────────────
 server {
     listen 80 default_server;
-    server_name taminsurnce.site _;
+    server_name ${DOMAIN} _;
 
     # Let's Encrypt ACME challenge
     location /.well-known/acme-challenge/ {
@@ -50,7 +54,7 @@ server {
 
     # Redirect everything else to HTTPS
     location / {
-        return 301 https://taminsurnce.site$request_uri;
+        return 301 https://${DOMAIN}$request_uri;
     }
 }
 
@@ -58,11 +62,11 @@ server {
 server {
     listen 443 ssl default_server;
     http2 on;
-    server_name taminsurnce.site;
+    server_name ${DOMAIN};
 
     # ── SSL certificates ─────────────────────────────────────────────
-    ssl_certificate     /etc/nginx/ssl/live/taminsurnce.site/fullchain.pem;
-    ssl_certificate_key /etc/nginx/ssl/live/taminsurnce.site/privkey.pem;
+    ssl_certificate     /etc/nginx/ssl/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/live/${DOMAIN}/privkey.pem;
 
     # ── SSL hardening ────────────────────────────────────────────
     ssl_protocols TLSv1.2 TLSv1.3;

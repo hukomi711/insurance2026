@@ -3,22 +3,23 @@
 # Insurance2026 — One-shot deploy to NEW server (AlmaLinux 9)
 #
 # Run from your local machine (Git Bash) AFTER:
-#   1. DNS A record:  taminsurnce.site -> NEW_IP  (verify with: nslookup taminsurnce.site 8.8.8.8)
-#   2. SSH key auth working: ssh -i ~/.ssh/id_ed25519 root@NEW_IP echo OK
+#   1. DNS A record:  $INS_DOMAIN -> $INS_SERVER_IP  (verify with: nslookup $INS_DOMAIN 8.8.8.8)
+#   2. SSH key auth working: ssh -i ~/.ssh/id_ed25519 root@$INS_SERVER_IP echo OK
 #   3. Server has >= 2GB RAM (recommended 4GB)
 #
-# Usage:  bash deploy/new-server/deploy.sh
+# Usage:
+#   INS_SERVER_IP=1.2.3.4 INS_DOMAIN=example.com bash deploy/new-server/deploy.sh
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-# ───── Config (edit if needed) ─────
-NEW_IP="${NEW_IP:-162.0.216.105}"
-DOMAIN="${DOMAIN:-taminsurnce.site}"
+# ───── Required env vars ─────
+NEW_IP="${INS_SERVER_IP:?set INS_SERVER_IP env var}"
+DOMAIN="${INS_DOMAIN:?set INS_DOMAIN env var}"
 WWW_DOMAIN="www.${DOMAIN}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
-SSH_USER="${SSH_USER:-root}"
-REPO_URL="${REPO_URL:-https://github.com/}"   # <-- set your git repo URL
-DEPLOY_DIR="/opt/insurance2026"
+SSH_USER="${INS_DEPLOY_USER:-root}"
+REPO_URL="${INS_REPO_URL:?set INS_REPO_URL env var (git repo URL)}"
+DEPLOY_DIR="${INS_DEPLOY_DIR:-/opt/insurance2026}"
 DUMP_LOCAL="$(dirname "$0")/insurance2026.sql.gz"
 ENV_LOCAL="$(dirname "$0")/.env.production.template"
 LE_EMAIL="${LE_EMAIL:-admin@${DOMAIN}}"

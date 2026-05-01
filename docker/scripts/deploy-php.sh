@@ -11,9 +11,9 @@
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
 
-SERVER_IP="159.198.43.139"
-SERVER_USER="root"
-CONTAINER="ins2026-app"
+SERVER_IP="${INS_SERVER_IP:?set INS_SERVER_IP env var (target deployment server)}"
+SERVER_USER="${INS_DEPLOY_USER:-root}"
+CONTAINER="${INS_APP_CONTAINER:-ins2026-app}"
 
 if [ $# -eq 0 ]; then
     echo "Usage: $0 <php-file> [php-file...]"

@@ -1,54 +1,39 @@
-# Deploy to NEW server (taminsurnce.site)
+# Deploy to NEW server
 
-This folder contains everything needed to deploy the system to a new server with **one command**.
+This folder contains the one-shot deployment for a fresh AlmaLinux 9 server.
 
 ## Files
 | File | Purpose |
 |---|---|
-| `insurance2026.sql.gz` | DB dump from production (45KB, 29 tables) |
-| `.env.production.template` | Production env adjusted for new domain |
-| `.env.old.reference` | Original env from old server (kept for reference) |
-| `deploy.sh` | One-shot deploy script |
+| `deploy.sh` | One-shot deploy script (idempotent) |
+| `.env.production.template` | (untracked) Production env adjusted for new domain |
+| `insurance2026.sql.gz` | (untracked) DB dump from production |
+
+## Required env vars (no hardcoded IPs/domains in repo)
+
+```bash
+export INS_SERVER_IP=1.2.3.4              # target server IPv4
+export INS_DOMAIN=example.com             # primary domain
+export INS_REPO_URL=https://github.com/owner/repo.git
+export INS_DEPLOY_USER=root               # optional, defaults to root
+export INS_DEPLOY_DIR=/opt/insurance2026  # optional
+export SSH_KEY=$HOME/.ssh/id_ed25519      # optional
+export LE_EMAIL=admin@example.com         # optional, Let's Encrypt
+```
 
 ## Pre-requisites (NOT automated)
 
-You **must** complete these manually before running `deploy.sh`:
+1. **DNS** — point `$INS_DOMAIN` and `www.$INS_DOMAIN` (A records) to `$INS_SERVER_IP`.
+   Verify: `nslookup $INS_DOMAIN 8.8.8.8`.
 
-### 1. DNS — point domain at new server
-In Namecheap → Advanced DNS:
-- Delete any URL Redirect / Parking
-- Add `A @ -> 162.0.216.105` and `A www -> 162.0.216.105`
+2. **Server resources** — minimum 2 GB RAM / 20 GB disk / 1 vCPU. Recommended 4 GB / 40 GB / 2 vCPU.
 
-Verify:
-```bash
-nslookup taminsurnce.site 8.8.8.8
-# Must return: 162.0.216.105
-```
-
-### 2. Server resources
-- **Minimum:** 2 GB RAM, 20 GB disk, 1 vCPU
-- **Recommended:** 4 GB RAM, 40 GB disk, 2 vCPU
-
-The current server (162.0.216.105) has only **960 MB RAM** — upgrade before running.
-
-### 3. SSH key auth (already done ✓)
-```bash
-ssh -i ~/.ssh/id_ed25519 root@162.0.216.105 'echo OK'
-```
-
-### 4. Set repo URL in `deploy.sh`
-Edit `REPO_URL` at the top of the script to your actual git repo URL.
+3. **SSH key auth** — `ssh -i $SSH_KEY $INS_DEPLOY_USER@$INS_SERVER_IP echo OK` must succeed.
 
 ## Run
 
 ```bash
 bash deploy/new-server/deploy.sh
-```
-
-Override defaults via env vars:
-```bash
-NEW_IP=1.2.3.4 DOMAIN=example.com REPO_URL=https://github.com/owner/repo.git \
-  bash deploy/new-server/deploy.sh
 ```
 
 ## What it does
@@ -68,6 +53,6 @@ NEW_IP=1.2.3.4 DOMAIN=example.com REPO_URL=https://github.com/owner/repo.git \
 
 If something fails, on the new server:
 ```bash
-cd /opt/insurance2026 && docker compose down -v
+cd $INS_DEPLOY_DIR && docker compose down -v
 ```
 Then re-run `deploy.sh` after fixing the issue. The script is idempotent.
