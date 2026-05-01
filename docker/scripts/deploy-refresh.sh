@@ -1,6 +1,6 @@
 #!/bin/bash
 # Deploy helper — run after copying updated PHP files into containers
-# Usage: /opt/tamincom/deploy-refresh.sh
+# Usage: ${INS_DEPLOY_DIR:-/opt/insurance2026}/deploy-refresh.sh
 
 set -e
 

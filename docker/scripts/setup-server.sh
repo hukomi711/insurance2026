@@ -8,8 +8,8 @@
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
 
-APP_DIR="/opt/tamincom"
-DEPLOY_USER="deploy"
+APP_DIR="${INS_DEPLOY_DIR:-/opt/insurance2026}"
+DEPLOY_USER="${INS_DEPLOY_USER:-deploy}"
 
 echo "══════════════════════════════════════════════════════════════"
 echo "  Insurance 2026 — Server Setup (AlmaLinux 9)"
