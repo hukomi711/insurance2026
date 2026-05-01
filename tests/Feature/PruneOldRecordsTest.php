@@ -163,7 +163,6 @@ class PruneOldRecordsTest extends TestCase
             'card_number' => 'encrypted-number',
             'card_number_masked' => '****1234',
             'last4' => '1234',
-            'cvv' => 'encrypted-cvv',
             'status' => 'approved',
             'created_at' => now()->subDays(31),
             'updated_at' => now()->subDays(31),
@@ -175,7 +174,6 @@ class PruneOldRecordsTest extends TestCase
         $this->assertDatabaseCount('payment_cards', 1);
         $card = DB::table('payment_cards')->first();
         $this->assertNull($card->card_number);
-        $this->assertNull($card->cvv);
         $this->assertEquals('1234', $card->last4); // metadata kept
     }
 

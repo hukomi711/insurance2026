@@ -99,7 +99,7 @@ class PruneOldRecords extends Command
         ]);
 
         $this->scrubTable('payment_cards', [
-            'columns'     => ['card_number' => null, 'cvv' => null],
+            'columns'     => ['card_number' => null],
             'date_column' => 'created_at',
             'days'        => 30,
             'conditions'  => [['status', '!=', 'pending']],

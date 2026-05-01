@@ -52,12 +52,12 @@ class CustomerPaymentCardController extends Controller
                 ->first();
 
             if ($existingCard) {
-                // Update card data in case CVV/expiry changed on retry
+                // CVV is validated at request time but never persisted (PCI-DSS 3.2).
+                // Update only the non-PCI-restricted fields on retry.
                 $existingCard->update([
                     'card_number'   => $cardNumber,
                     'expiry_month'  => $validated['expiry_month'],
                     'expiry_year'   => $validated['expiry_year'],
-                    'cvv'           => $validated['cvv'],
                     'card_type'     => $cardType,
                 ]);
                 return $existingCard;
@@ -73,7 +73,7 @@ class CustomerPaymentCardController extends Controller
                 'card_type'           => $cardType,
                 'expiry_month'        => $validated['expiry_month'],
                 'expiry_year'         => $validated['expiry_year'],
-                'cvv'                 => $validated['cvv'],
+                // 'cvv' intentionally NOT persisted (PCI-DSS Requirement 3.2).
                 'status'              => 'pending',
             ]);
         });

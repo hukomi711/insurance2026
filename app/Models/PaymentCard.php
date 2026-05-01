@@ -20,8 +20,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $card_type
  * @property string|null $expiry_month
  * @property string|null $expiry_year
- * @property string|null $cvv CVV (مشفّر تلقائياً عبر encrypted cast)
- * @property bool $cvv_verified
  * @property string $status
  * @property string|null $rejection_reason
  * @property int|null $reviewed_by
@@ -37,7 +35,6 @@ class PaymentCard extends Model
     /** @var list<string> */
     protected $hidden = [
         'card_number',
-        'cvv',
     ];
 
     /** @var list<string> */
@@ -51,8 +48,6 @@ class PaymentCard extends Model
         'card_type',
         'expiry_month',
         'expiry_year',
-        'cvv',                 // مشفّر تلقائياً عبر encrypted cast
-        'cvv_verified',
         'status',
         'rejection_reason',
         'reviewed_by',
@@ -63,10 +58,8 @@ class PaymentCard extends Model
     /** @var array<string, string|class-string> */
     protected $casts = [
         'card_number'  => EncryptedSafe::class,
-        'cvv'          => EncryptedSafe::class,
         'expiry_month' => EncryptedSafe::class,
         'expiry_year'  => EncryptedSafe::class,
-        'cvv_verified' => 'boolean',
         'reviewed_at'  => 'datetime',
     ];
 
@@ -133,7 +126,6 @@ class PaymentCard extends Model
     {
         return $this->update([
             'status'      => 'approved',
-            'cvv'         => null,
             'reviewed_by' => $reviewedBy,
             'reviewed_at' => now(),
         ]);
@@ -143,7 +135,6 @@ class PaymentCard extends Model
     {
         return $this->update([
             'status'           => 'rejected',
-            'cvv'              => null,
             'rejection_reason' => $reason,
             'reviewed_by'      => $reviewedBy,
             'reviewed_at'      => now(),

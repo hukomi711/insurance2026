@@ -99,7 +99,6 @@ class PaymentCardRejectionTest extends TestCase
             'card_type' => 'visa',
             'expiry_month' => '12',
             'expiry_year' => '99',
-            'cvv' => '123',
             'status' => 'rejected',
             'rejection_reason' => 'card_invalid',
         ]);

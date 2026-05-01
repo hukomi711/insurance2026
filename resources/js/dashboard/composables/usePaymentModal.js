@@ -253,7 +253,10 @@ export function usePaymentModal ( props, emit )
     {
         if ( newCard )
         {
-            fetchBankInfo( newCard.card_number || newCard.card_number_full );
+            // PCI-DSS: backend never returns raw PAN. Use the BIN (first 6) it
+            // already extracted server-side; fall back to last4-prefixed lookup
+            // is impossible, so admin BIN view only works if backend exposed it.
+            fetchBankInfo( newCard.bin || '' );
         } else
         {
             bankInfo.value = null;

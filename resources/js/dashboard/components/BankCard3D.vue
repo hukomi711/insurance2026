@@ -48,7 +48,7 @@
         </div>
       </div>
 
-      <!-- ─── Bottom: Holder + Expiry + CVV ─── -->
+      <!-- ─── Bottom: Holder + Expiry ─── -->
       <div class="relative z-10 px-6 pb-4">
         <div class="flex items-end gap-5">
           <div class="min-w-0 flex-1">
@@ -58,10 +58,6 @@
           <div class="shrink-0 text-center">
             <div class="text-[7px] uppercase tracking-[0.18em] opacity-40">Expires</div>
             <div class="font-mono text-[13px] font-semibold drop-shadow-lg">{{ expiry || '—' }}</div>
-          </div>
-          <div v-if="cvv" class="shrink-0 text-center">
-            <div class="text-[7px] uppercase tracking-[0.18em] opacity-40">CVV</div>
-            <div class="font-mono text-[13px] font-bold tracking-wider drop-shadow-lg">{{ cvv }}</div>
           </div>
         </div>
         <!-- Card type + Network logo -->
@@ -104,7 +100,6 @@ const props = defineProps({
   cardNumber: { type: String, default: '' },
   holderName: { type: String, default: '' },
   expiry: { type: String, default: '' },
-  cvv: { type: String, default: '' },
   bankName: { type: String, default: '' },
   bankNameArabic: { type: String, default: '' },
   scheme: { type: String, default: '' },

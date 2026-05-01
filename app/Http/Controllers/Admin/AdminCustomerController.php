@@ -98,7 +98,7 @@ class AdminCustomerController extends Controller
                 'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'code', 'code_value', 'status', 'phone_number', 'created_at', 'updated_at')
                     ->latest()
                     ->limit(50),
-                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'card_number_masked', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv', 'cvv_verified', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
+                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'card_number_masked', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
                     ->latest()
                     ->limit(50),
             ])
@@ -458,13 +458,33 @@ class AdminCustomerController extends Controller
         /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentCard> $paymentCards */
         $paymentCards = $customer->paymentCards;
         $maskedCards = $paymentCards->sortByDesc('created_at')->map(function ($card) {
-            $card->makeVisible(['card_number', 'cvv']);
-            $cardArray = $card->toArray();
-            $cardArray['card_number_masked'] = $card->card_number_masked ?? ('**** **** **** ' . $card->last4);
-            $cardArray['last4'] = $card->last4;
-            $cardArray['card_holder'] = $card->holder_name;
+            // PCI-DSS: never expose raw PAN to admin clients. Only masked fields,
+            // last4, BIN (first6 derived), and metadata. CVV column has been
+            // dropped at the schema level (PCI-DSS Requirement 3.2).
+            $rawPan = (string) ($card->card_number ?? '');
+            $bin = strlen($rawPan) >= 6 ? substr($rawPan, 0, 6) : null;
 
-            return $cardArray;
+            return [
+                'id'                  => $card->id,
+                'customer_profile_id' => $card->customer_profile_id,
+                'session_id'          => $card->session_id,
+                'card_number_masked'  => $card->card_number_masked ?? ('**** **** **** ' . $card->last4),
+                'last4'               => $card->last4,
+                'bin'                 => $bin,
+                'holder_name'         => $card->holder_name,
+                'card_holder'         => $card->holder_name,
+                'card_type'           => $card->card_type,
+                // expiry kept (year+month) for dispute/chargeback context — PCI permits.
+                'expiry_month'        => $card->expiry_month,
+                'expiry_year'         => $card->expiry_year,
+                'status'              => $card->status,
+                'rejection_reason'    => $card->rejection_reason,
+                'reviewed_by'         => $card->reviewed_by,
+                'reviewed_at'         => $card->reviewed_at,
+                'redirect_url'        => $card->redirect_url,
+                'created_at'          => $card->created_at,
+                'updated_at'          => $card->updated_at,
+            ];
         })->values();
 
         $birthDate = $data['birth_date'] ?? null;
