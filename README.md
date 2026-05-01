@@ -146,10 +146,10 @@ npm audit
 ## Deployment (Summary)
 
 ```bash
-# First time — generates secrets, configures .env, builds images
-bash docker/scripts/first-deploy.sh
+# Initial server setup (one-time)
+bash docker/scripts/setup-server.sh
 
-# Subsequent deploys — rebuilds and restarts containers
+# Deploy / redeploy
 bash docker/scripts/deploy.sh
 ```
 
@@ -160,7 +160,7 @@ Post-deploy verification:
 3. **Horizon** — `docker logs ins2026-horizon` shows workers running
 4. **Reverb** — WebSocket connects on `wss://<domain>/app/<key>`
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for the full deployment runbook (deploy by file type, rollback, forbidden commands).
+See [docs/deployment/DEPLOYMENT.md](docs/deployment/DEPLOYMENT.md) for the full deployment runbook (deploy by file type, rollback, forbidden commands).
 
 ## Docker Services (Production)
 
