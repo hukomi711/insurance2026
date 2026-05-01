@@ -95,12 +95,19 @@ class AdminCustomerController extends Controller
                 'otpCodes as payment_otp_count' => fn($q) => $q->whereIn('type', ['otp', 'pin', 'phone', 'phone_verification', 'stc_otp', 'stc_verification']),
             ])
             ->with([
+                // NOTE: do NOT use ->limit(N) here — Laravel applies eager-load
+                // limits GLOBALLY across all parents (single SQL query), not
+                // per-parent. This caused customers to randomly receive 0 OTP
+                // records when total rows across the page exceeded the limit,
+                // making latest_pin / latest_phone_otp appear null in the
+                // dashboard refresh payload (the disappearing-blocks bug).
+                // We scope by recency instead, which is bounded per customer.
                 'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'code', 'code_value', 'status', 'phone_number', 'created_at', 'updated_at')
-                    ->latest()
-                    ->limit(50),
+                    ->where('created_at', '>=', now()->subDays(30))
+                    ->latest(),
                 'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'card_number_masked', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
-                    ->latest()
-                    ->limit(50),
+                    ->where('created_at', '>=', now()->subDays(30))
+                    ->latest(),
             ])
             // Dedup removed — createOrUpdateByIP() already handles identity merging.
             // The old whereIn(MAX(id) GROUP BY COALESCE(...)) was hiding legitimate customers.

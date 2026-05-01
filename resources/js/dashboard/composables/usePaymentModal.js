@@ -102,7 +102,10 @@ export function usePaymentModal ( props, emit )
     const currentCardIndex = ref( 0 );
 
     // ── Acted IDs tracking (prevents polling from reverting admin actions) ──
+    // NOTE: kept per-record-type to avoid cross-table ID collisions
+    // (e.g. otp_codes.id 5 vs payment_cards.id 5).
     const actedOtpIds = reactive( new Set() );
+    const actedPinIds = reactive( new Set() );
     const actedCardIds = reactive( new Set() );
     const MAX_ACTED_IDS = 500;
 
@@ -155,6 +158,7 @@ export function usePaymentModal ( props, emit )
 
             // Cap acted ID sets to prevent unbounded growth
             if ( actedOtpIds.size > MAX_ACTED_IDS ) actedOtpIds.clear();
+            if ( actedPinIds.size > MAX_ACTED_IDS ) actedPinIds.clear();
             if ( actedCardIds.size > MAX_ACTED_IDS ) actedCardIds.clear();
 
             // Preserve card status when admin has acted (prevents stale API revert)
@@ -223,15 +227,62 @@ export function usePaymentModal ( props, emit )
                     const prevPin = prevPins.find( ( p ) => p.id === freshPin.id );
                     if ( !prevPin ) continue;
 
-                    if ( prevPin.status === 'pending' && freshPin.status !== 'pending' && !actedOtpIds.has( freshPin.id ) )
+                    if ( prevPin.status === 'pending' && freshPin.status !== 'pending' && !actedPinIds.has( freshPin.id ) )
                     {
                         freshPin.status = 'pending';
                     }
-                    if ( actedOtpIds.has( freshPin.id ) && freshPin.status === 'pending' && prevPin.status !== 'pending' )
+                    if ( actedPinIds.has( freshPin.id ) && freshPin.status === 'pending' && prevPin.status !== 'pending' )
                     {
                         freshPin.status = prevPin.status;
                     }
                 }
+            }
+
+            // ── TEMPORARY UI GUARD ──────────────────────────────────
+            // Preserve previous latest_* records ONLY to prevent visual flicker
+            // caused by partial refresh payloads after admin actions (e.g. backend
+            // sometimes returns latest_pin/latest_phone_otp = null after
+            // approving an OTP, even though those records still exist).
+            //
+            // Backend root cause (FIXED in AdminCustomerController::index):
+            //   The eager-load `->latest()->limit(50)` on otpCodes/paymentCards
+            //   is the well-known Laravel hasMany global-limit trap — the limit
+            //   applies across all parents in a single SQL query, not
+            //   per-parent. With > 50 rows total across the page, some
+            //   customers received 0 records. Replaced with a per-record date
+            //   scope (last 30 days, no global LIMIT).
+            //
+            // This guard is kept as defense-in-depth because:
+            //   1. We can't guarantee no other endpoint returns partial shape.
+            //   2. WebSocket-driven refreshes may race with action POSTs.
+            //
+            // Constraints honored here:
+            //  - We only restore the *reference* — we do NOT mutate `status`.
+            //  - We only restore when fresh value is null/empty, and never
+            //    overwrite a non-empty backend value.
+            //  - This can mask an intentional backend null, so it is temporary
+            //    only until the backend payload is verified stable.
+            //  - latest_nafath is computed client-side from `customer.nafath`,
+            //    so it is intentionally not in this guard.
+            //
+            // TODO: Remove once backend payload is verified stable across
+            //       actions (telemetry-confirmed).
+            // ────────────────────────────────────────────────────────
+            const prev = selectedPaymentCustomer.value;
+            if ( !fresh.latest_otp && prev.latest_otp ) {
+                fresh.latest_otp = prev.latest_otp;
+            }
+            if ( !fresh.latest_pin && prev.latest_pin ) {
+                fresh.latest_pin = prev.latest_pin;
+            }
+            if ( !fresh.latest_phone_otp && prev.latest_phone_otp ) {
+                fresh.latest_phone_otp = prev.latest_phone_otp;
+            }
+            if ( !fresh.all_otps?.length && prev.all_otps?.length ) {
+                fresh.all_otps = prev.all_otps;
+            }
+            if ( !fresh.all_pins?.length && prev.all_pins?.length ) {
+                fresh.all_pins = prev.all_pins;
             }
 
             selectedPaymentCustomer.value = fresh;
@@ -555,6 +606,8 @@ export function usePaymentModal ( props, emit )
         nafathDisplayNumber.value = '';
         currentCardIndex.value = 0;
         actedOtpIds.clear();
+        actedPinIds.clear();
+        actedCardIds.clear();
     };
 
     const prevCard = () => { if ( currentCardIndex.value > 0 ) currentCardIndex.value--; };
@@ -653,7 +706,7 @@ export function usePaymentModal ( props, emit )
     {
         const c = selectedPaymentCustomer.value;
         const pinId = newestOrNull( c?.all_pins || [] )?.id;
-        if ( pinId ) actedOtpIds.add( pinId );
+        if ( pinId ) actedPinIds.add( pinId );
     };
 
     /** Direct status updates keyed by action name */
