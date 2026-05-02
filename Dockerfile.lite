@@ -1,0 +1,53 @@
+# Lite Dockerfile — skips frontend build (uses pre-built public/build/)
+# Used for low-RAM server deployments
+
+FROM composer:2 AS vendor
+WORKDIR /build
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --optimize-autoloader --ignore-platform-reqs
+COPY . .
+RUN composer dump-autoload --optimize --no-dev --no-scripts
+
+FROM php:8.4-fpm-alpine AS runtime
+ARG APP_BUILD_SHA=unknown
+ENV APP_BUILD_SHA=${APP_BUILD_SHA}
+
+RUN apk add --no-cache icu-libs libzip libpng libjpeg-turbo freetype oniguruma linux-headers curl \
+    && apk add --no-cache --virtual .build-deps icu-dev libzip-dev libpng-dev libjpeg-turbo-dev freetype-dev oniguruma-dev $PHPIZE_DEPS \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) pdo_mysql mbstring intl zip gd bcmath opcache pcntl \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del .build-deps \
+    && rm -rf /tmp/pear
+
+# Browsershot runtime: Chromium + Node + puppeteer (Phase 2 PDF export)
+RUN apk add --no-cache chromium nss harfbuzz ca-certificates ttf-freefont font-noto font-noto-arabic nodejs npm
+ENV PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    NODE_PATH=/usr/lib/node_modules
+RUN npm install -g --omit=dev puppeteer@^23 && npm cache clean --force
+
+COPY docker/php/php-production.ini /usr/local/etc/php/conf.d/99-production.ini
+COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
+COPY docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+RUN addgroup -g 1000 -S appuser && adduser -u 1000 -S appuser -G appuser
+
+WORKDIR /var/www/html
+
+COPY --from=vendor --chown=appuser:appuser /build/ .
+# Use pre-built public/build (already copied into vendor stage from . COPY)
+COPY --chown=appuser:appuser public/build/ /opt/build-assets/build/
+
+RUN mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/logs bootstrap/cache \
+    && rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
+    && mv .env.production .env \
+    && chown -R appuser:appuser storage bootstrap/cache .env \
+    && chmod -R 775 storage bootstrap/cache
+
+RUN apk add --no-cache su-exec
+EXPOSE 9000
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["php-fpm"]
