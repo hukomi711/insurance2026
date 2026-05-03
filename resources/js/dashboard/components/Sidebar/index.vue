@@ -1,6 +1,6 @@
 <template>
     <aside
-        class="fixed inset-y-0 right-0 z-30 w-64 transform transition-transform duration-300"
+        class="fixed inset-y-0 right-0 z-50 w-[85vw] max-w-xs sm:max-w-sm lg:w-64 transform transition-transform duration-300"
         :style="{ backgroundColor: 'var(--admin-sidebar-bg)', color: 'var(--admin-sidebar-text)' }"
         :class="[
             sidebarOpened ? 'translate-x-0' : 'translate-x-full',

@@ -5,6 +5,53 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property string $event_name
+ * @property string $session_id
+ * @property int|null $customer_profile_id
+ * @property string|null $quote_uuid
+ * @property string|null $step_name
+ * @property int|null $step_order
+ * @property string|null $previous_step
+ * @property string|null $device_type
+ * @property string|null $source
+ * @property string|null $campaign
+ * @property string|null $country
+ * @property bool $is_returning_user
+ * @property int|null $elapsed_seconds
+ * @property array<array-key, mixed>|null $metadata
+ * @property string|null $ip_address
+ * @property string|null $user_agent
+ * @property \Illuminate\Support\Carbon $occurred_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\CustomerProfile|null $customerProfile
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereCampaign($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereCountry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereCustomerProfileId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereDeviceType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereElapsedSeconds($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereEventName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereIpAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereIsReturningUser($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereOccurredAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent wherePreviousStep($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereQuoteUuid($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereSessionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereSource($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereStepName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereStepOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|FunnelEvent whereUserAgent($value)
+ * @mixin \Illuminate\Database\Eloquent\Builder
+ */
 class FunnelEvent extends Model
 {
     /** @var list<string> */

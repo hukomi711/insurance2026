@@ -99,7 +99,7 @@
         <div class="flex items-center justify-between">
           <span class="text-xs text-gray-400">السائق {{ idx + 1 }}</span>
         </div>
-        <div class="mt-1 grid grid-cols-2 gap-2 text-sm">
+        <div class="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
           <div><span class="text-gray-400">الاسم: </span><span class="text-white">{{ drv.name || drv.fullName || '—' }}</span></div>
           <div><span class="text-gray-400">الهوية: </span><span class="font-mono text-yellow-400">{{ drv.nationalId || drv.id_number || '—' }}</span></div>
         </div>

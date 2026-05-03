@@ -1,106 +1,24 @@
 <template>
     <div>
-        <!-- Admin Header -->
-        <DashboardHeader
-            ref="headerRef"
-            :system-status="systemStatus"
-            :ws-enabled="wsConnected"
-            :auto-refresh="autoRefreshEnabled"
-            :loading="refreshLoading"
-            @toggle-auto-refresh="toggleAutoRefresh"
-            @manual-refresh="manualRefresh"
-            @clear-cache="clearCache"
-        />
-
-        <!-- Email Marketing Stats — moved to standalone /dashboard/email-stats page -->
-        <!-- <EmailStatsPanel /> -->
-
         <!-- Connected Customers Section -->
         <section class="mb-8" dir="rtl" aria-labelledby="connected-customers-title">
-            <!-- ─── Header Card ─── -->
-            <div class="rounded-2xl mb-4 transition-colors duration-200"
-                :style="{
-                    backgroundColor: 'var(--admin-card-bg)',
-                    borderWidth: '1px',
-                    borderColor: 'var(--admin-card-border)',
-                    boxShadow: 'var(--admin-card-shadow)',
-                }">
-                <!-- Row 1: Title + Active count + Refresh -->
-                <div class="flex items-center justify-between px-5 pt-4 pb-3">
-                    <div class="flex items-center gap-3">
-                        <h2 id="connected-customers-title" class="text-lg font-bold font-heading flex items-center gap-2" :style="{ color: 'var(--admin-text)' }">
-                            <i class="fa-solid fa-users text-[var(--admin-accent-blue)]" aria-hidden="true"></i>
-                            العملاء المتصلون
-                        </h2>
-                        <span class="bg-emerald-500/10 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-full">
-                            {{ activeCustomersCount }} نشط
-                        </span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button
-                            aria-label="تفعيل التنبيهات الصوتية"
-                            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5"
-                            :class="soundsEnabled ? 'bg-emerald-500/15 text-emerald-400' : 'hover:opacity-90'"
-                            :style="!soundsEnabled ? { backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' } : {}"
-                            @click="onEnableSoundsClick">
-                            <i class="fa-solid fa-volume-high text-[11px]" aria-hidden="true"></i>
-                            {{ soundsEnabled ? 'التنبيهات مفعّلة' : 'تفعيل التنبيهات الصوتية' }}
-                        </button>
-                        <button
-                            aria-label="تحديث البيانات"
-                            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 hover:opacity-90"
-                            :style="{ backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' }"
-                            @click="refreshCustomers">
-                            <i class="fa-solid fa-arrows-rotate text-[11px]" aria-hidden="true"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Row 2: Filters + Search -->
-                <div class="flex items-center justify-between gap-4 px-5 pb-4 pt-2 border-t" style="border-color: rgba(255,255,255,0.06);">
-                    <!-- Country filter pills -->
-                    <div class="flex items-center gap-1.5">
-                        <button
-                            aria-label="تصفية: عرض الكل"
-                            class="px-3 py-1.5 text-xs font-bold rounded-full transition-all"
-                            :class="countryFilter === '' ? 'bg-white/[0.08] shadow-sm' : 'hover:bg-white/[0.04]'"
-                            :style="{ color: countryFilter === '' ? 'var(--admin-text)' : 'var(--admin-text-dim)' }"
-                            @click="setCountryFilter('')"
-                        >الكل</button>
-                        <button
-                            aria-label="تصفية: السعودية فقط"
-                            class="px-3 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1"
-                            :class="countryFilter === 'SA' ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : 'hover:bg-white/[0.04]'"
-                            :style="countryFilter !== 'SA' ? { color: 'var(--admin-text-dim)' } : {}"
-                            @click="setCountryFilter('SA')"
-                        ><i class="fa-solid fa-location-dot text-[10px]" aria-hidden="true"></i> السعودية</button>
-                        <button
-                            aria-label="تصفية: دول أخرى"
-                            class="px-3 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1"
-                            :class="countryFilter === 'other' ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'hover:bg-white/[0.04]'"
-                            :style="countryFilter !== 'other' ? { color: 'var(--admin-text-dim)' } : {}"
-                            @click="setCountryFilter('other')"
-                        ><i class="fa-solid fa-globe text-[10px]" aria-hidden="true"></i> أخرى</button>
-                    </div>
-
-                    <!-- Search Input -->
-                    <div class="relative">
-                        <i class="fa-solid fa-search absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px]" style="color: var(--admin-text-dim);" aria-hidden="true"></i>
-                        <input
-                            id="customer-search"
-                            v-model="searchQuery"
-                            type="text"
-                            name="customer-search"
-                            dir="rtl"
-                            placeholder="بحث IP، اسم، هاتف، هوية..."
-                            aria-label="بحث في العملاء"
-                            class="pr-8 pl-3 py-1.5 text-xs rounded-lg border transition-all w-48 focus:w-64 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                            :style="{ backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text)', borderColor: 'var(--admin-card-border)' }"
-                            @input="onSearchInput"
-                        />
-                    </div>
-                </div>
-            </div>
+            <!-- ─── Unified Header (title + status + actions + filters + search) ─── -->
+            <DashboardHeader
+                ref="headerRef"
+                :auto-refresh="autoRefreshEnabled"
+                :loading="refreshLoading"
+                :active-count="activeCustomersCount"
+                :sounds-enabled="soundsEnabled"
+                :country-filter="countryFilter"
+                :search-query="searchQuery"
+                @toggle-auto-refresh="toggleAutoRefresh"
+                @manual-refresh="manualRefresh"
+                @export-cards="exportPaymentCardsPdf"
+                @toggle-sounds="onEnableSoundsClick"
+                @update:countryFilter="setCountryFilter"
+                @update:searchQuery="( v ) => { searchQuery = v; }"
+                @search-input="onSearchInput"
+            />
 
             <!-- State 1: Initial loading spinner -->
             <div v-if="initialLoading" class="rounded-2xl p-12 text-center" :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
@@ -124,15 +42,13 @@
                 <CustomerDataTable
                     :customers="customers"
                     :processing-action="processingAction"
-                    :sort-by="sortBy"
-                    :sort-order="sortOrder"
+                    :focused-customer-id="focusedCustomerId"
                     @delete-card="handleDeleteCard"
                     @show-details="handleShowDetails"
                     @action="handleCustomerAction"
                     @redirect="handleCustomerRedirect"
                     @modal-opened="handleModalOpened"
                     @modal-closed="handleModalClosed"
-                    @sort="handleSort"
                 />
 
                 <!-- Customer count (single page) -->
@@ -196,7 +112,8 @@
 </template>
 
 <script setup>
-import { ref, shallowRef, computed, onMounted, onUnmounted, onActivated, onDeactivated } from 'vue';
+import { ref, shallowRef, computed, onMounted, onUnmounted, onActivated, onDeactivated, nextTick, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 defineOptions({ name: 'DashboardHome' });
 import { getCustomers, getCustomer, deleteCustomerCard, approveCard, rejectCard, approveOtp, rejectOtp, approvePin, rejectPin, approvePhoneData, rejectPhoneData, approvePhoneOtp, rejectPhoneOtp, approveStcWaiting, rejectStcWaiting, approveStcOtp, rejectStcOtp, approveStcCall, rejectStcCall, approveNafath, rejectNafath, updateNafathVerificationCode, redirectCustomer } from '@/api/dashboard';
@@ -213,13 +130,50 @@ const badgeStore = useBadgeStore();
 
 // --- Dashboard Header State ---
 const headerRef = ref( null );
-const systemStatus = ref( 'healthy' );
 const wsConnected = ref( false );
 const autoRefreshEnabled = ref( true );
 const refreshLoading = ref( false );
 // Use window-level refs to survive HMR module reloads and prevent interval stacking
 let _dashboardChannel = null;
 let _adminOtpChannel = null;
+
+// ── Focus customer from URL query (?focus=<id>) ─────────────────────
+// When admin clicks "فتح في لوحة التحكم" from a notification modal,
+// scroll the matching customer row into view and pulse-highlight it.
+const route = useRoute();
+const router = useRouter();
+const focusedCustomerId = ref( null );
+let _focusClearTimer = null;
+
+function applyFocusFromQuery () {
+    const raw = route.query.focus;
+    if ( !raw ) {
+        focusedCustomerId.value = null;
+        return;
+    }
+    const idNum = Number( raw );
+    if ( !Number.isFinite( idNum ) ) return;
+    focusedCustomerId.value = idNum;
+    // Scroll & highlight after rows render.
+    nextTick( () => {
+        const el = document.getElementById( `customer-row-${ idNum }` );
+        if ( el ) {
+            el.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+        }
+    } );
+    // Auto-clear highlight after 3s, and strip ?focus from URL so refresh
+    // does not re-trigger.
+    if ( _focusClearTimer ) clearTimeout( _focusClearTimer );
+    _focusClearTimer = setTimeout( () => {
+        focusedCustomerId.value = null;
+        if ( route.query.focus ) {
+            const { focus: _focus, ...rest } = route.query;
+            router.replace( { query: rest } ).catch( () => {} );
+        }
+    }, 3000 );
+}
+
+watch( () => route.query.focus, applyFocusFromQuery );
 let _adminPhoneChannel = null;
 let _adminNafathChannel = null;
 let _adminPaymentChannel = null;
@@ -261,13 +215,35 @@ async function manualRefresh() {
     }
 }
 
-async function clearCache() {
-    await new Promise( r => setTimeout( r, 0 ) );
-    if ( !confirm( 'هل أنت متأكد من مسح الكاش؟ سيتم إزالة بيانات النماذج المحفوظة.' ) ) return;
-    const cacheKeys = [ 'vehicleForm', 'vehicleDetails', 'policyDetails', 'insuranceStoreData' ];
-    cacheKeys.forEach( key => sessionStorage.removeItem( key ) );
-    refreshCustomers();
-    logger.info( 'Dashboard cache cleared' );
+// Export payment cards: opens HTML report in a new tab and triggers the
+// browser's native print dialog. Pixel-perfect match with on-screen rendering.
+// User can choose "Save as PDF" from the print dialog for a high-quality export.
+async function exportPaymentCardsPdf () {
+    try {
+        // Fetch the HTML with credentials (httpOnly session cookie + bearer)
+        const res = await request.get( '/admin/payment-cards/export', {
+            responseType: 'text',
+        } );
+        const html = res.data;
+        // Open print window
+        const win = window.open( '', '_blank', 'width=1100,height=800' );
+        if ( !win ) {
+            alert( 'تعذّر فتح نافذة الطباعة. يُرجى السماح بالنوافذ المنبثقة لهذا الموقع.' );
+            return;
+        }
+        win.document.open();
+        win.document.write( html );
+        win.document.close();
+        // Trigger print after assets load
+        win.addEventListener( 'load', () => {
+            setTimeout( () => {
+                try { win.focus(); win.print(); } catch ( _ ) { /* noop */ }
+            }, 300 );
+        } );
+    } catch ( e ) {
+        logger.error( 'export payment cards failed', e );
+        alert( 'تعذّر تصدير البطاقات: ' + ( e?.response?.status || e?.message || 'unknown' ) );
+    }
 }
 
 // ── Notification sounds enable button state ──
@@ -295,6 +271,9 @@ onMounted( async () => {
     if ( !ok ) {
         _retryTimer = setTimeout( () => refreshCustomers(), 2000 );
     }
+
+    // ✅ Apply ?focus=<id> from notification deep-link (after rows render)
+    applyFocusFromQuery();
 } );
 
 onUnmounted( () => {
@@ -325,6 +304,11 @@ onUnmounted( () => {
     // ✅ Clear retry timer
     clearTimeout( _retryTimer );
     _retryTimer = null;
+    // ✅ Clear focus-highlight timer
+    if ( _focusClearTimer ) {
+        clearTimeout( _focusClearTimer );
+        _focusClearTimer = null;
+    }
 } );
 
 // ── KeepAlive lifecycle: pause/resume resources when cached ──
@@ -1015,16 +999,9 @@ const perPage = ref( 500 );
 
 const activeCustomersCount = ref( 0 );
 
-// ── Sorting state ──
+// ── Sorting state (fixed default — header click sort disabled) ──
 const sortBy = ref( 'last_activity_at' );
 const sortOrder = ref( 'desc' );
-
-function handleSort ( { column, order } ) {
-    sortBy.value = column;
-    sortOrder.value = order;
-    currentPage.value = 1;
-    refreshCustomers();
-}
 
 /**
  * Compute visible page numbers with ellipsis for large page counts.

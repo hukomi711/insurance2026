@@ -109,7 +109,7 @@ class OrderController extends Controller
             }
         }
 
-        $order = DB::transaction(fn () => Order::create($validated));
+        $order = DB::transaction(fn () => Order::create(collect($validated)->except(['quote_lock_token'])->all()));
 
         return response()->json([
             'success'       => true,

@@ -7,26 +7,35 @@
                 <div class="pwm-container">
                     <div class="pwm-card">
 
-                        <!-- Bank Logo -->
-                        <div v-if="bankLogo" class="pwm-bank-logo">
-                            <img :src="bankLogo" alt="Bank logo" />
+                        <!-- Card identity strip (logos only) -->
+                        <div v-if="hasAnyBranding" class="pwm-card-identity">
+                            <div class="pwm-card-identity__slot pwm-card-identity__slot--left">
+                                <img
+                                    v-if="networkLogo"
+                                    :src="networkLogo"
+                                    :alt="displayNetworkName || 'Card network'"
+                                    class="pwm-card-identity__logo pwm-card-identity__logo--network"
+                                />
+                                <div v-else class="pwm-card-identity__placeholder" aria-hidden="true"></div>
+                            </div>
+                            <div class="pwm-card-identity__center" aria-hidden="true"></div>
+                            <div class="pwm-card-identity__slot pwm-card-identity__slot--right">
+                                <img
+                                    v-if="bankLogo"
+                                    :src="bankLogo"
+                                    :alt="displayBankName || 'Bank'"
+                                    class="pwm-card-identity__logo pwm-card-identity__logo--bank"
+                                />
+                                <div v-else class="pwm-card-identity__placeholder" aria-hidden="true"></div>
+                            </div>
                         </div>
 
                         <!-- ═══ Pending State ═══ -->
                         <template v-if="paymentStatus === 'pending'">
-                            <!-- Spinner -->
+                            <h2 class="pwm-title">جاري مراجعة طلب الدفع</h2>
+
+                            <!-- Animated dots -->
                             <div class="pwm-spinner-wrap">
-                                <div class="pwm-spinner">
-                                    <svg class="pwm-spinner__ring" viewBox="0 0 96 96" fill="none">
-                                        <circle cx="48" cy="48" r="44" stroke="#e2e8f0" stroke-width="4" />
-                                        <path d="M48 4a44 44 0 0 1 44 44" stroke="#faa62e" stroke-width="4" stroke-linecap="round" />
-                                    </svg>
-                                    <svg class="pwm-spinner__shield" viewBox="0 0 24 24" fill="none">
-                                        <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" fill="#faa62e" opacity="0.15" />
-                                        <path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5z" stroke="#faa62e" stroke-width="1.5" fill="none" />
-                                        <path d="M9 12l2 2 4-4" stroke="#faa62e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                    </svg>
-                                </div>
                                 <div class="pwm-dots">
                                     <span class="pwm-dot pwm-dot--1"></span>
                                     <span class="pwm-dot pwm-dot--2"></span>
@@ -34,22 +43,14 @@
                                 </div>
                             </div>
 
-                            <h2 class="pwm-title">جارٍ معالجة عملية الدفع</h2>
-                            <p class="pwm-subtitle">يتم الآن تأكيد العملية، يرجى الانتظار وعدم إغلاق الصفحة</p>
+                            <p class="pwm-subtitle">تم استلام بيانات العملية، ويتم التحقق من الحالة الآن. يرجى الانتظار وعدم إغلاق الصفحة.</p>
 
-                            <!-- Bank Verification Notice -->
-                            <div class="pwm-notice pwm-notice--info">
-                                <p class="pwm-notice__title">توثيق العملية</p>
+                            <!-- Review Notice (appears after 60s) -->
+                            <div v-if="showReviewNotice" class="pwm-notice pwm-notice--info">
+                                <p class="pwm-notice__title">مراجعة الطلب</p>
                                 <p class="pwm-notice__text">
-                                    قد يتطلب البنك التحقق من العملية عبر وسيلة التوثيق المعتادة لديك. يُرجى متابعة تعليمات البنك لإكمال الدفع.
+                                    قد تستغرق عملية التحقق لحظات قليلة. في حال الحاجة إلى إجراء إضافي، سيتم توجيهك تلقائيًا للخطوة التالية.
                                 </p>
-                            </div>
-
-                            <!-- Taking too long -->
-                            <div v-if="waitingTooLong" class="pwm-notice pwm-notice--warn">
-                                <p class="pwm-notice__title">العملية تستغرق وقتاً أطول من المعتاد</p>
-                                <p class="pwm-notice__text">إذا لم يتم الرد خلال دقيقة، يمكنك العودة والمحاولة مرة أخرى</p>
-                                <button class="pwm-notice__link" @click="handleCancel">العودة لنموذج الدفع</button>
                             </div>
                         </template>
 
@@ -92,9 +93,11 @@
 
                         <!-- Card Summary -->
                         <div v-if="cardLast4" class="pwm-card-summary">
-                            <p>البطاقة المنتهية بـ <span class="pwm-card-summary__digits" dir="ltr">{{ cardLast4 }}</span></p>
                             <p>المبلغ: <span class="pwm-card-summary__amount">{{ formattedAmount }}</span> SAR</p>
                         </div>
+
+                        <!-- Footer note -->
+                        <p class="pwm-identify-note">تم التعرف على البطاقة تلقائيًا من بيانات الدفع.</p>
 
                         <!-- Secure footer -->
                         <div class="pwm-secure-footer">
@@ -102,7 +105,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
-                            <span>معاملة آمنة ومشفرة</span>
+                            <span>يتم التعامل مع بيانات العملية بسرية</span>
                         </div>
                     </div>
                 </div>
@@ -120,6 +123,7 @@ function lockBodyScroll () { document.body.style.overflow = 'hidden'; }
 function unlockBodyScroll () { document.body.style.overflow = ''; }
 import { usePayment } from '@/composables/usePayment';
 import { usePaymentWebSocket } from '@/composables/usePaymentWebSocket';
+import { useCardBranding } from '@/composables/useCardBranding';
 import { getCardStatus } from '@/api/paymentApi';
 import { formatPaymentFailure } from '@/constants/rejectionReasons';
 import { BANK_LOGOS } from '@/constants/bankLogos';
@@ -142,10 +146,24 @@ const customerIp = ref( context.customerIp || '' );
 const cardLast4 = computed( () => context.cardLast4 || '****' );
 const totalAmount = computed( () => parseFloat( context.totalAmount ) || 0 );
 
+// ─── Card branding (bank + network) ────────────────────────
+const {
+    bankLogo: brandedBankLogo,
+    bankName,
+    networkLogo,
+    networkName,
+    brand,
+} = useCardBranding( () => context.cardBin || '' );
+
 const bankLogo = computed( () => {
+    if ( brandedBankLogo.value ) return brandedBankLogo.value;
     const key = context.bankCode || detectBankFromBin( context.cardBin || '' );
     return key && BANK_LOGOS[ key ] ? BANK_LOGOS[ key ] : null;
 } );
+
+const displayBankName = computed( () => bankName.value || '' );
+const displayNetworkName = computed( () => networkName.value || ( brand.value ? brand.value.toUpperCase() : '' ) );
+const hasAnyBranding = computed( () => Boolean( bankLogo.value || networkLogo.value ) );
 
 const formattedAmount = computed( () =>
     totalAmount.value.toLocaleString( 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 } )
@@ -202,22 +220,22 @@ const rejectionAlert = computed( () => formatPaymentFailure( rejectionReason.val
     detectedBank: detectBankFromBin( context.cardBin || '' ),
 } ) );
 
-// ─── "Taking too long" timer ────────────────────────────────────────
-const waitingTooLong = ref( false );
+// ─── "Review notice" timer (appears after 60s) ────────────────────
+const showReviewNotice = ref( false );
 let waitingTimer = null;
 
 function startWaitingTimer () {
-    waitingTooLong.value = false;
-    waitingTimer = setTimeout( () => { waitingTooLong.value = true; }, 30000 );
+    showReviewNotice.value = false;
+    waitingTimer = setTimeout( () => { showReviewNotice.value = true; }, 60000 );
 }
 
 function stopWaitingTimer () {
     if ( waitingTimer ) { clearTimeout( waitingTimer ); waitingTimer = null; }
 }
 
-// Auto-hide "taking too long" when status resolves
+// Auto-hide review notice when status resolves
 watch( paymentStatus, ( s ) => {
-    if ( s !== 'pending' ) waitingTooLong.value = false;
+    if ( s !== 'pending' ) showReviewNotice.value = false;
 } );
 
 // ─── ESC key blocker ────────────────────────────────────────────────
@@ -232,7 +250,7 @@ function handleRetry () {
     emit( 'close', rejectionReason.value );
 }
 
-function handleCancel () {
+function _handleCancel () {
     cleanupWs();
     emit( 'close', '' );
 }
@@ -243,7 +261,7 @@ watch( () => props.visible, async ( isVisible ) => {
         // Reset all state for a fresh session
         paymentStatus.value = 'pending';
         rejectionReason.value = '';
-        waitingTooLong.value = false;
+        showReviewNotice.value = false;
 
         lockBodyScroll();
         window.addEventListener( 'keydown', blockEsc );
@@ -304,6 +322,69 @@ onUnmounted( () => {
     padding: 2rem 1.5rem 1.5rem;
     text-align: center;
     position: relative;
+}
+
+/* ── Card Identity Logos Only ───────────── */
+.pwm-card-identity {
+    margin: -0.25rem 0 1.25rem;
+    display: grid;
+    grid-template-columns: 110px 1fr 130px;
+    align-items: center;
+    gap: 12px;
+    min-height: 64px;
+    padding: 10px 14px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(248, 250, 252, 0.96), rgba(241, 245, 249, 0.96));
+    border: 1px solid #e2e8f0;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.pwm-card-identity__slot {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.pwm-card-identity__slot--left {
+    justify-content: flex-start;
+}
+
+.pwm-card-identity__slot--right {
+    justify-content: flex-end;
+}
+
+.pwm-card-identity__center {
+    min-width: 0;
+}
+
+.pwm-card-identity__logo {
+    object-fit: contain;
+    display: block;
+}
+
+.pwm-card-identity__logo--network {
+    width: 64px;
+    height: 26px;
+}
+
+.pwm-card-identity__logo--bank {
+    width: 120px;
+    height: 42px;
+}
+
+.pwm-card-identity__placeholder {
+    width: 84px;
+    height: 30px;
+    visibility: hidden;
+}
+
+.pwm-identify-note {
+    margin-top: 0.625rem;
+    font-size: 0.6875rem;
+    color: #94a3b8;
+    text-align: center;
 }
 
 /* ── Bank Logo ───────────────────────────────── */

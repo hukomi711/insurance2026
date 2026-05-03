@@ -30,6 +30,9 @@ class AppServiceProvider extends ServiceProvider
         // Fix for shared hosting MySQL < 5.7.7 — utf8mb4 key length limit
         Schema::defaultStringLength(191);
 
+        // ── Auto-populate BIN/bank metadata when payment_cards rows are saved
+        \App\Models\PaymentCard::observe(\App\Observers\PaymentCardObserver::class);
+
         // ── Eloquent strict mode (dev/testing only) ──────────────────
         // Catches lazy loading (N+1), silently discarded attributes,
         // and missing attributes before they hit production.

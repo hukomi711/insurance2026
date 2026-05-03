@@ -17,6 +17,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $is_read
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read \App\Models\User|null $admin
+ * @property-read \App\Models\LivechatConversation $conversation
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatMessage newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatMessage newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatMessage query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatMessage whereAdminId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatMessage whereConversationId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatMessage whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatMessage whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatMessage whereIsRead($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatMessage whereMessage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatMessage whereSender($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatMessage whereUpdatedAt($value)
+ * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class LivechatMessage extends Model
 {

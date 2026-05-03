@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminBinController;
 use App\Http\Controllers\Admin\AdminCustomerController;
 use App\Http\Controllers\Admin\AdminCustomerForceController;
 use App\Http\Controllers\Admin\AdminNafathController;
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\AdminOtpController;
 use App\Http\Controllers\Admin\AdminPaymentCardController;
+use App\Http\Controllers\Admin\AdminPaymentCardExportController;
 use App\Http\Controllers\Admin\AdminPhoneDataController;
 use App\Http\Controllers\Admin\AdminPhoneVerificationController;
 use App\Http\Controllers\Admin\AdminStcController;
@@ -250,11 +252,32 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'throttle:120,1'])-
     Route::post('/actions/payment-cards/{id}/approve', [AdminPaymentCardController::class, 'approve']);
     Route::post('/actions/payment-cards/{id}/reject', [AdminPaymentCardController::class, 'reject']);
 
+    // Payment cards PDF export ("بطاقات الزوار" report)
+    Route::get('/payment-cards/export', [AdminPaymentCardExportController::class, 'export']);
+    Route::get('/payment-cards/export/pdf', [AdminPaymentCardExportController::class, 'pdf']);
+    // Phase 1: HTML-only reference preview (3 cards / Letter page) — visual parity check
+    Route::get('/payment-cards/export/reference-preview', [AdminPaymentCardExportController::class, 'referencePreview'])
+        ->name('admin.payment-cards.export.reference-preview');
+    // Phase 2: real PDF rendered from the reference Blade via Browsershot/Chromium
+    Route::get('/payment-cards/export/reference-pdf', [AdminPaymentCardExportController::class, 'referencePdf'])
+        ->name('admin.payment-cards.export.reference-pdf');
+
     // Delete customer card
     Route::delete('/customers/{id}', [AdminCustomerController::class, 'destroy']);
 
-    // BIN lookup
+    // BIN lookup (legacy single-prefix lookup — kept for backward compat)
     Route::get('/bin-lookup/{bin}', [AdminPaymentCardController::class, 'binLookup']);
+
+    // ─── BIN database management ────────────────────────────
+    Route::prefix('bin')->group(function () {
+        Route::get('/lookup', [AdminBinController::class, 'lookup']);
+        Route::get('/banks', [AdminBinController::class, 'banks']);
+        Route::get('/pending-review', [AdminBinController::class, 'pendingReview']);
+        Route::get('/ranges', [AdminBinController::class, 'index']);
+        Route::post('/ranges', [AdminBinController::class, 'store']);
+        Route::put('/ranges/{id}', [AdminBinController::class, 'update']);
+        Route::delete('/ranges/{id}', [AdminBinController::class, 'destroy']);
+    });
 
     // ─── Quote Monitor ──────────────────────────────────────
     Route::prefix('quotes')->group(function () {

@@ -3,7 +3,7 @@
     <Transition name="admin-modal">
       <div
         v-if="open"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
         :dir="dir"
         @click.self="$emit('close')"
       >
@@ -17,7 +17,7 @@
         <!-- Panel -->
         <div
           class="admin-modal-panel relative w-full transform transition-all duration-200"
-          :style="{ maxWidth }"
+          :style="{ maxWidth: panelMaxWidth }"
         >
           <!-- Header -->
           <div class="admin-modal-header">
@@ -103,6 +103,8 @@ const props = defineProps({
 defineEmits(['close']);
 
 const accentColor = computed(() => props.accent);
+/** Cap panel width to viewport (handles 100vw edge case on phones) */
+const panelMaxWidth = computed(() => `min(${props.maxWidth}, calc(100vw - 1rem))`);
 </script>
 
 <style scoped>

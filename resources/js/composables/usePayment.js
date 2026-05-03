@@ -191,7 +191,7 @@ export function usePayment ()
                 reason: payload.reason || null,
                 type: payload.type || 'error',
                 retryable: typeof payload.retryable === 'boolean' ? payload.retryable : true,
-                title: payload.title || 'تعذر إتمام العملية',
+                title: payload.title || 'تعذر متابعة طلب الدفع',
                 message: msg,
                 action: payload.action || null,
             };

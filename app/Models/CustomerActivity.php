@@ -5,6 +5,41 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int|null $customer_profile_id
+ * @property string $customer_name اسم العميل
+ * @property string|null $phone
+ * @property string $stage customer_info / vehicle_info / compare / checkout / payment
+ * @property string $activity_type page_view / form_fill / compare_plans / select_plan / filter / upload / payment_complete / payment_failed
+ * @property string $description وصف النشاط
+ * @property string $status
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\CustomerProfile|null $customerProfile
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity completed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity failed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity ofStage(string $stage)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity recent(int $minutes = 60)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity search(?string $term)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity whereActivityType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity whereCustomerName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity whereCustomerProfileId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity wherePhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity whereStage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerActivity whereUpdatedAt($value)
+ * @mixin \Illuminate\Database\Eloquent\Builder
+ */
 class CustomerActivity extends Model
 {
     /** @var list<string> */

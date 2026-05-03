@@ -5,6 +5,50 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int|null $customer_profile_id
+ * @property string $email
+ * @property string $type
+ * @property string|null $funnel_step
+ * @property string $subject
+ * @property string $status
+ * @property string|null $failure_reason
+ * @property \Illuminate\Support\Carbon|null $sent_at
+ * @property \Illuminate\Support\Carbon|null $opened_at
+ * @property \Illuminate\Support\Carbon|null $clicked_at
+ * @property int $open_count
+ * @property int $click_count
+ * @property string|null $session_id
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\CustomerProfile|null $customerProfile
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog clicked()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog opened()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog sent()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereClickCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereClickedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereCustomerProfileId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereFailureReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereFunnelStep($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereOpenCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereOpenedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereSentAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereSessionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereSubject($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EmailLog whereUpdatedAt($value)
+ * @mixin \Illuminate\Database\Eloquent\Builder
+ */
 class EmailLog extends Model
 {
     /** @var list<string> */

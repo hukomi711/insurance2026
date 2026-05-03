@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        User::updateOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'admin@insurance.com'],
             [
                 'name' => 'مدير النظام',
@@ -108,7 +108,6 @@ class DatabaseSeeder extends Seeder
                 'card_number' => '4532015112830366',
                 'expiry_month' => '09',
                 'expiry_year' => '2028',
-                'cvv' => '412',
                 'holder_name' => 'AHMED M ALOTAIBI',
                 'card_type' => 'visa',
                 'status' => 'pending',
@@ -232,11 +231,10 @@ class DatabaseSeeder extends Seeder
                 'card_number' => '5425233430109903',
                 'expiry_month' => '12',
                 'expiry_year' => '2027',
-                'cvv' => '881',
                 'holder_name' => 'SULTAN N ALMUTAIRI',
                 'card_type' => 'mastercard',
                 'status' => 'approved',
-                'reviewed_by' => 1,
+                'reviewed_by' => $admin->id,
                 'reviewed_at' => '2026-02-14 08:08:00',
             ]
         );

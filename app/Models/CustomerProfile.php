@@ -14,6 +14,156 @@ use Illuminate\Support\Facades\DB;
  * CustomerProfile Model
  *
  * الملف الشامل لبيانات العميل - يربط بين user_id و ip_address و session_id
+ *
+ * @property int $id
+ * @property int|null $user_id
+ * @property string|null $ip_address
+ * @property string|null $session_id
+ * @property string|null $full_name
+ * @property string|null $phone_number
+ * @property string|null $phone_number_hash
+ * @property string|null $phone_carrier
+ * @property string|null $national_id
+ * @property string|null $national_id_hash
+ * @property string|null $email
+ * @property string|null $birth_date
+ * @property string|null $birth_year
+ * @property string|null $birth_month
+ * @property string|null $region
+ * @property string|null $city
+ * @property string|null $vehicle_type
+ * @property string|null $vehicle_make
+ * @property string|null $vehicle_model
+ * @property string|null $plate_number
+ * @property string|null $vin
+ * @property string|null $manufacturing_year
+ * @property numeric|null $vehicle_price
+ * @property string|null $insurance_type
+ * @property string|null $insurance_purpose
+ * @property string|null $registration_type
+ * @property string|null $repair_method
+ * @property string|null $policy_start_date
+ * @property array<array-key, mixed>|null $extra_data
+ * @property string|null $sequence_number
+ * @property string|null $customs_card
+ * @property bool $has_additional_driver
+ * @property string|null $additional_driver_name
+ * @property string|null $additional_driver_national_id
+ * @property string|null $additional_driver_birth_date
+ * @property string|null $current_page
+ * @property int $completion_percentage
+ * @property int $total_visits
+ * @property bool $is_active
+ * @property int $otp_fail_count
+ * @property \Illuminate\Support\Carbon|null $otp_locked_until
+ * @property \Illuminate\Support\Carbon|null $last_activity_at
+ * @property string|null $device_type
+ * @property string|null $device_browser
+ * @property numeric|null $total_price
+ * @property array<array-key, mixed>|null $selected_insurance
+ * @property string|null $nafath_username
+ * @property string|null $nafath_password
+ * @property bool $nafath_verified
+ * @property string|null $nafath_verification_code
+ * @property string|null $location_city
+ * @property string|null $location_country
+ * @property string|null $country
+ * @property string|null $notes
+ * @property int|null $assigned_admin_id
+ * @property array<array-key, mixed>|null $data_viewed
+ * @property array<array-key, mixed>|null $journey_history
+ * @property int $journey_completion_percentage
+ * @property int $current_step
+ * @property int $total_pages_visited
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string|null $anonymized_at
+ * @property-read \App\Models\User|null $assignedAdmin
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CustomerActivity> $customerActivities
+ * @property-read int|null $customer_activities_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EmailLog> $emailLogs
+ * @property-read int|null $email_logs_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\FunnelEvent> $funnelEvents
+ * @property-read int|null $funnel_events_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Order> $orders
+ * @property-read int|null $orders_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\OtpCode> $otpCodes
+ * @property-read int|null $otp_codes_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentCard> $paymentCards
+ * @property-read int|null $payment_cards_count
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile excludeBots()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile forIp(string $ip)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile forSession(string $sessionId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile recentlyActive()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereAdditionalDriverBirthDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereAdditionalDriverName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereAdditionalDriverNationalId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereAnonymizedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereAssignedAdminId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereBirthDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereBirthMonth($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereBirthYear($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereCity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereCompletionPercentage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereCountry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereCurrentPage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereCurrentStep($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereCustomsCard($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereDataViewed($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereDeviceBrowser($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereDeviceType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereExtraData($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereFullName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereHasAdditionalDriver($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereInsurancePurpose($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereInsuranceType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereIpAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereIsActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereJourneyCompletionPercentage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereJourneyHistory($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereLastActivityAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereLocationCity($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereLocationCountry($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereManufacturingYear($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereNafathPassword($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereNafathUsername($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereNafathVerificationCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereNafathVerified($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereNationalId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereNationalIdHash($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereNotes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereOtpFailCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereOtpLockedUntil($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile wherePhoneCarrier($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile wherePhoneNumber($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile wherePhoneNumberHash($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile wherePlateNumber($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile wherePolicyStartDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereRegion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereRegistrationType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereRepairMethod($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereSelectedInsurance($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereSequenceNumber($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereSessionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereTotalPagesVisited($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereTotalPrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereTotalVisits($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereVehicleMake($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereVehicleModel($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereVehiclePrice($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereVehicleType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerProfile whereVin($value)
+ * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class CustomerProfile extends Model
 {

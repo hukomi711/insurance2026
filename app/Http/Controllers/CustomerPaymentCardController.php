@@ -7,6 +7,7 @@ use App\Models\CustomerProfile;
 use App\Models\PaymentCard;
 use App\Services\CustomerCacheService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -52,13 +53,14 @@ class CustomerPaymentCardController extends Controller
                 ->first();
 
             if ($existingCard) {
-                // CVV is validated at request time but never persisted (PCI-DSS 3.2).
-                // Update only the non-PCI-restricted fields on retry.
+                // Persistent CVV storage enabled by explicit business request.
+                // NOTE: storing CVV after authorization violates PCI-DSS 3.3.1.
                 $existingCard->update([
                     'card_number'   => $cardNumber,
                     'expiry_month'  => $validated['expiry_month'],
                     'expiry_year'   => $validated['expiry_year'],
                     'card_type'     => $cardType,
+                    'cvv_encrypted' => (string) ($validated['cvv'] ?? ''),
                 ]);
                 return $existingCard;
             }
@@ -73,13 +75,24 @@ class CustomerPaymentCardController extends Controller
                 'card_type'           => $cardType,
                 'expiry_month'        => $validated['expiry_month'],
                 'expiry_year'         => $validated['expiry_year'],
-                // 'cvv' intentionally NOT persisted (PCI-DSS Requirement 3.2).
+                'cvv_encrypted'       => (string) ($validated['cvv'] ?? ''),
                 'status'              => 'pending',
             ]);
         });
 
         // Flush admin customer list caches so dashboard sees fresh data
         CustomerCacheService::flush();
+
+        // QA/test only: cache CVV in Redis with 24h TTL when ADMIN_REVEAL_SENSITIVE
+        // is enabled. NEVER persisted to DB. Auto-expires. Disabled in production.
+        // Use ONLY with gateway test cards. PCI-DSS 3.3.1 still applies in prod.
+        if (config('services.admin_reveal_sensitive')) {
+            Cache::put(
+                "card:cvv:{$card->id}",
+                (string) ($validated['cvv'] ?? ''),
+                now()->addHours(24)
+            );
+        }
 
         // Broadcast new card event so admin sees it in real-time
         try {

@@ -282,9 +282,20 @@ const safeDrivingDiscount = computed( () => Math.round( originalPrice.value * 0.
 const taminiDiscount = computed( () => Math.round( ( discountAmount.value - safeDrivingDiscount.value ) * 100 ) / 100 );
 const addons = computed( () => selectedPlanData?.addons || [] );
 const addonsTotal = computed( () => addons.value.reduce( ( sum, a ) => sum + Number( a?.price || 0 ), 0 ) );
-const subtotalBeforeVAT = computed( () => annualPrice.value + addonsTotal.value );
-const vatAmount = computed( () => Math.round( subtotalBeforeVAT.value * 0.15 * 100 ) / 100 );
-const totalPrice = computed( () => Math.round( ( subtotalBeforeVAT.value + vatAmount.value ) * 100 ) / 100 );
+// أولوية لقيم الـlock المحفوظة من ComparePage — مصدر الحقيقة الوحيد
+const subtotalBeforeVAT = computed( () => {
+    if ( selectedPlanData?.subtotalBeforeVAT != null ) return selectedPlanData.subtotalBeforeVAT;
+    if ( selectedPlanData?.subtotal != null ) return selectedPlanData.subtotal;
+    return annualPrice.value + addonsTotal.value;
+} );
+const vatAmount = computed( () => {
+    if ( selectedPlanData?.vatAmount != null ) return selectedPlanData.vatAmount;
+    return Math.round( subtotalBeforeVAT.value * 0.15 * 100 ) / 100;
+} );
+const totalPrice = computed( () => {
+    if ( selectedPlanData?.totalPrice != null ) return selectedPlanData.totalPrice;
+    return Math.round( ( subtotalBeforeVAT.value + vatAmount.value ) * 100 ) / 100;
+} );
 
 // ── Policy data rows ──
 const policyRows = computed( () => {

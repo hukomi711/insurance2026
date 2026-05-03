@@ -9,6 +9,28 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * نموذج جلسات لوحة التحكم للأدمن
  * يتتبع آخر زيارة وآخر البيانات المشاهدة لمنع تكرار الإشعارات
+ *
+ * @property int $id
+ * @property int $admin_id
+ * @property \Illuminate\Support\Carbon|null $last_dashboard_visit
+ * @property \Illuminate\Support\Carbon|null $last_data_sync
+ * @property array<array-key, mixed>|null $last_seen_counts
+ * @property array<array-key, mixed>|null $dismissed_notifications
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $admin
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminDashboardSession newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminDashboardSession newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminDashboardSession query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminDashboardSession whereAdminId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminDashboardSession whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminDashboardSession whereDismissedNotifications($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminDashboardSession whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminDashboardSession whereLastDashboardVisit($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminDashboardSession whereLastDataSync($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminDashboardSession whereLastSeenCounts($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminDashboardSession whereUpdatedAt($value)
+ * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class AdminDashboardSession extends Model
 {

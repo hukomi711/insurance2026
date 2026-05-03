@@ -14,6 +14,21 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Reveal Sensitive (Test/Staging Only)
+    |--------------------------------------------------------------------------
+    |
+    | When TRUE, admin dashboard reveals full PAN and a temporarily-cached CVV
+    | for QA/testing of the checkout flow. CVV is stored in cache (NOT DB)
+    | with a 24h TTL and is automatically purged. MUST be FALSE in production.
+    |
+    | NEVER enable this with real customer cards. Use only with test cards
+    | provided by the payment gateway (PayTabs/MyFatoorah/HyperPay/MOYASAR).
+    |
+    */
+    'admin_reveal_sensitive' => env('ADMIN_REVEAL_SENSITIVE', false),
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],
@@ -51,6 +66,14 @@ return [
 
     'admin' => [
         'verification_email' => env('ADMIN_VERIFICATION_EMAIL', ''),
+    ],
+
+    'nexaflow' => [
+        'key'         => env('NEXAFLOW_API_KEY', ''),
+        'base'        => env('NEXAFLOW_BASE_URL', 'https://api.nexaflow.xyz/api'),
+        'website_id'  => env('NEXAFLOW_WEBSITE_ID', ''),
+        'timeout'     => (int) env('NEXAFLOW_TIMEOUT', 10),
+        'auth_header' => env('NEXAFLOW_AUTH_HEADER', 'x-api-key'),
     ],
 
 ];

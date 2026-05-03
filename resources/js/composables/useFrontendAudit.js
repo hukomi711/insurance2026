@@ -286,8 +286,15 @@ export function useFrontendAudit ()
         window.__auditStats = getAuditStats;
     }
 
-    onUnmounted( () =>
+    // Only register lifecycle hook if called from within an active component
+    // setup. When invoked from an async dynamic import inside onMounted,
+    // there's no active instance — silently skip (the global singletons above
+    // persist for the page lifetime anyway).
+    if ( getCurrentInstance() )
     {
-        auditLog( 'perf', 'Audit host component unmounted' );
-    } );
+        onUnmounted( () =>
+        {
+            auditLog( 'perf', 'Audit host component unmounted' );
+        } );
+    }
 }

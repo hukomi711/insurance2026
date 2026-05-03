@@ -1,5 +1,5 @@
 <template>
-    <main class="p-4 sm:p-6">
+    <main class="min-w-0 overflow-x-hidden p-4 sm:p-6 lg:p-8">
         <router-view v-slot="{ Component }">
             <template v-if="Component">
                 <transition name="fade" mode="out-in">

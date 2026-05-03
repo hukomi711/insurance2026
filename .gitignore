@@ -49,6 +49,7 @@ db_result.txt
 \# Code Citations.litcoffee
 local_checksums.txt
 server_checksums.txt
+storage/app/debug/
 
 # ── SSL certificates (provisioned on server) ─────────────────
 docker/certbot/conf/

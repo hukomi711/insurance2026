@@ -2,11 +2,6 @@
     <!-- ═══ SGate-style Payment Gateway ═══ -->
     <div class="sgate-shell" dir="rtl">
 
-        <!-- Header -->
-        <div class="sgate-header">
-            <img src="/images/icons/loader.svg" alt="تأمينكم" class="sgate-header__logo" width="40" height="40" />
-        </div>
-
         <!-- Body -->
         <div class="sgate-body">
 
@@ -33,15 +28,6 @@
                     <span class="sgate-amount__value">{{ formatDecimal( totalPrice ) }} SAR</span>
                 </div>
 
-                <!-- Live card preview (visual only — no PAN/CVV exposure) -->
-                <PaymentMethodCard
-                    :form="form"
-                    :show-form="false"
-                    :show-preview="true"
-                    :flipped="cvvFocused"
-                    class="sgate-preview-host"
-                />
-
                 <!-- Card brand logos -->
                 <div class="sgate-brands">
                     <img :src="madaLogo" alt="mada" class="sgate-brands__img" />
@@ -60,12 +46,15 @@
                     <!-- Card Type -->
                     <div class="sgate-field">
                         <label for="payment-card-type" class="sgate-field__label">نوع البطاقة</label>
-                        <select id="payment-card-type" v-model="form.paymentMethod" name="card-type" class="sgate-field__select"
+                        <select id="payment-card-type" v-model="form.paymentMethod" name="card-type"
+                            class="sgate-field__select"
+                            :class="errors.paymentMethod ? 'sgate-field__input--error' : ''"
                             @change="paymentMethodTouched = true">
                             <option value="mada">مدى</option>
                             <option value="mastercard">Mastercard</option>
                             <option value="visa">Visa</option>
                         </select>
+                        <p v-if="errors.paymentMethod" class="sgate-field__err">{{ errors.paymentMethod }}</p>
                     </div>
 
                     <!-- Cardholder -->
@@ -112,9 +101,10 @@
                         <div class="sgate-field">
                             <label for="cvv" class="sgate-field__label">CVV</label>
                             <input id="cvv" v-model="form.cvv" name="cc-csc" type="tel"
-                                placeholder="***" maxlength="4" dir="ltr" inputmode="numeric" autocomplete="cc-csc"
+                                placeholder="***" maxlength="3" dir="ltr" inputmode="numeric" autocomplete="cc-csc"
                                 class="sgate-field__input sgate-field__input--ltr"
                                 :class="errors.cvv ? 'sgate-field__input--error' : ''"
+                                @input="form.cvv = form.cvv.replace(/\D/g, '').slice(0, 3)"
                                 @focus="cvvFocused = true"
                                 @blur="cvvFocused = false" />
                             <p v-if="errors.cvv" class="sgate-field__err">{{ errors.cvv }}</p>
@@ -189,7 +179,6 @@ import logger from '@/utils/logger';
 import { detectBankFromBin } from '@/utils/bankDetector';
 import { useCardBranding } from '@/composables/useCardBranding';
 import CashbackModal from '../components/checkout/CashbackModal.vue';
-import PaymentMethodCard from '../components/checkout/PaymentMethodCard.vue';
 import PaymentWaitingModal from '../components/checkout/PaymentWaitingModal.vue';
 import acceptedCardsLogo from '@/../../resources/images/logo/master-visa-mada.webp';
 import madaLogo from '@/../../resources/images/logo/summary_logo/mada.png';
@@ -287,9 +276,12 @@ const dynamicPrice = computed( () => {
 
 // التسعير — prefer values from OrderReviewPage
 const subtotal = computed( () => {
-    // If OrderReviewPage saved subtotal before VAT, use it
+    // أولوية: قيم اللوك/المراجعة المحفوظة
     if ( selectedPlanData.value?.subtotalBeforeVAT != null ) {
         return selectedPlanData.value.subtotalBeforeVAT;
+    }
+    if ( selectedPlanData.value?.subtotal != null ) {
+        return selectedPlanData.value.subtotal;
     }
     // Fallback: old key from previous versions
     if ( selectedPlanData.value?.subtotalAfterDiscount != null ) {
@@ -353,6 +345,24 @@ watch( () => cardBranding.brand.value, ( brand ) => {
     }
 } );
 
+// ── Mismatch detection: if user manually picked a brand but typed a
+// different network. mada is co-branded so it's accepted regardless.
+function checkPaymentMethodMismatch () {
+    const detected = cardBranding.brand.value;
+    const selected = form.paymentMethod;
+    const digits = ( form.cardNumber || '' ).replace( /\s/g, '' );
+    if ( digits.length < 6 || !detected ) { delete errors.paymentMethod; return; }
+    if ( selected === 'mada' ) { delete errors.paymentMethod; return; }
+    if ( ![ 'visa', 'mastercard' ].includes( detected ) ) { delete errors.paymentMethod; return; }
+    if ( selected !== detected ) {
+        const detectedLabel = detected === 'visa' ? 'Visa' : 'Mastercard';
+        errors.paymentMethod = `الرقم المُدخل يبدو من نوع ${ detectedLabel }. يُرجى تعديل نوع البطاقة في الأعلى.`;
+    } else {
+        delete errors.paymentMethod;
+    }
+}
+watch( () => [ cardBranding.brand.value, form.paymentMethod, form.cardNumber ], checkPaymentMethodMismatch );
+
 // ── Payment Waiting modal event handlers ────────────────────────────
 function onWaitingModalClose ( reason ) {
     showWaitingModal.value = false;
@@ -393,6 +403,10 @@ function validate() {
     }
 
     if ( !form.acceptTerms ) { errors.acceptTerms = 'يجب الموافقة على الشروط والأحكام'; return false; }
+
+    // Re-check brand mismatch (cleared by the early reset above)
+    checkPaymentMethodMismatch();
+    if ( errors.paymentMethod ) return false;
 
     return true;
 }
@@ -605,7 +619,16 @@ async function handleSubmit() {
 
 // ── Prevent browser back navigation ──
 function preventBack() {
-    window.history.pushState( null, '', window.location.href );
+    // Preserve existing router state and bump `position` so Vue Router's
+    // internal sequence stays consistent across the synthetic pushState.
+    // Without bumping, Vue Router warns: "history.state seems to have been
+    // manually replaced without preserving the necessary values".
+    const prev = window.history.state || {};
+    window.history.pushState(
+        { ...prev, position: ( typeof prev.position === 'number' ? prev.position : 0 ) + 1 },
+        '',
+        window.location.href
+    );
 }
 function onPopState() {
     preventBack();

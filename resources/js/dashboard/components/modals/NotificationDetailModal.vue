@@ -55,7 +55,7 @@
         <h5 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
           <i class="fa-solid fa-key text-amber-400"></i> رمز OTP
         </h5>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الرمز</p>
             <p class="text-sm font-medium text-amber-300">{{ customer.latest_otp.code || customer.latest_otp.code_value || '—' }}</p>
@@ -80,7 +80,7 @@
         <h5 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
           <i class="fa-solid fa-credit-card text-purple-400"></i> رقم PIN
         </h5>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الرمز</p>
             <p class="text-sm font-medium text-amber-300">{{ customer.latest_pin.code || customer.latest_pin.code_value || '—' }}</p>
@@ -103,7 +103,7 @@
         </h5>
         <div v-for="(card, idx) in customer.payment.cards.slice(0, 1)" :key="card.id || idx"
           class="admin-glass admin-glass--blue">
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="admin-data-cell">
               <p class="text-[11px] text-gray-500 mb-1">اسم حامل البطاقة</p>
               <p class="text-sm font-medium text-gray-200">{{ card.holder_name || card.card_holder || '—' }}</p>
@@ -137,7 +137,7 @@
         <h5 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
           <i class="fa-solid fa-phone text-cyan-400"></i> تحقق هاتفي
         </h5>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الرمز</p>
             <p class="text-sm font-medium text-amber-300">{{ customer.latest_phone_otp.code || customer.latest_phone_otp.code_value || '—' }}</p>
@@ -162,7 +162,7 @@
         <h5 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
           <i class="fa-solid fa-user-plus text-blue-400"></i> معلومات العميل
         </h5>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الاسم</p>
             <p class="text-sm font-medium text-gray-200">{{ customer.fullName || customer.full_name || '—' }}</p>
@@ -203,7 +203,7 @@
         <h5 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
           <i class="fa-solid fa-fingerprint text-indigo-400"></i> نفاذ
         </h5>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">المستخدم</p>
             <p class="text-sm font-medium text-gray-200">{{ customer.nafath.username || '—' }}</p>
@@ -229,7 +229,8 @@
     <template #footer>
       <div class="flex items-center justify-between gap-3">
         <button
-          class="px-4 py-2 text-sm rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors"
+          class="px-4 py-2 text-sm rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          :disabled="!customer?.id"
           @click="goToDashboard">
           <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i>
           فتح في لوحة التحكم
@@ -350,7 +351,11 @@ function statusLabel(status) {
 
 
 function goToDashboard() {
+  const focusId = customer.value?.id || null;
   emit('close');
-  router.push({ name: 'dashboard' });
+  router.push({
+    name: 'dashboard',
+    query: focusId ? { focus: String(focusId) } : {},
+  });
 }
 </script>

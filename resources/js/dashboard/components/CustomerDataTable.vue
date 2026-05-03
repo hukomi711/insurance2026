@@ -9,34 +9,27 @@
             <th class="w-[170px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">المسار الحالي</th>
             <th class="w-[100px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">الدفع</th>
             <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">بيانات التأمين</th>
-            <th class="w-[130px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('full_name')">
+            <th class="w-[130px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               الاسم
-              <i v-if="sortBy === 'full_name'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
             </th>
             <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">البيانات الأساسية</th>
-            <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('national_id')">
+            <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               رقم الهوية
-              <i v-if="sortBy === 'national_id'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
             </th>
-            <th class="w-[90px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('city')">
+            <th class="w-[90px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               الموقع
-              <i v-if="sortBy === 'city'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
             </th>
-            <th class="w-[90px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('region')">
+            <th class="w-[90px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               المنطقة
-              <i v-if="sortBy === 'region'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
             </th>
-            <th class="w-[120px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('ip_address')">
+            <th class="w-[120px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               IP
-              <i v-if="sortBy === 'ip_address'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
             </th>
-            <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('last_activity_at')">
+            <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               آخر نشاط
-              <i v-if="sortBy === 'last_activity_at'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
             </th>
-            <th class="w-[50px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors" @click="toggleSort('is_active')">
+            <th class="w-[50px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               الحالة
-              <i v-if="sortBy === 'is_active'" class="fa-solid fa-xs ms-1" :class="sortOrder === 'asc' ? 'fa-sort-up' : 'fa-sort-down'" aria-hidden="true"></i>
             </th>
             <th class="w-[40px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">#</th>
           </tr>
@@ -48,8 +41,9 @@
         >
           <tr
             v-for="(customer, index) in customers"
+            :id="`customer-row-${customer.id}`"
             :key="customer.id"
-            class="transition-colors hover:bg-gray-700"
+            :class="['transition-colors hover:bg-gray-700', { 'admin-row-focus': focusedCustomerId === customer.id }]"
           >
             <!-- حذف -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
@@ -377,22 +371,13 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  sortBy: {
-    type: String,
-    default: 'last_activity_at',
-  },
-  sortOrder: {
-    type: String,
-    default: 'desc',
+  focusedCustomerId: {
+    type: [Number, String],
+    default: null,
   },
 });
 
-const emit = defineEmits(['delete-card', 'show-details', 'action', 'redirect', 'modal-opened', 'modal-closed', 'sort']);
-
-function toggleSort ( column ) {
-    const order = props.sortBy === column && props.sortOrder === 'desc' ? 'asc' : 'desc';
-    emit( 'sort', { column, order } );
-}
+const emit = defineEmits(['delete-card', 'show-details', 'action', 'redirect', 'modal-opened', 'modal-closed']);
 
 function formatRelativeTime ( isoString ) {
     if ( !isoString ) return '—';

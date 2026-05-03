@@ -5,6 +5,29 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $code
+ * @property string $ip_address
+ * @property bool $used
+ * @property \Illuminate\Support\Carbon $expires_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminLoginCode newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminLoginCode newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminLoginCode query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminLoginCode whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminLoginCode whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminLoginCode whereExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminLoginCode whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminLoginCode whereIpAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminLoginCode whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminLoginCode whereUsed($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AdminLoginCode whereUserId($value)
+ * @mixin \Illuminate\Database\Eloquent\Builder
+ */
 class AdminLoginCode extends Model
 {
     /** @var list<string> */

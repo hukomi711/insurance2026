@@ -12,7 +12,7 @@
             <Breadcrumb class="hidden lg:flex" />
         </div>
 
-        <!-- Center: Search -->
+        <!-- Center: Search (sm and up — inline) -->
         <div class="hidden sm:flex items-center flex-1 max-w-md mx-4">
             <div ref="searchRef" class="relative w-full">
                 <i class="fa-solid fa-magnifying-glass w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2"
@@ -71,13 +71,21 @@
         </div>
 
         <!-- Right: Theme + Debug Toggle + Notifications + User -->
-        <div class="flex items-center gap-3">
-            <!-- Theme Toggle -->
-            <ThemeToggle />
+        <div class="flex items-center gap-1 sm:gap-3">
+            <!-- Mobile search trigger (<sm only) -->
+            <button class="admin-touch sm:hidden inline-flex items-center justify-center rounded-lg transition-colors"
+                aria-label="بحث"
+                :style="{ color: 'var(--admin-text-muted)' }"
+                @click="openMobileSearch">
+                <i class="fa-solid fa-magnifying-glass w-5 h-5" aria-hidden="true"></i>
+            </button>
+
+            <!-- Theme Toggle (hidden on <sm — moved into More menu) -->
+            <ThemeToggle class="hidden sm:inline-flex" />
 
             <!-- Notifications -->
             <div ref="notifRef" class="relative">
-                <button class="relative p-2 rounded-lg transition-colors"
+                <button class="admin-touch relative inline-flex items-center justify-center p-2 rounded-lg transition-colors"
                     aria-label="الإشعارات"
                     :aria-expanded="showDropdown"
                     :style="{ color: 'var(--admin-text-muted)' }"
@@ -100,7 +108,7 @@
                     leave-to-class="opacity-0 translate-y-1"
                 >
                     <div v-if="showDropdown"
-                        class="absolute left-0 top-full mt-2 w-[360px] max-h-[480px] bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 flex flex-col"
+                        class="absolute left-0 top-full mt-2 w-[min(92vw,360px)] max-h-[480px] bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 flex flex-col"
                         dir="rtl">
                         <!-- Header -->
                         <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
@@ -162,9 +170,104 @@
                 </Transition>
             </div>
 
+            <!-- More menu (<sm) — collects secondary actions like ThemeToggle -->
+            <div ref="moreRef" class="relative sm:hidden">
+                <button class="admin-touch inline-flex items-center justify-center p-2 rounded-lg transition-colors"
+                    aria-label="المزيد"
+                    :aria-expanded="showMore"
+                    :style="{ color: 'var(--admin-text-muted)' }"
+                    @click="showMore = !showMore">
+                    <i class="fa-solid fa-ellipsis-vertical w-5 h-5" aria-hidden="true"></i>
+                </button>
+                <Transition
+                    enter-active-class="transition ease-out duration-150"
+                    enter-from-class="opacity-0 translate-y-1"
+                    enter-to-class="opacity-100 translate-y-0"
+                    leave-active-class="transition ease-in duration-100"
+                    leave-from-class="opacity-100 translate-y-0"
+                    leave-to-class="opacity-0 translate-y-1"
+                >
+                    <div v-if="showMore"
+                        class="absolute left-0 top-full mt-2 w-44 rounded-xl shadow-xl overflow-hidden z-50 p-2"
+                        :style="{
+                            backgroundColor: 'var(--admin-card-bg)',
+                            borderWidth: '1px',
+                            borderColor: 'var(--admin-card-border)',
+                        }"
+                        dir="rtl">
+                        <div class="flex items-center justify-between gap-2 px-2 py-2">
+                            <span class="text-xs" :style="{ color: 'var(--admin-text-dim)' }">المظهر</span>
+                            <ThemeToggle />
+                        </div>
+                    </div>
+                </Transition>
+            </div>
+
             <!-- User -->
             <UserDropdown />
         </div>
+
+        <!-- Mobile search sheet (<sm) — full-width overlay -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition ease-out duration-200"
+                enter-from-class="opacity-0"
+                enter-to-class="opacity-100"
+                leave-active-class="transition ease-in duration-150"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+            >
+                <div v-if="mobileSearchOpen"
+                    class="fixed inset-0 z-[60] flex items-start justify-center bg-black/50 sm:hidden p-4"
+                    role="dialog" aria-modal="true" aria-label="بحث في لوحة التحكم"
+                    @click.self="closeMobileSearch">
+                    <div class="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
+                        :style="{
+                            backgroundColor: 'var(--admin-card-bg)',
+                            borderWidth: '1px',
+                            borderColor: 'var(--admin-card-border)',
+                        }"
+                        dir="rtl">
+                        <div class="flex items-center gap-2 p-3 border-b" :style="{ borderColor: 'var(--admin-card-border)' }">
+                            <div class="relative flex-1">
+                                <i class="fa-solid fa-magnifying-glass w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2"
+                                    :style="{ color: 'var(--admin-text-dim)' }" aria-hidden="true"></i>
+                                <input ref="mobileSearchInput" v-model="searchQuery" type="text" autocomplete="off"
+                                    aria-label="بحث في لوحة التحكم"
+                                    placeholder="بحث في الوثائق، العملاء..."
+                                    class="w-full pr-10 pl-4 py-3 rounded-xl text-sm outline-none transition-colors"
+                                    :style="{
+                                        backgroundColor: 'var(--admin-input-bg)',
+                                        borderWidth: '1px',
+                                        borderColor: 'var(--admin-input-border)',
+                                        color: 'var(--admin-input-text)',
+                                    }"
+                                    @input="onSearchInput"
+                                    @keydown.enter="filteredSearch.length && navigateToResultMobile(filteredSearch[0])"
+                                    @keydown.esc="closeMobileSearch" />
+                            </div>
+                            <button class="admin-touch inline-flex items-center justify-center px-3 rounded-lg text-sm"
+                                :style="{ color: 'var(--admin-text-muted)' }"
+                                @click="closeMobileSearch">إلغاء</button>
+                        </div>
+                        <!-- Results -->
+                        <div class="max-h-[60vh] overflow-y-auto">
+                            <button v-for="page in filteredSearch" :key="page.route"
+                                class="w-full flex items-center gap-3 px-4 py-3 text-sm text-right hover:opacity-90 transition"
+                                :style="{ color: 'var(--admin-text-secondary)' }"
+                                @click="navigateToResultMobile(page)">
+                                <i class="fa-solid fa-arrow-left text-xs" :style="{ color: 'var(--admin-text-dim)' }" aria-hidden="true"></i>
+                                <span>{{ page.label }}</span>
+                            </button>
+                            <div v-if="searchQuery.trim() && filteredSearch.length === 0"
+                                class="p-6 text-center text-sm" :style="{ color: 'var(--admin-text-dim)' }">
+                                لا توجد نتائج
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
 
         <!-- Notification Detail Modal -->
         <NotificationDetailModal
@@ -176,7 +279,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
+import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotificationsStore } from '@/store/modules/notifications';
 import Hamburger from './Hamburger.vue';
@@ -189,6 +292,12 @@ const router = useRouter();
 const notificationsStore = useNotificationsStore();
 const showDropdown = ref(false);
 const notifRef = ref(null);
+
+// ── Mobile UI state ──
+const mobileSearchOpen = ref(false);
+const mobileSearchInput = ref(null);
+const showMore = ref(false);
+const moreRef = ref(null);
 
 // ── Notification detail modal ──
 const showNotifDetail = ref(false);
@@ -232,6 +341,25 @@ function navigateToResult(page) {
     router.push({ name: page.route });
 }
 
+function navigateToResultMobile(page) {
+    closeMobileSearch();
+    router.push({ name: page.route });
+}
+
+function openMobileSearch() {
+    mobileSearchOpen.value = true;
+    showMore.value = false;
+    nextTick(() => {
+        mobileSearchInput.value?.focus();
+    });
+}
+
+function closeMobileSearch() {
+    mobileSearchOpen.value = false;
+    searchQuery.value = '';
+    showSearchResults.value = false;
+}
+
 function onSearchClickOutside(e) {
     if (searchRef.value && !searchRef.value.contains(e.target)) {
         showSearchResults.value = false;
@@ -248,6 +376,17 @@ function onClickOutside(e) {
     if (notifRef.value && !notifRef.value.contains(e.target)) {
         showDropdown.value = false;
     }
+    if (moreRef.value && !moreRef.value.contains(e.target)) {
+        showMore.value = false;
+    }
+}
+
+// ── Global Esc handler — closes mobile search / more menu / notif ──
+function onKeydown(e) {
+    if (e.key !== 'Escape') return;
+    if (mobileSearchOpen.value) closeMobileSearch();
+    if (showMore.value) showMore.value = false;
+    if (showDropdown.value) showDropdown.value = false;
 }
 
 // ── Notification click — open detail modal ──
@@ -284,11 +423,13 @@ function iconClass(item) { return item.icon || typeConfig[item.type]?.icon || 'f
 onMounted(() => {
     document.addEventListener('click', onClickOutside);
     document.addEventListener('click', onSearchClickOutside);
+    document.addEventListener('keydown', onKeydown);
     // ⚠️ Notification auto-refresh removed — now handled centrally by adminPolling.js
 });
 
 onUnmounted(() => {
     document.removeEventListener('click', onClickOutside);
     document.removeEventListener('click', onSearchClickOutside);
+    document.removeEventListener('keydown', onKeydown);
 });
 </script>

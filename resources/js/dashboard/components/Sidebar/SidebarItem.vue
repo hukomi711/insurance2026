@@ -3,6 +3,7 @@
         class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
         :class="isActive ? 'bg-[var(--color-primary)] text-white' : ''"
         :style="isActive ? {} : { color: 'var(--admin-sidebar-text)' }"
+        @click="onNavigate"
         @mouseenter="!isActive && ($event.currentTarget.style.backgroundColor = 'var(--admin-sidebar-hover)')"
         @mouseleave="!isActive && ($event.currentTarget.style.backgroundColor = 'transparent')">
         <component :is="iconComponent" class="text-xl w-5 text-center" />
@@ -18,6 +19,7 @@
 import { computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useBadgeStore } from '@/store/modules/badges';
+import { useAppStore } from '@/store/modules/app';
 import { IconHome, IconActivity, IconLogin, IconSettings, IconQuoteMonitor, IconFunnel, IconRanking, IconEmail } from '@/icons';
 
 const ICON_MAP = { home: IconHome, activity: IconActivity, login: IconLogin, settings: IconSettings, 'quote-monitor': IconQuoteMonitor, funnel: IconFunnel, ranking: IconRanking, email: IconEmail };
@@ -32,6 +34,7 @@ const props = defineProps( {
 
 const route = useRoute();
 const badgeStore = useBadgeStore();
+const appStore = useAppStore();
 
 const iconComponent = computed( () => ICON_MAP[ props.item.meta.icon ] || null );
 
@@ -45,6 +48,13 @@ const badgeCount = computed( () => {
     if ( !props.item.meta.badgeKey ) return 0;
     return badgeStore.getBadge( props.item.meta.badgeKey );
 } );
+
+/** Auto-close drawer on mobile/tablet after navigation */
+function onNavigate() {
+    if ( appStore.isMobile ) {
+        appStore.closeSidebar();
+    }
+}
 
 // Auto-mark section as seen when admin navigates to that page
 watch( isActive, ( active ) => {

@@ -28,7 +28,7 @@
     </div>
 
     <!-- بطاقات الإحصائيات -->
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div class="rounded-xl p-4 transition-colors duration-200"
         :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
         <div class="flex items-center justify-between">

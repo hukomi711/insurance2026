@@ -5,6 +5,35 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int|null $user_id
+ * @property string $email
+ * @property string $ip_address
+ * @property string|null $user_agent
+ * @property string|null $location المدينة، البلد
+ * @property string $status
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt failed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt recent(int $hours = 24)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt search(?string $term)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt successful()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt whereIpAddress($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt whereLocation($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt whereUserAgent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LoginAttempt whereUserId($value)
+ * @mixin \Illuminate\Database\Eloquent\Builder
+ */
 class LoginAttempt extends Model
 {
     /** @var list<string> */

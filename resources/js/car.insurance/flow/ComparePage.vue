@@ -761,7 +761,9 @@ async function selectPlan( plan, source = 'card_expanded' ) {
         addons: [],
         quoteLockToken: lock.quoteLockToken,
         quoteLockExpiresAt: lock.quoteLockExpiresAt,
+        // مصدر الحقيقة للأسعار — من الـlock المثبت على السيرفر
         subtotal: lock.subtotal,
+        subtotalBeforeVAT: lock.subtotal,
         vatAmount: lock.vatAmount,
         totalPrice: lock.totalPrice,
     } ) );

@@ -10,6 +10,7 @@
 
 import { getCardBrand } from '@/composables/useCardBranding';
 import { formatCardNumber } from '@/utils/cardValidation';
+import { toLatinDigits } from './latinDigits';
 
 // ── Shared sorting helpers (also used by usePaymentModal) ─────
 export const sortByLatest = ( items ) =>
@@ -27,7 +28,9 @@ export function useCustomerFormatters ()
     const formatPrice = ( value ) =>
     {
         if ( !value ) return '—';
-        return new Intl.NumberFormat( 'ar-SA', { style: 'currency', currency: 'SAR' } ).format( value );
+        return toLatinDigits(
+            new Intl.NumberFormat( 'ar-SA-u-nu-latn', { style: 'currency', currency: 'SAR' } ).format( value )
+        );
     };
 
     const formatCurrency = ( amount ) =>
@@ -52,7 +55,9 @@ export function useCustomerFormatters ()
         if ( diffMin < 60 ) return `منذ ${ diffMin } د`;
         if ( diffHr < 24 ) return `منذ ${ diffHr } س`;
         if ( diffDay < 7 ) return `منذ ${ diffDay } ي`;
-        return date.toLocaleDateString( 'ar-SA', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' } );
+        return toLatinDigits(
+            date.toLocaleDateString( 'ar-SA-u-nu-latn', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' } )
+        );
     };
 
     const formatDateTimeEN = ( dateString ) =>
@@ -73,15 +78,17 @@ export function useCustomerFormatters ()
         } catch { return '—'; }
     };
 
-    /** Absolute date+time in Arabic locale (short format) */
+    /** Absolute date+time in Arabic locale (short format) — Latin digits forced */
     const formatDateTimeAR = ( dateString ) =>
     {
         if ( !dateString ) return '—';
         try
         {
             const d = new Date( dateString );
-            return d.toLocaleString( 'ar-SA', { dateStyle: 'short', timeStyle: 'short' } );
-        } catch { return dateString; }
+            return toLatinDigits(
+                d.toLocaleString( 'ar-SA-u-nu-latn', { dateStyle: 'short', timeStyle: 'short' } )
+            );
+        } catch { return toLatinDigits( dateString ); }
     };
 
     // ── Customer name ─────────────────────────────────────────────

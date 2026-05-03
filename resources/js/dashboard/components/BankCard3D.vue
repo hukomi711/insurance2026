@@ -15,6 +15,15 @@
       <!-- Diagonal accent line -->
       <div class="pointer-events-none absolute -right-20 top-10 h-[200%] w-24 rotate-[25deg] bg-white/[0.03]" />
 
+      <!-- Optional in-card status pill (top-right corner) -->
+      <div
+        v-if="statusPill"
+        class="status-badge absolute right-3 top-3 z-30 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm"
+        :class="statusPill.classes"
+      >
+        {{ statusPill.label }}
+      </div>
+
       <!-- ─── Top row: Bank logo + Contactless ─── -->
       <div class="relative z-10 flex items-center justify-between px-6 pt-5">
         <!-- Bank logo -->
@@ -48,9 +57,9 @@
         </div>
       </div>
 
-      <!-- ─── Bottom: Holder + Expiry ─── -->
+      <!-- ─── Bottom: Holder + Expiry + CVV ─── -->
       <div class="relative z-10 px-6 pb-4">
-        <div class="flex items-end gap-5">
+        <div class="flex items-end gap-4">
           <div class="min-w-0 flex-1">
             <div class="text-[7px] uppercase tracking-[0.18em] opacity-40">Card Holder</div>
             <div class="truncate text-[13px] font-semibold tracking-wide drop-shadow-lg">{{ holderName || '—' }}</div>
@@ -58,6 +67,10 @@
           <div class="shrink-0 text-center">
             <div class="text-[7px] uppercase tracking-[0.18em] opacity-40">Expires</div>
             <div class="font-mono text-[13px] font-semibold drop-shadow-lg">{{ expiry || '—' }}</div>
+          </div>
+          <div v-if="cvv" class="shrink-0 text-center">
+            <div class="text-[7px] uppercase tracking-[0.18em] opacity-40">CVV</div>
+            <div class="font-mono text-[13px] font-semibold tracking-widest drop-shadow-lg">{{ cvv }}</div>
           </div>
         </div>
         <!-- Card type + Network logo -->
@@ -105,6 +118,8 @@ const props = defineProps({
   scheme: { type: String, default: '' },
   cardType: { type: String, default: '' },
   cardLevel: { type: String, default: '' },
+  status: { type: String, default: '' },
+  cvv: { type: String, default: '' },
 });
 
 // ── Branding from BIN ───────────────────────────────────────────────
@@ -128,10 +143,11 @@ const resolvedScheme = computed(() => {
   return '';
 });
 
-// ── Formatted card number ───────────────────────────────────────────
+// ── Formatted card number (bullets for masked digits) ───────────
 const formattedCardNumber = computed(() => {
   if (!props.cardNumber) return '•••• •••• •••• ••••';
-  const cleaned = props.cardNumber.replace(/\s/g, '');
+  // Convert asterisks/x's to bullet glyphs for nicer typography, then group in 4s
+  const cleaned = props.cardNumber.replace(/\s/g, '').replace(/[*xX]/g, '•');
   return cleaned.replace(/(.{4})/g, '$1 ').trim();
 });
 
@@ -256,6 +272,16 @@ const cardBorderClass = computed(() => {
   };
   return map[resolvedScheme.value] || 'border-white/[0.08]';
 });
+
+// ── In-card status pill (pending/approved/rejected) ─────────────
+const statusPill = computed(() => {
+  const s = (props.status || '').toLowerCase();
+  if (!s) return null;
+  if (s === 'pending')                       return { label: 'Pending',  classes: 'bg-amber-400/25 text-amber-100 ring-1 ring-amber-300/40' };
+  if (s === 'approved' || s === 'verified')  return { label: 'Approved', classes: 'bg-emerald-400/25 text-emerald-100 ring-1 ring-emerald-300/40' };
+  if (s === 'rejected' || s === 'failed')    return { label: 'Rejected', classes: 'bg-rose-400/25 text-rose-100 ring-1 ring-rose-300/40' };
+  return null;
+});
 </script>
 
 <style scoped>
@@ -299,5 +325,12 @@ const cardBorderClass = computed(() => {
 @keyframes shimmer {
   0%, 100% { background-position: 200% 0; }
   50%      { background-position: -200% 0; }
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-overlay { animation: none; }
+  .card-face { transition: none; }
+  .bank-card-3d:hover .card-face { transform: none; }
 }
 </style>

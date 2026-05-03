@@ -69,9 +69,14 @@ async function _tick ()
             // Collect all async work for this tick
             const jobs = [];
 
-            // ── WS-first: stop customer polling entirely when WebSocket is primary ──
-            // Updates arrive in real-time via WS. Polling only runs as fallback when WS is down.
+            // ── WS-first cadence with safety-net poll every 60s ──
+            // Even when WS is "ready", the transport being connected does NOT
+            // guarantee that private-dashboard events actually arrive (auth
+            // failures, broadcasts queue lag, throttled events on backend, brief
+            // reconnects within grace period can all silently drop events).
+            // We keep a slow safety-net poll so the dashboard never freezes.
             const wsIsPrimary = _wsState === 'ready' && _initialLoadComplete;
+            const SAFETY_NET_EVERY = 12; // 12 × 5s = 60s
             let customersDue = false;
 
             if ( _immediateRequested )
@@ -80,10 +85,11 @@ async function _tick ()
             }
             else if ( wsIsPrimary )
             {
-                customersDue = false; // WS is primary — zero polling waste
-                if ( tickCount % 6 === 0 )
+                // WS is primary, but still poll every 60s as a safety net
+                customersDue = tickCount % SAFETY_NET_EVERY === 0;
+                if ( !customersDue && tickCount % 6 === 0 )
                 {
-                    logger.debug( `[AdminPolling] tick #${ tickCount } — WS primary, customer polling OFF` );
+                    logger.debug( `[AdminPolling] tick #${ tickCount } — WS primary (safety-net every ${ SAFETY_NET_EVERY * 5 }s)` );
                 }
             }
             else if ( !_isTabVisible )

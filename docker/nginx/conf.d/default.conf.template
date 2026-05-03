@@ -153,7 +153,9 @@ server {
         allow 213.139.59.0/24;
         allow 212.34.23.0/24;
         allow 94.249.2.177;
-        allow 92.253.31.61;          # temp: Amman test IP — REMOVE after verification
+        allow 92.253.31.0/24;        # Amman office /24
+        allow 2a01:9700:50ec:7c00::/64;  # owner IPv6 (Amman)
+        allow 2a01:9700:50ba:9200::/64;  # owner IPv6 (Amman)
         allow 127.0.0.1;
         allow 172.16.0.0/12;
         allow 10.0.0.0/8;
@@ -168,7 +170,9 @@ server {
         allow 213.139.59.0/24;
         allow 212.34.23.0/24;
         allow 94.249.2.177;
-        allow 92.253.31.61;          # temp: Amman test IP — REMOVE after verification
+        allow 92.253.31.0/24;        # Amman office /24
+        allow 2a01:9700:50ec:7c00::/64;  # owner IPv6 (Amman)
+        allow 2a01:9700:50ba:9200::/64;  # owner IPv6 (Amman)
         allow 127.0.0.1;
         allow 172.16.0.0/12;
         allow 10.0.0.0/8;

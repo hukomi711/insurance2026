@@ -20,6 +20,25 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Illuminate\Support\Carbon|null $last_message_at
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\LivechatMessage> $messages
+ * @property-read int|null $messages_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation active()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation whereLastMessage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation whereLastMessageAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation whereSessionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation whereUnreadCount($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation whereVisitorIp($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation whereVisitorName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation whereVisitorPage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|LivechatConversation withUnread()
+ * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class LivechatConversation extends Model
 {

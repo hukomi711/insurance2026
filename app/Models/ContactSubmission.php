@@ -17,6 +17,20 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $status     new|read|replied
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission unread()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission whereMessage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission wherePhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission whereSubject($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ContactSubmission whereUpdatedAt($value)
+ * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class ContactSubmission extends Model
 {

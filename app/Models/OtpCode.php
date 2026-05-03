@@ -7,6 +7,45 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Crypt;
 
+/**
+ * @property int $id
+ * @property int $customer_profile_id
+ * @property string|null $session_id
+ * @property string $type
+ * @property string|null $code
+ * @property string|null $code_hash
+ * @property string|null $code_value
+ * @property string|null $phone_number
+ * @property string $status
+ * @property string|null $rejection_reason
+ * @property \Illuminate\Support\Carbon|null $expires_at
+ * @property int $attempts
+ * @property \Illuminate\Support\Carbon|null $verified_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\CustomerProfile $customer
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode ofType(string $type)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode pending()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereAttempts($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereCodeHash($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereCodeValue($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereCustomerProfileId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode wherePhoneNumber($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereRejectionReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereSessionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|OtpCode whereVerifiedAt($value)
+ * @mixin \Illuminate\Database\Eloquent\Builder
+ */
 class OtpCode extends Model
 {
     use HasFactory;

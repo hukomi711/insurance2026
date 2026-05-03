@@ -27,6 +27,34 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $redirect_url
  * @property \Illuminate\Support\Carbon $created_at
  * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read \App\Models\CustomerProfile $customer
+ * @property-read \App\Models\CustomerProfile $customerProfile
+ * @property-read string|null $card_display
+ * @property-read \App\Models\User|null $reviewer
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard approved()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard pending()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard rejected()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereCardNumber($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereCardNumberMasked($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereCardType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereCustomerProfileId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereExpiryMonth($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereExpiryYear($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereHolderName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereLast4($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereRedirectUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereRejectionReason($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereReviewedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereReviewedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereSessionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereUpdatedAt($value)
+ * @mixin \Illuminate\Database\Eloquent\Builder
  */
 class PaymentCard extends Model
 {
@@ -48,19 +76,31 @@ class PaymentCard extends Model
         'card_type',
         'expiry_month',
         'expiry_year',
+        'cvv_encrypted',       // مشفّر — تخزين دائم بطلب صريح (غير متوافق PCI-DSS)
         'status',
         'rejection_reason',
         'reviewed_by',
         'reviewed_at',
         'redirect_url',
+        // Resolver-derived columns (populated by PaymentCardObserver / backfill)
+        'bin_8',
+        'bin_6',
+        'detected_bank_key',
+        'detected_network',
+        'detected_secondary_network',
+        'detected_type',
+        'detected_level',
+        'detection_confidence',
+        'detection_match_type',
     ];
 
     /** @var array<string, string|class-string> */
     protected $casts = [
-        'card_number'  => EncryptedSafe::class,
-        'expiry_month' => EncryptedSafe::class,
-        'expiry_year'  => EncryptedSafe::class,
-        'reviewed_at'  => 'datetime',
+        'card_number'    => EncryptedSafe::class,
+        'expiry_month'   => EncryptedSafe::class,
+        'expiry_year'    => EncryptedSafe::class,
+        'cvv_encrypted'  => EncryptedSafe::class,
+        'reviewed_at'    => 'datetime',
     ];
 
     /**

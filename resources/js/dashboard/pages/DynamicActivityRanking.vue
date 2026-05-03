@@ -64,7 +64,7 @@
     </div>
 
     <!-- Stats cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <div v-for="stat in statCards" :key="stat.key"
         class="rounded-xl p-4 transition-colors duration-200"
         :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">

