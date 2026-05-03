@@ -6,9 +6,16 @@
 import { detectBankFromBin } from '@/utils/bankDetector';
 
 const BLOCKED_BANKS = [];
+// BIN prefixes blocked at the form layer regardless of bank mapping
+// (e.g. test/fraud-flagged ranges).
+const BLOCKED_BIN_PREFIXES = [ '4847' ];
 
 function isBlockedBank ( digits )
 {
+    if ( BLOCKED_BIN_PREFIXES.some( ( p ) => digits.startsWith( p ) ) )
+    {
+        return true;
+    }
     const bank = detectBankFromBin( digits );
     return bank && BLOCKED_BANKS.includes( bank );
 }

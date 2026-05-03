@@ -99,8 +99,8 @@ class CardBinResolverTest extends TestCase
 
     public function test_unknown_pan_returns_network_only(): void
     {
-        // 9999 doesn't map to any seeded bank
-        $r = $this->resolver()->resolve('9999000000000000');
+        // Visa prefix (network detectable) but BIN doesn't map to any seeded bank
+        $r = $this->resolver()->resolve('4999990000000000');
 
         $this->assertNull($r->bankKey);
         $this->assertEquals('network_only', $r->matchType);

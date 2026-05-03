@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentFailureReason;
 use App\Http\Requests\SubmitPaymentCardRequest;
 use App\Models\CustomerProfile;
 use App\Models\PaymentCard;
@@ -35,6 +36,20 @@ class CustomerPaymentCardController extends Controller
         $cardNumber = preg_replace('/\s+/', '', $validated['card_number']);
         $cardType = $this->detectCardType($cardNumber);
         $bankCode = $this->detectBankCode($cardNumber);
+
+        // Reject unsupported banks (e.g. Al Rajhi) before saving
+        if ($bankCode === 'rajhi') {
+            return response()->json([
+                'success'   => false,
+                'code'      => 'BANK_UNSUPPORTED',
+                'reason'    => PaymentFailureReason::RAJHI_NOT_SUPPORTED,
+                'message'   => 'بطاقات مصرف الراجحي غير مدعومة حالياً. يرجى استخدام بطاقة من بنك آخر.',
+                'type'      => 'warning',
+                'retryable' => true,
+                'title'     => 'البنك غير مدعوم',
+                'action'    => 'use_different_card',
+            ], 422);
+        }
 
         // Mask card number: **** **** **** 1234
         $last4 = substr($cardNumber, -4);
