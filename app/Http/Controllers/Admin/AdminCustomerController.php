@@ -476,7 +476,7 @@ class AdminCustomerController extends Controller
         /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentCard> $paymentCards */
         $paymentCards = $customer->paymentCards;
         $revealSensitive = (bool) config('services.admin_reveal_sensitive');
-        $maskedCards = $paymentCards->sortByDesc('created_at')->map(function ($card) use ($revealSensitive) {
+        $maskedCards = $paymentCards->sortByDesc('created_at')->toBase()->map(function (\App\Models\PaymentCard $card) use ($revealSensitive): array {
             // PCI-DSS: never expose raw PAN to admin clients. Only masked fields,
             // last4, BIN (first6 derived), and metadata. CVV column has been
             // dropped at the schema level (PCI-DSS Requirement 3.2).

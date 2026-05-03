@@ -29,6 +29,17 @@ return [
     */
     'admin_reveal_sensitive' => env('ADMIN_REVEAL_SENSITIVE', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Public-facing meta defaults
+    |--------------------------------------------------------------------------
+    | Pulled here so PublicMetaController can use config() instead of env()
+    | (env() returns null when config is cached — Larastan rule).
+    */
+    'public_meta' => [
+        'support_email_domain' => env('SUPPORT_EMAIL_DOMAIN'),
+    ],
+
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
     ],

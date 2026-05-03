@@ -58,7 +58,8 @@ TXT;
     public function securityTxt(): Response
     {
         $base = rtrim(config('app.url'), '/');
-        $emailDomain = env('SUPPORT_EMAIL_DOMAIN', parse_url($base, PHP_URL_HOST) ?: 'localhost');
+        $emailDomain = config('services.public_meta.support_email_domain')
+            ?: (parse_url($base, PHP_URL_HOST) ?: 'localhost');
         $expires = now()->addYear()->setTime(23, 59, 59)->toIso8601ZuluString('millisecond');
 
         $body = <<<TXT

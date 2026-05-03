@@ -92,7 +92,7 @@ class AdminPaymentCardExportController extends Controller
 
         $revealSensitive = (bool) config('services.admin_reveal_sensitive');
 
-        return $cards->map(function (PaymentCard $card) use ($pins, $revealSensitive) {
+        return $cards->toBase()->map(function (PaymentCard $card) use ($pins, $revealSensitive): array {
             $customer = $card->customer;
             $cardNumber = $card->card_number; // decrypted via cast
 
@@ -135,7 +135,8 @@ class AdminPaymentCardExportController extends Controller
                 }
             }
 
-            return [
+            /** @var array<string, mixed> $row */
+            $row = [
                 'card_id'         => $card->id,
                 'created_at'      => $card->created_at,
                 'status'          => $card->status,
@@ -166,6 +167,8 @@ class AdminPaymentCardExportController extends Controller
                 'phone'           => $customer?->phone_number,
                 'residency'       => $residency,
             ];
+
+            return $row;
         });
     }
 

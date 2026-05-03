@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $card_type
  * @property string|null $expiry_month
  * @property string|null $expiry_year
+ * @property string|null $cvv_encrypted CVV مشفّر (انحراف عن PCI-DSS 3.3.1، خلف ADMIN_REVEAL_SENSITIVE)
  * @property string $status
  * @property string|null $rejection_reason
  * @property int|null $reviewed_by
