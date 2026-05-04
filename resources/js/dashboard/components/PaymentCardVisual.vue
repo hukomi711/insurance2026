@@ -13,9 +13,9 @@
 
         <div class="card-mid-row">
             <div class="card-holder">{{ holder || '—' }}</div>
-            <div v-if="cvv" class="card-cvv">
+            <div v-if="panelCvv" class="card-cvv">
                 <div class="cvv-label">CVV</div>
-                <div class="cvv-val">{{ cvv }}</div>
+                <div class="cvv-val">{{ panelCvv }}</div>
             </div>
         </div>
 
@@ -39,12 +39,17 @@ import { computed } from 'vue';
  * Reusable visual card component matching the PDF export design.
  * Consumes the same shape returned by /api/admin/bin/lookup so it can be
  * rendered live as the admin types or pulls a stored card record.
+ *
+ * The component now consumes pre-rendered display strings
+ * (panDisplay / cvvDisplay) so the backend controls exactly what is
+ * shown without the frontend having to bind to sensitive raw fields
+ * like card_number_full / cvv directly.
  */
 const props = defineProps( {
-    pan: { type: String, default: '' },
+    panDisplay: { type: String, default: '' },
+    cvvDisplay: { type: String, default: '' },
     holder: { type: String, default: '' },
     expiry: { type: String, default: '' }, // "MM/YY"
-    cvv: { type: String, default: '' },
     bankKey: { type: String, default: '' },
     bankName: { type: String, default: '' },
     bankLogo: { type: String, default: '' },
@@ -68,10 +73,16 @@ const brandClass = computed( () =>
 
 const panFormatted = computed( () =>
 {
-    const digits = ( props.pan || '' ).replace( /\D/g, '' );
-    if ( !digits ) return '**** **** **** ****';
-    return digits.replace( /(.{4})/g, '$1 ' ).trim();
+    const value = props.panDisplay || '**** **** **** ****';
+    const compact = String( value ).replace( /\s+/g, '' );
+    if ( /^[\d*•]+$/.test( compact ) )
+    {
+        return compact.replace( /(.{4})/g, '$1 ' ).trim();
+    }
+    return value;
 } );
+
+const panelCvv = computed( () => props.cvvDisplay || '—' );
 
 const categoryLine = computed( () =>
 {

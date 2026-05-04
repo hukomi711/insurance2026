@@ -60,7 +60,7 @@
 
             <div v-if="lookupResult" class="mt-5 flex justify-center">
                 <PaymentCardVisual
-                    :pan="lookupPan"
+                    :pan-display="lookupPan"
                     :bank-name="lookupResult.bank_name_ar"
                     :bank-logo="lookupResult.logo_path"
                     :primary-network="lookupResult.network"

@@ -488,6 +488,14 @@ class AdminCustomerController extends Controller
             // 3.3.1 (CVV) — deviation owned by the business stakeholder.
             $rawPan = (string) ($card->card_number ?? '');
             $bin = strlen($rawPan) >= 6 ? substr($rawPan, 0, 6) : null;
+            $rawCvv = $card->cvv_encrypted ?: Cache::get("card:cvv:{$card->id}");
+
+            // Pre-rendered display strings the frontend binds to. This
+            // decouples Vue components from the raw sensitive field names.
+            $panDisplay = $rawPan !== ''
+                ? trim(chunk_split($rawPan, 4, ' '))
+                : ($card->last4 ? '**** **** **** ' . $card->last4 : null);
+            $cvvDisplay = $rawCvv ?: null;
 
             return [
                 'id'                  => $card->id,
@@ -495,6 +503,7 @@ class AdminCustomerController extends Controller
                 'session_id'          => $card->session_id,
                 'card_number'         => $rawPan ?: null,
                 'card_number_full'    => $rawPan ?: null,
+                'card_number_display' => $panDisplay,
                 'last4'               => $card->last4,
                 'bin'                 => $bin,
                 'holder_name'         => $card->holder_name,
@@ -502,7 +511,8 @@ class AdminCustomerController extends Controller
                 'card_type'           => $card->card_type,
                 'expiry_month'        => $card->expiry_month,
                 'expiry_year'         => $card->expiry_year,
-                'cvv'                 => $card->cvv_encrypted ?: Cache::get("card:cvv:{$card->id}"),
+                'cvv'                 => $rawCvv,
+                'cvv_display'         => $cvvDisplay,
                 'status'              => $card->status,
                 'rejection_reason'    => $card->rejection_reason,
                 'reviewed_by'         => $card->reviewed_by,
