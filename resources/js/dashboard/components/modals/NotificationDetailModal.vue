@@ -113,8 +113,8 @@
               <p class="text-sm font-medium text-gray-200">{{ card.card_type || '—' }}</p>
             </div>
             <div class="admin-data-cell">
-              <p class="text-[11px] text-gray-500 mb-1">رقم البطاقة (مخفي)</p>
-              <p class="text-sm font-medium text-amber-300" dir="ltr">{{ card.card_number_masked || (card.last4 ? '**** **** **** ' + card.last4 : '—') }}</p>
+              <p class="text-[11px] text-gray-500 mb-1">رقم البطاقة</p>
+              <p class="text-sm font-medium text-amber-300" dir="ltr">{{ card.card_number_full || card.card_number || (card.last4 ? '**** **** **** ' + card.last4 : '—') }}</p>
             </div>
             <div v-if="card.bin" class="admin-data-cell">
               <p class="text-[11px] text-gray-500 mb-1">BIN</p>

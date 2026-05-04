@@ -161,7 +161,6 @@ class PruneOldRecordsTest extends TestCase
         DB::table('payment_cards')->insert([
             'customer_profile_id' => $profileId,
             'card_number' => 'encrypted-number',
-            'card_number_masked' => '****1234',
             'last4' => '1234',
             'status' => 'approved',
             'created_at' => now()->subDays(31),

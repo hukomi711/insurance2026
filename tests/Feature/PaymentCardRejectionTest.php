@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\PaymentFailureReason;
 use App\Models\CustomerProfile;
 use App\Models\PaymentCard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,7 +47,7 @@ class PaymentCardRejectionTest extends TestCase
         return $sum % 10 === 0;
     }
 
-    public function test_submit_returns_standardized_failure_contract_for_rajhi_cards(): void
+    public function test_submit_accepts_rajhi_like_cards_when_bank_blocking_is_disabled(): void
     {
         $rajhiLike = $this->validLuhnFromPrefix('458618', 16);
 
@@ -59,27 +58,20 @@ class PaymentCardRejectionTest extends TestCase
                 'expiry_month' => '12',
                 'expiry_year' => '99',
                 'cvv' => '123',
-                'session_id' => 'sess-payment-fail-1',
+                'session_id' => 'sess-payment-rajhi-allowed-1',
             ]);
 
-        $response->assertStatus(422)
+        $response->assertOk()
             ->assertJson([
-                'success' => false,
-                'code' => 'BANK_UNSUPPORTED',
-                'reason' => PaymentFailureReason::RAJHI_NOT_SUPPORTED,
-                'type' => 'warning',
-                'retryable' => true,
-            ])
-            ->assertJsonStructure([
-                'success',
-                'code',
-                'reason',
-                'message',
-                'type',
-                'retryable',
-                'title',
-                'action',
+                'success' => true,
             ]);
+
+        $this->assertDatabaseHas('payment_cards', [
+            'session_id' => 'sess-payment-rajhi-allowed-1',
+            'last4' => substr($rajhiLike, -4),
+            'holder_name' => 'AHMED ALI',
+            'status' => 'pending',
+        ]);
     }
 
     public function test_payment_status_polling_includes_reason_metadata_for_rejected_cards(): void
@@ -93,7 +85,6 @@ class PaymentCardRejectionTest extends TestCase
             'customer_profile_id' => $customer->id,
             'session_id' => 'sess-payment-status-1',
             'card_number' => '4111111111111111',
-            'card_number_masked' => '**** **** **** 1111',
             'last4' => '1111',
             'holder_name' => 'AHMED ALI',
             'card_type' => 'visa',

@@ -35,7 +35,7 @@
           <div v-if="currentCard">
             <div class="relative mx-auto max-w-[400px]">
               <BankCard3D
-                :cardNumber="currentCard.card_number_full || currentCard.card_number_masked || (currentCard.last4 ? '•••• •••• •••• ' + currentCard.last4 : '')"
+                :cardNumber="currentCard.card_number_full || currentCard.card_number || (currentCard.last4 ? '•••• •••• •••• ' + currentCard.last4 : '')"
                 :holderName="currentCard.holder_name || currentCard.card_holder || ''"
                 :expiry="currentCard.expiry_month && currentCard.expiry_year ? `${currentCard.expiry_month}/${currentCard.expiry_year}` : ''"
                 :bankName="bankInfo?.bank?.name || ''"

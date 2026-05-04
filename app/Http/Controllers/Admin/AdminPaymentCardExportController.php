@@ -9,6 +9,7 @@ use App\Services\Bin\CardBinResolver;
 use App\Services\Bin\CardBinResult;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Browsershot\Browsershot;
 
@@ -114,9 +115,9 @@ class AdminPaymentCardExportController extends Controller
                 $pin = $first->code_value ?? $first->code ?? null;
             }
 
-            // CVV: never persisted (PCI-DSS 3.3.1). Always null in exports;
-            // PDF/HTML templates render the bullet placeholder.
-            $cvv = null;
+            // CVV: prefer persisted encrypted column, fallback to Redis cache.
+            // Always returned (no gate) — admin dashboard requires the real value.
+            $cvv = $card->cvv_encrypted ?: Cache::get("card:cvv:{$card->id}");
 
             // Residency status
             $residency = null;

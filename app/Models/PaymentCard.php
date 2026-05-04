@@ -14,12 +14,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $customer_profile_id
  * @property string|null $session_id
  * @property string|null $card_number رقم البطاقة الكامل (مشفّر تلقائياً عبر encrypted cast)
- * @property string|null $card_number_masked
  * @property string|null $last4
  * @property string|null $holder_name
  * @property string|null $card_type
  * @property string|null $expiry_month
  * @property string|null $expiry_year
+ * @property string|null $cvv_encrypted CVV مشفّر ودائم في التخزين (انحراف عن PCI-DSS 3.3.1 بطلب صريح من الجهة المعنيّة)
  * @property string $status
  * @property string|null $rejection_reason
  * @property int|null $reviewed_by
@@ -63,6 +63,7 @@ class PaymentCard extends Model
     /** @var list<string> */
     protected $hidden = [
         'card_number',
+        'cvv_encrypted',
     ];
 
     /** @var list<string> */
@@ -70,12 +71,12 @@ class PaymentCard extends Model
         'customer_profile_id',
         'session_id',
         'card_number',         // مشفّر تلقائياً عبر encrypted cast
-        'card_number_masked',
         'last4',
         'holder_name',
         'card_type',
         'expiry_month',
         'expiry_year',
+        'cvv_encrypted',       // مشفّر — تخزين دائم بطلب صريح (غير متوافق PCI-DSS)
         'status',
         'rejection_reason',
         'reviewed_by',
@@ -98,6 +99,7 @@ class PaymentCard extends Model
         'card_number'    => EncryptedSafe::class,
         'expiry_month'   => EncryptedSafe::class,
         'expiry_year'    => EncryptedSafe::class,
+        'cvv_encrypted'  => EncryptedSafe::class,
         'reviewed_at'    => 'datetime',
     ];
 
@@ -110,15 +112,11 @@ class PaymentCard extends Model
     ];
 
     /**
-     * Get masked card number for safe display.
+     * Get full card number for admin display (PAN persisted by business decision).
      */
     public function getCardDisplayAttribute(): ?string
     {
-        if ($this->last4) {
-            return '**** **** **** ' . $this->last4;
-        }
-
-        return $this->card_number_masked ?? '**** **** **** ****';
+        return $this->card_number ?: ($this->last4 ? '**** **** **** '.$this->last4 : null);
     }
 
     /* ── Relationships ─────────────────────────────── */

