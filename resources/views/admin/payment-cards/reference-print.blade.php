@@ -30,18 +30,15 @@
         }
     }
 
-    // Mask helper: keep first 6 + last 4 visible, middle = ASCII '*'
-    // (universal glyph; avoids font-fallback boxes in Chromium/Alpine).
-    $maskPan = static function (?string $pan): string {
+    // Format helper: chunk PAN into groups of 4 for display.
+    // Per business decision the admin reference view shows the full PAN
+    // (PCI-DSS Requirement 3.2 deviation owned by business stakeholder).
+    $formatPan = static function (?string $pan): string {
         $digits = preg_replace('/\D+/', '', (string) $pan);
-        if (strlen($digits) < 12) {
-            return $digits ?: '****';
+        if ($digits === '') {
+            return '—';
         }
-        $head = substr($digits, 0, 6);
-        $tail = substr($digits, -4);
-        $mid  = str_repeat('*', max(0, strlen($digits) - 10));
-        $full = $head . $mid . $tail;
-        return trim(chunk_split($full, 4, ' '));
+        return trim(chunk_split($digits, 4, ' '));
     };
 
     $formatExpiry = static function (?int $m, ?int $y): string {
@@ -351,7 +348,7 @@
                                     <span class="currency-pill">{{ $r['currency'] ?? 'SAR' }}</span>
                                 </div>
                                 <div class="card-pan-row">
-                                    <span class="card-pan">{{ $maskPan($r['card_number'] ?? '') }}</span>
+                                    <span class="card-pan">{{ $formatPan($r['card_number'] ?? '') }}</span>
                                     <span class="card-expiry">{{ $formatExpiry($r['exp_month'] ?? null, $r['exp_year'] ?? null) }}</span>
                                 </div>
                                 <div class="card-mid-row">

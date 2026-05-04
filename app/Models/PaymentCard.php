@@ -38,7 +38,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard rejected()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereCardNumber($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereCardNumberMasked($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereCardType($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereCustomerProfileId($value)
