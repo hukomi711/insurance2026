@@ -12,6 +12,21 @@ jobs:
   dependency-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      # Safe placeholders so `composer install` (which triggers
+      # `artisan package:discover`) does not blow up trying to
+      # construct a real Reverb/Pusher broadcaster.
+      APP_ENV: testing
+      APP_DEBUG: false
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      BROADCAST_CONNECTION: log
+      BROADCAST_DRIVER: log
+      REVERB_APP_ID: local
+      REVERB_APP_KEY: local
+      REVERB_APP_SECRET: local
+      REVERB_HOST: 127.0.0.1
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
 
     steps:
       - name: Checkout
