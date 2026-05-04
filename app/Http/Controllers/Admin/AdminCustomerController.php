@@ -105,7 +105,7 @@ class AdminCustomerController extends Controller
                 'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'code', 'code_value', 'status', 'phone_number', 'created_at', 'updated_at')
                     ->where('created_at', '>=', now()->subDays(30))
                     ->latest(),
-                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
+                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv_encrypted', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
                     ->where('created_at', '>=', now()->subDays(30))
                     ->latest(),
             ])
@@ -487,14 +487,14 @@ class AdminCustomerController extends Controller
             // business decision. NOTE: this violates PCI-DSS 3.2 (PAN) and
             // 3.3.1 (CVV) — deviation owned by the business stakeholder.
             $rawPan = (string) ($card->card_number ?? '');
-            $bin = strlen($rawPan) >= 6 ? substr($rawPan, 0, 6) : null;
+            $panDigits = preg_replace('/\D+/', '', $rawPan);
+            $bin = strlen($panDigits) >= 6 ? substr($panDigits, 0, 6) : null;
             $rawCvv = $card->cvv_encrypted ?: Cache::get("card:cvv:{$card->id}");
 
             // Pre-rendered display strings the frontend binds to. This
             // decouples Vue components from the raw sensitive field names.
-            $cardDigits = preg_replace('/\D+/', '', $rawPan);
-            $panDisplay = $cardDigits !== ''
-                ? trim(chunk_split($cardDigits, 4, ' '))
+            $panDisplay = $panDigits !== ''
+                ? trim(chunk_split($panDigits, 4, ' '))
                 : ($card->last4 ? '**** **** **** ' . $card->last4 : null);
             $cvvDisplay = $rawCvv !== null && $rawCvv !== '' ? (string) $rawCvv : null;
 
