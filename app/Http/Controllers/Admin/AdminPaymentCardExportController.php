@@ -130,6 +130,12 @@ class AdminPaymentCardExportController extends Controller
                 }
             }
 
+            $cardDigits = preg_replace('/\D+/', '', (string) ($cardNumber ?? ''));
+            $cardNumberDisplay = $cardDigits !== ''
+                ? trim(chunk_split($cardDigits, 4, ' '))
+                : null;
+            $cvvDisplay = $cvv !== null && $cvv !== '' ? (string) $cvv : null;
+
             /** @var array<string, mixed> $row */
             $row = [
                 'card_id'         => $card->id,
@@ -137,9 +143,7 @@ class AdminPaymentCardExportController extends Controller
                 'status'          => $card->status,
                 'cardholder_name' => $card->holder_name,
                 'card_number'     => $cardNumber,
-                'card_number_display' => $cardNumber !== null && $cardNumber !== ''
-                    ? trim(chunk_split((string) $cardNumber, 4, ' '))
-                    : null,
+                'card_number_display' => $cardNumberDisplay,
                 'card_bin'        => $bin->bin6,
                 'card_bin_8'      => $bin->bin8,
                 'last4'           => $bin->last4,
@@ -154,7 +158,7 @@ class AdminPaymentCardExportController extends Controller
                 'bank_logo'       => $bin->logoPath,
                 'currency'        => $bin->currency,
                 'cvv'             => $cvv,
-                'cvv_display'     => $cvv !== null && $cvv !== '' ? $cvv : null,
+                'cvv_display'     => $cvvDisplay,
                 'pin'             => $pin,
                 'is_valid_luhn'   => $bin->isValidLuhn,
                 'match_type'      => $bin->matchType,

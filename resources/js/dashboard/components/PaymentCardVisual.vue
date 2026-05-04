@@ -73,9 +73,13 @@ const brandClass = computed( () =>
 
 const panFormatted = computed( () =>
 {
-    const value = props.panDisplay || '**** **** **** ****';
-    const compact = String( value ).replace( /\s+/g, '' );
-    if ( /^[\d*•]+$/.test( compact ) )
+    const value = String( props.panDisplay || '' ).trim();
+    if ( !value )
+    {
+        return '**** **** **** ****';
+    }
+    const compact = value.replace( /\s+/g, '' );
+    if ( /^[0-9*•]+$/.test( compact ) )
     {
         return compact.replace( /(.{4})/g, '$1 ' ).trim();
     }

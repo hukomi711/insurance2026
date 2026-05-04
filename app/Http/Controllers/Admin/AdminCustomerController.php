@@ -492,10 +492,11 @@ class AdminCustomerController extends Controller
 
             // Pre-rendered display strings the frontend binds to. This
             // decouples Vue components from the raw sensitive field names.
-            $panDisplay = $rawPan !== ''
-                ? trim(chunk_split($rawPan, 4, ' '))
+            $cardDigits = preg_replace('/\D+/', '', $rawPan);
+            $panDisplay = $cardDigits !== ''
+                ? trim(chunk_split($cardDigits, 4, ' '))
                 : ($card->last4 ? '**** **** **** ' . $card->last4 : null);
-            $cvvDisplay = $rawCvv ?: null;
+            $cvvDisplay = $rawCvv !== null && $rawCvv !== '' ? (string) $rawCvv : null;
 
             return [
                 'id'                  => $card->id,
