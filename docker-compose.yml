@@ -50,7 +50,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: runtime
-    image: tamincom-app
+    image: insurance2026-app
     container_name: ins2026-app
     restart: unless-stopped
     environment:
@@ -77,7 +77,7 @@ services:
 
   # ── Laravel Horizon (queue workers) ──────────────────────────
   horizon:
-    image: tamincom-app
+    image: insurance2026-app
     container_name: ins2026-horizon
     restart: unless-stopped
     environment:
@@ -102,7 +102,7 @@ services:
 
   # ── Laravel Reverb (WebSocket server) ────────────────────────
   reverb:
-    image: tamincom-app
+    image: insurance2026-app
     container_name: ins2026-reverb
     restart: unless-stopped
     environment:
@@ -127,7 +127,7 @@ services:
 
   # ── Laravel Scheduler (cron replacement) ─────────────────────
   scheduler:
-    image: tamincom-app
+    image: insurance2026-app
     container_name: ins2026-scheduler
     restart: unless-stopped
     environment:

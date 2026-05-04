@@ -8,7 +8,7 @@
  *     @<host> #<code>
  * e.g.
  *     رمز التحقق هو 123456
- *     @taiicoomiin.site #123456
+ *     @example.com #123456
  *
  * Usage:
  *   import { useWebOtp } from '@/composables/useWebOtp';

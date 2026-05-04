@@ -66,7 +66,7 @@ echo "  -> Secrets validated."
 echo "[4/7] Building application image (zero-drift: one image → all roles)..."
 GIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || cat .build-sha 2>/dev/null || echo "unknown")
 $COMPOSE build --no-cache --build-arg APP_BUILD_SHA="$GIT_SHA" app
-echo "  -> Built tamincom-app image (commit: $GIT_SHA)"
+echo "  -> Built insurance2026-app image (commit: $GIT_SHA)"
 
 # ── 5. Start/restart ALL services from the same image ────────────
 echo "[5/7] Starting services (force-recreate to pick up new image)..."
