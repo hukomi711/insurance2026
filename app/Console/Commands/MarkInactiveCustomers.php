@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Events\CustomerActivityUpdated;
 use App\Models\CustomerProfile;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 class MarkInactiveCustomers extends Command
 {
@@ -35,9 +36,30 @@ class MarkInactiveCustomers extends Command
             return self::SUCCESS;
         }
 
-        // Bulk update
-        CustomerProfile::where('is_active', true)
-            ->where('last_activity_at', '<', $cutoff)
+        // Redis-first heartbeat: visitors who keep heartbeating on the same page
+        // do NOT update last_activity_at (we deliberately avoid the DB write).
+        // Their liveness lives in Cache key visitor:last_seen:{ip}. Filter those
+        // out so we don't falsely flip them to inactive.
+        $stillLiveIds = [];
+        foreach ($staleCustomers as $customer) {
+            if (! empty($customer->ip_address)
+                && Cache::has("visitor:last_seen:{$customer->ip_address}")) {
+                $stillLiveIds[] = $customer->id;
+            }
+        }
+
+        $staleCustomers = $staleCustomers->reject(
+            fn ($c) => in_array($c->id, $stillLiveIds, true)
+        );
+
+        if ($staleCustomers->isEmpty()) {
+            $this->info('All stale customers are still live in Redis cache.');
+            return self::SUCCESS;
+        }
+
+        // Bulk update — only the truly stale (not in Redis cache)
+        $idsToFlip = $staleCustomers->pluck('id')->all();
+        CustomerProfile::whereIn('id', $idsToFlip)
             ->update(['is_active' => false]);
 
         // Broadcast inactivity event for each customer so the dashboard updates in real-time

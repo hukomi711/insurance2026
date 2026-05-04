@@ -123,9 +123,40 @@ class CustomerTrackingController extends Controller
             return response()->json(['success' => true, 'customer_ip' => $ip]);
         }
 
+        // ── Redis-first fast-path ────────────────────────────────────
+        // Heartbeats arrive every 10s. When the visitor stays on the same page,
+        // we MUST avoid touching the DB (no transaction, no FOR UPDATE, no
+        // last_activity_at write). We refresh visitor:last_seen instead, and
+        // a scheduled job reconciles last_activity_at to the DB.
+        //
+        // TTL = 180s (matches `customers:mark-inactive --minutes=3` default).
+        $lastPageKey = "visitor:last_page:{$ip}";
+        $lastSeenKey = "visitor:last_seen:{$ip}";
+        $cachedPage  = Cache::get($lastPageKey);
+
+        if ($cachedPage !== null && $cachedPage === $page) {
+            // Same page → silent heartbeat: refresh TTLs only, no DB work.
+            Cache::put($lastPageKey, $page, 180);
+            Cache::put($lastSeenKey, time(), 180);
+
+            // Preserve admin-initiated redirect polling (atomic read+delete).
+            $pendingRedirect = Cache::pull("pending_redirect:{$ip}");
+
+            $response = ['success' => true, 'customer_ip' => $ip];
+            if ($pendingRedirect && $pendingRedirect !== $page) {
+                $response['redirect_to'] = $pendingRedirect;
+            }
+            return response()->json($response);
+        }
+
+        // ── Slow path: page changed OR first heartbeat (cache miss) ──
         $customer = CustomerProfile::createOrUpdateByIP($ip, [
             'current_page' => $page,
         ]);
+
+        // Seed the fast-path cache so subsequent heartbeats stay silent.
+        Cache::put($lastPageKey, $page, 180);
+        Cache::put($lastSeenKey, time(), 180);
 
         // Record page view activity (only on actual page change, never on heartbeat)
         if ($customer->wasRecentlyCreated || $customer->wasChanged('current_page')) {
