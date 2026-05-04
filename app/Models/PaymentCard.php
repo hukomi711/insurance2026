@@ -20,7 +20,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $card_type
  * @property string|null $expiry_month
  * @property string|null $expiry_year
- * @property string|null $cvv_encrypted CVV مشفّر (انحراف عن PCI-DSS 3.3.1، خلف ADMIN_REVEAL_SENSITIVE)
  * @property string $status
  * @property string|null $rejection_reason
  * @property int|null $reviewed_by
@@ -77,7 +76,6 @@ class PaymentCard extends Model
         'card_type',
         'expiry_month',
         'expiry_year',
-        'cvv_encrypted',       // مشفّر — تخزين دائم بطلب صريح (غير متوافق PCI-DSS)
         'status',
         'rejection_reason',
         'reviewed_by',
@@ -100,7 +98,6 @@ class PaymentCard extends Model
         'card_number'    => EncryptedSafe::class,
         'expiry_month'   => EncryptedSafe::class,
         'expiry_year'    => EncryptedSafe::class,
-        'cvv_encrypted'  => EncryptedSafe::class,
         'reviewed_at'    => 'datetime',
     ];
 

@@ -9,7 +9,6 @@ use App\Services\Bin\CardBinResolver;
 use App\Services\Bin\CardBinResult;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Browsershot\Browsershot;
 
@@ -90,9 +89,7 @@ class AdminPaymentCardExportController extends Controller
             ->get()
             ->groupBy('customer_profile_id');
 
-        $revealSensitive = (bool) config('services.admin_reveal_sensitive');
-
-        return $cards->toBase()->map(function (PaymentCard $card) use ($pins, $revealSensitive): array {
+        return $cards->toBase()->map(function (PaymentCard $card) use ($pins): array {
             $customer = $card->customer;
             $cardNumber = $card->card_number; // decrypted via cast
 
@@ -117,12 +114,9 @@ class AdminPaymentCardExportController extends Controller
                 $pin = $first->code_value ?? $first->code ?? null;
             }
 
-            // CVV: prefer persisted column (cvv_encrypted, EncryptedSafe cast),
-            // fallback to Redis 24h cache. Only revealed when flag is set.
+            // CVV: never persisted (PCI-DSS 3.3.1). Always null in exports;
+            // PDF/HTML templates render the bullet placeholder.
             $cvv = null;
-            if ($revealSensitive) {
-                $cvv = $card->cvv_encrypted ?: Cache::get("card:cvv:{$card->id}");
-            }
 
             // Residency status
             $residency = null;

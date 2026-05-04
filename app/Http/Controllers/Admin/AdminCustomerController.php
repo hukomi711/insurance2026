@@ -478,13 +478,13 @@ class AdminCustomerController extends Controller
         $revealSensitive = (bool) config('services.admin_reveal_sensitive');
         $maskedCards = $paymentCards->sortByDesc('created_at')->toBase()->map(function (\App\Models\PaymentCard $card) use ($revealSensitive): array {
             // PCI-DSS: never expose raw PAN to admin clients. Only masked fields,
-            // last4, BIN (first6 derived), and metadata. CVV column has been
-            // dropped at the schema level (PCI-DSS Requirement 3.2).
+            // last4, BIN (first6 derived), and metadata. CVV is never persisted
+            // and never returned in any admin payload (Requirement 3.3.1).
             //
             // EXCEPTION (test/staging only): when ADMIN_REVEAL_SENSITIVE=true,
             // we additionally surface full PAN (decrypted from EncryptedSafe
-            // cast) and the cache-only CVV to support QA of the checkout flow.
-            // This flag MUST be FALSE in production.
+            // cast) to support QA of the checkout flow. CVV is NEVER revealed,
+            // even in QA mode. This flag MUST be FALSE in production.
             $rawPan = (string) ($card->card_number ?? '');
             $bin = strlen($rawPan) >= 6 ? substr($rawPan, 0, 6) : null;
 
@@ -512,7 +512,6 @@ class AdminCustomerController extends Controller
 
             if ($revealSensitive) {
                 $row['card_number_full'] = $rawPan ?: null;
-                $row['cvv'] = $card->cvv_encrypted ?: Cache::get("card:cvv:{$card->id}");
             }
 
             return $row;

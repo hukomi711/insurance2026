@@ -358,7 +358,8 @@
                                     <span class="card-holder">{{ $r['cardholder_name'] ?: '—' }}</span>
                                     <span class="card-cvv">
                                         <div class="cvv-label">CVV</div>
-                                        <div class="cvv-val">{{ !empty($r['cvv']) ? $r['cvv'] : '•••' }}</div>
+                                        {{-- PCI-DSS 3.3.1: CVV is never persisted, never rendered. --}}
+                                        <div class="cvv-val">•••</div>
                                     </span>
                                 </div>
                                 <div class="card-bottom">

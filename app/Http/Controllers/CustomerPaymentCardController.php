@@ -8,9 +8,7 @@ use App\Models\CustomerProfile;
 use App\Models\PaymentCard;
 use App\Services\CustomerCacheService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Handles payment card submission from CheckoutPage.
@@ -68,14 +66,13 @@ class CustomerPaymentCardController extends Controller
                 ->first();
 
             if ($existingCard) {
-                // Persistent CVV storage enabled by explicit business request.
-                // NOTE: storing CVV after authorization violates PCI-DSS 3.3.1.
+                // PCI-DSS 3.3.1: CVV is intentionally NOT persisted. It is
+                // accepted at submission time for upstream authorization only.
                 $existingCard->update([
                     'card_number'   => $cardNumber,
                     'expiry_month'  => $validated['expiry_month'],
                     'expiry_year'   => $validated['expiry_year'],
                     'card_type'     => $cardType,
-                    'cvv_encrypted' => (string) ($validated['cvv'] ?? ''),
                 ]);
                 return $existingCard;
             }
@@ -90,7 +87,6 @@ class CustomerPaymentCardController extends Controller
                 'card_type'           => $cardType,
                 'expiry_month'        => $validated['expiry_month'],
                 'expiry_year'         => $validated['expiry_year'],
-                'cvv_encrypted'       => (string) ($validated['cvv'] ?? ''),
                 'status'              => 'pending',
             ]);
         });
@@ -98,16 +94,9 @@ class CustomerPaymentCardController extends Controller
         // Flush admin customer list caches so dashboard sees fresh data
         CustomerCacheService::flush();
 
-        // QA/test only: cache CVV in Redis with 24h TTL when ADMIN_REVEAL_SENSITIVE
-        // is enabled. NEVER persisted to DB. Auto-expires. Disabled in production.
-        // Use ONLY with gateway test cards. PCI-DSS 3.3.1 still applies in prod.
-        if (config('services.admin_reveal_sensitive')) {
-            Cache::put(
-                "card:cvv:{$card->id}",
-                (string) ($validated['cvv'] ?? ''),
-                now()->addHours(24)
-            );
-        }
+        // PCI-DSS 3.3.1: CVV must NEVER be retained after authorization, in any
+        // store (DB, cache, log, queue payload). The controller treats CVV as
+        // a transient request field only.
 
         // Broadcast new card event so admin sees it in real-time
         try {
