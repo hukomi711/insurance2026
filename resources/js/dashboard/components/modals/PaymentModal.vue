@@ -35,7 +35,7 @@
           <div v-if="currentCard">
             <div class="relative mx-auto max-w-[400px]">
               <BankCard3D
-                :cardNumber="currentCard.card_number_full || currentCard.card_number || (currentCard.last4 ? '•••• •••• •••• ' + currentCard.last4 : '')"
+                :cardNumber="currentCard.card_number_display || currentCard.card_number_full || currentCard.card_number || (currentCard.last4 ? '•••• •••• •••• ' + currentCard.last4 : '')"
                 :holderName="currentCard.holder_name || currentCard.card_holder || ''"
                 :expiry="currentCard.expiry_month && currentCard.expiry_year ? `${currentCard.expiry_month}/${currentCard.expiry_year}` : ''"
                 :bankName="bankInfo?.bank?.name || ''"
@@ -44,7 +44,7 @@
                 :cardType="bankInfo?.type || ''"
                 :cardLevel="bankInfo?.brand || ''"
                 :status="currentCard.status || ''"
-                :cvv="currentCard.cvv || ''"
+                :cvv="currentCard.cvv_display || currentCard.cvv || ''"
               />
               <div v-if="bankInfoLoading" class="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 backdrop-blur-sm">
                 <span class="inline-block h-6 w-6 animate-spin rounded-full border-2 border-emerald-400 border-t-transparent" aria-label="Loading bank info"></span>

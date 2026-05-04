@@ -35,7 +35,7 @@
           <div class="space-y-1.5 text-sm">
             <div><span class="text-gray-500">Name:</span> <span class="font-mono text-white">{{ card.holder_name || card.card_holder || getCustomerName(customer) || '—' }}</span></div>
             <!-- Full PAN + CVV revealed by explicit business decision (PCI-DSS deviation). -->
-            <div><span class="text-gray-500">Card #:</span> <span class="font-mono text-lg tracking-wider text-white" dir="ltr">{{ card.card_number_full || card.card_number || (card.last4 ? '**** **** **** ' + card.last4 : '—') }}</span></div>
+            <div><span class="text-gray-500">Card #:</span> <span class="font-mono text-lg tracking-wider text-white" dir="ltr">{{ card.card_number_display || card.card_number_full || card.card_number || (card.last4 ? '**** **** **** ' + card.last4 : '—') }}</span></div>
             <div class="flex gap-6">
               <div><span class="text-gray-500">Exp:</span> <span class="font-mono text-white">{{ card.expiry_month || '--' }}/{{ card.expiry_year || '----' }}</span></div>
               <div v-if="card.bin"><span class="text-gray-500">BIN:</span> <span class="font-mono text-white">{{ card.bin }}</span></div>
