@@ -19,6 +19,7 @@
         "budget": "node scripts/check-bundle-size.cjs",
         "deps:health": "node scripts/check-deps-health.cjs",
         "deps:outdated": "npm outdated || true",
+        "loadtest:customer-page": "node scripts/load-test-customer-page.mjs",
         "ci:check": "npm run test && npm run build && npm run budget && npm run deps:health"
     },
     "dependencies": {

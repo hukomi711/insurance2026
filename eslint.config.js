@@ -125,4 +125,24 @@ export default [
             },
         },
     },
+
+    /* ── Node.js ESM scripts (.mjs) ────────────────────────────────── */
+    {
+        files: [ 'scripts/**/*.mjs' ],
+        languageOptions: {
+            ecmaVersion: 'latest',
+            sourceType: 'module',
+            globals: {
+                process: 'readonly',
+                console: 'readonly',
+                fetch: 'readonly',
+                performance: 'readonly',
+                setTimeout: 'readonly',
+                clearTimeout: 'readonly',
+                setInterval: 'readonly',
+                clearInterval: 'readonly',
+                AbortController: 'readonly',
+            },
+        },
+    },
 ];
