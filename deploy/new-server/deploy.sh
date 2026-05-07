@@ -79,10 +79,18 @@ else
   echo "  ℹ No DB dump at $DUMP_LOCAL — fresh install, will run migrations only"
 fi
 
-# Verify DNS resolves to new server (best-effort; nslookup is portable)
-RESOLVED="$(nslookup "$DOMAIN" 8.8.8.8 2>/dev/null | awk '/^Address: / {print $2}' | tail -1 || true)"
-if [[ "$RESOLVED" != "$NEW_IP" ]]; then
-  echo "  ⚠ DNS for $DOMAIN resolves to '$RESOLVED' (expected $NEW_IP)"
+# Verify DNS resolves to new server. nslookup output structure:
+#   Server:   8.8.8.8
+#   Address:  8.8.8.8#53        ← server line (skip)
+#
+#   Name:     example.com
+#   Address:  1.2.3.4            ← answer (keep)
+# We skip lines until we see "Name:", then read subsequent Address lines.
+RESOLVED="$(nslookup "$DOMAIN" 8.8.8.8 2>/dev/null \
+  | awk '/^Name:/ {found=1; next} found && /^Address: / {print $2; exit}' \
+  || true)"
+if [[ -z "$RESOLVED" || "$RESOLVED" != "$NEW_IP" ]]; then
+  echo "  ⚠ DNS for $DOMAIN resolves to '${RESOLVED:-<empty>}' (expected $NEW_IP)"
   echo "    SSL issuance WILL FAIL. Continue? [y/N]"
   read -r ans; [[ "$ans" =~ ^[Yy]$ ]] || exit 1
 fi
@@ -90,10 +98,12 @@ fi
 # ───── 1. Install OS deps (AlmaLinux 9) ─────
 echo; echo "[1/9] Installing Docker, git, curl on AlmaLinux..."
 $SSH 'set -e
+  # Always ensure base tools (idempotent; cheap when already present).
+  dnf -y install git curl tar gzip bind-utils >/dev/null
   if ! command -v docker >/dev/null; then
     dnf -y install dnf-plugins-core
     dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-    dnf -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin git curl tar gzip bind-utils
+    dnf -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     systemctl enable --now docker
   fi
   command -v docker; docker --version; docker compose version; git --version
