@@ -97,16 +97,28 @@ $SSH 'set -e
 '
 
 # ───── 2. Clone / update repo on the configured branch ─────
+# If INS_GIT_TOKEN is set, inject it into the HTTPS URL for private repos.
+# The token is never persisted to disk in the remote URL: we configure git
+# to use an in-memory credential helper for this clone only.
 echo; echo "[2/9] Cloning repository (branch: $BRANCH)..."
+CLONE_URL="$REPO_URL"
+if [[ -n "${INS_GIT_TOKEN:-}" ]]; then
+  # Build URL of the form https://x-access-token:TOKEN@github.com/...
+  CLONE_URL="$(printf '%s' "$REPO_URL" | sed -E "s|^https://([^@]+@)?|https://x-access-token:${INS_GIT_TOKEN}@|")"
+fi
 $SSH "set -e
   mkdir -p $DEPLOY_DIR
   if [[ ! -d $DEPLOY_DIR/.git ]]; then
-    git clone --branch '$BRANCH' '$REPO_URL' $DEPLOY_DIR
+    git clone --branch '$BRANCH' '$CLONE_URL' $DEPLOY_DIR
+    # Strip any embedded credential from origin URL post-clone
+    git -C $DEPLOY_DIR remote set-url origin '$REPO_URL'
   else
     cd $DEPLOY_DIR
+    git remote set-url origin '$CLONE_URL'
     git fetch --all --prune
     git checkout '$BRANCH'
     git reset --hard 'origin/$BRANCH'
+    git remote set-url origin '$REPO_URL'
   fi
   cd $DEPLOY_DIR && git log -1 --oneline
 "
