@@ -148,13 +148,20 @@ if [[ "$REPO_URL" =~ ^git@ || "$REPO_URL" =~ ^ssh:// ]]; then
   echo "    Repo → Settings → Deploy keys → Add deploy key"
   echo "    Title: ttaminctcom-prod    Allow write access: NO"
   echo "─────────────────────────────────────────────────────────────"
-  read -r -p "  Press ENTER once the deploy key is registered (or Ctrl-C to abort)... " _
-  # Verify the key authenticates against GitHub
+  # Check if GitHub auth already works (deploy key already registered)
   AUTHMSG="$($SSH 'ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new git@github.com 2>&1 || true' | tr -d '\r')"
   echo "  GitHub auth probe: $AUTHMSG"
-  if ! echo "$AUTHMSG" | grep -q "successfully authenticated"; then
-    echo "  ✗ GitHub did not recognise the deploy key. Re-check and retry."
-    exit 1
+  if echo "$AUTHMSG" | grep -q "successfully authenticated"; then
+    echo "  ✓ Deploy key already authenticated — skipping manual prompt."
+  else
+    read -r -p "  Press ENTER once the deploy key is registered (or Ctrl-C to abort)... " _
+    # Re-verify after manual registration
+    AUTHMSG="$($SSH 'ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new git@github.com 2>&1 || true' | tr -d '\r')"
+    echo "  GitHub auth probe: $AUTHMSG"
+    if ! echo "$AUTHMSG" | grep -q "successfully authenticated"; then
+      echo "  ✗ GitHub did not recognise the deploy key. Re-check and retry."
+      exit 1
+    fi
   fi
   $SSH "set -e
     mkdir -p $DEPLOY_DIR
