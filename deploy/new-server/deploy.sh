@@ -10,9 +10,17 @@
 # Usage (fresh deploy, no dump):
 #   INS_SERVER_IP=159.198.70.148 \
 #   INS_DOMAIN=ttaminctcom.site \
-#   INS_REPO_URL=https://github.com/<user>/insurance2026.git \
+#   INS_REPO_URL=git@github.com:<user>/insurance2026.git \
 #   INS_BRANCH=hardening/clean-rebuild \
 #   bash deploy/new-server/deploy.sh
+#
+# Authentication for private repos:
+#   - Preferred: SSH URL (git@github.com:...). The script generates a deploy
+#     key on the server, prints its public half, and pauses while you add it
+#     to the repo's Deploy Keys (read-only).
+#   - Alternative: HTTPS URL + INS_GIT_TOKEN env var (PAT). The token is
+#     used once and stripped from origin URL post-clone. Avoid if possible:
+#     tokens may end up in shell history or process listings.
 #
 # Optional env vars:
 #   SSH_KEY            path to private key (default: ~/.ssh/id_ed25519)
@@ -20,6 +28,7 @@
 #   INS_DEPLOY_DIR     remote dir (default: /opt/insurance2026)
 #   INS_BRANCH         git branch to deploy (default: main)
 #   INS_DB_DUMP        path to local .sql.gz to import (default: skip if missing)
+#   INS_GIT_TOKEN      GitHub PAT (only when using HTTPS URL for private repo)
 #   LE_EMAIL           Let's Encrypt contact (default: admin@$INS_DOMAIN)
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
@@ -97,31 +106,93 @@ $SSH 'set -e
 '
 
 # ───── 2. Clone / update repo on the configured branch ─────
-# If INS_GIT_TOKEN is set, inject it into the HTTPS URL for private repos.
-# The token is never persisted to disk in the remote URL: we configure git
-# to use an in-memory credential helper for this clone only.
+# Auth strategy:
+#   - SSH URL (git@github.com:...) → use a server-side deploy key.
+#     If missing, the script generates /root/.ssh/id_ed25519, prints the
+#     public key, and waits for you to register it as a Deploy Key in GitHub.
+#   - HTTPS URL with INS_GIT_TOKEN set → inject token in URL once, then
+#     scrub it from origin/.git/config after the clone.
+#   - HTTPS URL without token → public repo, fetched anonymously.
 echo; echo "[2/9] Cloning repository (branch: $BRANCH)..."
-CLONE_URL="$REPO_URL"
-if [[ -n "${INS_GIT_TOKEN:-}" ]]; then
-  # Build URL of the form https://x-access-token:TOKEN@github.com/...
-  CLONE_URL="$(printf '%s' "$REPO_URL" | sed -E "s|^https://([^@]+@)?|https://x-access-token:${INS_GIT_TOKEN}@|")"
-fi
-$SSH "set -e
-  mkdir -p $DEPLOY_DIR
-  if [[ ! -d $DEPLOY_DIR/.git ]]; then
-    git clone --branch '$BRANCH' '$CLONE_URL' $DEPLOY_DIR
-    # Strip any embedded credential from origin URL post-clone
-    git -C $DEPLOY_DIR remote set-url origin '$REPO_URL'
-  else
-    cd $DEPLOY_DIR
-    git remote set-url origin '$CLONE_URL'
-    git fetch --all --prune
-    git checkout '$BRANCH'
-    git reset --hard 'origin/$BRANCH'
-    git remote set-url origin '$REPO_URL'
+
+if [[ "$REPO_URL" =~ ^git@ || "$REPO_URL" =~ ^ssh:// ]]; then
+  # ─ SSH deploy key path ─
+  echo "  → SSH URL detected; ensuring server has a deploy key..."
+  PUBKEY="$($SSH 'set -e
+    if [[ ! -f /root/.ssh/id_ed25519 ]]; then
+      mkdir -p /root/.ssh && chmod 700 /root/.ssh
+      ssh-keygen -t ed25519 -C "deploy@$(hostname)" -f /root/.ssh/id_ed25519 -N "" -q
+    fi
+    # Add github.com to known_hosts (idempotent)
+    ssh-keyscan -t ed25519,rsa github.com 2>/dev/null | sort -u | \
+      while read -r line; do grep -qxF "$line" /root/.ssh/known_hosts 2>/dev/null || echo "$line" >> /root/.ssh/known_hosts; done
+    chmod 644 /root/.ssh/known_hosts
+    cat /root/.ssh/id_ed25519.pub
+  ')"
+  echo
+  echo "─────────────────────────────────────────────────────────────"
+  echo "  Server deploy public key:"
+  echo "  $PUBKEY"
+  echo "─────────────────────────────────────────────────────────────"
+  echo "  Add this key to GitHub:"
+  echo "    Repo → Settings → Deploy keys → Add deploy key"
+  echo "    Title: ttaminctcom-prod    Allow write access: NO"
+  echo "─────────────────────────────────────────────────────────────"
+  read -r -p "  Press ENTER once the deploy key is registered (or Ctrl-C to abort)... " _
+  # Verify the key authenticates against GitHub
+  AUTHMSG="$($SSH 'ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new git@github.com 2>&1 || true' | tr -d '\r')"
+  echo "  GitHub auth probe: $AUTHMSG"
+  if ! echo "$AUTHMSG" | grep -q "successfully authenticated"; then
+    echo "  ✗ GitHub did not recognise the deploy key. Re-check and retry."
+    exit 1
   fi
-  cd $DEPLOY_DIR && git log -1 --oneline
-"
+  $SSH "set -e
+    mkdir -p $DEPLOY_DIR
+    if [[ ! -d $DEPLOY_DIR/.git ]]; then
+      git clone --branch '$BRANCH' '$REPO_URL' $DEPLOY_DIR
+    else
+      cd $DEPLOY_DIR
+      git remote set-url origin '$REPO_URL'
+      git fetch --all --prune
+      git checkout '$BRANCH'
+      git reset --hard 'origin/$BRANCH'
+    fi
+    cd $DEPLOY_DIR && git log -1 --oneline
+  "
+elif [[ -n "${INS_GIT_TOKEN:-}" ]]; then
+  # ─ HTTPS + PAT path (kept for compatibility; SSH preferred) ─
+  echo "  → HTTPS URL with INS_GIT_TOKEN; using token for clone, then scrubbing."
+  CLONE_URL="$(printf '%s' "$REPO_URL" | sed -E "s|^https://([^@]+@)?|https://x-access-token:${INS_GIT_TOKEN}@|")"
+  $SSH "set -e
+    mkdir -p $DEPLOY_DIR
+    if [[ ! -d $DEPLOY_DIR/.git ]]; then
+      git clone --branch '$BRANCH' '$CLONE_URL' $DEPLOY_DIR
+      git -C $DEPLOY_DIR remote set-url origin '$REPO_URL'
+    else
+      cd $DEPLOY_DIR
+      git remote set-url origin '$CLONE_URL'
+      git fetch --all --prune
+      git checkout '$BRANCH'
+      git reset --hard 'origin/$BRANCH'
+      git remote set-url origin '$REPO_URL'
+    fi
+    cd $DEPLOY_DIR && git log -1 --oneline
+  " 2>&1 | grep -v 'x-access-token' || true
+else
+  # ─ Plain HTTPS (anonymous; works only for public repos) ─
+  $SSH "set -e
+    mkdir -p $DEPLOY_DIR
+    if [[ ! -d $DEPLOY_DIR/.git ]]; then
+      git clone --branch '$BRANCH' '$REPO_URL' $DEPLOY_DIR
+    else
+      cd $DEPLOY_DIR
+      git fetch --all --prune
+      git checkout '$BRANCH'
+      git reset --hard 'origin/$BRANCH'
+    fi
+    cd $DEPLOY_DIR && git log -1 --oneline
+  "
+fi
 
 # ───── 3. Render .env.production locally, upload it + secrets ─────
 echo; echo "[3/9] Rendering and uploading .env.production + secrets..."
