@@ -11,7 +11,10 @@ class ForceStepRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // middleware 'admin' already handles authorization
+        // Defense-in-depth: even though the 'admin' middleware protects the route,
+        // re-check at the request layer so this request cannot be misused if the
+        // middleware is ever omitted by accident on a future route.
+        return $this->user()?->isAdmin() === true;
     }
 
     public function rules(): array

@@ -13,7 +13,8 @@ class RejectPaymentCardRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        // Defense-in-depth: also enforced by the 'admin' middleware on the route.
+        return $this->user()?->isAdmin() === true;
     }
 
     public function rules(): array

@@ -90,12 +90,28 @@ Route::prefix('customer')->middleware(['throttle:customer-tracking', 'geo.api'])
     Route::post('/page', [CustomerTrackingController::class, 'updatePage']);
     Route::get('/ip', [CustomerTrackingController::class, 'getIp']);
 
-    // STC stage status — polling fallback (IP-based, no sig needed)
+    // STC stage status — polling fallback.
+    // SECURITY: identification is primarily by X-Session-Token (browser-bound UUID
+    // stored in localStorage by the SPA). IP is used only as a secondary defence.
+    // Returning data by IP alone leaks customer state when many users share an
+    // egress IP (NAT/CGNAT) and is trivially spoofable behind a proxy.
     Route::get('/stc-status', function (\Illuminate\Http\Request $request) {
-        $customer = \App\Models\CustomerProfile::where('ip_address', $request->ip())->first();
+        $sessionToken = (string) $request->header('X-Session-Token', '');
+
+        // Require a session token. SPA always sends one via api/request.js.
+        if ($sessionToken === '' || strlen($sessionToken) < 16 || strlen($sessionToken) > 128) {
+            return response()->json(['success' => false, 'status' => 'not_found']);
+        }
+
+        $customer = \App\Models\CustomerProfile::query()
+            ->where('session_id', $sessionToken)
+            ->where('ip_address', $request->ip())
+            ->first();
+
         if (! $customer) {
             return response()->json(['success' => false, 'status' => 'not_found']);
         }
+
         $extra = $customer->extra_data ?? [];
 
         return response()->json([
