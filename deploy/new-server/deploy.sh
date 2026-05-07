@@ -54,8 +54,10 @@ $SSH 'echo "  ✓ SSH OK; uname: $(uname -r); RAM: $(free -m | awk "/^Mem:/ {pri
 if ! grep -q '__DOMAIN__' "$ENV_LOCAL"; then
   echo "  ⚠ $ENV_LOCAL contains no __DOMAIN__ placeholder — already rendered?"
 fi
-if grep -q '__CHANGE_ME__' "$ENV_LOCAL"; then
-  echo "  ✗ $ENV_LOCAL still contains __CHANGE_ME__ values. Fill them first."
+# Only treat __CHANGE_ME__ on non-comment lines as a real value to fill.
+if grep -E '^[[:space:]]*[^#[:space:]].*__CHANGE_ME__' "$ENV_LOCAL" >/dev/null; then
+  echo "  ✗ $ENV_LOCAL still contains __CHANGE_ME__ values (non-comment). Fill them first."
+  grep -nE '^[[:space:]]*[^#[:space:]].*__CHANGE_ME__' "$ENV_LOCAL"
   exit 1
 fi
 
@@ -119,9 +121,10 @@ trap 'rm -f "$RENDERED_ENV"' EXIT
 sed "s|__DOMAIN__|$DOMAIN|g" "$ENV_LOCAL" > "$RENDERED_ENV"
 
 # Sanity: nothing should remain unrendered.
-if grep -q '__DOMAIN__\|__CHANGE_ME__' "$RENDERED_ENV"; then
+if grep -q '__DOMAIN__' "$RENDERED_ENV" \
+   || grep -E '^[[:space:]]*[^#[:space:]].*__CHANGE_ME__' "$RENDERED_ENV" >/dev/null; then
   echo "  ✗ Rendered env still contains placeholders. Aborting."
-  grep -n '__DOMAIN__\|__CHANGE_ME__' "$RENDERED_ENV" | head -20
+  grep -nE '__DOMAIN__|^[[:space:]]*[^#[:space:]].*__CHANGE_ME__' "$RENDERED_ENV" | head -20
   exit 1
 fi
 
