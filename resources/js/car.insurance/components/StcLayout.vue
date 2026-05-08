@@ -32,9 +32,9 @@
                     <div class="flex flex-wrap items-center justify-center gap-4 lg:justify-between">
                         <div class="flex items-center justify-center gap-4 lg:justify-between">
                             <a href="https://www.stc.com.sa/content/stc/sa/ar/personal/home.html"
-                                target="_blank" rel="noreferrer">صفحة stc الرئيسية</a>
+                                target="_blank" rel="noopener noreferrer">صفحة stc الرئيسية</a>
                             <a href="https://www.stc.com.sa/content/stc/sa/ar/content-page/privacy.html"
-                                target="_blank" rel="noreferrer">إشعار الخصوصية</a>
+                                target="_blank" rel="noopener noreferrer">إشعار الخصوصية</a>
                         </div>
                         <div class="stc-copyright text-sm">الحقوق محفوظة © 2026 stc</div>
                         <div class="stc-social flex flex-wrap items-center gap-2.5">

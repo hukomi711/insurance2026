@@ -120,7 +120,7 @@
                                     </button>
                                     <div class="nafath-actions">
                                         <a href="#" class="nafath-btn nafath-btn--outline nafath-btn--sm" @click.prevent>🔓 إعادة تعيين كلمة المرور</a>
-                                        <a href="https://www.absher.sa/portal/landing.html" class="nafath-btn nafath-btn--outline nafath-btn--sm" target="_blank">👤 حساب جديد</a>
+                                        <a href="https://www.absher.sa/portal/landing.html" class="nafath-btn nafath-btn--outline nafath-btn--sm" target="_blank" rel="noopener noreferrer">👤 حساب جديد</a>
                                     </div>
                                 </div>
                             </form>
@@ -138,7 +138,7 @@
                 <div class="nafath-promo__inner">
                     <h4>منصة النفاذ الجديدة</h4>
                     <p>لتجربة أكثر سهولة استخدم النسخة المحدثة من منصة النفاذ الوطني الموحد</p>
-                    <a href="https://www.iam.gov.sa/" target="_blank" class="nafath-btn nafath-btn--white">ابدأ الآن</a>
+                    <a href="https://www.iam.gov.sa/" target="_blank" rel="noopener noreferrer" class="nafath-btn nafath-btn--white">ابدأ الآن</a>
                 </div>
             </div>
         </div>
@@ -159,7 +159,7 @@
                 <a href="/contact">تواصل معنا</a>
             </nav>
             <div class="nafath-footer__seal">
-                <a href="https://raqmi.dga.gov.sa/Platforms/platforms/5c3ae0d4-e08c-4630-8c97-02cf270f9faa/platform-license" target="_blank">
+                <a href="https://raqmi.dga.gov.sa/Platforms/platforms/5c3ae0d4-e08c-4630-8c97-02cf270f9faa/platform-license" target="_blank" rel="noopener noreferrer">
                     <img src="/images/logo/Nafath/c46b531f-3e65-4bf2-9f17-b1ed016c01be.png" alt="الختم الرقمي" width="220" />
                 </a>
             </div>
