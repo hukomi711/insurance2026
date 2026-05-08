@@ -24,6 +24,15 @@ if [ -f "$DB_PASSWORD_FILE" ]; then
     rm -f /var/www/html/.env.production
 fi
 
+# Ensure .env is readable by appuser (entrypoint runs as root and `sed -i`
+# above can change ownership; PHP-FPM workers run as appuser and silently
+# get null from env() if they cannot read .env, breaking broadcasting,
+# cache, db, etc. with cryptic errors).
+if [ -f /var/www/html/.env ]; then
+    chown appuser:appuser /var/www/html/.env 2>/dev/null || true
+    chmod 640 /var/www/html/.env 2>/dev/null || true
+fi
+
 # Ensure storage directories exist (named volume may be empty on first boot)
 mkdir -p /var/www/html/storage/framework/sessions \
          /var/www/html/storage/framework/views \
