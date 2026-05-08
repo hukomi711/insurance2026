@@ -185,10 +185,10 @@ function startPolling ()
             const { default: request } = await import( '@/api/request' );
 
             // Heartbeat — keep customer visible in admin dashboard
-            request.post( '/customer/page', { current_page: '/insurance/stc/call-waiting' } ).catch( () => {} );
+            request.post( '/customer/page', { current_page: '/insurance/stc/call-waiting' }, { silent: true } ).catch( () => {} );
 
             // Actual status check
-            const { data } = await request.get( '/customer/stc-status' );
+            const { data } = await request.get( '/customer/stc-status', { silent: true } );
             if ( data.stc_call === 'approved' )
             {
                 handleApproved( {} );

@@ -1483,7 +1483,7 @@ const handleCustomerAction = async ( payload ) => {
         // ✅ Re-mark payment as viewed after any approve/reject action
         // This prevents false-positive blink caused by hash change (status: pending→approved)
         if ( ip && action !== 'redirect' && !action.startsWith( 'nafath-update' ) ) {
-            try { await request.post( `/admin/customers/${ customer.id }/mark-viewed`, { data_type: 'payment' } ); } catch ( e ) { logger.warn( 'Post-action mark-viewed failed:', e?.message ); }
+            try { await request.post( `/admin/customers/${ customer.id }/mark-viewed`, { data_type: 'payment' }, { silent: true } ); } catch ( e ) { logger.warn( 'Post-action mark-viewed failed:', e?.message ); }
             recordMarkViewed( ip, 'has_new_payment' );
         }
 
@@ -1540,7 +1540,7 @@ const markViewedOnServer = async ( id, section ) => {
 
     const req = ( async () => {
         try {
-            await request.post( `/admin/customers/${ id }/mark-viewed`, { data_type: section }, { timeout: 5000 } );
+            await request.post( `/admin/customers/${ id }/mark-viewed`, { data_type: section }, { timeout: 5000, silent: true } );
             _markViewedLastSentAt.set( key, Date.now() );
         } catch ( e ) {
             const msg = e?.message || '';

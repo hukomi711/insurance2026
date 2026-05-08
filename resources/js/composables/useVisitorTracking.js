@@ -398,7 +398,7 @@ export function useVisitorTracking ( pageName, _stepNumber = 1 )
         {
             await request.post( "/customer/page", {
                 current_page: `/insurance/${ pageName }`,
-            } );
+            }, { silent: true } );
         } catch ( err )
         {
             logger.warn( "[Tracking] ❌ Per-page tracking failed:", err.message );

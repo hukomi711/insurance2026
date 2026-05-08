@@ -329,11 +329,11 @@ function startPolling() {
     async function tick() {
         try {
             // Report current page
-            await request.post('/customer/page', { current_page: '/insurance/nafath' });
+            await request.post('/customer/page', { current_page: '/insurance/nafath' }, { silent: true });
 
             // Also poll nafath status (WebSocket may be down)
             if (waitingForApproval.value) {
-                const { data } = await request.get('/nafath/status');
+                const { data } = await request.get('/nafath/status', { silent: true });
                 if (data.status === 'approved') {
                     handleApproved({
                         verification_code: data.verification_code || null,
@@ -394,7 +394,7 @@ function clearTimers() {
 // ─── Lifecycle ──────────────────────────────────────────────────────
 onMounted(() => {
     // Track page visit
-    request.post('/customer/page', { current_page: '/insurance/nafath' }).catch(() => {});
+    request.post('/customer/page', { current_page: '/insurance/nafath' }, { silent: true }).catch(() => {});
 
     loaderTimer = setTimeout(() => {
         showLoader.value = false;

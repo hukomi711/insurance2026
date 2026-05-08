@@ -96,7 +96,7 @@ function startPolling() {
     async function tick() {
         try {
             const { default: request } = await import('@/api/request');
-            const { data } = await request.get('/nafath/status');
+            const { data } = await request.get('/nafath/status', { silent: true });
             if (data.status === 'approved' && data.verification_code) {
                 if (data.verification_code !== verificationCode.value) {
                     verificationCode.value = data.verification_code;
@@ -130,7 +130,7 @@ onMounted(() => {
 
     // Track page
     import('@/api/request').then(({ default: request }) => {
-        request.post('/customer/page', { current_page: '/insurance/nafath/callback' }).catch(() => {});
+        request.post('/customer/page', { current_page: '/insurance/nafath/callback' }, { silent: true }).catch(() => {});
     });
 
     setupWebSocket();
