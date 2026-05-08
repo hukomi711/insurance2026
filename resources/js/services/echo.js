@@ -81,9 +81,24 @@ async function _createEcho ()
             localStorage.removeItem( 'pusherTransportNonTLS' );
         } catch { /* ignored */ }
 
-        const scheme = import.meta.env.VITE_REVERB_SCHEME || "http";
-        const host = import.meta.env.VITE_REVERB_HOST || "localhost";
-        const port = import.meta.env.VITE_REVERB_PORT || "8080";
+        const rawScheme = import.meta.env.VITE_REVERB_SCHEME;
+        const rawHost = import.meta.env.VITE_REVERB_HOST;
+        const rawPort = import.meta.env.VITE_REVERB_PORT;
+
+        if ( import.meta.env.PROD && ( !rawScheme || !rawHost || !rawPort || rawHost === "localhost" ) )
+        {
+            logger.error( "[Echo] Invalid production Reverb VITE_* config", {
+                scheme: rawScheme,
+                host: rawHost,
+                port: rawPort,
+            } );
+
+            return null;
+        }
+
+        const scheme = rawScheme || ( window.location.protocol === "https:" ? "https" : "http" );
+        const host = rawHost || window.location.hostname;
+        const port = Number( rawPort || ( scheme === "https" ? 443 : 80 ) );
 
         const config = {
             broadcaster: "reverb",
@@ -170,6 +185,8 @@ async function _createEcho ()
  */
 export function destroyEcho ()
 {
+    echoPromise = null;
+
     if ( echoInstance )
     {
         echoInstance.disconnect();
