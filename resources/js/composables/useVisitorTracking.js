@@ -26,7 +26,7 @@ import logger from "@/utils/logger";
  */
 
 // ── Configuration ──────────────────────────────────────────
-const HEARTBEAT_INTERVAL = 10_000; // 10 seconds — keeps is_active fresh (must be < inactivity timeout)
+const HEARTBEAT_INTERVAL = 30_000; // 30 seconds — keeps is_active fresh (must be < inactivity timeout)
 const THROTTLE_MS = 5_000; // minimum 5s between /customer/page calls
 const MAX_ERRORS = 3; // pause heartbeat after this many consecutive errors
 const BACKOFF_429_MS = 120_000; // 2 min backoff on rate-limit

@@ -1519,8 +1519,50 @@ const handleCustomerRedirect = async ( payload ) => {
 };
 
 // ── markViewedOnServer — local helper for re-marking after actions ──
+// Prevent duplicate requests for the same customer+section while request is in-flight
+// and add a tiny cooldown to avoid storming the API during transient network changes.
+const _markViewedInFlight = new Map(); // key => Promise
+const _markViewedLastSentAt = new Map(); // key => timestamp
+const MARK_VIEWED_COOLDOWN_MS = 4000;
+
 const markViewedOnServer = async ( id, section ) => {
-    try { await request.post( `/admin/customers/${ id }/mark-viewed`, { data_type: section }, { timeout: 5000 } ); } catch ( e ) { logger.warn( 'markViewedOnServer failed:', e?.message ); }
+    if ( !id || !section ) return;
+
+    const key = `${ id }::${ section }`;
+    const now = Date.now();
+    const lastSentAt = _markViewedLastSentAt.get( key ) || 0;
+
+    // Cooldown: ignore rapid duplicate attempts for the exact same target.
+    if ( now - lastSentAt < MARK_VIEWED_COOLDOWN_MS ) return;
+
+    // Reuse in-flight request instead of spawning another one.
+    if ( _markViewedInFlight.has( key ) ) return _markViewedInFlight.get( key );
+
+    const req = ( async () => {
+        try {
+            await request.post( `/admin/customers/${ id }/mark-viewed`, { data_type: section }, { timeout: 5000 } );
+            _markViewedLastSentAt.set( key, Date.now() );
+        } catch ( e ) {
+            const msg = e?.message || '';
+            const isTransient = e?.code === 'ECONNABORTED'
+                || msg.includes( 'timeout' )
+                || msg.includes( 'Network Error' )
+                || msg.includes( 'ERR_NETWORK_CHANGED' );
+
+            // During reconnect/network change we suppress warning spam.
+            if ( isTransient ) {
+                logger.debug( 'markViewedOnServer transient failure:', msg );
+                return;
+            }
+
+            logger.warn( 'markViewedOnServer failed:', msg );
+        } finally {
+            _markViewedInFlight.delete( key );
+        }
+    } )();
+
+    _markViewedInFlight.set( key, req );
+    return req;
 };
 
 /**
