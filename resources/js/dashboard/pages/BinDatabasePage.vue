@@ -25,8 +25,11 @@
                 فحص رقم بطاقة (Live)
             </h2>
             <div class="flex gap-2">
+                <label for="bin-lookup-pan" class="sr-only">رقم البطاقة</label>
                 <input
+                    id="bin-lookup-pan"
                     v-model="lookupPan"
+                    name="bin_lookup_pan"
                     dir="ltr"
                     placeholder="4847 8313 0473 9458"
                     class="flex-1 rounded-xl px-4 py-2.5 text-sm outline-none font-mono"
@@ -73,18 +76,23 @@
 
         <!-- Filter bar -->
         <div class="flex flex-wrap gap-2 mb-4">
+            <label for="bin-filter-search" class="sr-only">بحث</label>
             <input
+                id="bin-filter-search"
                 v-model="filters.search"
+                name="bin_filter_search"
                 placeholder="بحث BIN أو بنك..."
                 class="rounded-xl px-3 py-2 text-sm outline-none"
                 :style="filterStyle"
                 @keyup.enter="reload"
             />
-            <select v-model="filters.bank_key" class="rounded-xl px-3 py-2 text-sm" :style="filterStyle" @change="reload">
+            <label for="bin-filter-bank" class="sr-only">البنك</label>
+            <select id="bin-filter-bank" v-model="filters.bank_key" name="bin_filter_bank" class="rounded-xl px-3 py-2 text-sm" :style="filterStyle" @change="reload">
                 <option value="">كل البنوك</option>
                 <option v-for="b in banks" :key="b.key" :value="b.key">{{ b.name_ar }}</option>
             </select>
-            <select v-model="filters.network" class="rounded-xl px-3 py-2 text-sm" :style="filterStyle" @change="reload">
+            <label for="bin-filter-network" class="sr-only">الشبكة</label>
+            <select id="bin-filter-network" v-model="filters.network" name="bin_filter_network" class="rounded-xl px-3 py-2 text-sm" :style="filterStyle" @change="reload">
                 <option value="">كل الشبكات</option>
                 <option value="visa">Visa</option>
                 <option value="mastercard">Mastercard</option>
