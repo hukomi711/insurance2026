@@ -114,7 +114,23 @@ async function handleVerify() {
         const redirect = route.query.redirect;
         router.push(redirect && typeof redirect === 'string' ? redirect : '/dashboard');
     } catch (e) {
-        error.value = e.message || 'رمز التأكيد غير صحيح أو منتهي الصلاحية';
+        const status = e?.response?.status;
+        const serverMessage = e?.response?.data?.message;
+
+        // Session expired (pending_token gone from cache) — redirect to login
+        if (status === 422 && serverMessage && serverMessage.includes('انتهت صلاحية الجلسة')) {
+            error.value = serverMessage;
+            setTimeout(() => router.replace('/login'), 1500);
+            return;
+        }
+
+        // Lockout — show server message and disable form briefly
+        if (status === 429) {
+            error.value = serverMessage || 'تم تجاوز الحد الأقصى للمحاولات. حاول لاحقاً.';
+            return;
+        }
+
+        error.value = serverMessage || e.message || 'رمز التأكيد غير صحيح أو منتهي الصلاحية';
     } finally {
         loading.value = false;
     }

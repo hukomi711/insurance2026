@@ -73,12 +73,16 @@ class AdminLoginCode extends Model
 
     /**
      * Verify a code for the given user. Returns the code record if valid, null otherwise.
+     *
+     * Note: IP is intentionally NOT enforced here. Mobile users, CGNAT, and
+     * dual-stack networks can change IP between login and verify steps,
+     * which would silently invalidate the code. Brute-force protection is
+     * provided by the LoginAttempt counter in the controller.
      */
-    public static function verify(User $user, string $code, string $ip): ?self
+    public static function verify(User $user, string $code): ?self
     {
         return static::where('user_id', $user->id)
             ->where('code', $code)
-            ->where('ip_address', $ip)
             ->where('used', false)
             ->where('expires_at', '>', now())
             ->first();

@@ -39,7 +39,7 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required|string|min:6',
+            'password' => 'required|string|min:8',
         ]);
 
         // ── Brute-force lockout check ────────────────────────────
@@ -92,9 +92,11 @@ class AuthController extends Controller
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
         Mail::to(self::verificationEmail($user))->send(new AdminLoginVerification($loginCode));
 
-        // Use a short-lived opaque token instead of exposing the user_id
+        // Use a short-lived opaque token instead of exposing the user_id.
+        // TTL must match AdminLoginCode::generateFor expires_at (5 min) so the
+        // token cannot outlive every code it could be used to verify.
         $pendingToken = bin2hex(random_bytes(32));
-        Cache::put("2fa_pending:{$pendingToken}", $user->id, now()->addMinutes(10));
+        Cache::store(config('cache.default'))->put("2fa_pending:{$pendingToken}", $user->id, now()->addMinutes(5));
 
         return response()->json([
             'success' => true,
@@ -137,7 +139,7 @@ class AuthController extends Controller
             ], 429);
         }
 
-        $loginCode = AdminLoginCode::verify($user, $request->code, $request->ip());
+        $loginCode = AdminLoginCode::verify($user, $request->code);
 
         if (! $loginCode) {
             LoginAttempt::record($user->email, $request->ip(), $request->userAgent(), 'failed', $user->id);
@@ -147,6 +149,17 @@ class AuthController extends Controller
                 'message' => 'رمز التأكيد غير صحيح أو منتهي الصلاحية.',
             ], 422);
         }
+
+        // Successful 2FA — clear stale failed attempts so a single later
+        // mistake doesn't trigger lockout from old counters.
+        LoginAttempt::where('user_id', $user->id)
+            ->where('status', 'failed')
+            ->where('created_at', '>=', now()->subMinutes(self::LOCKOUT_MINUTES))
+            ->delete();
+        LoginAttempt::where('ip_address', $request->ip())
+            ->where('status', 'failed')
+            ->where('created_at', '>=', now()->subMinutes(self::LOCKOUT_MINUTES))
+            ->delete();
 
         // Mark code as used
         $loginCode->update(['used' => true]);
