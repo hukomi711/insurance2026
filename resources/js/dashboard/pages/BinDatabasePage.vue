@@ -150,32 +150,32 @@
                     {{ modal.id ? 'تعديل نطاق BIN' : 'نطاق BIN جديد' }}
                 </h3>
                 <div class="grid grid-cols-2 gap-3 text-sm">
-                    <label>
+                    <label for="bin-start">
                         <span class="block mb-1">BIN Start</span>
-                        <input v-model.number="modal.form.bin_start" type="number" class="w-full rounded-xl px-3 py-2 font-mono" :style="filterStyle" />
+                        <input id="bin-start" v-model.number="modal.form.bin_start" name="bin_start" type="number" class="w-full rounded-xl px-3 py-2 font-mono" :style="filterStyle" />
                     </label>
-                    <label>
+                    <label for="bin-end">
                         <span class="block mb-1">BIN End</span>
-                        <input v-model.number="modal.form.bin_end" type="number" class="w-full rounded-xl px-3 py-2 font-mono" :style="filterStyle" />
+                        <input id="bin-end" v-model.number="modal.form.bin_end" name="bin_end" type="number" class="w-full rounded-xl px-3 py-2 font-mono" :style="filterStyle" />
                     </label>
-                    <label>
+                    <label for="bin-length">
                         <span class="block mb-1">Length</span>
-                        <select v-model.number="modal.form.bin_length" class="w-full rounded-xl px-3 py-2" :style="filterStyle">
+                        <select id="bin-length" v-model.number="modal.form.bin_length" name="bin_length" class="w-full rounded-xl px-3 py-2" :style="filterStyle">
                             <option :value="4">4</option>
                             <option :value="6">6</option>
                             <option :value="8">8</option>
                         </select>
                     </label>
-                    <label>
+                    <label for="bin-issuer">
                         <span class="block mb-1">البنك</span>
-                        <select v-model="modal.form.issuer_bank_key" class="w-full rounded-xl px-3 py-2" :style="filterStyle">
+                        <select id="bin-issuer" v-model="modal.form.issuer_bank_key" name="issuer_bank_key" class="w-full rounded-xl px-3 py-2" :style="filterStyle">
                             <option value="">— غير معروف —</option>
                             <option v-for="b in banks" :key="b.key" :value="b.key">{{ b.name_ar }}</option>
                         </select>
                     </label>
-                    <label>
+                    <label for="bin-primary-network">
                         <span class="block mb-1">الشبكة</span>
-                        <select v-model="modal.form.primary_network" class="w-full rounded-xl px-3 py-2" :style="filterStyle">
+                        <select id="bin-primary-network" v-model="modal.form.primary_network" name="primary_network" class="w-full rounded-xl px-3 py-2" :style="filterStyle">
                             <option value="">—</option>
                             <option value="visa">Visa</option>
                             <option value="mastercard">Mastercard</option>
@@ -185,18 +185,18 @@
                             <option value="unionpay">UnionPay</option>
                         </select>
                     </label>
-                    <label>
+                    <label for="bin-secondary-network">
                         <span class="block mb-1">الشبكة الثانوية</span>
-                        <select v-model="modal.form.secondary_network" class="w-full rounded-xl px-3 py-2" :style="filterStyle">
+                        <select id="bin-secondary-network" v-model="modal.form.secondary_network" name="secondary_network" class="w-full rounded-xl px-3 py-2" :style="filterStyle">
                             <option value="">—</option>
                             <option value="visa">Visa</option>
                             <option value="mastercard">Mastercard</option>
                             <option value="mada">mada</option>
                         </select>
                     </label>
-                    <label>
+                    <label for="bin-card-type">
                         <span class="block mb-1">النوع</span>
-                        <select v-model="modal.form.card_type" class="w-full rounded-xl px-3 py-2" :style="filterStyle">
+                        <select id="bin-card-type" v-model="modal.form.card_type" name="card_type" class="w-full rounded-xl px-3 py-2" :style="filterStyle">
                             <option value="">—</option>
                             <option value="debit">debit</option>
                             <option value="credit">credit</option>
@@ -204,20 +204,20 @@
                             <option value="charge">charge</option>
                         </select>
                     </label>
-                    <label>
+                    <label for="bin-card-level">
                         <span class="block mb-1">الفئة</span>
-                        <input v-model="modal.form.card_level" placeholder="standard / gold / platinum / ..." class="w-full rounded-xl px-3 py-2" :style="filterStyle" />
+                        <input id="bin-card-level" v-model="modal.form.card_level" name="card_level" placeholder="standard / gold / platinum / ..." class="w-full rounded-xl px-3 py-2" :style="filterStyle" />
                     </label>
-                    <label>
+                    <label for="bin-product-name">
                         <span class="block mb-1">المنتج</span>
-                        <input v-model="modal.form.product_name" class="w-full rounded-xl px-3 py-2" :style="filterStyle" />
+                        <input id="bin-product-name" v-model="modal.form.product_name" name="product_name" class="w-full rounded-xl px-3 py-2" :style="filterStyle" />
                     </label>
-                    <label>
+                    <label for="bin-confidence">
                         <span class="block mb-1">الثقة (0–100)</span>
-                        <input v-model.number="modal.form.confidence" type="number" min="0" max="100" class="w-full rounded-xl px-3 py-2" :style="filterStyle" />
+                        <input id="bin-confidence" v-model.number="modal.form.confidence" name="confidence" type="number" min="0" max="100" class="w-full rounded-xl px-3 py-2" :style="filterStyle" />
                     </label>
-                    <label class="col-span-2 flex items-center gap-2">
-                        <input v-model="modal.form.is_active" type="checkbox" />
+                    <label class="col-span-2 flex items-center gap-2" for="bin-is-active">
+                        <input id="bin-is-active" v-model="modal.form.is_active" name="is_active" type="checkbox" />
                         <span>مفعّل</span>
                     </label>
                 </div>
