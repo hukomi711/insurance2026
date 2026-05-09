@@ -4,9 +4,9 @@ This document is the **single source of truth** for spinning up the application
 on a fresh AlmaLinux 9 server using the Docker Compose stack defined in this
 repository. Follow sections in order. Every command is idempotent unless noted.
 
-> **No real domains, IPs, or secrets appear in this document.**
+> **No real IPs or secrets appear in this document.**
 > Replace placeholders before running:
-> - `NEW_DOMAIN.example` → your apex domain
+> - `tamifortami.online` → your apex domain
 > - `${INS_SERVER_IP}` → your server's public IPv4
 > - `CHANGE_ME` → any value flagged in `.env.production.example`
 
@@ -32,15 +32,15 @@ Outbound access required to: `download.docker.com`, `github.com`, GHCR, `letsenc
 Before any deployment, configure A records at your registrar:
 
 ```
-A     NEW_DOMAIN.example          → ${INS_SERVER_IP}    TTL 300
-A     www.NEW_DOMAIN.example      → ${INS_SERVER_IP}    TTL 300
+A     tamifortami.online          → ${INS_SERVER_IP}    TTL 300
+A     www.tamifortami.online      → ${INS_SERVER_IP}    TTL 300
 ```
 
 Verify propagation from your local machine:
 
 ```bash
-nslookup NEW_DOMAIN.example 8.8.8.8
-nslookup www.NEW_DOMAIN.example 8.8.8.8
+nslookup tamifortami.online 8.8.8.8
+nslookup www.tamifortami.online 8.8.8.8
 ```
 
 Both must resolve to `${INS_SERVER_IP}` **before** Let's Encrypt issuance (section L), otherwise certbot will fail.
@@ -116,7 +116,7 @@ chmod 600 .env.production
 ## G) Fill in Real Values
 
 Edit `.env.production` and replace **every** `CHANGE_ME` and every
-`NEW_DOMAIN.example` occurrence. Required substitutions:
+`tamifortami.online` occurrence. Required substitutions:
 
 | Key | How to generate |
 |---|---|
@@ -213,8 +213,8 @@ docker compose stop nginx || true
 docker run --rm -p 80:80 \
   -v $PWD/docker/nginx/ssl:/etc/letsencrypt \
   certbot/certbot certonly --standalone --non-interactive --agree-tos \
-  -m admin@NEW_DOMAIN.example \
-  -d NEW_DOMAIN.example -d www.NEW_DOMAIN.example
+  -m admin@tamifortami.online \
+  -d tamifortami.online -d www.tamifortami.online
 docker compose up -d nginx
 ```
 
@@ -251,24 +251,24 @@ docker compose up -d --force-recreate app horizon reverb scheduler
 
 From the server:
 ```bash
-curl -sk https://NEW_DOMAIN.example/api/health         | jq .
-curl -sk https://NEW_DOMAIN.example/api/health/queues  | jq .
-curl -sk https://NEW_DOMAIN.example/api/health/realtime | jq .
+curl -sk https://tamifortami.online/api/health         | jq .
+curl -sk https://tamifortami.online/api/health/queues  | jq .
+curl -sk https://tamifortami.online/api/health/realtime | jq .
 ```
 
 From your local machine:
 ```bash
 for path in / /login /sitemap.xml /robots.txt; do
-  printf '  %s  https://NEW_DOMAIN.example%s\n' \
-    "$(curl -sk -o /dev/null -w '%{http_code}' https://NEW_DOMAIN.example$path)" "$path"
+  printf '  %s  https://tamifortami.online%s\n' \
+    "$(curl -sk -o /dev/null -w '%{http_code}' https://tamifortami.online$path)" "$path"
 done
 ```
 
 Expected: `200` for `/`, `/login`, `/sitemap.xml`, `/robots.txt`.
 
-WebSocket smoke from a browser console on `https://NEW_DOMAIN.example`:
+WebSocket smoke from a browser console on `https://tamifortami.online`:
 ```js
-new WebSocket('wss://NEW_DOMAIN.example/app/' + import.meta.env.VITE_REVERB_APP_KEY)
+new WebSocket('wss://tamifortami.online/app/' + import.meta.env.VITE_REVERB_APP_KEY)
   .addEventListener('open', () => console.log('WS OK'));
 ```
 
@@ -311,7 +311,7 @@ check `docker compose ps redis` is `healthy`.
 
 ### Reverb: clients can't connect / 403 origin
 - Verify `REVERB_ALLOWED_ORIGINS` includes the exact scheme + host
-  (e.g. `https://NEW_DOMAIN.example`, no trailing slash).
+  (e.g. `https://tamifortami.online`, no trailing slash).
 - After editing `.env.production`, **force-recreate** reverb (a `restart`
   re-uses stale env): `docker compose up -d --force-recreate reverb`.
 - Confirm nginx proxies `/app/*` and `/apps/*` to `reverb:8080` with WebSocket
