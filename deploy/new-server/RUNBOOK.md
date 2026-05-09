@@ -203,7 +203,7 @@ docker compose up -d --force-recreate app horizon reverb scheduler
 
 ## L) SSL / Nginx
 
-The nginx container reads cert files from `docker/nginx/ssl/live/${INS_DOMAIN}/`.
+The nginx container reads cert files from `docker/certbot/conf/live/${INS_DOMAIN}/`.
 
 Issue certificates with certbot in standalone mode (run **before** nginx is
 exposed on :80):
@@ -211,7 +211,8 @@ exposed on :80):
 ```bash
 docker compose stop nginx || true
 docker run --rm -p 80:80 \
-  -v $PWD/docker/nginx/ssl:/etc/letsencrypt \
+  -v $PWD/docker/certbot/conf:/etc/letsencrypt \
+  -v $PWD/docker/certbot/www:/var/www/certbot \
   certbot/certbot certonly --standalone --non-interactive --agree-tos \
   -m admin@tamifortami.online \
   -d tamifortami.online -d www.tamifortami.online
@@ -220,7 +221,7 @@ docker compose up -d nginx
 
 Renewal (cron, monthly):
 ```bash
-docker run --rm -v $PWD/docker/nginx/ssl:/etc/letsencrypt \
+docker run --rm -v $PWD/docker/certbot/conf:/etc/letsencrypt \
   certbot/certbot renew --quiet
 docker exec ins2026-nginx nginx -s reload
 ```
