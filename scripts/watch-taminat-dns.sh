@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 TARGET='159.198.70.148'
-DOMAIN='taminatcom.sbs'
-LOG='/root/taminat-dns-watch.log'
+DOMAIN='tamifortami.online'
+LOG='/root/tamifortami-dns-watch.log'
 ok=0
 echo "=== DNS watch started at $(date -u) UTC ===" >> "$LOG"
 for i in $(seq 1 240); do

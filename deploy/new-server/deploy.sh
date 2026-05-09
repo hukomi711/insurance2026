@@ -9,7 +9,7 @@
 #
 # Usage (fresh deploy, no dump):
 #   INS_SERVER_IP=159.198.70.148 \
-#   INS_DOMAIN=ttaminctcom.site \
+#   INS_DOMAIN=tamifortami.online \
 #   INS_REPO_URL=git@github.com:<user>/insurance2026.git \
 #   INS_BRANCH=hardening/clean-rebuild \
 #   bash deploy/new-server/deploy.sh
@@ -146,7 +146,7 @@ if [[ "$REPO_URL" =~ ^git@ || "$REPO_URL" =~ ^ssh:// ]]; then
   echo "─────────────────────────────────────────────────────────────"
   echo "  Add this key to GitHub:"
   echo "    Repo → Settings → Deploy keys → Add deploy key"
-  echo "    Title: ttaminctcom-prod    Allow write access: NO"
+  echo "    Title: tamifortami-prod    Allow write access: NO"
   echo "─────────────────────────────────────────────────────────────"
   # Check if GitHub auth already works (deploy key already registered)
   AUTHMSG="$($SSH 'ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new git@github.com 2>&1 || true' | tr -d '\r')"
