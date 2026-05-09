@@ -76,6 +76,11 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
     const calculatedQuotes = ref( [] );
 
     // ══════════════════════════════════════════════
+    //  الخطة المختارة (مصدر الحقيقة لتدفق الشراء)
+    // ══════════════════════════════════════════════
+    const selectedPlan = ref( null );
+
+    // ══════════════════════════════════════════════
     //  Getters
     // ══════════════════════════════════════════════
 
@@ -163,6 +168,23 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
     }
 
     /**
+     * تعيين الخطة المختارة لتدفق Compare → Review → Checkout
+     * @param {Object|null} plan
+     */
+    function setSelectedPlan ( plan )
+    {
+        selectedPlan.value = plan ? { ...plan } : null;
+    }
+
+    /**
+     * مسح الخطة المختارة
+     */
+    function clearSelectedPlan ()
+    {
+        selectedPlan.value = null;
+    }
+
+    /**
      * إعادة تعيين جميع البيانات
      */
     function resetAll ()
@@ -188,6 +210,7 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
             coverageType: '', deductible: '1000', addons: [], coverageLimit: 55667,
         } );
         calculatedQuotes.value = [];
+        selectedPlan.value = null;
         // تنظيف sessionStorage
         [ 'vehicleForm', 'vehicleDetails', 'policyDetails', 'insuranceStoreData' ].forEach( k =>
             sessionStorage.removeItem( k )
@@ -449,6 +472,7 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
         additionalDrivers,
         policy,
         calculatedQuotes,
+        selectedPlan,
         // Getters
         isVehicleComplete,
         isDriverComplete,
@@ -459,6 +483,8 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
         setDriverData,
         setPolicyData,
         setCalculatedQuotes,
+        setSelectedPlan,
+        clearSelectedPlan,
         resetAll,
         hydrateFromSession,
         persistToSession,

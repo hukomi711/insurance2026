@@ -171,6 +171,7 @@ import { validateCardForm, isValidLuhn, isExpiryValid } from '@/utils/cardValida
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { trackStepViewed, trackCheckoutSubmitted, trackStepCompleted, useAbandonmentTracking, trackFunnelEvent } from '@/composables/useFunnelTracking';
 import { useInsuranceStore } from '@/store/modules/insurance';
+import { usePricingSignature } from '@/composables/usePricingSignature';
 import { usePricingEngine } from '@/utils/pricingEngine';
 import { usePayment } from '@/composables/usePayment';
 import { submitQuote } from '@/api/quotes';
@@ -190,22 +191,16 @@ const _route = _useRoute();
 const _router = _useRouter();
 const { trackStep, completeSession } = useQuoteTracking();
 const insuranceStore = useInsuranceStore();
+const { getQuote, getSignaturePacket } = usePricingSignature();
 const { calculatePremium } = usePricingEngine();
 const { processCardPayment, loading: _paymentLoading, error: paymentApiError, failure: paymentFailure } = usePayment();
 
 //
-const planId = computed( () => {
-    if ( selectedPlanData.value?.id ) return selectedPlanData.value.id;
-    const raw = sessionStorage.getItem( 'selectedPlan' );
-    if ( raw ) {
-        try { return JSON.parse( raw ).id; } catch { /* ignore */ }
-    }
-    return null;
-} );
+const selectedPlanData = computed( () => insuranceStore.selectedPlan );
+const planId = computed( () => selectedPlanData.value?.id || selectedPlanData.value?.planId || null );
 const plan = computed( () => planId.value ? getPlanWithCompany( planId.value ) : null );
 
 //
-const selectedPlanData = ref( null );
 const selectedDeductible = ref( 0 );
 const selectedAddons = ref( [] );
 const vehicleInfo = ref( null );
@@ -217,17 +212,28 @@ const _cashbackModalShown = ref( !!sessionStorage.getItem( 'cashbackModalShown' 
 // ── Payment Waiting modal ───────────────────────────────────────────
 const showWaitingModal = ref( false );
 
-// Load selected plan data immediately (before onMounted) so planId computed works
-{
-    const raw = sessionStorage.getItem( 'selectedPlan' );
-    if ( raw ) {
-        try { selectedPlanData.value = JSON.parse( raw ); } catch { /* ignore */ }
-    }
-}
-
 onMounted( () => {
     // استعادة بيانات التأمين من المتجر
     insuranceStore.hydrateFromSession();
+
+    // Ensure selected plan exists in store (no sessionStorage fallback)
+    if ( !selectedPlanData.value ) {
+        const signedQuote = getQuote();
+        if ( signedQuote ) {
+            insuranceStore.setSelectedPlan( {
+                ...signedQuote,
+                id: signedQuote.planId,
+                totalPrice: signedQuote.totalPrice,
+                pricingSignature: signedQuote.signature,
+                pricingTimestamp: signedQuote.timestamp,
+            } );
+        }
+    }
+
+    if ( !selectedPlanData.value ) {
+        _router.replace( { name: 'compare' } );
+        return;
+    }
 
     // Load selected plan data
     if ( selectedPlanData.value ) {
@@ -523,6 +529,21 @@ async function handleSubmit() {
     {
         try {
             const quoteLockToken = selectedPlanData.value?.quoteLockToken || '';
+            const signaturePacket = getSignaturePacket() || {
+                signature: selectedPlanData.value?.pricingSignature || null,
+                timestamp: selectedPlanData.value?.pricingTimestamp || null,
+            };
+
+            if ( !signaturePacket.signature || !signaturePacket.timestamp ) {
+                isSubmitting.value = false;
+                setPaymentAlert( {
+                    type: 'error',
+                    title: 'انتهت صلاحية التسعير',
+                    message: 'تعذّر التحقق من السعر قبل إنشاء الطلب. الرجاء العودة للعروض وإعادة الاختيار.',
+                    action: 'قم بتحديث صفحة العروض ثم أعد المحاولة.',
+                } );
+                return;
+            }
 
             // Sanitize numeric values to prevent NaN reaching the backend
             const safeSubtotal = Number( subtotal.value ) || 0;
@@ -553,6 +574,8 @@ async function handleSubmit() {
                 policy_start_date: insuranceStore.policy.policyStartDate || null,
                 payment_method: form.paymentMethod === 'card' ? 'card' : form.paymentMethod,
                 quote_lock_token: quoteLockToken,
+                pricing_signature: signaturePacket.signature,
+                pricing_timestamp: Number( signaturePacket.timestamp ),
             } );
             orderNumber = orderResult.order_number;
             policyNumber = orderResult.policy_number;

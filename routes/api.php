@@ -34,6 +34,7 @@ use App\Http\Controllers\EmailTrackingController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PricingConstantsController;
 use App\Http\Controllers\QuoteCalculationController;
 use App\Http\Controllers\QuoteLockController;
 use App\Http\Controllers\QuoteTrackingController;
@@ -192,6 +193,12 @@ Route::post('analytics/funnel-event', [FunnelAnalyticsController::class, 'store'
 // ─── Quote Calculation (public — pricing engine) ────────────────────
 Route::post('quotes/calculate', [QuoteCalculationController::class, 'calculate'])
     ->middleware(['throttle:30,1', 'geo.api']);
+
+// ─── NEW: Pricing Constants (public — for version sync) ──────────────
+Route::prefix('pricing')->middleware(['throttle:60,1', 'geo.api'])->group(function () {
+    Route::get('/constants', [PricingConstantsController::class, 'index']);
+    Route::post('/constants/verify', [PricingConstantsController::class, 'verify']);
+});
 
 // ─── Quote Price Lock (public — checkout consistency token) ───────
 Route::post('quotes/lock', [QuoteLockController::class, 'store'])

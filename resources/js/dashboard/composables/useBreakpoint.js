@@ -1,30 +1,30 @@
 /**
  * Reactive breakpoint composable for the admin dashboard.
  *
- * Aligned with Tailwind v3 default breakpoints so JS-side logic
- * never disagrees with CSS-side `sm:`/`md:`/`lg:`/`xl:` modifiers.
+ * Aligned with Tailwind v4 @theme breakpoints defined in app.css
+ * so JS-side logic never disagrees with CSS-side `sm:`/`md:`/`lg:`/`xl:` modifiers.
  *
- *   sm: 640px
+ *   sm: 575px
  *   md: 768px
- *   lg: 1024px
+ *   lg: 992px
  *   xl: 1280px
- *  2xl: 1536px
+ *  2xl: 1400px
  *
  * Usage:
  *   const { isMobile, isTablet, isDesktop, current } = useBreakpoint();
  *   // isMobile  → < md  (< 768)
- *   // isTablet  → md..lg (768..<1024)
- *   // isDesktop → >= lg (>= 1024)
+ *   // isTablet  → md..lg (768..<992)
+ *   // isDesktop → >= lg (>= 992)
  */
 
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
 
 export const BP = Object.freeze({
-    sm: 640,
+    sm: 575,
     md: 768,
-    lg: 1024,
+    lg: 992,
     xl: 1280,
-    '2xl': 1536,
+    '2xl': 1400,
 });
 
 let sharedWidth = null;

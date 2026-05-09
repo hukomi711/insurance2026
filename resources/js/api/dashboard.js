@@ -42,9 +42,9 @@ export function markSingleNotificationRead ( key )
 /**
  * @returns {Promise<{ data: { success: boolean, data: Array, count: number } }>}
  */
-export function getCustomers ( params = {} )
+export function getCustomers ( params = {}, config = {} )
 {
-    return request.get( '/admin/customers', { params } );
+    return request.get( '/admin/customers', { params, ...config } );
 }
 
 /**

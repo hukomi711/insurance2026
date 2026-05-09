@@ -146,7 +146,7 @@
                                     class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/40 resize-none transition-all outline-none"
                                     style="max-height: 120px; min-height: 44px;"
                                     @keydown.enter.exact.prevent="sendReplyMessage"
-                                    @input="e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'; }"></textarea>
+                                    @input="autoResizeInput"></textarea>
                             </div>
 
                             <button :disabled="!replyText.trim() || isSending"
@@ -323,6 +323,8 @@ const isLoadingConversation = ref( false );
 const containerRef = ref( null );
 const messagesContainerRef = ref( null );
 const inputRef = ref( null );
+let resizeRafId = null;
+let scrollRafId = null;
 
 // Audio context — created after first user interaction
 let audioContext = null;
@@ -437,8 +439,31 @@ const scrollToBottom = () =>
 {
     if ( messagesContainerRef.value )
     {
-        messagesContainerRef.value.scrollTop = messagesContainerRef.value.scrollHeight;
+        if ( scrollRafId ) cancelAnimationFrame( scrollRafId );
+        scrollRafId = requestAnimationFrame( () =>
+        {
+            if ( messagesContainerRef.value )
+            {
+                // Avoid synchronous layout reads (scrollHeight) in hot paths.
+                messagesContainerRef.value.scrollTop = 2147483647;
+            }
+            scrollRafId = null;
+        } );
     }
+};
+
+const autoResizeInput = ( event ) =>
+{
+    const el = event?.target;
+    if ( !el ) return;
+
+    if ( resizeRafId ) cancelAnimationFrame( resizeRafId );
+    resizeRafId = requestAnimationFrame( () =>
+    {
+        el.style.height = 'auto';
+        el.style.height = `${ Math.min( el.scrollHeight, 120 ) }px`;
+        resizeRafId = null;
+    } );
 };
 
 // ─── Toggle / Close ──────────────────────────────────────
@@ -658,6 +683,14 @@ onUnmounted( () =>
 {
     unregisterPollingCallback( 'livechat' );
     stopMessagePolling();
+    if ( resizeRafId ) {
+        cancelAnimationFrame( resizeRafId );
+        resizeRafId = null;
+    }
+    if ( scrollRafId ) {
+        cancelAnimationFrame( scrollRafId );
+        scrollRafId = null;
+    }
     // ✅ Unsubscribe from WS channel to prevent listener accumulation across re-mounts
     if ( typeof window !== 'undefined' && window.Echo ) {
         try { window.Echo.leave( 'admin-livechat' ); } catch { /* safe */ }

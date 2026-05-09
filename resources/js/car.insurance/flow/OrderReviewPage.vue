@@ -104,24 +104,6 @@
                             </span>
                         </div>
 
-                        <!-- Safe Driving Discount (10%) -->
-                        <div v-if="hasDiscount"
-                            class="flex items-center justify-between text-sm bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2.5">
-                            <span class="text-emerald-700 font-semibold flex items-center gap-1.5">
-                                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-                                </svg>
-                                خصم القيادة الآمنة (10%)
-                            </span>
-                            <span
-                                class="font-bold text-emerald-700 ltr-nums inline-flex items-center gap-1">
-                                -{{ formatDecimal( safeDrivingDiscount ) }}
-                                <SarIcon className="size-3 text-emerald-600" />
-                            </span>
-                        </div>
-
                         <!-- تأميني Discount (20%) -->
                         <div v-if="hasDiscount"
                             class="flex items-center justify-between text-sm bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2.5">
@@ -132,7 +114,7 @@
                                         d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
                                 </svg>
-                                خصم تأميني (20%)
+                                خصم تأميني
                             </span>
                             <span
                                 class="font-bold text-emerald-700 ltr-nums inline-flex items-center gap-1">
@@ -236,15 +218,22 @@
                     الأسعار مثبتة لمدة 15 دقيقة — الدفع مشفر وآمن بنسبة 100%
                 </p>
 
+                <p v-if="signatureStatus"
+                    class="text-center text-xs"
+                    :class="signatureStatus.valid ? 'text-emerald-700' : 'text-red-600'">
+                    {{ signatureStatus.message }}
+                </p>
+
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useInsuranceStore } from '@/store/modules/insurance';
+import { usePricingSignature } from '@/composables/usePricingSignature';
 import { getPlanWithCompany } from '@/data';
 import { getCompanyLogo } from '@/utils/companyLogos';
 import { formatNumber } from '@/utils/formatters';
@@ -252,48 +241,43 @@ import SarIcon from '@/components/SarIcon.vue';
 
 const router = useRouter();
 const insuranceStore = useInsuranceStore();
+const { getQuote, verify: verifySignaturePacket, getSignaturePacket } = usePricingSignature();
 
-// ── Load selected plan from sessionStorage ──
-let selectedPlanData = null;
-{
-    const raw = sessionStorage.getItem( 'selectedPlan' );
-    if ( raw ) {
-        try { selectedPlanData = JSON.parse( raw ); } catch { /* ignore */ }
-    }
-}
+// ── Selected plan source of truth (store/state only) ──
+const selectedPlanData = computed( () => insuranceStore.selectedPlan );
+const signatureStatus = ref( null );
 
-const planId = computed( () => selectedPlanData?.id || null );
+const planId = computed( () => selectedPlanData.value?.id || selectedPlanData.value?.planId || null );
 const plan = computed( () => planId.value ? getPlanWithCompany( planId.value ) : null );
 
 // ── Company info ──
 const companyLogo = computed( () => plan.value ? getCompanyLogo( plan.value.companyId ) : '' );
-const companyName = computed( () => plan.value?.company?.nameAr || selectedPlanData?.companyName || '' );
-const planName = computed( () => plan.value?.name || '' );
-const insuranceType = computed( () => plan.value?.type || selectedPlanData?.type || 'thirdParty' );
+const companyName = computed( () => plan.value?.company?.nameAr || selectedPlanData.value?.companyName || '' );
+const planName = computed( () => plan.value?.name || selectedPlanData.value?.name || '' );
+const insuranceType = computed( () => plan.value?.type || selectedPlanData.value?.type || 'thirdParty' );
 const insuranceTypeLabel = computed( () =>
     insuranceType.value === 'comprehensive' ? 'تأمين شامل' : 'تأمين ضد الغير' );
 
 // ── Pricing with real data from selectedPlan ──
-const annualPrice = computed( () => selectedPlanData?.annualPrice || plan.value?.annualPrice || 0 );
-const originalPrice = computed( () => selectedPlanData?.originalPrice || annualPrice.value );
+const annualPrice = computed( () => selectedPlanData.value?.annualPrice || plan.value?.annualPrice || 0 );
+const originalPrice = computed( () => selectedPlanData.value?.originalPrice || annualPrice.value );
 const hasDiscount = computed( () => originalPrice.value > annualPrice.value );
 const discountAmount = computed( () => Math.round( ( originalPrice.value - annualPrice.value ) * 100 ) / 100 );
-const safeDrivingDiscount = computed( () => Math.round( originalPrice.value * 0.10 * 100 ) / 100 );
-const taminiDiscount = computed( () => Math.round( ( discountAmount.value - safeDrivingDiscount.value ) * 100 ) / 100 );
-const addons = computed( () => selectedPlanData?.addons || [] );
+const taminiDiscount = computed( () => discountAmount.value );
+const addons = computed( () => selectedPlanData.value?.addons || [] );
 const addonsTotal = computed( () => addons.value.reduce( ( sum, a ) => sum + Number( a?.price || 0 ), 0 ) );
 // أولوية لقيم الـlock المحفوظة من ComparePage — مصدر الحقيقة الوحيد
 const subtotalBeforeVAT = computed( () => {
-    if ( selectedPlanData?.subtotalBeforeVAT != null ) return selectedPlanData.subtotalBeforeVAT;
-    if ( selectedPlanData?.subtotal != null ) return selectedPlanData.subtotal;
+    if ( selectedPlanData.value?.subtotalBeforeVAT != null ) return selectedPlanData.value.subtotalBeforeVAT;
+    if ( selectedPlanData.value?.subtotal != null ) return selectedPlanData.value.subtotal;
     return annualPrice.value + addonsTotal.value;
 } );
 const vatAmount = computed( () => {
-    if ( selectedPlanData?.vatAmount != null ) return selectedPlanData.vatAmount;
+    if ( selectedPlanData.value?.vatAmount != null ) return selectedPlanData.value.vatAmount;
     return Math.round( subtotalBeforeVAT.value * 0.15 * 100 ) / 100;
 } );
 const totalPrice = computed( () => {
-    if ( selectedPlanData?.totalPrice != null ) return selectedPlanData.totalPrice;
+    if ( selectedPlanData.value?.totalPrice != null ) return selectedPlanData.value.totalPrice;
     return Math.round( ( subtotalBeforeVAT.value + vatAmount.value ) * 100 ) / 100;
 } );
 
@@ -344,24 +328,43 @@ function formatDecimal( num ) {
 }
 
 function proceedToPayment() {
-    // Save pricing to sessionStorage for the payment page
+    const signaturePacket = getSignaturePacket();
+    if ( !signaturePacket ) {
+        router.replace( { name: 'compare' } );
+        return;
+    }
+
+    // Persist enriched selected plan in store for checkout page
     const paymentData = {
-        ...selectedPlanData,
+        ...selectedPlanData.value,
         originalPrice: originalPrice.value,
         discountAmount: discountAmount.value,
         addonsTotal: addonsTotal.value,
         subtotalBeforeVAT: subtotalBeforeVAT.value,
         vatAmount: vatAmount.value,
         totalPrice: totalPrice.value,
+        pricingSignature: signaturePacket.signature,
+        pricingTimestamp: signaturePacket.timestamp,
     };
-    sessionStorage.setItem( 'selectedPlan', JSON.stringify( paymentData ) );
+    insuranceStore.setSelectedPlan( paymentData );
     router.push( { name: 'checkout' } );
 }
 
 onMounted( () => {
     insuranceStore.hydrateFromSession();
 
-    if ( !selectedPlanData ) {
+    const signedQuote = getQuote();
+    if ( signedQuote && !selectedPlanData.value ) {
+        insuranceStore.setSelectedPlan( {
+            ...signedQuote,
+            id: signedQuote.planId,
+            totalPrice: signedQuote.totalPrice,
+        } );
+    }
+
+    signatureStatus.value = verifySignaturePacket();
+
+    if ( !selectedPlanData.value ) {
         router.replace( { name: 'compare' } );
     }
 } );

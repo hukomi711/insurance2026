@@ -255,6 +255,8 @@ import { getQuotes } from '@/api/quotes';
 import request from '@/api/request';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { trackStepViewed, trackQuoteSelected, trackStepCompleted } from '@/composables/useFunnelTracking';
+import { usePricingSignature } from '@/composables/usePricingSignature';
+import { usePricingConstants } from '@/composables/usePricingConstants';
 import { useInsuranceStore } from '@/store/modules/insurance';
 import { usePricingEngine } from '@/utils/pricingEngine';
 import { formatNumber } from '@/utils/formatters';
@@ -353,8 +355,19 @@ function retryLoadQuotes() {
 
 // Logo & format helpers use shared composables/utilities (imported above)
 
+// Initialize composables
+const { store: storePricingSignature } = usePricingSignature();
+const { load: loadConstants } = usePricingConstants();
+
 // Resume tracking
-onMounted( () => {
+onMounted( async () => {
+    // Load pricing constants from backend for version sync
+    try {
+        await loadConstants();
+    } catch ( err ) {
+        logger.warn( '[ComparePage] Failed to load pricing constants:', err );
+    }
+
     resumeSession( 'compare' );
     trackStepViewed( 'compare', { ui_variant: 'quotecard_v3_benefits3_details_unified' } );
     loadVehicleInfo();
@@ -727,8 +740,23 @@ async function issueQuoteLock ( selection ) {
     };
 }
 
+function ensureSignatureFields ( quote ) {
+    const hasSignature = Boolean( quote?.signature && quote?.timestamp && quote?.expiresAt );
+    if ( hasSignature ) return true;
+
+    selectionError.value = 'تعذّر التحقق من السعر حالياً. الرجاء تحديث العروض والمحاولة مرة أخرى.';
+    logger.warn( '[ComparePage] Missing pricing signature packet on selected quote', {
+        planId: quote?.id,
+        companyId: quote?.companyId,
+        subType: quote?.subType,
+    } );
+    return false;
+}
+
 async function selectPlan( plan, source = 'card_expanded' ) {
     selectionError.value = '';
+    if ( !ensureSignatureFields( plan ) ) return;
+
     trackStep( 'select_plan', 4, { selected_plan_id: plan.id, source }, 'next' );
     let lock;
     try {
@@ -749,7 +777,26 @@ async function selectPlan( plan, source = 'card_expanded' ) {
         return;
     }
 
-    sessionStorage.setItem( 'selectedPlan', JSON.stringify( {
+    // Store signed quote packet in in-memory shared state (secure flow)
+    try {
+        storePricingSignature( {
+            planId: plan.id,
+            totalPrice: lock.totalPrice,
+            signature: plan.signature,
+            timestamp: plan.timestamp,
+            expiresAt: plan.expiresAt,
+            companyId: plan.companyId,
+            subType: plan.subType,
+            annualPrice: plan.annualPrice,
+            pricingFactors: plan.pricingFactors || null,
+        } );
+    } catch ( err ) {
+        logger.error( '[ComparePage] Failed to store pricing signature packet:', err );
+        selectionError.value = 'تعذّر حفظ توقيع حماية السعر. الرجاء المحاولة مرة أخرى.';
+        return;
+    }
+
+    insuranceStore.setSelectedPlan( {
         id: plan.id,
         name: plan.name,
         companyName: plan.company?.nameAr,
@@ -766,7 +813,10 @@ async function selectPlan( plan, source = 'card_expanded' ) {
         subtotalBeforeVAT: lock.subtotal,
         vatAmount: lock.vatAmount,
         totalPrice: lock.totalPrice,
-    } ) );
+        pricingSignature: plan.signature,
+        pricingTimestamp: plan.timestamp,
+        pricingExpiresAt: plan.expiresAt,
+    } );
     trackQuoteSelected( { plan_id: plan.id, source } );
     trackStepCompleted( 'compare', 'orderReview' );
     router.push( { name: 'orderReview' } );
@@ -787,6 +837,8 @@ async function handleOfferSelect( selection ) {
     const addons = selection.addons || [];
     const addonsTotal = addons.reduce( ( sum, a ) => sum + Number( a?.price || 0 ), 0 );
 
+    if ( !ensureSignatureFields( p ) ) return;
+
     let lock;
     try {
         lock = await issueQuoteLock( {
@@ -806,7 +858,26 @@ async function handleOfferSelect( selection ) {
         return;
     }
 
-    sessionStorage.setItem( 'selectedPlan', JSON.stringify( {
+    // Store signed quote packet in in-memory shared state (secure flow)
+    try {
+        storePricingSignature( {
+            planId: p.id,
+            totalPrice: lock.totalPrice,
+            signature: p.signature,
+            timestamp: p.timestamp,
+            expiresAt: p.expiresAt,
+            companyId: p.companyId,
+            subType: p.subType,
+            annualPrice: Number( selection.annualPrice || p.annualPrice || 0 ),
+            pricingFactors: p.pricingFactors || null,
+        } );
+    } catch ( err ) {
+        logger.error( '[ComparePage] Failed to store pricing signature packet (offer select):', err );
+        selectionError.value = 'تعذّر حفظ توقيع حماية السعر. الرجاء المحاولة مرة أخرى.';
+        return;
+    }
+
+    insuranceStore.setSelectedPlan( {
         id: p.id,
         name: p.name,
         companyName: p.company?.nameAr,
@@ -821,7 +892,10 @@ async function handleOfferSelect( selection ) {
         vatAmount: lock.vatAmount,
         quoteLockToken: lock.quoteLockToken,
         quoteLockExpiresAt: lock.quoteLockExpiresAt,
-    } ) );
+        pricingSignature: p.signature,
+        pricingTimestamp: p.timestamp,
+        pricingExpiresAt: p.expiresAt,
+    } );
     trackStep( 'select_plan', 4, { selected_plan_id: p.id, source }, 'next' );
     trackQuoteSelected( { plan_id: p.id, source } );
     trackStepCompleted( 'compare', 'orderReview' );

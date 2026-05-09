@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\PricingLog;
 use Carbon\Carbon;
 
 /**
@@ -12,14 +13,19 @@ use Carbon\Carbon;
  *
  * Same formula: rawPrice = basePrice × vehicle × driver × lifestyle × policy × company × ncd
  * Then clamp to PRICE_LIMITS, round to nearest 10.
+ *
+ * NEW: Includes digital signatures + audit logging
  */
 class QuoteCalculationService
 {
     private array $config;
+    private PricingSignatureService $signatureService;
 
-    public function __construct()
-    {
+    public function __construct(
+        PricingSignatureService $signatureService
+    ) {
         $this->config = config('pricing');
+        $this->signatureService = $signatureService;
     }
 
     /**
@@ -29,7 +35,7 @@ class QuoteCalculationService
      * @param  array  $vehicle  { year, make, estimatedValue, purposeOfUse, carModification, hasTrailer, transmissionType }
      * @param  array  $driver   { dateOfBirth, drivingExperience, accidentCounts, trafficViolations, education, foreignLicense, healthConditions, ncdYears, city, nightParking, expectedKM, additionalDrivers }
      * @param  array  $policy   { repairMethod, deductible? }
-     * @return array  [ { companyId, subType, annualPrice, monthlyPrice, vatAmount, totalWithVAT, basePrice, pricingFactors, notes }, ... ]
+     * @return array  [ { companyId, subType, annualPrice, monthlyPrice, vatAmount, totalWithVAT, basePrice, pricingFactors, notes, signature, timestamp }, ... ]
      */
     public function calculateForPlans(array $plans, array $vehicle, array $driver, array $policy): array
     {
@@ -37,6 +43,72 @@ class QuoteCalculationService
             fn (array $plan) => $this->calculateSinglePlan($plan, $vehicle, $driver, $policy),
             $plans
         );
+    }
+
+    /**
+     * Calculate pricing for multiple plans WITH digital signatures (for checkout).
+     *
+     * @param  array  $plans
+     * @param  array  $vehicle
+     * @param  array  $driver
+     * @param  array  $policy
+     * @param  bool   $withSignature  - If true, includes digital signature
+     * @param  bool   $logCalculation - If true, logs to PricingLog table
+     * @return array  [ { ...quote, signature, timestamp }, ... ]
+     */
+    public function calculateForPlansWithSignature(array $plans, array $vehicle, array $driver, array $policy, bool $logCalculation = true): array
+    {
+        $quotes = $this->calculateForPlans($plans, $vehicle, $driver, $policy);
+
+        return array_map(function (array $quote) use ($logCalculation) {
+            // Generate signature for this quote
+            $planId = "{$quote['companyId']}_{$quote['subType']}";
+            $sigPacket = $this->signatureService->generateSignature($planId, $quote['totalWithVAT']);
+
+            // Log this calculation
+            if ($logCalculation) {
+                $this->logCalculation($quote, $planId, 'quote_calculation');
+            }
+
+            return array_merge($quote, [
+                'signature' => $sigPacket['signature'],
+                'timestamp' => $sigPacket['timestamp'],
+                'expiresAt' => $sigPacket['expiresAt'],
+            ]);
+        }, $quotes);
+    }
+
+    /**
+     * Log a pricing calculation for audit trail.
+     */
+    private function logCalculation(array $quote, string $planId, string $context): void
+    {
+        try {
+            $userId = null;
+            if (function_exists('auth') && auth('web')->check()) {
+                $userId = auth('web')->id();
+            }
+
+            PricingLog::create([
+                'user_id' => $userId,
+                'plan_id' => $planId,
+                'quoted_price' => $quote['totalWithVAT'],
+                'base_price' => $quote['basePrice'],
+                'factors' => $quote['pricingFactors'],
+                'pricing_version' => config('pricing.version', '1.0.0'),
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'context' => $context,
+                'metadata' => [
+                    'annual_price' => $quote['annualPrice'],
+                    'vat_amount' => $quote['vatAmount'],
+                    'original_price' => $quote['originalPrice'],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            // Log error but don't break pricing calculation
+            logger()->warning('Failed to log pricing calculation', ['error' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -157,7 +229,11 @@ class QuoteCalculationService
 
     private function getManufacturerFactor(mixed $makeId): float
     {
-        return 1.0;
+        $manufacturerFactors = $this->config['manufacturer_factors'] ?? [];
+        if (empty($manufacturerFactors) || !$makeId) {
+            return 1.0;
+        }
+        return $manufacturerFactors[(string) $makeId] ?? 1.0;
     }
 
     private function getVehicleValueFactor(mixed $value): float
@@ -189,7 +265,11 @@ class QuoteCalculationService
 
     private function getTransmissionFactor(mixed $type): float
     {
-        return 1.0;
+        $transmissionFactors = $this->config['transmission_factors'] ?? [];
+        if (empty($transmissionFactors) || !$type) {
+            return 1.0;
+        }
+        return $transmissionFactors[(string) $type] ?? 1.0;
     }
 
     // ═══════════════════════════════════════════════
@@ -229,7 +309,11 @@ class QuoteCalculationService
 
     private function getExperienceFactor(mixed $experience): float
     {
-        return 1.0;
+        $experienceFactors = $this->config['experience_factors'] ?? [];
+        if (empty($experienceFactors) || $experience === null || $experience === '') {
+            return 1.0;
+        }
+        return $experienceFactors[(string) $experience] ?? 1.0;
     }
 
     private function getAccidentFactor(mixed $count): float

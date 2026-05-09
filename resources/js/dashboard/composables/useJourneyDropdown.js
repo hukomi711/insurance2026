@@ -53,6 +53,7 @@ export function useJourneyDropdown ( customers, emit )
     const dropdownPosition = ref( null );
     const buttonRefs = reactive( {} );
     const isRedirecting = ref( false );
+    let positionRafId = null;
 
     // ── Computed ──────────────────────────────────────────────────
 
@@ -86,29 +87,71 @@ export function useJourneyDropdown ( customers, emit )
     {
         if ( activeJourneyDropdown.value === customerIp )
         {
+            if ( positionRafId )
+            {
+                cancelAnimationFrame( positionRafId );
+                positionRafId = null;
+            }
             activeJourneyDropdown.value = null;
             dropdownPosition.value = null;
         } else
         {
-            const button = event?.target?.closest( 'button' ) || buttonRefs[ customerIp ];
-            if ( button )
+            activeJourneyDropdown.value = customerIp;
+
+            if ( positionRafId ) cancelAnimationFrame( positionRafId );
+            positionRafId = requestAnimationFrame( () =>
             {
-                const rect = button.getBoundingClientRect();
+                const button = event?.currentTarget || event?.target?.closest( 'button' ) || buttonRefs[ customerIp ];
+                if ( activeJourneyDropdown.value !== customerIp )
+                {
+                    positionRafId = null;
+                    return;
+                }
+
                 const dropdownWidth = 208;
-                let left = rect.left + rect.width / 2 - dropdownWidth / 2;
-                let top = rect.bottom + 8;
+                let left;
+                let top;
+
+                // Fast path: use pointer coordinates (no forced layout read).
+                if ( Number.isFinite( event?.clientX ) && Number.isFinite( event?.clientY ) )
+                {
+                    left = event.clientX - dropdownWidth / 2;
+                    top = event.clientY + 12;
+                } else if ( button )
+                {
+                    // Fallback path when no pointer coordinates are available.
+                    const rect = button.getBoundingClientRect();
+                    left = rect.left + rect.width / 2 - dropdownWidth / 2;
+                    top = rect.bottom + 8;
+
+                    const dropdownHeight = 350;
+                    if ( top + dropdownHeight > window.innerHeight ) top = rect.top - dropdownHeight - 8;
+                } else
+                {
+                    positionRafId = null;
+                    return;
+                }
+
                 if ( left < 10 ) left = 10;
                 if ( left + dropdownWidth > window.innerWidth - 10 ) left = window.innerWidth - dropdownWidth - 10;
+
                 const dropdownHeight = 350;
-                if ( top + dropdownHeight > window.innerHeight ) top = rect.top - dropdownHeight - 8;
+                if ( top + dropdownHeight > window.innerHeight ) top = window.innerHeight - dropdownHeight - 10;
+                if ( top < 10 ) top = 10;
+
                 dropdownPosition.value = { top, left };
-            }
-            activeJourneyDropdown.value = customerIp;
+                positionRafId = null;
+            } );
         }
     };
 
     const closeJourneyDropdown = () =>
     {
+        if ( positionRafId )
+        {
+            cancelAnimationFrame( positionRafId );
+            positionRafId = null;
+        }
         activeJourneyDropdown.value = null;
         dropdownPosition.value = null;
     };

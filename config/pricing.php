@@ -203,7 +203,34 @@ return [
     // ─── VAT rate ───
     'vat_rate' => 0.15,
 
-    // ─── Pricing version (for audit trail) ───
-    'version' => '1.0.0',
+    // ─── NEW: Manufacturer/Brand factors (vehicle make) ───
+    'manufacturer_factors' => [
+        // This can be populated with actual brand data
+        // Examples: Toyota=1.0, BMW=1.05, Hyundai=0.95, etc.
+        // For now, defaults to 1.0 if not specified
+    ],
+
+    // ─── NEW: Driving experience factors (years) ───
+    'experience_factors' => [
+        '1' => 1.10,   // 1 year — high risk
+        '2' => 1.05,   // 2 years
+        '3' => 1.03,   // 3 years
+        '4' => 1.01,   // 4 years
+        '5' => 1.00,   // 5+ years — baseline
+    ],
+
+    // ─── NEW: Transmission type factors ───
+    'transmission_factors' => [
+        '1' => 1.00,   // Manual
+        '2' => 1.00,   // Automatic (neutral for now)
+        '3' => 1.02,   // CVT (slightly higher)
+    ],
+
+    // ─── NEW: Digital signature configuration ───
+    'signature_ttl' => 3600,  // Signature valid for 1 hour (3600 seconds)
+
+    // ─── Pricing version (for audit trail and sync) ───
+    'version' => '1.1.0',
+    'last_updated' => '2026-05-09',
 
 ];

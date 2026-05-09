@@ -25,6 +25,7 @@ const props = defineProps( {
     soundsEnabled: { type: Boolean, default: false },
     countryFilter: { type: String, default: '' },
     searchQuery: { type: String, default: '' },
+    sortMode: { type: String, default: 'priority' },
 } );
 
 const emit = defineEmits( [
@@ -34,7 +35,9 @@ const emit = defineEmits( [
     'toggle-sounds',
     'update:countryFilter',
     'update:searchQuery',
+    'update:sortMode',
     'search-input',
+    'reset-filters',
 ] );
 
 // ── Live clock — keeps "آخر تحديث" accurate without parent re-rendering ──
@@ -57,6 +60,12 @@ const lastUpdatedLabel = computed( () => {
 
 const refreshLabel = computed( () => props.autoRefresh ? 'تحديث تلقائي' : 'تحديث متوقف' );
 const refreshDot = computed( () => props.autoRefresh ? 'bg-emerald-400' : 'bg-amber-400' );
+const hasActiveFilters = computed( () => Boolean( props.countryFilter || props.searchQuery?.trim() ) );
+const countryFilterLabel = computed( () => {
+    if ( props.countryFilter === 'SA' ) return 'السعودية';
+    if ( props.countryFilter === 'other' ) return 'أخرى';
+    return 'الكل';
+} );
 
 function setCountry ( v )
 {
@@ -65,8 +74,24 @@ function setCountry ( v )
 
 function onSearch ( e )
 {
-    emit( 'update:searchQuery', e.target.value );
+    emit( 'update:searchQuery', e?.target?.value ?? '' );
     emit( 'search-input', e );
+}
+
+function clearSearch ()
+{
+    emit( 'update:searchQuery', '' );
+    emit( 'search-input' );
+}
+
+function resetFilters ()
+{
+    emit( 'reset-filters' );
+}
+
+function setSortMode ( mode )
+{
+    emit( 'update:sortMode', mode );
 }
 </script>
 
@@ -163,12 +188,45 @@ function onSearch ( e )
             </div>
         </div>
 
+        <div
+            v-if="hasActiveFilters"
+            class="flex flex-wrap items-center justify-between gap-2 border-t px-4 sm:px-5 py-2"
+            style="border-color: rgba(255,255,255,0.06);"
+        >
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="text-[11px]" :style="{ color: 'var(--admin-text-dim)' }">الفلاتر النشطة:</span>
+                <span
+                    v-if="countryFilter"
+                    class="inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold"
+                    :style="{ backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text)' }"
+                >
+                    الدولة: {{ countryFilterLabel }}
+                </span>
+                <span
+                    v-if="searchQuery?.trim()"
+                    class="inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold"
+                    :style="{ backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text)' }"
+                >
+                    بحث: {{ searchQuery }}
+                </span>
+            </div>
+            <button
+                type="button"
+                class="text-[11px] font-semibold rounded-lg px-2.5 py-1 transition-colors hover:opacity-90"
+                :style="{ backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-dim)' }"
+                aria-label="إعادة تعيين الفلاتر"
+                @click="resetFilters"
+            >
+                إعادة تعيين
+            </button>
+        </div>
+
         <!-- ── Row 2: Filters + Search ─────────────────────────── -->
         <div
             class="flex flex-col gap-3 border-t px-4 sm:px-5 py-3 md:flex-row md:items-center md:justify-between"
             style="border-color: rgba(255,255,255,0.06);"
         >
-            <div class="flex items-center gap-1.5 overflow-x-auto -mx-1 px-1">
+            <div class="flex flex-wrap items-center gap-2 overflow-x-auto -mx-1 px-1">
                 <button
                     type="button"
                     aria-label="تصفية: عرض الكل"
@@ -193,6 +251,26 @@ function onSearch ( e )
                     :style="countryFilter !== 'other' ? { color: 'var(--admin-text-dim)' } : {}"
                     @click="setCountry( 'other' )"
                 >أخرى</button>
+
+                <span class="mx-1 h-4 w-px bg-white/10"></span>
+
+                <button
+                    type="button"
+                    aria-label="وضع ترتيب: أولوية العمليات"
+                    class="px-3 py-1.5 text-xs font-bold rounded-full transition-all whitespace-nowrap"
+                    :class="sortMode === 'priority' ? 'bg-blue-500/20 text-blue-300 shadow-sm' : 'hover:bg-white/[0.04]'"
+                    :style="sortMode !== 'priority' ? { color: 'var(--admin-text-dim)' } : {}"
+                    @click="setSortMode( 'priority' )"
+                >ترتيب أولوية</button>
+
+                <button
+                    type="button"
+                    aria-label="وضع ترتيب: زمني فقط"
+                    class="px-3 py-1.5 text-xs font-bold rounded-full transition-all whitespace-nowrap"
+                    :class="sortMode === 'time' ? 'bg-violet-500/20 text-violet-300 shadow-sm' : 'hover:bg-white/[0.04]'"
+                    :style="sortMode !== 'time' ? { color: 'var(--admin-text-dim)' } : {}"
+                    @click="setSortMode( 'time' )"
+                >ترتيب زمني</button>
             </div>
 
             <div class="relative w-full md:w-64">
@@ -217,6 +295,16 @@ function onSearch ( e )
                     }"
                     @input="onSearch"
                 />
+                <button
+                    v-if="searchQuery"
+                    type="button"
+                    class="absolute left-2 top-1/2 -translate-y-1/2 rounded-md px-1.5 py-0.5 text-[10px] font-bold transition-colors hover:bg-white/10"
+                    :style="{ color: 'var(--admin-text-dim)' }"
+                    aria-label="مسح البحث"
+                    @click="clearSearch"
+                >
+                    ×
+                </button>
             </div>
         </div>
     </header>

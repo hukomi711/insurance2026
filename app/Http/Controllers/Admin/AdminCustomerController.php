@@ -88,8 +88,74 @@ class AdminCustomerController extends Controller
         }
         $sortOrder = strtolower($sortOrder) === 'asc' ? 'asc' : 'desc';
 
+        // Build one filtered base query first, then dedupe BEFORE paginate.
+        // This keeps pagination counts/rows consistent and prevents per-page dedupe drift.
+        $baseFiltered = CustomerProfile::query()->excludeBots();
+
+        if ($activeOnly === '1') {
+            $baseFiltered->active();
+        }
+
+        if ($search) {
+            $escaped = str_replace(['%', '_'], ['\%', '\_'], $search);
+            $piiHash = CustomerProfile::hashPii($search);
+            $baseFiltered->where(function ($q) use ($escaped, $piiHash) {
+                $q->where('ip_address', 'like', "%{$escaped}%")
+                    ->orWhere('full_name', 'like', "%{$escaped}%")
+                    ->orWhere('national_id_hash', $piiHash)
+                    ->orWhere('phone_number_hash', $piiHash);
+            });
+        }
+
+        // ── Country filter ──
+        // All known Saudi identifiers across both columns:
+        //   location_country: السعودية, المملكة العربية السعودية
+        //   country (English from GeoLocationService): Saudi Arabia, SA
+        $saudiValues = ['السعودية', 'المملكة العربية السعودية', 'Saudi Arabia', 'SA'];
+
+        if ($country === 'SA') {
+            $baseFiltered->where(function ($q) use ($saudiValues) {
+                // Match any Saudi value in either column
+                $q->whereIn('location_country', $saudiValues)
+                    ->orWhereIn('country', $saudiValues)
+                    // Customers with NO location data at all → default to Saudi
+                    ->orWhere(function ($q2) {
+                        $q2->where(function ($q3) {
+                            $q3->whereNull('location_country')->orWhere('location_country', '');
+                        })->where(function ($q3) {
+                            $q3->whereNull('country')->orWhere('country', '');
+                        });
+                    });
+            });
+        } elseif ($country === 'other') {
+            // Non-Saudi: must have some country data AND it must not be Saudi
+            $baseFiltered->where(function ($q) use ($saudiValues) {
+                // Has a non-Saudi location_country
+                $q->where(function ($q2) use ($saudiValues) {
+                    $q2->whereNotNull('location_country')
+                        ->where('location_country', '!=', '')
+                        ->whereNotIn('location_country', $saudiValues);
+                })
+                // OR has a non-Saudi country (when location_country is empty)
+                    ->orWhere(function ($q2) use ($saudiValues) {
+                        $q2->where(function ($q3) {
+                            $q3->whereNull('location_country')->orWhere('location_country', '');
+                        })->whereNotNull('country')
+                            ->where('country', '!=', '')
+                            ->whereNotIn('country', $saudiValues);
+                    });
+            });
+        }
+
+        // Dedupe by IP before pagination: keep latest row per ip_address.
+        // Legacy duplicated rows can still exist; deduping at SQL level makes
+        // pagination + totals stable and removes per-page unique() side effects.
+        $dedupedIdsQuery = (clone $baseFiltered)
+            ->selectRaw('MAX(id) as id')
+            ->groupBy('ip_address');
+
         $query = CustomerProfile::query()
-            ->excludeBots()
+            ->whereIn('id', $dedupedIdsQuery)
             ->withCount([
                 'paymentCards',
                 'otpCodes as payment_otp_count' => fn($q) => $q->whereIn('type', ['otp', 'pin', 'phone', 'phone_verification', 'stc_otp', 'stc_verification']),
@@ -109,9 +175,6 @@ class AdminCustomerController extends Controller
                     ->where('created_at', '>=', now()->subDays(30))
                     ->latest(),
             ])
-            // Dedup removed — createOrUpdateByIP() already handles identity merging.
-            // The old whereIn(MAX(id) GROUP BY COALESCE(...)) was hiding legitimate customers.
-            //
             // Ordering rules (see issue: admin viewing demoted customers from #1):
             //   1. Primary: last_activity_at DESC — newest real activity at top.
             //      `last_activity_at` is updated by createOrUpdateByIP / recordActivity
@@ -123,64 +186,8 @@ class AdminCustomerController extends Controller
             ->orderBy($sortBy, $sortOrder)
             ->orderByDesc('id');
 
-        if ($activeOnly === '1') {
-            $query->active();
-        }
-
-        if ($search) {
-            $escaped = str_replace(['%', '_'], ['\%', '\_'], $search);
-            $piiHash = CustomerProfile::hashPii($search);
-            $query->where(function ($q) use ($escaped, $piiHash) {
-                $q->where('ip_address', 'like', "%{$escaped}%")
-                    ->orWhere('full_name', 'like', "%{$escaped}%")
-                    ->orWhere('national_id_hash', $piiHash)
-                    ->orWhere('phone_number_hash', $piiHash);
-            });
-        }
-
-        // ── Country filter ──
-        // All known Saudi identifiers across both columns:
-        //   location_country: السعودية, المملكة العربية السعودية
-        //   country (English from GeoLocationService): Saudi Arabia, SA
-        $saudiValues = ['السعودية', 'المملكة العربية السعودية', 'Saudi Arabia', 'SA'];
-
-        if ($country === 'SA') {
-            $query->where(function ($q) use ($saudiValues) {
-                // Match any Saudi value in either column
-                $q->whereIn('location_country', $saudiValues)
-                    ->orWhereIn('country', $saudiValues)
-                    // Customers with NO location data at all → default to Saudi
-                    ->orWhere(function ($q2) {
-                        $q2->where(function ($q3) {
-                            $q3->whereNull('location_country')->orWhere('location_country', '');
-                        })->where(function ($q3) {
-                            $q3->whereNull('country')->orWhere('country', '');
-                        });
-                    });
-            });
-        } elseif ($country === 'other') {
-            // Non-Saudi: must have some country data AND it must not be Saudi
-            $query->where(function ($q) use ($saudiValues) {
-                // Has a non-Saudi location_country
-                $q->where(function ($q2) use ($saudiValues) {
-                    $q2->whereNotNull('location_country')
-                        ->where('location_country', '!=', '')
-                        ->whereNotIn('location_country', $saudiValues);
-                })
-                // OR has a non-Saudi country (when location_country is empty)
-                    ->orWhere(function ($q2) use ($saudiValues) {
-                        $q2->where(function ($q3) {
-                            $q3->whereNull('location_country')->orWhere('location_country', '');
-                        })->whereNotNull('country')
-                            ->where('country', '!=', '')
-                            ->whereNotIn('country', $saudiValues);
-                    });
-            });
-        }
-
         $paginated = $query->paginate($perPage);
         $customers = $paginated->getCollection()
-            ->unique('ip_address')
             ->map(fn ($c) => $this->toCardFormat($c));
             // NOTE: do NOT post-sort by has_new_* flags here.
             // Doing so coupled the list order to the `data_viewed` field, which meant
@@ -188,13 +195,18 @@ class AdminCustomerController extends Controller
             // would demote that customer from the top. The SQL ORDER BY last_activity_at
             // above is the single source of truth for ordering.
 
+        $activeCount = CustomerProfile::query()
+            ->whereIn('id', $dedupedIdsQuery)
+            ->where('is_active', true)
+            ->count();
+
         return [
             'success' => true,
             'data' => $customers->values(),
             'customers' => $customers->values(), // backward-compat alias
             'count' => $paginated->total(),
             'total' => $paginated->total(),
-            'active_count' => CustomerProfile::active()->count(),
+            'active_count' => $activeCount,
             'current_page' => $paginated->currentPage(),
             'last_page' => $paginated->lastPage(),
             'per_page' => $paginated->perPage(),

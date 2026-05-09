@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
+import { useInsuranceStore } from '@/store/modules/insurance';
 import { fetchGeoStatus } from '@/utils/geoCheck';
 import dashboardRoutes from '@/dashboard/router';
 
@@ -107,7 +108,8 @@ const routes = [
                 meta: { title: 'مراجعة الطلب - تأمينكم' },
                 beforeEnter: () =>
                 {
-                    if ( !sessionStorage.getItem( 'selectedPlan' ) ) return { name: 'compare' };
+                    const insuranceStore = useInsuranceStore();
+                    if ( !insuranceStore.selectedPlan ) return { name: 'compare' };
                 },
             },
             {
@@ -117,7 +119,8 @@ const routes = [
                 meta: { title: 'الدفع - تأمينكم', hideLayout: true },
                 beforeEnter: () =>
                 {
-                    if ( !sessionStorage.getItem( 'selectedPlan' ) ) return { name: 'compare' };
+                    const insuranceStore = useInsuranceStore();
+                    if ( !insuranceStore.selectedPlan ) return { name: 'compare' };
                 },
             },
             {

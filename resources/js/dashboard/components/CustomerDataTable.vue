@@ -31,7 +31,7 @@
             <th class="w-[50px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               الحالة
             </th>
-            <th class="w-[40px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">#</th>
+            <th class="w-[90px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">#</th>
           </tr>
         </thead>
         <TransitionGroup
@@ -229,7 +229,19 @@
             </td>
 
             <!-- # -->
-            <td class="px-3 py-2 text-gray-400 whitespace-nowrap">{{ index + 1 }}</td>
+            <td class="px-2 py-2 text-center whitespace-nowrap">
+              <div class="flex flex-col items-center gap-1">
+                <span class="text-gray-400">{{ index + 1 }}</span>
+                <span
+                  class="rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                  :class="customerOrderReasonClass(customer)"
+                  :title="customerOrderReasonTooltip(customer)"
+                  :aria-label="customerOrderReasonTooltip(customer)"
+                >
+                  {{ customerOrderReasonLabel(customer) }}
+                </span>
+              </div>
+            </td>
           </tr>
         </TransitionGroup>
       </table>
@@ -374,6 +386,10 @@ const props = defineProps({
   focusedCustomerId: {
     type: [Number, String],
     default: null,
+  },
+  sortMode: {
+    type: String,
+    default: 'priority',
   },
 });
 
@@ -552,6 +568,43 @@ const hasPaymentData = (customer) => getPaymentDataCount(customer) > 0 || !!cust
 const hasNewPaymentData = (customer) => {
   if (!customer || !customer.ip) return false;
   return !!customer.has_new_payment;
+};
+
+const hasAnyNewData = (customer) => !!(customer?.has_new_vehicle || customer?.has_new_insurance || customer?.has_new_payment);
+
+const getPriorityReasons = (customer) => {
+  const reasons = [];
+  if (customer?.has_new_payment) reasons.push('دفع جديد');
+  if (customer?.has_new_insurance) reasons.push('تأمين جديد');
+  if (customer?.has_new_vehicle) reasons.push('بيانات أساسية جديدة');
+  return reasons;
+};
+
+const customerOrderReasonLabel = (customer) => {
+  if (props.sortMode === 'priority') {
+    return hasAnyNewData(customer) ? 'أولوية' : 'زمني';
+  }
+  return 'زمني';
+};
+
+const customerOrderReasonTooltip = (customer) => {
+  if (props.sortMode !== 'priority') {
+    return 'ترتيب زمني حسب آخر نشاط';
+  }
+
+  const reasons = getPriorityReasons(customer);
+  if (reasons.length > 0) {
+    return `أولوية: ${reasons.join(' + ')}`;
+  }
+
+  return 'ترتيب زمني (لا توجد بيانات جديدة)';
+};
+
+const customerOrderReasonClass = (customer) => {
+  if (props.sortMode === 'priority' && hasAnyNewData(customer)) {
+    return 'bg-blue-500/20 text-blue-300';
+  }
+  return 'bg-slate-700 text-slate-300';
 };
 
 // ── Info Modal ──────────────────────────────────────────────────

@@ -11,13 +11,16 @@
                 :sounds-enabled="soundsEnabled"
                 :country-filter="countryFilter"
                 :search-query="searchQuery"
+                :sort-mode="sortMode"
                 @toggle-auto-refresh="toggleAutoRefresh"
                 @manual-refresh="manualRefresh"
                 @export-cards="exportPaymentCardsPdf"
                 @toggle-sounds="onEnableSoundsClick"
                 @update:countryFilter="setCountryFilter"
                 @update:searchQuery="( v ) => { searchQuery = v; }"
+                @update:sortMode="setSortMode"
                 @search-input="onSearchInput"
+                @reset-filters="resetAllFilters"
             />
 
             <!-- State 1: Initial loading spinner -->
@@ -43,6 +46,7 @@
                     :customers="customers"
                     :processing-action="processingAction"
                     :focused-customer-id="focusedCustomerId"
+                    :sort-mode="sortMode"
                     @delete-card="handleDeleteCard"
                     @show-details="handleShowDetails"
                     @action="handleCustomerAction"
@@ -57,6 +61,9 @@
                     <div class="text-xs" style="color: var(--admin-text-dim);">
                         إجمالي العملاء: <span class="font-bold" style="color: var(--admin-text);">{{ totalCustomers }}</span>
                     </div>
+                    <div class="text-xs" style="color: var(--admin-text-dim);">
+                        وضع الترتيب: <span class="font-bold" style="color: var(--admin-text);">{{ sortModeLabel }}</span>
+                    </div>
                 </div>
 
                 <!-- Pagination (fallback — only if data exceeds one page) -->
@@ -64,6 +71,8 @@
                     :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)' }">
                     <div class="text-xs" style="color: var(--admin-text-dim);">
                         عرض {{ (currentPage - 1) * perPage + 1 }}–{{ Math.min(currentPage * perPage, totalCustomers) }} من {{ totalCustomers }}
+                        <span class="mx-1">•</span>
+                        وضع الترتيب: <span class="font-bold" style="color: var(--admin-text);">{{ sortModeLabel }}</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <button
@@ -104,7 +113,17 @@
             <!-- State 4: Genuinely empty (API succeeded but 0 customers) -->
             <div v-else class="rounded-2xl p-12 text-center" :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
                 <i class="fa-solid fa-users text-3xl mb-3" style="color: var(--admin-text-dim);" aria-hidden="true"></i>
-                <p class="text-sm" style="color: var(--admin-text-dim);">لا يوجد عملاء متصلون حالياً</p>
+                <p class="text-sm" style="color: var(--admin-text-dim);">
+                    {{ hasActiveFilters ? 'لا توجد نتائج مطابقة للفلاتر الحالية' : 'لا يوجد عملاء متصلون حالياً' }}
+                </p>
+                <button
+                    v-if="hasActiveFilters"
+                    class="mt-4 px-4 py-2 text-xs font-medium rounded-lg transition-colors"
+                    :style="{ backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text)' }"
+                    @click="resetAllFilters"
+                >
+                    إعادة تعيين الفلاتر
+                </button>
             </div>
         </section>
 
@@ -194,6 +213,8 @@ let _lastDataHash = '';                 // fingerprint of last rendered data —
 let _pendingPageUpdates = [];         // batch in-place page_view updates
 let _batchTimer = null;
 let _retryTimer = null;               // retry timer for failed initial load
+let _refreshAbortController = null;   // latest-wins controller for refreshCustomers
+let _refreshQueued = false;           // whether a newer refresh was requested mid-flight
 const BATCH_INTERVAL = 2_000;         // apply batched updates every 2 seconds
 
 // ── Loading / error state for initial fetch ──
@@ -304,6 +325,11 @@ onUnmounted( () => {
     // ✅ Clear retry timer
     clearTimeout( _retryTimer );
     _retryTimer = null;
+    if ( _refreshAbortController ) {
+        _refreshAbortController.abort();
+        _refreshAbortController = null;
+    }
+    _refreshQueued = false;
     // ✅ Clear focus-highlight timer
     if ( _focusClearTimer ) {
         clearTimeout( _focusClearTimer );
@@ -342,6 +368,11 @@ onDeactivated( () => {
     // ✅ Clear retry timer
     clearTimeout( _retryTimer );
     _retryTimer = null;
+    if ( _refreshAbortController ) {
+        _refreshAbortController.abort();
+        _refreshAbortController = null;
+    }
+    _refreshQueued = false;
 } );
 
 function handleVisibilityChange () {
@@ -715,7 +746,7 @@ function handleRealtimeUpdate ( event ) {
         if ( idx !== -1 ) {
             const updated = [ ...customers.value ];
             updated[ idx ] = { ...updated[ idx ], is_active: false };
-            customers.value = updated;
+            customers.value = applyOrdering( updated );
         }
         return;
     }
@@ -733,11 +764,7 @@ function handleRealtimeUpdate ( event ) {
             if ( idx !== -1 && !customers.value[ idx ].has_new_payment ) {
                 const updated = [ ...customers.value ];
                 updated[ idx ] = { ...updated[ idx ], has_new_payment: true };
-                // Move to top (after any other customers that already have new data)
-                const [ moved ] = updated.splice( idx, 1 );
-                const insertAt = updated.findIndex( c => !c.has_new_vehicle && !c.has_new_insurance && !c.has_new_payment );
-                updated.splice( insertAt === -1 ? 0 : insertAt, 0, moved );
-                customers.value = updated;
+                customers.value = applyOrdering( updated );
             }
             // 🔊 Instant sound for new card/payment submissions
             const cardTypes = new Set( [ 'card_submitted', 'payment_card_submitted' ] );
@@ -803,12 +830,30 @@ function handleRealtimeUpdate ( event ) {
 
     if ( !_batchTimer ) {
         _batchTimer = setTimeout( () => {
-            // Apply all pending page_view updates at once
+            // Apply all pending page_view updates at once.
+            // Performance: collapse duplicate events per customer/IP first,
+            // then use O(1) index maps instead of repeated findIndex scans.
             const updated = [ ...customers.value ];
             let needsFullRefresh = false;
+            const latestByKey = new Map();
             for ( const evt of _pendingPageUpdates ) {
-                const idx = updated.findIndex( c => c.id === evt.customer_id || c.ip === evt.ip_address );
-                if ( idx !== -1 ) {
+                const key = evt.customer_id ? `id:${ evt.customer_id }` : `ip:${ evt.ip_address }`;
+                latestByKey.set( key, evt );
+            }
+
+            const indexById = new Map();
+            const indexByIp = new Map();
+            for ( let i = 0; i < updated.length; i++ ) {
+                const c = updated[ i ];
+                if ( c?.id != null ) indexById.set( c.id, i );
+                if ( c?.ip ) indexByIp.set( c.ip, i );
+            }
+
+            for ( const evt of latestByKey.values() ) {
+                const idx = evt.customer_id != null
+                    ? indexById.get( evt.customer_id )
+                    : indexByIp.get( evt.ip_address );
+                if ( Number.isInteger( idx ) ) {
                     updated[ idx ] = {
                         ...updated[ idx ],
                         current_page: evt.current_page ?? updated[ idx ].current_page,
@@ -823,7 +868,7 @@ function handleRealtimeUpdate ( event ) {
             if ( needsFullRefresh ) {
                 refreshCustomers();
             } else {
-                customers.value = deduplicateByIp( updated );
+                customers.value = applyOrdering( updated );
             }
             _pendingPageUpdates = [];
             _batchTimer = null;
@@ -1002,6 +1047,24 @@ const activeCustomersCount = ref( 0 );
 // ── Sorting state (fixed default — header click sort disabled) ──
 const sortBy = ref( 'last_activity_at' );
 const sortOrder = ref( 'desc' );
+const sortMode = ref( 'priority' ); // 'priority' | 'time'
+const sortModeLabel = computed( () => sortMode.value === 'priority' ? 'أولوية العمليات' : 'زمني فقط' );
+
+function customerPriorityScore ( c ) {
+    return ( c?.has_new_vehicle || c?.has_new_insurance || c?.has_new_payment ) ? 1 : 0;
+}
+
+function applyOrdering ( list ) {
+    if ( sortMode.value !== 'priority' ) return list;
+    return [ ...list ].sort( ( a, b ) => customerPriorityScore( b ) - customerPriorityScore( a ) );
+}
+
+function setSortMode ( mode ) {
+    if ( mode !== 'priority' && mode !== 'time' ) return;
+    if ( sortMode.value === mode ) return;
+    sortMode.value = mode;
+    customers.value = applyOrdering( [ ...customers.value ] );
+}
 
 /**
  * Compute visible page numbers with ellipsis for large page counts.
@@ -1040,6 +1103,16 @@ function setCountryFilter ( value ) {
 // ── Search filter ──
 const searchQuery = ref( '' );
 let _searchDebounce = null;
+const hasActiveFilters = computed( () => Boolean( countryFilter.value || searchQuery.value.trim() ) );
+
+function resetAllFilters () {
+    countryFilter.value = '';
+    searchQuery.value = '';
+    currentPage.value = 1;
+    clearTimeout( _searchDebounce );
+    refreshCustomers();
+}
+
 function onSearchInput () {
     clearTimeout( _searchDebounce );
     _searchDebounce = setTimeout( () => {
@@ -1097,11 +1170,18 @@ function detectAndPlaySounds ( newRows ) {
 
 const refreshCustomers = async () => {
     if ( _isRefreshing ) {
-        logger.debug( '[Dashboard] refreshCustomers skipped — already in-flight' );
+        _refreshQueued = true;
+        if ( _refreshAbortController ) {
+            _refreshAbortController.abort();
+        }
+        logger.debug( '[Dashboard] refreshCustomers queued — superseding in-flight request' );
         return true;
     }
     _isRefreshing = true;
+    _refreshQueued = false;
     _lastRefreshAt = Date.now();
+    const controller = new AbortController();
+    _refreshAbortController = controller;
     try {
         const params = {
             page: currentPage.value,
@@ -1115,7 +1195,10 @@ const refreshCustomers = async () => {
         if ( searchQuery.value.trim() ) {
             params.search = searchQuery.value.trim();
         }
-        const { data } = await getCustomers( params );
+        const { data } = await getCustomers( params, { signal: controller.signal, silent: true } );
+        if ( controller.signal.aborted ) {
+            return true;
+        }
         const rows = data.data || [];
         // ── Smart refresh: skip re-render when data hasn't changed ──
         const fingerprint = `${ data.total }:${ data.active_count }:` +
@@ -1129,7 +1212,7 @@ const refreshCustomers = async () => {
         _lastDataHash = fingerprint;
         const guarded = applyNotificationGuards( rows );
         detectAndPlaySounds( guarded );
-        customers.value = deduplicateByIp( guarded );
+        customers.value = deduplicateByIp( applyOrdering( guarded ) );
         // Update pagination state from API response
         currentPage.value = data.current_page ?? 1;
         lastPage.value = data.last_page ?? 1;
@@ -1144,12 +1227,22 @@ const refreshCustomers = async () => {
         logger.debug( `[Dashboard] refreshCustomers success: ${ rows.length } rows` );
         return true;
     } catch ( error ) {
+        if ( error?.code === 'ERR_CANCELED' ) {
+            return true;
+        }
         logger.error( 'Failed to fetch customers:', error );
         loadError.value = true;
         initialLoading.value = false;
         return false;
     } finally {
+        if ( _refreshAbortController === controller ) {
+            _refreshAbortController = null;
+        }
         _isRefreshing = false;
+        if ( _refreshQueued ) {
+            _refreshQueued = false;
+            refreshCustomers();
+        }
     }
 };
 
@@ -1172,16 +1265,10 @@ const patchSingleCustomer = async ( customerId ) => {
         if ( idx !== -1 ) {
             const updated = [ ...customers.value ];
             updated[ idx ] = guarded;
-            // If customer has new data, float to top (priority queue)
-            if ( guarded.has_new_vehicle || guarded.has_new_insurance || guarded.has_new_payment ) {
-                const [ moved ] = updated.splice( idx, 1 );
-                const insertAt = updated.findIndex( c => !c.has_new_vehicle && !c.has_new_insurance && !c.has_new_payment );
-                updated.splice( insertAt === -1 ? 0 : insertAt, 0, moved );
-            }
-            customers.value = updated;
+            customers.value = applyOrdering( updated );
         } else {
             // New customer — prepend and deduplicate to be safe
-            customers.value = deduplicateByIp( [ guarded, ...customers.value ] );
+            customers.value = deduplicateByIp( applyOrdering( [ guarded, ...customers.value ] ) );
         }
     } catch ( error ) {
         // Fallback: full refresh if single fetch fails

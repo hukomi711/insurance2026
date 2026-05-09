@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Services\PricingSignatureService;
+use App\Services\QuoteCalculationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,6 +12,17 @@ use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
+    private PricingSignatureService $signatureService;
+    private QuoteCalculationService $quoteService;
+
+    public function __construct(
+        PricingSignatureService $signatureService,
+        QuoteCalculationService $quoteService
+    ) {
+        $this->signatureService = $signatureService;
+        $this->quoteService = $quoteService;
+    }
+
     // ─── Server-side price limits (post-20% discount, mirrors pricingConstants.js) ─
     private const PRICE_LIMITS = [
         'third_party'   => ['min' => 300,  'max' => 2500],
@@ -64,6 +77,10 @@ class OrderController extends Controller
 
             // Quote lock
             'quote_lock_token' => 'nullable|string|max:64',
+
+            // Pricing signature (anti-tampering)
+            'pricing_signature' => 'nullable|string|max:255',
+            'pricing_timestamp' => 'nullable|integer',
         ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Order validation failed', [
@@ -119,13 +136,40 @@ class OrderController extends Controller
         ], 201);
     }
 
-    // ─── Price sanity check ───────────────────────────────────────
+    // ─── Price sanity check + signature verification ───────────────────────────────────────
     private function validatePricing(array $data): ?string
     {
         $type     = $data['insurance_type'];
         $subtotal = (float) $data['subtotal'];
         $vat      = (float) $data['vat_amount'];
         $total    = (float) $data['total'];
+        $planId   = $data['plan_id'] ?? null;
+        $signature = $data['pricing_signature'] ?? null;
+        $timestamp = $data['pricing_timestamp'] ?? null;
+
+        // ═══ NEW: Verify digital signature (prevents tampering) ═══
+        if ($signature && $timestamp && $planId) {
+            $sigVerification = $this->signatureService->verifyPacket([
+                'signature' => $signature,
+                'planId' => $planId,
+                'totalPrice' => (int)$total,
+                'timestamp' => (int)$timestamp,
+            ]);
+            if (!$sigVerification['valid']) {
+                Log::warning('Order pricing rejected — signature invalid', [
+                    'reason' => $sigVerification['error'] ?? 'Unknown',
+                    'plan_id' => $planId,
+                    'total' => $total,
+                ]);
+                return 'توقيع الحماية غير صحيح — قد تم تعديل السعر.';
+            }
+        } else {
+            // No signature provided — still validate basic price range
+            Log::info('Order pricing: no signature provided (valid for legacy clients)', [
+                'plan_id' => $planId,
+                'total' => $total,
+            ]);
+        }
 
         // 1. Subtotal within range (allow addons headroom)
         $limits = self::PRICE_LIMITS[$type] ?? null;

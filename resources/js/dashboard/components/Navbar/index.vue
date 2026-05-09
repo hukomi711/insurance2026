@@ -12,64 +12,6 @@
             <Breadcrumb class="hidden lg:flex" />
         </div>
 
-        <!-- Center: Search (sm and up — inline) -->
-        <div class="hidden sm:flex items-center flex-1 max-w-md mx-4">
-            <div ref="searchRef" class="relative w-full">
-                <i class="fa-solid fa-magnifying-glass w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2"
-                    :style="{ color: 'var(--admin-text-dim)' }" aria-hidden="true"></i>
-                <input id="dashboard-search" v-model="searchQuery" type="text" name="dashboard-search" autocomplete="off"
-                    aria-label="بحث في لوحة التحكم"
-                    placeholder="بحث في الوثائق، العملاء..."
-                    class="w-full pr-10 pl-4 py-2 rounded-xl text-sm outline-none transition-colors duration-200"
-                    :style="{
-                        backgroundColor: 'var(--admin-input-bg)',
-                        borderWidth: '1px',
-                        borderColor: 'var(--admin-input-border)',
-                        color: 'var(--admin-input-text)',
-                    }"
-                    @input="onSearchInput"
-                    @keydown.enter="filteredSearch.length && navigateToResult(filteredSearch[0])" />
-
-                <!-- Search Results Dropdown -->
-                <Transition
-                    enter-active-class="transition ease-out duration-150"
-                    enter-from-class="opacity-0 translate-y-1"
-                    enter-to-class="opacity-100 translate-y-0"
-                    leave-active-class="transition ease-in duration-100"
-                    leave-from-class="opacity-100 translate-y-0"
-                    leave-to-class="opacity-0 translate-y-1"
-                >
-                    <div v-if="showSearchResults && filteredSearch.length > 0"
-                        class="absolute right-0 top-full mt-1 w-full rounded-xl shadow-lg overflow-hidden z-50"
-                        :style="{
-                            backgroundColor: 'var(--admin-card-bg)',
-                            borderWidth: '1px',
-                            borderColor: 'var(--admin-card-border)',
-                        }"
-                        dir="rtl">
-                        <button v-for="page in filteredSearch" :key="page.route"
-                            class="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors text-right"
-                            :style="{ color: 'var(--admin-text-secondary)' }"
-                            @click="navigateToResult(page)">
-                            <i class="fa-solid fa-arrow-left text-xs" :style="{ color: 'var(--admin-text-dim)' }" aria-hidden="true"></i>
-                            <span>{{ page.label }}</span>
-                        </button>
-                    </div>
-                </Transition>
-                <div v-if="showSearchResults && searchQuery.trim() && filteredSearch.length === 0"
-                    class="absolute right-0 top-full mt-1 w-full rounded-xl shadow-lg overflow-hidden z-50 p-4 text-center text-sm"
-                    :style="{
-                        backgroundColor: 'var(--admin-card-bg)',
-                        borderWidth: '1px',
-                        borderColor: 'var(--admin-card-border)',
-                        color: 'var(--admin-text-dim)',
-                    }"
-                    dir="rtl">
-                    لا توجد نتائج
-                </div>
-            </div>
-        </div>
-
         <!-- Right: Theme + Debug Toggle + Notifications + User -->
         <div class="flex items-center gap-1 sm:gap-3">
             <!-- Mobile search trigger (<sm only) -->
@@ -333,12 +275,6 @@ const filteredSearch = computed(() => {
 
 function onSearchInput() {
     showSearchResults.value = searchQuery.value.trim().length > 0;
-}
-
-function navigateToResult(page) {
-    searchQuery.value = '';
-    showSearchResults.value = false;
-    router.push({ name: page.route });
 }
 
 function navigateToResultMobile(page) {

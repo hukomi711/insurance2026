@@ -70,6 +70,10 @@ export async function getQuotes ( formData = {} )
                     monthlyPrice: quote.monthlyPrice,
                     basePrice: quote.basePrice,
                     pricingFactors: quote.pricingFactors,
+                    signature: quote.signature,
+                    timestamp: quote.timestamp,
+                    expiresAt: quote.expiresAt,
+                    totalWithVAT: quote.totalWithVAT,
                 };
             }
             return plan;
