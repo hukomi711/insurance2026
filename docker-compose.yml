@@ -107,6 +107,7 @@ services:
     restart: unless-stopped
     environment:
       DB_PASSWORD_FILE: /run/secrets/db_password
+      REVERB_ALLOWED_ORIGINS: "*"
     secrets:
       - db_password
     volumes:

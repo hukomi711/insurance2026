@@ -6,22 +6,25 @@ repository. Follow sections in order. Every command is idempotent unless noted.
 
 > **No real IPs or secrets appear in this document.**
 > Replace placeholders before running:
+>
 > - `tamifortami.online` → your apex domain
 > - `${INS_SERVER_IP}` → your server's public IPv4
 > - `CHANGE_ME` → any value flagged in `.env.production.example`
 
 ---
 
+<!-- markdownlint-disable MD022 MD031 MD032 MD060 -->
+
 ## A) Server Requirements
 
-| Resource | Minimum | Recommended |
-|---|---|---|
-| OS | AlmaLinux 9 (x86_64) | AlmaLinux 9 / RHEL 9 |
-| vCPU | 1 | 2+ |
-| RAM | 2 GB | 4 GB |
-| Disk | 20 GB SSD | 40 GB SSD |
-| Network | Public IPv4 | Public IPv4 + IPv6 |
-| Open ports | 22, 80, 443 | 22, 80, 443 |
+| Resource   | Minimum             | Recommended        |
+| ---------- | ------------------- | ------------------ |
+| OS         | AlmaLinux 9 (x86_64) | AlmaLinux 9 / RHEL 9 |
+| vCPU       | 1                   | 2+                 |
+| RAM        | 2 GB                | 4 GB               |
+| Disk       | 20 GB SSD           | 40 GB SSD          |
+| Network    | Public IPv4         | Public IPv4 + IPv6 |
+| Open ports | 22, 80, 443         | 22, 80, 443        |
 
 Outbound access required to: `download.docker.com`, `github.com`, GHCR, `letsencrypt.org`, your SMTP provider, and the NexaFlow API host.
 
@@ -31,7 +34,7 @@ Outbound access required to: `download.docker.com`, `github.com`, GHCR, `letsenc
 
 Before any deployment, configure A records at your registrar:
 
-```
+```text
 A     tamifortami.online          → ${INS_SERVER_IP}    TTL 300
 A     www.tamifortami.online      → ${INS_SERVER_IP}    TTL 300
 ```
@@ -50,14 +53,19 @@ Both must resolve to `${INS_SERVER_IP}` **before** Let's Encrypt issuance (secti
 ## C) SSH Access
 
 1. Generate a deploy key on your local machine (one-time):
+
    ```bash
    ssh-keygen -t ed25519 -f ~/.ssh/ins2026_deploy -C "ins2026-deploy"
    ```
+
 2. Install the public key on the server (root or sudo user):
+
    ```bash
    ssh-copy-id -i ~/.ssh/ins2026_deploy.pub root@${INS_SERVER_IP}
    ```
+
 3. Verify:
+
    ```bash
    ssh -i ~/.ssh/ins2026_deploy root@${INS_SERVER_IP} 'echo OK'
    ```
@@ -118,16 +126,16 @@ chmod 600 .env.production
 Edit `.env.production` and replace **every** `CHANGE_ME` and every
 `tamifortami.online` occurrence. Required substitutions:
 
-| Key | How to generate |
-|---|---|
-| `APP_KEY` | `docker run --rm -v $PWD:/app -w /app php:8.3-cli php artisan key:generate --show` |
-| `DB_PASSWORD` | `openssl rand -hex 32` |
-| `REVERB_APP_ID` | `openssl rand -hex 12` |
-| `REVERB_APP_KEY` | `openssl rand -hex 12` |
-| `REVERB_APP_SECRET` | `openssl rand -hex 32` |
-| `STATUS_POLL_SECRET` | `openssl rand -hex 32` |
-| `ADMIN_PASSWORD` | `openssl rand -base64 24` |
-| Mail / NexaFlow / IP_API_KEY | from each provider's dashboard |
+| Key                        | How to generate                                                             |
+| -------------------------- | --------------------------------------------------------------------------- |
+| `APP_KEY`                  | `docker run --rm -v $PWD:/app -w /app php:8.3-cli php artisan key:generate --show` |
+| `DB_PASSWORD`              | `openssl rand -hex 32`                                                     |
+| `REVERB_APP_ID`            | `openssl rand -hex 12`                                                     |
+| `REVERB_APP_KEY`           | `openssl rand -hex 12`                                                     |
+| `REVERB_APP_SECRET`        | `openssl rand -hex 32`                                                     |
+| `STATUS_POLL_SECRET`       | `openssl rand -hex 32`                                                     |
+| `ADMIN_PASSWORD`           | `openssl rand -base64 24`                                                  |
+| Mail / NexaFlow / IP_API_KEY | from each provider's dashboard                                         |
 
 Mirror `DB_PASSWORD` into the Docker secret file:
 
@@ -161,11 +169,13 @@ needed on the host.
 ## I) Migrate Database
 
 Fresh install:
+
 ```bash
 docker exec ins2026-app php artisan migrate --force
 ```
 
 Restore from existing dump (optional):
+
 ```bash
 zcat backup.sql.gz | docker exec -i ins2026-db sh -c \
   'mariadb -uroot -p$(cat /run/secrets/db_root_password) insurance2026'
@@ -220,6 +230,7 @@ docker compose up -d nginx
 ```
 
 Renewal (cron, monthly):
+
 ```bash
 docker run --rm -v $PWD/docker/certbot/conf:/etc/letsencrypt \
   certbot/certbot renew --quiet
@@ -251,6 +262,7 @@ docker compose up -d --force-recreate app horizon reverb scheduler
 ## N) Smoke Checks
 
 From the server:
+
 ```bash
 curl -sk https://tamifortami.online/api/health         | jq .
 curl -sk https://tamifortami.online/api/health/queues  | jq .
@@ -258,6 +270,7 @@ curl -sk https://tamifortami.online/api/health/realtime | jq .
 ```
 
 From your local machine:
+
 ```bash
 for path in / /login /sitemap.xml /robots.txt; do
   printf '  %s  https://tamifortami.online%s\n' \
@@ -268,6 +281,7 @@ done
 Expected: `200` for `/`, `/login`, `/sitemap.xml`, `/robots.txt`.
 
 WebSocket smoke from a browser console on `https://tamifortami.online`:
+
 ```js
 new WebSocket('wss://tamifortami.online/app/' + import.meta.env.VITE_REVERB_APP_KEY)
   .addEventListener('open', () => console.log('WS OK'));
@@ -280,20 +294,27 @@ new WebSocket('wss://tamifortami.online/app/' + import.meta.env.VITE_REVERB_APP_
 Each deploy keeps the previous image tagged. To roll back:
 
 1. Identify the previous image SHA:
+
    ```bash
    docker images insurance2026-app --format '{{.ID}} {{.CreatedAt}}'
    ```
+
 2. Re-tag the previous image and recreate:
+
    ```bash
    docker tag <previous-sha> insurance2026-app:rollback
    sed -i 's/image: insurance2026-app$/image: insurance2026-app:rollback/' docker-compose.yml
    docker compose up -d --force-recreate app horizon reverb scheduler
    ```
+
 3. If a migration was applied that must be reverted:
+
    ```bash
    docker exec ins2026-app php artisan migrate:rollback --step=1
    ```
+
 4. Restore the working tree afterwards:
+
    ```bash
    git checkout -- docker-compose.yml
    ```
@@ -376,5 +397,7 @@ docker exec ins2026-app tail -f storage/logs/laravel.log
 | Prune unused images | `docker image prune -f` | monthly |
 
 ---
+
+<!-- markdownlint-enable MD022 MD031 MD032 MD060 -->
 
 **End of runbook.**
