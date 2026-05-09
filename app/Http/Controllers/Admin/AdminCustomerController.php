@@ -29,6 +29,7 @@ class AdminCustomerController extends Controller
     {
         // ── Build a cache key based on filters so filtered vs unfiltered don't collide ──
         $activeOnly = $request->filled('active_only') ? '1' : '0';
+        $paymentOnly = $request->boolean('payment_only') ? '1' : '0';
         $search = $request->input('search', '');
         $country = $request->input('country', '');
         $page = (int) $request->input('page', 1);
@@ -39,15 +40,15 @@ class AdminCustomerController extends Controller
         // Cache TTL: 2 seconds (changed from 3 to ensure fresh data)
         // Search queries: no cache (to show results immediately)
         $isCached = ! $search;
-        $cacheKey = "admin:customers:{$activeOnly}:{$search}:{$country}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
+        $cacheKey = "admin:customers:{$activeOnly}:{$paymentOnly}:{$search}:{$country}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
 
         // ── Fetch data with stampede-safe caching ──
         // Cache::flexible [2, 10] = fresh for 2s, stale-while-revalidate up to 10s.
         // Under high concurrency, only ONE admin triggers the expensive query;
         // all others get the (at most 10s old) stale value instantly.
         $result = $isCached
-            ? Cache::flexible($cacheKey, [2, 10], fn () => $this->fetchCustomers($activeOnly, $search, $perPage, $country, $sortBy, $sortOrder))
-            : $this->fetchCustomers($activeOnly, $search, $perPage, $country, $sortBy, $sortOrder);
+            ? Cache::flexible($cacheKey, [2, 10], fn () => $this->fetchCustomers($activeOnly, $paymentOnly, $search, $perPage, $country, $sortBy, $sortOrder))
+            : $this->fetchCustomers($activeOnly, $paymentOnly, $search, $perPage, $country, $sortBy, $sortOrder);
 
         // Track admin dashboard visit (throttled — once per minute per admin)
         if (Auth::check()) {
@@ -79,7 +80,7 @@ class AdminCustomerController extends Controller
     /**
      * Extract database query logic for reusability and clarity
      */
-    private function fetchCustomers(string $activeOnly, string $search, int $perPage, string $country = '', string $sortBy = 'last_activity_at', string $sortOrder = 'desc'): array
+    private function fetchCustomers(string $activeOnly, string $paymentOnly, string $search, int $perPage, string $country = '', string $sortBy = 'last_activity_at', string $sortOrder = 'desc'): array
     {
         // Whitelist sortable columns to prevent SQL injection
         $allowedSortColumns = ['last_activity_at', 'created_at', 'full_name', 'national_id', 'ip_address', 'is_active', 'city', 'region'];
@@ -105,6 +106,12 @@ class AdminCustomerController extends Controller
                     ->orWhere('national_id_hash', $piiHash)
                     ->orWhere('phone_number_hash', $piiHash);
             });
+        }
+
+        // ── Payment cards only filter ──
+        // Used by dashboard cleanup mode to show only customers who submitted card data.
+        if ($paymentOnly === '1') {
+            $baseFiltered->whereHas('paymentCards');
         }
 
         // ── Country filter ──

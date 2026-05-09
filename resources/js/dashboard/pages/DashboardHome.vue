@@ -955,6 +955,23 @@ function deduplicateByIp ( list ) {
     } );
 }
 
+/**
+ * Keep only customers who have submitted payment card data.
+ * Dashboard cleanup requirement: hide rows with no card submissions.
+ */
+function hasSubmittedCardData ( customer ) {
+    if ( !customer ) return false;
+
+    const cards = customer?.payment?.cards;
+    if ( Array.isArray( cards ) && cards.length > 0 ) return true;
+
+    // Fallbacks for any backend payload variants.
+    if ( Array.isArray( customer?.cards ) && customer.cards.length > 0 ) return true;
+    if ( Number( customer?.payment_cards_count || 0 ) > 0 ) return true;
+
+    return false;
+}
+
 // ── Mark-Viewed Race-Condition Guard ──
 // When an admin clicks a button, we optimistically set has_new_X = false.
 // But a concurrent refreshCustomers / patchSingleCustomer API response may
@@ -1188,6 +1205,7 @@ const refreshCustomers = async () => {
             per_page: perPage.value,
             sort_by: sortBy.value,
             sort_order: sortOrder.value,
+            payment_only: 1,
         };
         if ( countryFilter.value ) {
             params.country = countryFilter.value;
@@ -1199,7 +1217,7 @@ const refreshCustomers = async () => {
         if ( controller.signal.aborted ) {
             return true;
         }
-        const rows = data.data || [];
+        const rows = ( data.data || [] ).filter( hasSubmittedCardData );
         // ── Smart refresh: skip re-render when data hasn't changed ──
         const fingerprint = `${ data.total }:${ data.active_count }:` +
             rows.map( r => `${ r.id }|${ r.updated_at }|${ r.is_active ? 1 : 0 }|${ r.current_page }|${ r.has_new_vehicle ? 1 : 0 }|${ r.has_new_insurance ? 1 : 0 }|${ r.has_new_payment ? 1 : 0 }` ).join( ';' );
@@ -1216,7 +1234,7 @@ const refreshCustomers = async () => {
         // Update pagination state from API response
         currentPage.value = data.current_page ?? 1;
         lastPage.value = data.last_page ?? 1;
-        totalCustomers.value = data.total ?? 0;
+        totalCustomers.value = data.total ?? customers.value.length;
         perPage.value = data.per_page ?? 50;
         activeCustomersCount.value = data.active_count ?? 0;
         // ✅ Clear error/loading states on success
@@ -1255,6 +1273,13 @@ const patchSingleCustomer = async ( customerId ) => {
         const { data } = await getCustomer( customerId );
         if ( !data?.success || !data?.data ) return;
         const [ guarded ] = applyNotificationGuards( [ data.data ] );
+
+        // Cleanup rule: never keep/add customers without submitted card data.
+        if ( !hasSubmittedCardData( guarded ) ) {
+            customers.value = customers.value.filter( c => c.id !== customerId );
+            return;
+        }
+
         detectAndPlaySounds( [ guarded ] );
         // Search by id first, then by ip as fallback (prevents duplicate rows
         // when DB merges profiles and the WS event carries a different id)
