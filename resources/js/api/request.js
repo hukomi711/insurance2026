@@ -19,6 +19,16 @@ const NO_RETRY_429_PATHS = [
     "/phone-verification/resend",
 ];
 
+/**
+ * Auth form endpoints should manage their own 401/403 UI states
+ * (e.g. login banner messages) and must not trigger global session-expired flow.
+ */
+const AUTH_FORM_PATHS = [
+    "/admin/login",
+    "/admin/verify-code",
+    "/admin/resend-code",
+];
+
 /** Maximum number of automatic retries on 419 (CSRF mismatch) */
 const MAX_419_RETRIES = 1;
 const CSRF_RETRY_HEADER = "x-csrf-retry";
@@ -149,6 +159,15 @@ request.interceptors.response.use(
 
         if ( status === 401 || status === 403 )
         {
+            const isAuthFormEndpoint = AUTH_FORM_PATHS.some(
+                ( p ) => error.config?.url?.includes( p ),
+            );
+
+            if ( isAuthFormEndpoint )
+            {
+                return Promise.reject( error );
+            }
+
             // Clear auth token only — preserve customer insurance form data
             localStorage.removeItem( "auth_token" );
             logger.warn(
