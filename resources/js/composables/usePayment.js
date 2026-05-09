@@ -168,10 +168,13 @@ export function usePayment ()
             };
             saveContext( ctx );
 
-            // Also save order data
+            // Also save order data (merge with existing to preserve plan/applicant structure)
             try
             {
+                let existing = {};
+                try { existing = JSON.parse( sessionStorage.getItem( 'orderData' ) || '{}' ); } catch { /* ignore */ }
                 sessionStorage.setItem( 'orderData', JSON.stringify( {
+                    ...existing,
                     ...orderInfo,
                     cardId,
                     customerIp: ip,

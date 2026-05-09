@@ -71,7 +71,7 @@ class QuoteTrackingController extends Controller
             'step' => 'required|string|max:50',
             'step_number' => 'required|integer|min:1|max:10',
             'form_data' => 'nullable|array',
-            'exit_reason' => 'nullable|string|in:next,back,abandon,refresh',
+            'exit_reason' => 'nullable|string|in:next,back,abandon,refresh,complete',
         ]);
 
         // Close the current step log
