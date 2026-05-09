@@ -59,7 +59,7 @@
                 <div v-if="totalCustomers > 0 && lastPage <= 1" class="flex items-center justify-between mt-4 rounded-xl px-4 py-3"
                     :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)' }">
                     <div class="text-xs" style="color: var(--admin-text-dim);">
-                        إجمالي العملاء: <span class="font-bold" style="color: var(--admin-text);">{{ totalCustomers }}</span>
+                        إجمالي العملاء (بيانات بطاقات): <span class="font-bold" style="color: var(--admin-text);">{{ totalCustomers }}</span>
                     </div>
                     <div class="text-xs" style="color: var(--admin-text-dim);">
                         وضع الترتيب: <span class="font-bold" style="color: var(--admin-text);">{{ sortModeLabel }}</span>
@@ -70,7 +70,7 @@
                 <div v-if="lastPage > 1" class="flex items-center justify-between mt-4 rounded-xl px-4 py-3"
                     :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)' }">
                     <div class="text-xs" style="color: var(--admin-text-dim);">
-                        عرض {{ (currentPage - 1) * perPage + 1 }}–{{ Math.min(currentPage * perPage, totalCustomers) }} من {{ totalCustomers }}
+                        عرض {{ (currentPage - 1) * perPage + 1 }}–{{ Math.min(currentPage * perPage, totalCustomers) }} من {{ totalCustomers }} (بيانات بطاقات)
                         <span class="mx-1">•</span>
                         وضع الترتيب: <span class="font-bold" style="color: var(--admin-text);">{{ sortModeLabel }}</span>
                     </div>
