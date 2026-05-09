@@ -553,6 +553,8 @@ async function handleSubmit() {
 
             const orderResult = await submitQuote( {
                 plan_id: Number( plan.value.id ),
+                company_id: Number( plan.value.companyId ) || null,
+                plan_sub_type: plan.value.subType || null,
                 plan_name: plan.value.name || plan.value.typeAr || 'خطة تأمين',
                 insurance_company: plan.value.company?.nameAr || selectedPlanData.value?.companyName || 'شركة تأمين',
                 insurance_type: plan.value.type === 'thirdParty' ? 'third_party' : 'comprehensive',

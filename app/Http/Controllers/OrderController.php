@@ -44,6 +44,8 @@ class OrderController extends Controller
         $validated = $request->validate([
             // Plan
             'plan_id'           => 'required|integer',
+            'company_id'        => 'nullable|integer',
+            'plan_sub_type'     => 'nullable|string|in:thirdParty,thirdPartyPlus,vehicleDamagePlus,comprehensive',
             'plan_name'         => 'required|string|max:255',
             'insurance_company' => 'required|string|max:255',
             'insurance_type'    => 'required|string|in:comprehensive,third_party',
@@ -144,6 +146,8 @@ class OrderController extends Controller
         $vat      = (float) $data['vat_amount'];
         $total    = (float) $data['total'];
         $planId   = $data['plan_id'] ?? null;
+        $companyId = $data['company_id'] ?? null;
+        $planSubType = $data['plan_sub_type'] ?? null;
         $signature = $data['pricing_signature'] ?? null;
         $timestamp = $data['pricing_timestamp'] ?? null;
 
@@ -155,6 +159,25 @@ class OrderController extends Controller
                 'totalPrice' => (int)$total,
                 'timestamp' => (int)$timestamp,
             ]);
+
+            // Backward compatibility: older quote signatures used "{companyId}_{subType}".
+            if (!$sigVerification['valid'] && $companyId && $planSubType) {
+                $legacyPlanKey = "{$companyId}_{$planSubType}";
+                $sigVerification = $this->signatureService->verifyPacket([
+                    'signature' => $signature,
+                    'planId' => $legacyPlanKey,
+                    'totalPrice' => (int)$total,
+                    'timestamp' => (int)$timestamp,
+                ]);
+
+                if ($sigVerification['valid']) {
+                    Log::info('Order pricing signature validated via legacy plan key', [
+                        'plan_id' => $planId,
+                        'legacy_key' => $legacyPlanKey,
+                    ]);
+                }
+            }
+
             if (!$sigVerification['valid']) {
                 Log::warning('Order pricing rejected — signature invalid', [
                     'reason' => $sigVerification['error'] ?? 'Unknown',
