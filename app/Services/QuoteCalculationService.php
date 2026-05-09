@@ -31,11 +31,11 @@ class QuoteCalculationService
     /**
      * Calculate pricing for multiple plans (batch).
      *
-     * @param  array  $plans    [{ companyId, subType, deductible }, ...]
+        * @param  array  $plans    [{ id?, companyId, subType, deductible }, ...]
      * @param  array  $vehicle  { year, make, estimatedValue, purposeOfUse, carModification, hasTrailer, transmissionType }
      * @param  array  $driver   { dateOfBirth, drivingExperience, accidentCounts, trafficViolations, education, foreignLicense, healthConditions, ncdYears, city, nightParking, expectedKM, additionalDrivers }
      * @param  array  $policy   { repairMethod, deductible? }
-     * @return array  [ { companyId, subType, annualPrice, monthlyPrice, vatAmount, totalWithVAT, basePrice, pricingFactors, notes, signature, timestamp }, ... ]
+        * @return array  [ { id?, companyId, subType, annualPrice, monthlyPrice, vatAmount, totalWithVAT, basePrice, pricingFactors, notes, signature, timestamp }, ... ]
      */
     public function calculateForPlans(array $plans, array $vehicle, array $driver, array $policy): array
     {
@@ -62,8 +62,8 @@ class QuoteCalculationService
 
         return array_map(function (array $quote) use ($logCalculation) {
             // Generate signature for this quote
-            $planId = "{$quote['companyId']}_{$quote['subType']}";
-            $sigPacket = $this->signatureService->generateSignature($planId, $quote['totalWithVAT']);
+            $planId = !empty($quote['id']) ? (int) $quote['id'] : "{$quote['companyId']}_{$quote['subType']}";
+            $sigPacket = $this->signatureService->generateSignature($planId, (int) $quote['totalWithVAT']);
 
             // Log this calculation
             if ($logCalculation) {
@@ -173,6 +173,7 @@ class QuoteCalculationService
         }
 
         return [
+            'id'             => $plan['id'] ?? null,
             'companyId'      => $plan['companyId'],
             'subType'        => $plan['subType'],
             'annualPrice'    => $annualPrice,

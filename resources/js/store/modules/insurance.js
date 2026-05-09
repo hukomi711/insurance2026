@@ -76,7 +76,7 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
     const calculatedQuotes = ref( [] );
 
     // ══════════════════════════════════════════════
-    //  الخطة المختارة (مصدر الحقيقة لتدفق الشراء)
+    //  الخطة المختارة (Compare → OrderReview → Checkout)
     // ══════════════════════════════════════════════
     const selectedPlan = ref( null );
 
@@ -168,7 +168,7 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
     }
 
     /**
-     * تعيين الخطة المختارة لتدفق Compare → Review → Checkout
+     * تعيين الخطة المختارة في التدفق
      * @param {Object|null} plan
      */
     function setSelectedPlan ( plan )

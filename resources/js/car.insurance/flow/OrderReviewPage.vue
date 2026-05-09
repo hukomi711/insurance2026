@@ -21,6 +21,20 @@
         <div class="box py-6 sm:py-8">
             <div class="max-w-2xl mx-auto space-y-5">
 
+                <!-- Signature Status -->
+                <div v-if="signatureStatus"
+                    class="rounded-xl border px-4 py-3 text-sm"
+                    :class="signatureStatus.valid ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'">
+                    <div class="flex items-center gap-2 font-semibold">
+                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {{ signatureStatusTitle }}
+                    </div>
+                    <p class="mt-1">{{ signatureStatusMessage }}</p>
+                </div>
+
                 <!-- ═══ Policy Data Card ═══ -->
                 <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
                     <div class="bg-primary/5 px-4 sm:px-5 py-3 border-b border-primary/10">
@@ -51,13 +65,14 @@
                             </div>
                         </div>
                         <!-- Policy details rows -->
-                        <div class="space-y-2.5">
+                        <div v-if="policyRows.length" class="space-y-2.5">
                             <div v-for="item in policyRows" :key="item.label"
                                 class="flex items-center justify-between text-sm">
                                 <span class="text-slate-500">{{ item.label }}</span>
                                 <span class="font-semibold text-foreground ltr-nums">{{ item.value }}</span>
                             </div>
                         </div>
+                        <p v-else class="text-sm text-slate-500">لا توجد تفاصيل وثيقة إضافية متاحة حالياً.</p>
                     </div>
                 </div>
 
@@ -73,12 +88,15 @@
                             بيانات المركبة
                         </h2>
                     </div>
-                    <div class="p-4 sm:p-5 space-y-2.5">
+                    <div v-if="vehicleRows.length" class="p-4 sm:p-5 space-y-2.5">
                         <div v-for="item in vehicleRows" :key="item.label"
                             class="flex items-center justify-between text-sm">
                             <span class="text-slate-500">{{ item.label }}</span>
                             <span class="font-semibold text-foreground">{{ item.value }}</span>
                         </div>
+                    </div>
+                    <div v-else class="p-4 sm:p-5">
+                        <p class="text-sm text-slate-500">تعذّر تحميل بيانات المركبة. يمكنك العودة للعروض ثم المحاولة مرة أخرى.</p>
                     </div>
                 </div>
 
@@ -198,7 +216,9 @@
 
                 <!-- ═══ Pay Button ═══ -->
                 <button
-                    class="w-full h-14 rounded-2xl bg-primary text-white font-bold text-base hover:bg-primary-dark active:bg-primary-darker transition-colors inline-flex items-center justify-center gap-2.5 shadow-lg shadow-primary/20 cursor-pointer"
+                    :disabled="!canProceedToPayment"
+                    class="w-full h-14 rounded-2xl bg-primary text-white font-bold text-base transition-colors inline-flex items-center justify-center gap-2.5 shadow-lg shadow-primary/20"
+                    :class="canProceedToPayment ? 'hover:bg-primary-dark active:bg-primary-darker cursor-pointer' : 'opacity-50 cursor-not-allowed'"
                     @click="proceedToPayment">
                     <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         aria-hidden="true">
@@ -208,6 +228,10 @@
                     الانتقال للدفع — {{ formatDecimal( totalPrice ) }} ر.س
                 </button>
 
+                <p v-if="!canProceedToPayment" class="text-center text-xs text-red-600">
+                    لا يمكن المتابعة للدفع حالياً — يرجى تحديث العروض واختيار عرض جديد.
+                </p>
+
                 <!-- Security note -->
                 <p class="text-center text-xs text-muted flex items-center justify-center gap-1.5">
                     <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -216,12 +240,6 @@
                             d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
                     الأسعار مثبتة لمدة 15 دقيقة — الدفع مشفر وآمن بنسبة 100%
-                </p>
-
-                <p v-if="signatureStatus"
-                    class="text-center text-xs"
-                    :class="signatureStatus.valid ? 'text-emerald-700' : 'text-red-600'">
-                    {{ signatureStatus.message }}
                 </p>
 
             </div>
@@ -246,6 +264,21 @@ const { getQuote, verify: verifySignaturePacket, getSignaturePacket } = usePrici
 // ── Selected plan source of truth (store/state only) ──
 const selectedPlanData = computed( () => insuranceStore.selectedPlan );
 const signatureStatus = ref( null );
+
+const canProceedToPayment = computed( () =>
+    Boolean( selectedPlanData.value && signatureStatus.value?.valid && totalPrice.value > 0 )
+);
+const signatureStatusTitle = computed( () =>
+    signatureStatus.value?.valid ? 'تم التحقق من السعر' : 'تعذّر التحقق من السعر'
+);
+const signatureStatusMessage = computed( () => {
+    if ( !signatureStatus.value ) return '';
+    if ( signatureStatus.value.valid ) {
+        const mins = Math.max( 1, Math.ceil( ( signatureStatus.value.remainingSeconds || 0 ) / 60 ) );
+        return `السعر محمي ومثبت — صالح لمدة ${ mins } دقيقة.`;
+    }
+    return 'انتهت صلاحية التوقيع أو تغيّر السعر. الرجاء العودة للعروض وإعادة الاختيار.';
+} );
 
 const planId = computed( () => selectedPlanData.value?.id || selectedPlanData.value?.planId || null );
 const plan = computed( () => planId.value ? getPlanWithCompany( planId.value ) : null );
@@ -328,6 +361,13 @@ function formatDecimal( num ) {
 }
 
 function proceedToPayment() {
+    signatureStatus.value = verifySignaturePacket();
+
+    if ( !signatureStatus.value?.valid ) {
+        router.replace( { name: 'compare' } );
+        return;
+    }
+
     const signaturePacket = getSignaturePacket();
     if ( !signaturePacket ) {
         router.replace( { name: 'compare' } );

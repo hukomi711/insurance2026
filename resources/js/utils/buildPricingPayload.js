@@ -21,6 +21,7 @@ export function buildPricingPayload ( formData, plans = [] )
 
     return {
         plans: plans.map( plan => ( {
+            id: Number( plan.id ) || 0,
             companyId: Number( plan.companyId ),
             subType: plan.subType,
             deductible: Number( plan.deductible ) || 0,
