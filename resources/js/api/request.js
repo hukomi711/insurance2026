@@ -159,11 +159,16 @@ request.interceptors.response.use(
 
         if ( status === 401 || status === 403 )
         {
+            const requestUrl = String( error.config?.url || "" );
             const isAuthFormEndpoint = AUTH_FORM_PATHS.some(
-                ( p ) => error.config?.url?.includes( p ),
+                ( p ) => requestUrl.includes( p ),
             );
 
-            if ( isAuthFormEndpoint )
+            const isAuthPage =
+                window.location.pathname === "/login" ||
+                window.location.pathname === "/admin-verify";
+
+            if ( isAuthFormEndpoint || isAuthPage )
             {
                 return Promise.reject( error );
             }
