@@ -154,8 +154,12 @@ server {
         allow 212.34.23.0/24;
         allow 176.29.26.0/24;        # admin ISP subnet (dynamic)
         allow 176.29.27.0/24;        # admin ISP subnet (dynamic)
+        allow 176.29.110.0/24;       # incident allowlist (dynamic ISP subnet)
+        allow 176.29.159.0/24;       # mobile ISP subnet
         allow 176.29.167.0/24;       # admin office subnet
         allow 51.252.190.177;        # current admin IP
+        allow 95.187.140.107;        # current admin IP
+        allow 212.34.20.184;         # incident allowlist (admin current IP)
         allow 94.249.2.177;
         allow 92.253.31.0/24;        # Amman office /24
         allow 2a01:9700:50ec:7c00::/64;  # owner IPv6 (Amman)
@@ -175,8 +179,12 @@ server {
         allow 212.34.23.0/24;
         allow 176.29.26.0/24;        # admin ISP subnet (dynamic)
         allow 176.29.27.0/24;        # admin ISP subnet (dynamic)
+        allow 176.29.110.0/24;       # incident allowlist (dynamic ISP subnet)
+        allow 176.29.159.0/24;       # mobile ISP subnet
         allow 176.29.167.0/24;       # admin office subnet
         allow 51.252.190.177;        # current admin IP
+        allow 95.187.140.107;        # current admin IP
+        allow 212.34.20.184;         # incident allowlist (admin current IP)
         allow 94.249.2.177;
         allow 92.253.31.0/24;        # Amman office /24
         allow 2a01:9700:50ec:7c00::/64;  # owner IPv6 (Amman)
