@@ -38,6 +38,8 @@ class DatabaseSeeder extends Seeder
 
         $this->command?->info('✅ DatabaseSeeder: admin user ensured.');
 
+        $this->call(SiteSettingsSeeder::class);
+
         if (app()->environment(['local', 'testing'])) {
             $this->call(DemoDataSeeder::class);
         } else {

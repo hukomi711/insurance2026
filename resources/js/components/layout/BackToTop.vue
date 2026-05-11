@@ -2,7 +2,7 @@
   <transition name="fade">
     <button
       v-if="showButton"
-      class="fixed bottom-20 left-4 lg:bottom-8 lg:left-6 z-30 w-11 h-11 lg:w-12 lg:h-12 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
+      class="fixed bottom-24 left-4 lg:bottom-28 lg:left-6 z-30 w-11 h-11 lg:w-12 lg:h-12 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dark)] text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110"
       aria-label="العودة للأعلى"
       @click="scrollToTop"
     >

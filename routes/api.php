@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\LiveChatController;
 use App\Http\Controllers\Admin\LoginAttemptController;
 use App\Http\Controllers\Admin\QuoteMonitorController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\SiteSettingsController;
 use App\Http\Controllers\Admin\SystemMonitorController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\ContactController;
@@ -38,6 +39,7 @@ use App\Http\Controllers\PricingConstantsController;
 use App\Http\Controllers\QuoteCalculationController;
 use App\Http\Controllers\QuoteLockController;
 use App\Http\Controllers\QuoteTrackingController;
+use App\Http\Controllers\SiteConfigController;
 use App\Http\Controllers\StatusController;
 use Illuminate\Support\Facades\Route;
 
@@ -160,6 +162,9 @@ Route::prefix('status')->middleware(['status.sig', 'throttle:status-poll', 'geo.
 
 // ─── Contact Form (public — called from SPA) ───────────────────────
 Route::post('/contact', [ContactController::class, 'store'])->middleware(['throttle:5,1', 'geo.api']);
+
+// ─── Site Config (public — contact info + feature flags for the SPA) ─
+Route::get('/site-config', [SiteConfigController::class, 'index'])->middleware('throttle:120,1');
 
 // ─── Orders (public — called from SPA checkout) ────────────────────
 Route::prefix('orders')->middleware(['throttle:30,1', 'geo.api'])->group(function () {
@@ -341,6 +346,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'throttle:120,1'])-
     Route::get('settings', [SettingsController::class, 'index']);
     Route::put('settings', [SettingsController::class, 'update']);
     Route::post('settings/password', [SettingsController::class, 'changePassword'])->middleware('throttle:3,1');
+
+    // ─── Site Settings (global contact info, WhatsApp, …) ───
+    Route::get('site-settings', [SiteSettingsController::class, 'index']);
+    Route::put('site-settings', [SiteSettingsController::class, 'update']);
 
     // ─── User Management ────────────────────────────────────
     Route::get('users', [UserManagementController::class, 'index']);

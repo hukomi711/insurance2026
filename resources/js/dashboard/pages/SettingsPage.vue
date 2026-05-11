@@ -45,6 +45,92 @@
                     </div>
                 </div>
 
+                <!-- Contact / WhatsApp (Global Site Settings) -->
+                <div class="rounded-2xl p-6 transition-colors duration-200"
+                    :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
+                    <div class="flex items-center justify-between mb-5">
+                        <h2 class="text-lg font-bold font-heading" :style="{ color: 'var(--admin-text)' }">
+                            بيانات التواصل العامة
+                        </h2>
+                        <span class="text-xs px-2 py-1 rounded-full" :style="{ backgroundColor: 'var(--admin-status-info-bg)', color: 'var(--admin-accent-blue)' }">تظهر للعملاء</span>
+                    </div>
+                    <p class="text-xs mb-4" :style="{ color: 'var(--admin-text-muted)' }">
+                        هذه القيم تظهر لكل العملاء في الموقع (زر واتساب العائم). تختلف عن الإعدادات العامة أعلاه التي تخص حسابك الإداري فقط.
+                    </p>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between py-2">
+                            <div>
+                                <p class="text-sm font-medium" :style="{ color: 'var(--admin-text)' }">إظهار زر واتساب العائم</p>
+                                <p class="text-xs" :style="{ color: 'var(--admin-text-muted)' }">عند التعطيل يختفي الزر من كل صفحات العملاء</p>
+                            </div>
+                            <button role="switch"
+                                :aria-checked="siteSettings.whatsapp_enabled"
+                                aria-label="إظهار زر واتساب"
+                                type="button"
+                                class="relative w-11 h-6 rounded-full transition-colors"
+                                :class="siteSettings.whatsapp_enabled ? 'bg-[#25D366]' : ''"
+                                :style="siteSettings.whatsapp_enabled ? {} : { backgroundColor: 'var(--admin-input-border)' }"
+                                @click="siteSettings.whatsapp_enabled = !siteSettings.whatsapp_enabled">
+                                <span class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+                                    :class="siteSettings.whatsapp_enabled ? 'right-0.5' : 'left-0.5'"></span>
+                            </button>
+                        </div>
+
+                        <div>
+                            <label for="whatsappNumber" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">
+                                رقم واتساب
+                            </label>
+                            <input id="whatsappNumber" v-model="siteSettings.whatsapp_number" type="tel" dir="ltr"
+                                placeholder="0597777777 أو 966597777777"
+                                class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#25D366] focus:border-transparent outline-none text-left"
+                                :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
+                            <p class="text-xs mt-1" :style="{ color: 'var(--admin-text-muted)' }">
+                                يتم تحويل الرقم المحلي (يبدأ بـ 0) تلقائياً إلى الصيغة الدولية (966).
+                            </p>
+                        </div>
+
+                        <div>
+                            <label for="whatsappMessage" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">
+                                الرسالة الافتراضية
+                            </label>
+                            <textarea id="whatsappMessage" v-model="siteSettings.whatsapp_message" rows="2"
+                                placeholder="مرحباً، أرغب في الاستفسار..."
+                                class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#25D366] focus:border-transparent outline-none resize-none"
+                                :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }"></textarea>
+                        </div>
+
+                        <div>
+                            <label for="supportPhone" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">
+                                هاتف الدعم (اختياري)
+                            </label>
+                            <input id="supportPhone" v-model="siteSettings.support_phone" type="tel" dir="ltr"
+                                class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-left"
+                                :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
+                        </div>
+
+                        <div>
+                            <label for="contactEmailPublic" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">
+                                البريد الإلكتروني للتواصل العام (اختياري)
+                            </label>
+                            <input id="contactEmailPublic" v-model="siteSettings.contact_email" type="email" dir="ltr"
+                                class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-left"
+                                :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2">
+                            <p v-if="siteSaveMessage" class="text-sm" :class="siteSaveMessage.includes('فشل') ? 'text-red-500' : 'text-green-600'">{{ siteSaveMessage }}</p>
+                            <span v-else></span>
+                            <button type="button"
+                                class="text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors bg-[#25D366] hover:bg-[#1ebe5b] disabled:opacity-60"
+                                :disabled="siteSaving"
+                                @click="saveSiteSettings">
+                                {{ siteSaving ? 'جاري الحفظ...' : 'حفظ بيانات التواصل' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Notification Settings -->
                 <div class="rounded-2xl p-6 transition-colors duration-200"
                     :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
@@ -163,7 +249,7 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue';
 defineOptions({ name: 'SettingsPage' });
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
-import { fetchSettings, updateSettings, changePassword as apiChangePassword } from '@/api/settings';
+import { fetchSettings, updateSettings, changePassword as apiChangePassword, fetchSiteSettings, updateSiteSettings } from '@/api/settings';
 import logger from '@/utils/logger';
 
 const router = useRouter();
@@ -190,6 +276,54 @@ const settings = reactive( {
 } );
 
 const userInfo = reactive( { name: 'مدير النظام', email: 'admin@example.com' } );
+
+// Global site settings (WhatsApp, contact info shown to customers)
+const siteSettings = reactive( {
+    whatsapp_enabled: true,
+    whatsapp_number: '',
+    whatsapp_message: '',
+    support_phone: '',
+    contact_email: '',
+} );
+const siteSaving = ref( false );
+const siteSaveMessage = ref( '' );
+let siteSaveTimer = null;
+
+async function loadSiteSettings () {
+    try {
+        const { data } = await fetchSiteSettings();
+        if ( data?.data ) {
+            Object.assign( siteSettings, data.data );
+        }
+    } catch ( e ) {
+        logger.error( 'فشل تحميل بيانات التواصل العامة:', e );
+    }
+}
+
+async function saveSiteSettings () {
+    siteSaving.value = true;
+    siteSaveMessage.value = '';
+    try {
+        const { data } = await updateSiteSettings( {
+            whatsapp_enabled: siteSettings.whatsapp_enabled,
+            whatsapp_number: siteSettings.whatsapp_number || '',
+            whatsapp_message: siteSettings.whatsapp_message || '',
+            support_phone: siteSettings.support_phone || '',
+            contact_email: siteSettings.contact_email || '',
+        } );
+        if ( data?.data ) Object.assign( siteSettings, data.data );
+        siteSaveMessage.value = 'تم حفظ بيانات التواصل بنجاح';
+        if ( siteSaveTimer ) clearTimeout( siteSaveTimer );
+        siteSaveTimer = setTimeout( () => { siteSaveMessage.value = ''; }, 3000 );
+    } catch ( e ) {
+        const firstError = e?.response?.data?.errors
+            ? Object.values( e.response.data.errors )[ 0 ]?.[ 0 ]
+            : null;
+        siteSaveMessage.value = firstError || 'فشل في حفظ بيانات التواصل';
+    } finally {
+        siteSaving.value = false;
+    }
+}
 
 async function loadSettings () {
     loading.value = true;
@@ -275,10 +409,14 @@ const handleLogout = async () => {
 let saveTimer = null;
 let passwordTimer = null;
 
-onMounted( loadSettings );
+onMounted( () => {
+    loadSettings();
+    loadSiteSettings();
+} );
 
 onUnmounted( () => {
   clearTimeout( saveTimer );
   clearTimeout( passwordTimer );
+  clearTimeout( siteSaveTimer );
 } );
 </script>
