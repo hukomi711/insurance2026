@@ -124,7 +124,8 @@ class GeoLocationService
     /**
      * هل الزائر من السعودية؟
      *
-     * Fail-Open: إذا فشل تحديد الموقع يُعتبر سعودي (لعدم تعطيل الموقع)
+     * Fail-Open: إذا فشل تحديد الموقع أو كان كود البلد فارغاً/غير معروف
+     * يُعتبر سعودي (لتجنّب حظر زوار حقيقيين على نطاقات IP غير مفهرسة في MaxMind).
      */
     public function isSaudiArabia(string $ip): bool
     {
@@ -135,9 +136,17 @@ class GeoLocationService
             return true;
         }
 
+        $countryCode = $location['country_code'] ?? '';
+
+        // Fail-Open: كود البلد فارغ أو unknown → نسمح
+        // (MaxMind قد يُرجع موقعاً جزئياً بدون country_code لنطاقات mobile/ISP غير مفهرسة)
+        if ($countryCode === '' || strtoupper($countryCode) === 'UNKNOWN') {
+            return true;
+        }
+
         $allowedCountries = $this->getAllowedCountries();
 
-        return in_array($location['country_code'] ?? '', $allowedCountries, true);
+        return in_array($countryCode, $allowedCountries, true);
     }
 
     /**
