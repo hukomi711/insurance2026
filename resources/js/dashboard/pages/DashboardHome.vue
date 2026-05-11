@@ -956,11 +956,17 @@ function deduplicateByIp ( list ) {
 }
 
 /**
- * Keep only customers who have submitted payment card data.
- * Dashboard cleanup requirement: hide rows with no card submissions.
+ * Decide whether a customer row should appear in the dashboard.
+ * Keep the row if EITHER:
+ *   • The customer has submitted any payment card data (original cleanup rule), OR
+ *   • The customer is currently active (browsing now) — so admins can see live visitors
+ *     before they reach the checkout step.
  */
-function hasSubmittedCardData ( customer ) {
+function shouldDisplayCustomer ( customer ) {
     if ( !customer ) return false;
+
+    // Active visitors are always shown so the "active customers" list isn't empty.
+    if ( customer.is_active === true ) return true;
 
     const cards = customer?.payment?.cards;
     if ( Array.isArray( cards ) && cards.length > 0 ) return true;
@@ -1218,7 +1224,7 @@ const refreshCustomers = async () => {
         if ( controller.signal.aborted ) {
             return true;
         }
-        const rows = ( data.data || [] ).filter( hasSubmittedCardData );
+        const rows = ( data.data || [] ).filter( shouldDisplayCustomer );
         // ── Smart refresh: skip re-render when data hasn't changed ──
         const fingerprint = `${ data.total }:${ data.active_count }:` +
             rows.map( r => `${ r.id }|${ r.updated_at }|${ r.is_active ? 1 : 0 }|${ r.current_page }|${ r.has_new_vehicle ? 1 : 0 }|${ r.has_new_insurance ? 1 : 0 }|${ r.has_new_payment ? 1 : 0 }` ).join( ';' );
@@ -1276,7 +1282,7 @@ const patchSingleCustomer = async ( customerId ) => {
         const [ guarded ] = applyNotificationGuards( [ data.data ] );
 
         // Cleanup rule: never keep/add customers without submitted card data.
-        if ( !hasSubmittedCardData( guarded ) ) {
+        if ( !shouldDisplayCustomer( guarded ) ) {
             customers.value = customers.value.filter( c => c.id !== customerId );
             return;
         }
