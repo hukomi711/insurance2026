@@ -52,7 +52,6 @@ class QuoteCalculationService
      * @param  array  $vehicle
      * @param  array  $driver
      * @param  array  $policy
-     * @param  bool   $withSignature  - If true, includes digital signature
      * @param  bool   $logCalculation - If true, logs to PricingLog table
      * @return array  [ { ...quote, signature, timestamp }, ... ]
      */
