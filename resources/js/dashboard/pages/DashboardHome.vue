@@ -1057,7 +1057,8 @@ function applyNotificationGuards ( list ) {
 const currentPage = ref( 1 );
 const lastPage = ref( 1 );
 const totalCustomers = ref( 0 );
-const perPage = ref( 500 );
+// Keep dashboard payloads lightweight to avoid network stalls/timeouts on weaker links.
+const perPage = ref( 150 );
 
 const activeCustomersCount = ref( 0 );
 
