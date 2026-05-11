@@ -146,7 +146,7 @@ if [[ "$REPO_URL" =~ ^git@ || "$REPO_URL" =~ ^ssh:// ]]; then
   echo "─────────────────────────────────────────────────────────────"
   echo "  Add this key to GitHub:"
   echo "    Repo → Settings → Deploy keys → Add deploy key"
-  echo "    Title: tamifortami-prod    Allow write access: NO"
+  echo "    Title: tamicom-prod    Allow write access: NO"
   echo "─────────────────────────────────────────────────────────────"
   # Check if GitHub auth already works (deploy key already registered)
   AUTHMSG="$($SSH 'ssh -T -o BatchMode=yes -o StrictHostKeyChecking=accept-new git@github.com 2>&1 || true' | tr -d '\r')"
