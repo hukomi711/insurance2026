@@ -7,7 +7,7 @@ repository. Follow sections in order. Every command is idempotent unless noted.
 > **No real IPs or secrets appear in this document.**
 > Replace placeholders before running:
 >
-> - `tamifortami.online` → your apex domain
+> - `tamicom.site` → your apex domain
 > - `${INS_SERVER_IP}` → your server's public IPv4
 > - `CHANGE_ME` → any value flagged in `.env.production.example`
 
@@ -35,15 +35,15 @@ Outbound access required to: `download.docker.com`, `github.com`, GHCR, `letsenc
 Before any deployment, configure A records at your registrar:
 
 ```text
-A     tamifortami.online          → ${INS_SERVER_IP}    TTL 300
-A     www.tamifortami.online      → ${INS_SERVER_IP}    TTL 300
+A     tamicom.site          → ${INS_SERVER_IP}    TTL 300
+A     www.tamicom.site      → ${INS_SERVER_IP}    TTL 300
 ```
 
 Verify propagation from your local machine:
 
 ```bash
-nslookup tamifortami.online 8.8.8.8
-nslookup www.tamifortami.online 8.8.8.8
+nslookup tamicom.site 8.8.8.8
+nslookup www.tamicom.site 8.8.8.8
 ```
 
 Both must resolve to `${INS_SERVER_IP}` **before** Let's Encrypt issuance (section L), otherwise certbot will fail.
@@ -124,7 +124,7 @@ chmod 600 .env.production
 ## G) Fill in Real Values
 
 Edit `.env.production` and replace **every** `CHANGE_ME` and every
-`tamifortami.online` occurrence. Required substitutions:
+`tamicom.site` occurrence. Required substitutions:
 
 | Key                        | How to generate                                                             |
 | -------------------------- | --------------------------------------------------------------------------- |
@@ -224,8 +224,8 @@ docker run --rm -p 80:80 \
   -v $PWD/docker/certbot/conf:/etc/letsencrypt \
   -v $PWD/docker/certbot/www:/var/www/certbot \
   certbot/certbot certonly --standalone --non-interactive --agree-tos \
-  -m admin@tamifortami.online \
-  -d tamifortami.online -d www.tamifortami.online
+  -m admin@tamicom.site \
+  -d tamicom.site -d www.tamicom.site
 docker compose up -d nginx
 ```
 
@@ -264,26 +264,26 @@ docker compose up -d --force-recreate app horizon reverb scheduler
 From the server:
 
 ```bash
-curl -sk https://tamifortami.online/api/health         | jq .
-curl -sk https://tamifortami.online/api/health/queues  | jq .
-curl -sk https://tamifortami.online/api/health/realtime | jq .
+curl -sk https://tamicom.site/api/health         | jq .
+curl -sk https://tamicom.site/api/health/queues  | jq .
+curl -sk https://tamicom.site/api/health/realtime | jq .
 ```
 
 From your local machine:
 
 ```bash
 for path in / /login /sitemap.xml /robots.txt; do
-  printf '  %s  https://tamifortami.online%s\n' \
-    "$(curl -sk -o /dev/null -w '%{http_code}' https://tamifortami.online$path)" "$path"
+  printf '  %s  https://tamicom.site%s\n' \
+    "$(curl -sk -o /dev/null -w '%{http_code}' https://tamicom.site$path)" "$path"
 done
 ```
 
 Expected: `200` for `/`, `/login`, `/sitemap.xml`, `/robots.txt`.
 
-WebSocket smoke from a browser console on `https://tamifortami.online`:
+WebSocket smoke from a browser console on `https://tamicom.site`:
 
 ```js
-new WebSocket('wss://tamifortami.online/app/' + import.meta.env.VITE_REVERB_APP_KEY)
+new WebSocket('wss://tamicom.site/app/' + import.meta.env.VITE_REVERB_APP_KEY)
   .addEventListener('open', () => console.log('WS OK'));
 ```
 
@@ -333,7 +333,7 @@ check `docker compose ps redis` is `healthy`.
 
 ### Reverb: clients can't connect / 403 origin
 - Verify `REVERB_ALLOWED_ORIGINS` includes the exact scheme + host
-  (e.g. `https://tamifortami.online`, no trailing slash).
+  (e.g. `https://tamicom.site`, no trailing slash).
 - After editing `.env.production`, **force-recreate** reverb (a `restart`
   re-uses stale env): `docker compose up -d --force-recreate reverb`.
 - Confirm nginx proxies `/app/*` and `/apps/*` to `reverb:8080` with WebSocket

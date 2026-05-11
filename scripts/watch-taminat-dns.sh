@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 TARGET='159.198.70.148'
-DOMAIN='tamifortami.online'
+DOMAIN='tamicom.site'
 LOG='/root/tamifortami-dns-watch.log'
 ok=0
 echo "=== DNS watch started at $(date -u) UTC ===" >> "$LOG"
