@@ -1058,7 +1058,7 @@ const currentPage = ref( 1 );
 const lastPage = ref( 1 );
 const totalCustomers = ref( 0 );
 // Keep dashboard payloads lightweight to avoid network stalls/timeouts on weaker links.
-const perPage = ref( 150 );
+const perPage = ref( 200 );
 
 const activeCustomersCount = ref( 0 );
 
