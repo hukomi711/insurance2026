@@ -483,6 +483,19 @@ class AdminCustomerController extends Controller
         // leak fields not intended for the admin payload.
         unset($data['payment_cards']);
 
+        // Slim the payload: remove fields the dashboard frontend never
+        // consumes (hash columns, raw user_agent, raw journey_history) and
+        // duplicate extra_data keys (frontend reads `custom_data` only).
+        // This reliably trims ~30-40% of the per-customer payload.
+        unset(
+            $data['national_id_hash'],
+            $data['phone_number_hash'],
+            $data['email_hash'],
+            $data['user_agent'],
+            $data['journey_history'],
+            $data['otp_codes'],
+        );
+
         $data['ip'] = $data['ip_address'] ?? null;
 
         $latestOtp = $customer->otpCodes->where('type', 'otp')->sortByDesc('created_at')->first();

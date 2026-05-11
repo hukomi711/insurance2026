@@ -37,6 +37,11 @@ Schedule::command('customers:update-locations')
     ->weeklyOn(1, '04:00')
     ->withoutOverlapping();
 
+// Hard-delete orphan customer profiles older than 30 days nightly at 3:30 AM
+Schedule::command('customers:prune-orphans --days=30')
+    ->dailyAt('03:30')
+    ->withoutOverlapping();
+
 // Detect abandoned funnel sessions (stalled users) every 5 minutes
 Schedule::command('funnel:detect-abandoned')
     ->everyFiveMinutes()
