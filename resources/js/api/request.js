@@ -1,4 +1,4 @@
-﻿import axios from "axios";
+import axios from "axios";
 import { useNotificationsStore } from "@/store";
 import logger from "@/utils/logger";
 import { getSessionToken } from "@/utils/sessionToken";

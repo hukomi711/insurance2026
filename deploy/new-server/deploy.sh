@@ -9,7 +9,7 @@
 #
 # Usage (fresh deploy, no dump):
 #   INS_SERVER_IP=159.198.70.148 \
-#   INS_DOMAIN=tamicom.site \
+#   INS_DOMAIN=tamiicom.com \
 #   INS_REPO_URL=git@github.com:<user>/insurance2026.git \
 #   INS_BRANCH=hardening/clean-rebuild \
 #   bash deploy/new-server/deploy.sh
