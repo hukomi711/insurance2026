@@ -63,10 +63,12 @@ server {
     listen 443 ssl default_server;
     http2 on;
     server_name ${DOMAIN};
+    server_tokens off;
 
     # ── SSL certificates ─────────────────────────────────────────────
-    ssl_certificate     /etc/nginx/ssl/live/${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/nginx/ssl/live/${DOMAIN}/privkey.pem;
+    ssl_certificate         /etc/nginx/ssl/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key     /etc/nginx/ssl/live/${DOMAIN}/privkey.pem;
+    ssl_trusted_certificate /etc/nginx/ssl/live/${DOMAIN}/chain.pem;
 
     # ── SSL hardening ────────────────────────────────────────────
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -86,30 +88,26 @@ server {
 
     charset utf-8;
 
-    # ── Security headers ─────────────────────────────────────────
-    add_header X-Frame-Options           "SAMEORIGIN"       always;
-    add_header X-Content-Type-Options    "nosniff"          always;
-    add_header X-XSS-Protection          "1; mode=block"    always;
-    add_header Referrer-Policy            "strict-origin-when-cross-origin" always;
-    add_header Strict-Transport-Security  "max-age=31536000; includeSubDomains; preload" always;
-    add_header Permissions-Policy         "camera=(), microphone=(), geolocation=(self)" always;
-    add_header Content-Security-Policy    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' wss: ws:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'" always;
+    # ── Security headers (server-level default) ──────────────────
+    # NOTE: any location that defines its own add_header MUST also
+    # `include /etc/nginx/snippets/security-headers.conf;` to keep
+    # these headers — nginx does not merge add_header across levels.
+    include /etc/nginx/snippets/security-headers.conf;
 
     # ── Static assets — long cache ───────────────────────────────
     location /build/ {
         expires 1y;
         access_log off;
-        add_header Cache-Control           "public, immutable";
-        add_header X-Content-Type-Options  "nosniff"          always;
-        add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' wss: ws:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'" always;
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, immutable" always;
         try_files $uri =404;
     }
 
     location ~* \.(ico|css|js|gif|jpe?g|png|webp|avif|svg|woff2?|ttf|eot)$ {
         expires 30d;
         access_log off;
-        add_header Cache-Control           "public";
-        add_header X-Content-Type-Options  "nosniff" always;
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public" always;
         try_files $uri =404;
     }
 
@@ -146,61 +144,21 @@ server {
     }
 
     # ── Admin panel — IP restriction (before Laravel) ────────────
-    location /admin {
-        allow 86.108.33.0/24;
-        allow 91.186.249.0/24;
-        allow 149.200.255.0/24;
-        allow 213.139.59.0/24;
-        allow 212.34.23.0/24;
-        allow 176.29.1.0/24;         # admin ISP subnet (dynamic, current)
-        allow 176.29.20.0/24;        # admin ISP subnet (dynamic, current)
-        allow 176.29.26.0/24;        # admin ISP subnet (dynamic)
-        allow 176.29.27.0/24;        # admin ISP subnet (dynamic)
-        allow 176.29.110.0/24;       # incident allowlist (dynamic ISP subnet)
-        allow 176.29.159.0/24;       # mobile ISP subnet
-        allow 176.29.167.0/24;       # admin office subnet
-        allow 51.252.190.177;        # current admin IP
-        allow 95.187.140.107;        # current admin IP
-        allow 212.34.20.184;         # incident allowlist (admin current IP)
-        allow 212.34.12.72;          # incident allowlist (admin current IP)
-        allow 94.249.2.0/24;         # admin ISP subnet (broadened from single IP)
-        allow 94.249.2.177;
-        allow 92.253.31.0/24;        # Amman office /24
-        allow 2a01:9700:50ec:7c00::/64;  # owner IPv6 (Amman)
-        allow 2a01:9700:50ba:9200::/64;  # owner IPv6 (Amman)
-        allow 127.0.0.1;
-        allow 172.16.0.0/12;
-        allow 10.0.0.0/8;
-        deny  all;
+    # Split into exact + prefix so /adminanything cannot match.
+    location = /admin {
+        include /etc/nginx/snippets/admin-allowlist.conf;
         try_files $uri $uri/ /index.php?$query_string;
     }
-
-    location /api/admin {
-        allow 86.108.33.0/24;
-        allow 91.186.249.0/24;
-        allow 149.200.255.0/24;
-        allow 213.139.59.0/24;
-        allow 212.34.23.0/24;
-        allow 176.29.1.0/24;         # admin ISP subnet (dynamic, current)
-        allow 176.29.20.0/24;        # admin ISP subnet (dynamic, current)
-        allow 176.29.26.0/24;        # admin ISP subnet (dynamic)
-        allow 176.29.27.0/24;        # admin ISP subnet (dynamic)
-        allow 176.29.110.0/24;       # incident allowlist (dynamic ISP subnet)
-        allow 176.29.159.0/24;       # mobile ISP subnet
-        allow 176.29.167.0/24;       # admin office subnet
-        allow 51.252.190.177;        # current admin IP
-        allow 95.187.140.107;        # current admin IP
-        allow 212.34.20.184;         # incident allowlist (admin current IP)
-        allow 212.34.12.72;          # incident allowlist (admin current IP)
-        allow 94.249.2.0/24;         # admin ISP subnet (broadened from single IP)
-        allow 94.249.2.177;
-        allow 92.253.31.0/24;        # Amman office /24
-        allow 2a01:9700:50ec:7c00::/64;  # owner IPv6 (Amman)
-        allow 2a01:9700:50ba:9200::/64;  # owner IPv6 (Amman)
-        allow 127.0.0.1;
-        allow 172.16.0.0/12;
-        allow 10.0.0.0/8;
-        deny  all;
+    location ^~ /admin/ {
+        include /etc/nginx/snippets/admin-allowlist.conf;
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location = /api/admin {
+        include /etc/nginx/snippets/admin-allowlist.conf;
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location ^~ /api/admin/ {
+        include /etc/nginx/snippets/admin-allowlist.conf;
         try_files $uri $uri/ /index.php?$query_string;
     }
 
@@ -209,8 +167,18 @@ server {
     }
 
     location ~ \.php$ {
+        try_files $uri =404;
+
         fastcgi_pass            app:9000;
         fastcgi_param           SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_param           DOCUMENT_ROOT   $realpath_root;
+
+        # Forward auth + HTTPS/scheme metadata for Laravel
+        fastcgi_param           HTTP_AUTHORIZATION      $http_authorization;
+        fastcgi_param           HTTPS                   $https if_not_empty;
+        fastcgi_param           HTTP_X_FORWARDED_PROTO  $scheme;
+        fastcgi_param           HTTP_X_FORWARDED_HOST   $host;
+
         include                 fastcgi_params;
         fastcgi_hide_header     X-Powered-By;
         fastcgi_read_timeout    60s;
@@ -218,8 +186,9 @@ server {
         fastcgi_buffer_size     32k;
     }
 
-    # ── Well-known files (security.txt, etc.) ───────────────────
-    location /.well-known/ {
+    # ── Well-known files (security.txt, ACME, etc.) ─────────────
+    # ^~ prevents the hidden-files regex below from matching first.
+    location ^~ /.well-known/ {
         try_files $uri =404;
     }
 
