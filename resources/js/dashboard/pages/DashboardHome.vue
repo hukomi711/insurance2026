@@ -281,8 +281,11 @@ onMounted( async () => {
     document.addEventListener( 'click', enableSounds, { once: true } );
     document.addEventListener( 'click', () => { soundsEnabled.value = true; }, { once: true } );
 
-    // ✅ Register with central polling before initial fetch
-    registerPollingCallback( 'refreshCustomers', refreshCustomers );
+    // ✅ Register with central polling before initial fetch.
+    //    Skip polling-driven refresh while a search is active — the user is
+    //    typing and the debounced search handler will refresh on its own;
+    //    polling on top would cause flicker and double-fetch.
+    registerPollingCallback( 'refreshCustomers', _pollingRefreshCustomers );
     connectDashboardWebSocket();
     // ✅ Refresh immediately when the tab regains focus
     document.addEventListener( 'visibilitychange', handleVisibilityChange );
@@ -339,7 +342,7 @@ onUnmounted( () => {
 
 // ── KeepAlive lifecycle: pause/resume resources when cached ──
 onActivated( () => {
-    registerPollingCallback( 'refreshCustomers', refreshCustomers );
+    registerPollingCallback( 'refreshCustomers', _pollingRefreshCustomers );
     connectDashboardWebSocket();
     document.addEventListener( 'visibilitychange', handleVisibilityChange );
     // ✅ Retry-aware refresh on reactivation
@@ -1063,15 +1066,27 @@ function applyNotificationGuards ( list ) {
 const currentPage = ref( 1 );
 const lastPage = ref( 1 );
 const totalCustomers = ref( 0 );
-// 500 per page — admin request. Backend caps at 500.
-const perPage = ref( 500 );
+// 100 per page — covers typical active load while keeping payload small.
+// Reduced from 500 to cut ~5s polling response from ~1.6 MB → ~300 KB.
+// Backend hard-caps at 500; pagination UI handles overflow.
+const perPage = ref( 100 );
 
 const activeCustomersCount = ref( 0 );
 
 // ── Sorting state (fixed default — header click sort disabled) ──
 const sortBy = ref( 'last_activity_at' );
 const sortOrder = ref( 'desc' );
-const sortMode = ref( 'priority' ); // 'priority' | 'time'
+// ✅ Persist sortMode across refreshes via localStorage.
+const SORT_MODE_STORAGE_KEY = 'dashboard:sortMode';
+function _loadStoredSortMode () {
+    try {
+        const v = localStorage.getItem( SORT_MODE_STORAGE_KEY );
+        return ( v === 'priority' || v === 'time' ) ? v : 'priority';
+    } catch ( _e ) {
+        return 'priority';
+    }
+}
+const sortMode = ref( _loadStoredSortMode() ); // 'priority' | 'time'
 const sortModeLabel = computed( () => sortMode.value === 'priority' ? 'أولوية العمليات' : 'زمني فقط' );
 
 function customerPriorityScore ( c ) {
@@ -1087,6 +1102,7 @@ function setSortMode ( mode ) {
     if ( mode !== 'priority' && mode !== 'time' ) return;
     if ( sortMode.value === mode ) return;
     sortMode.value = mode;
+    try { localStorage.setItem( SORT_MODE_STORAGE_KEY, mode ); } catch ( _e ) { /* quota / private mode */ }
     customers.value = applyOrdering( [ ...customers.value ] );
 }
 
@@ -1269,6 +1285,22 @@ const refreshCustomers = async () => {
             refreshCustomers();
         }
     }
+};
+
+/**
+ * Polling-driven refresh wrapper.
+ * Skips the refresh when an active search query is present — the dedicated
+ * debounced search handler (onSearchInput) is responsible for refreshing
+ * search results, and a competing polling tick would cause flicker / wasted
+ * server load / a race against the search debounce.
+ * Direct user actions still call refreshCustomers() unconditionally.
+ */
+const _pollingRefreshCustomers = () => {
+    if ( searchQuery.value && searchQuery.value.trim() ) {
+        logger.debug( '[Dashboard] polling tick skipped — search active' );
+        return Promise.resolve( true );
+    }
+    return refreshCustomers();
 };
 
 /**

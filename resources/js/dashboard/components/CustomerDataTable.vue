@@ -582,7 +582,12 @@ const getPriorityReasons = (customer) => {
 
 const customerOrderReasonLabel = (customer) => {
   if (props.sortMode === 'priority') {
-    return hasAnyNewData(customer) ? 'أولوية' : 'زمني';
+    // In priority mode, only flag rows that actually have new data as
+    // "أولوية". Rows without new data are still ordered by priority score
+    // (their score is 0), so labelling them "زمني" is misleading. Use a
+    // neutral dash to indicate "normal/no flag" while the table mode badge
+    // in the footer remains the source of truth for the active sort mode.
+    return hasAnyNewData(customer) ? 'أولوية' : '—';
   }
   return 'زمني';
 };
