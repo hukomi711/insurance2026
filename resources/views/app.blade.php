@@ -38,15 +38,11 @@
 												content="قارن أسعار تأمين المركبات من أفضل شركات التأمين في المملكة العربية السعودية.">
 								<meta name="twitter:image" content="{{ url("/images/og-image.png") }}">
 								<link rel="canonical" href="{{ url("/") }}">
-								@production
-												@if (!empty($viteFonts["noto-kufi"]))
-																<link rel="preload" as="font" type="font/woff2" href="/build/{{ $viteFonts["noto-kufi"] }}"
-																				crossorigin>
-												@endif
-												@if (!empty($viteFonts["roboto"]))
-																<link rel="preload" as="font" type="font/woff2" href="/build/{{ $viteFonts["roboto"] }}" crossorigin>
-												@endif
-								@endproduction
+								{{-- Note: previously preloaded noto-kufi + roboto woff2 here. Removed because
+								     the preload href (from $viteFonts) did not exactly match the URL that
+								     @fontsource @font-face rules request after Vite hashing, triggering
+								     "preloaded but not used" warnings. CSS @import in app.css still loads
+								     them on demand with font-display: swap. --}}
 
 								{{-- Inline critical CSS — renders skeleton instantly before any bundle loads --}}
 								<style>
