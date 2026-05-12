@@ -7,6 +7,7 @@ use App\Services\PricingSignatureService;
 use App\Services\QuoteCalculationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -150,6 +151,68 @@ class OrderController extends Controller
         $planSubType = $data['plan_sub_type'] ?? null;
         $signature = $data['pricing_signature'] ?? null;
         $timestamp = $data['pricing_timestamp'] ?? null;
+        $quoteLockToken = $data['quote_lock_token'] ?? null;
+
+        // ═══ Strongest check: server-issued quote-lock snapshot ═══
+        // The lock was created by QuoteLockController from a server-side calculation
+        // and stored in cache for 60 min. If the client supplies one, we require
+        // an EXACT match against the snapshot — no need to recalculate from scratch.
+        if ($quoteLockToken) {
+            $snapshot = Cache::get('quote_lock:' . $quoteLockToken);
+
+            if (! is_array($snapshot)) {
+                Log::warning('Order pricing rejected — quote lock missing or expired', [
+                    'plan_id' => $planId,
+                    'token_present' => true,
+                ]);
+
+                return 'انتهت صلاحية عرض السعر. يرجى إعادة طلب عرض جديد.';
+            }
+
+            // Same insurance type (third_party vs comprehensive)?
+            if (isset($snapshot['insurance_type']) && $snapshot['insurance_type'] !== $type) {
+                Log::warning('Order pricing rejected — insurance_type mismatch with quote lock', [
+                    'expected' => $snapshot['insurance_type'],
+                    'submitted' => $type,
+                ]);
+
+                return 'نوع التأمين غير مطابق لعرض السعر المحفوظ.';
+            }
+
+            // Same plan?
+            if (isset($snapshot['plan_id']) && (int) $snapshot['plan_id'] !== (int) $planId) {
+                Log::warning('Order pricing rejected — plan_id mismatch with quote lock', [
+                    'expected' => $snapshot['plan_id'],
+                    'submitted' => $planId,
+                ]);
+
+                return 'خطة التأمين غير مطابقة لعرض السعر المحفوظ.';
+            }
+
+            // Exact amounts (1 halala tolerance for float rounding)
+            foreach (['subtotal' => $subtotal, 'vat_amount' => $vat, 'total' => $total] as $field => $submitted) {
+                if (! isset($snapshot[$field])) {
+                    continue;
+                }
+                if (abs((float) $snapshot[$field] - $submitted) > 0.01) {
+                    Log::warning('Order pricing rejected — amount mismatch with quote lock', [
+                        'field' => $field,
+                        'snapshot' => $snapshot[$field],
+                        'submitted' => $submitted,
+                        'plan_id' => $planId,
+                    ]);
+
+                    return 'تم تعديل السعر بعد إصدار العرض. يرجى إعادة طلب عرض جديد.';
+                }
+            }
+
+            // Lock matched — the price was authenticated by /api/quotes/lock.
+            // Drop through to HMAC verification below as a second defence layer.
+            Log::info('Order pricing: quote lock matched', [
+                'plan_id' => $planId,
+                'total' => $total,
+            ]);
+        }
 
         // ═══ NEW: Verify digital signature (prevents tampering) ═══
         if ($signature && $timestamp && $planId) {

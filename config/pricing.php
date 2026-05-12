@@ -227,7 +227,15 @@ return [
     ],
 
     // ─── NEW: Digital signature configuration ───
-    'signature_ttl' => 3600,  // Signature valid for 1 hour (3600 seconds)
+    // Dedicated HMAC key for pricing signatures. Falls back to APP_KEY
+    // when empty (backward compatible). Set PRICING_SIGNATURE_KEY in .env
+    // to a long random secret to decouple from APP_KEY rotation.
+    'signature_key' => env('PRICING_SIGNATURE_KEY', ''),
+    'signature_ttl' => (int) env('PRICING_SIGNATURE_TTL', 3600),  // Signature valid for 1 hour (3600 seconds)
+
+    // ─── Promotional discount applied AFTER risk-factor pricing, BEFORE VAT ───
+    // 0.80 = 20% off. Set to 1.0 to disable. Override via env without code change.
+    'promotional_discount_factor' => (float) env('PRICING_PROMO_FACTOR', 0.80),
 
     // ─── Pricing version (for audit trail and sync) ───
     'version' => '1.1.0',

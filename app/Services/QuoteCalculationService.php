@@ -55,24 +55,47 @@ class QuoteCalculationService
      * @param  bool   $logCalculation - If true, logs to PricingLog table
      * @return array  [ { ...quote, signature, timestamp }, ... ]
      */
-    public function calculateForPlansWithSignature(array $plans, array $vehicle, array $driver, array $policy, bool $logCalculation = true): array
+    public function calculateForPlansWithSignature(array $plans, array $vehicle, array $driver, array $policy, bool $logCalculation = false): array
     {
         $quotes = $this->calculateForPlans($plans, $vehicle, $driver, $policy);
 
         return array_map(function (array $quote) use ($logCalculation) {
-            // Generate signature for this quote
-            $planId = !empty($quote['id']) ? (int) $quote['id'] : "{$quote['companyId']}_{$quote['subType']}";
-            $sigPacket = $this->signatureService->generateSignature($planId, (int) $quote['totalWithVAT']);
+            // Generate signature for this quote.
+            // NOTE: planId is kept as string to avoid (int) cast collapsing slug ids
+            // like "tawuniya_basic" or "quote_abc123" to 0. PricingSignatureService
+            // canonicalises to string internally so numeric ids still match.
+            // NOTE: totalWithVAT is currently signed in SAR integer units (not halalas)
+            // because OrderController::validatePricing() also passes (int) $total in SAR.
+            // Switching to halalas requires a coordinated change across frontend +
+            // OrderController + this service in the same release.
+            $planId = ! empty($quote['id'])
+                ? (string) $quote['id']
+                : "{$quote['companyId']}_{$quote['subType']}";
 
-            // Log this calculation
+            $totalWithVATSar     = (int) $quote['totalWithVAT'];
+            $totalWithVATHalalas = $totalWithVATSar * 100;
+
+            $sigPacket = $this->signatureService->generateSignature(
+                $planId,
+                $totalWithVATSar
+            );
+
+            // Log this calculation only when explicitly requested by the caller.
+            // Default is off to avoid bloating pricing_logs on every quote-listing view;
+            // checkout / payment submission should opt-in.
             if ($logCalculation) {
                 $this->logCalculation($quote, $planId, 'quote_calculation');
             }
 
             return array_merge($quote, [
-                'signature' => $sigPacket['signature'],
-                'timestamp' => $sigPacket['timestamp'],
-                'expiresAt' => $sigPacket['expiresAt'],
+                // Informational halalas field for clients ready to migrate.
+                // The signature itself still covers the SAR value above; switching the
+                // signed unit is a separate coordinated release (see comment above).
+                'totalWithVATHalalas' => $totalWithVATHalalas,
+                'priceUnit'           => 'SAR',
+                'signature'           => $sigPacket['signature'],
+                'timestamp'           => $sigPacket['timestamp'],
+                'expiresAt'           => $sigPacket['expiresAt'],
             ]);
         }, $quotes);
     }
@@ -80,7 +103,7 @@ class QuoteCalculationService
     /**
      * Log a pricing calculation for audit trail.
      */
-    private function logCalculation(array $quote, string $planId, string $context): void
+    private function logCalculation(array $quote, string|int $planId, string $context): void
     {
         try {
             $userId = null;
@@ -124,7 +147,7 @@ class QuoteCalculationService
         $lifestyleFactor = $this->getLifestyleRiskFactor($driver);
 
         // Policy factor — policy.deductible overrides plan.deductible
-        $effectiveDeductible = $policy['deductible'] ?? $plan['deductible'];
+        $effectiveDeductible = $policy['deductible'] ?? ($plan['deductible'] ?? null);
         $policyFactor = $this->getPolicyFactor($policy, $effectiveDeductible);
 
         // Company factor
@@ -151,9 +174,10 @@ class QuoteCalculationService
         // Round to nearest 10
         $annualBeforeDiscount = (int) (round($clampedPrice / 10) * 10);
 
-        // 20% promotional discount
-        $annualPrice  = (int) (round(($annualBeforeDiscount * 0.80) / 10) * 10);
-        $originalPrice = $annualBeforeDiscount;
+        // Promotional discount (configurable via PRICING_PROMO_FACTOR / config('pricing.promotional_discount_factor'))
+        $discountFactor = (float) ($this->config['promotional_discount_factor'] ?? 1.0);
+        $annualPrice    = (int) (round(($annualBeforeDiscount * $discountFactor) / 10) * 10);
+        $originalPrice  = $annualBeforeDiscount;
 
         $monthlyPrice = (int) ceil($annualPrice / 12);
         $vatRate      = $this->config['vat_rate'];
@@ -189,6 +213,7 @@ class QuoteCalculationService
                 'company'   => $companyFactor,
                 'ncd'       => $ncdFactor,
                 'coverage'  => round($coverageFactor, 3),
+                'promo'     => $discountFactor,
                 'total'     => round(
                     $vehicleFactor * $driverFactor * $lifestyleFactor
                     * $policyFactor * $companyFactor * $ncdFactor * $coverageFactor,
@@ -361,9 +386,13 @@ class QuoteCalculationService
 
     private function getCityFactor(mixed $city): float
     {
-        if (!$city) return 1.0;
-        return $this->config['city_factors'][$city]
-            ?? $this->config['city_factors']['_default'];
+        if (! $city) {
+            return 1.0;
+        }
+
+        return $this->config['city_factors'][(string) $city]
+            ?? $this->config['city_factors']['_default']
+            ?? 1.0;
     }
 
     private function getParkingFactor(mixed $parking): float
@@ -388,22 +417,31 @@ class QuoteCalculationService
 
     private function getDeductibleFactor(mixed $deductible): float
     {
-        if ($deductible === null || $deductible === '') return 1.0;
+        if ($deductible === null || $deductible === '') {
+            return 1.0;
+        }
 
-        $val = (int) $deductible;
-        $factors = $this->config['deductible_factors'];
+        $val     = (int) $deductible;
+        $factors = $this->config['deductible_factors'] ?? [];
 
-        if (isset($factors[$val])) return $factors[$val];
+        if ($factors === []) {
+            return 1.0;
+        }
+
+        if (isset($factors[$val])) {
+            return (float) $factors[$val];
+        }
 
         // Find closest key
-        $keys = array_keys($factors);
+        $keys    = array_map('intval', array_keys($factors));
         $closest = $keys[0];
         foreach ($keys as $key) {
             if (abs($key - $val) < abs($closest - $val)) {
                 $closest = $key;
             }
         }
-        return $factors[$closest] ?? 1.0;
+
+        return (float) ($factors[$closest] ?? 1.0);
     }
 
     private function getRepairMethodFactor(string $method): float

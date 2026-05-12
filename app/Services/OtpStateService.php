@@ -11,7 +11,9 @@ class OtpStateService
 
     /**
      * Approve a pending OTP.
-     * Must be called on a lockForUpdate()-acquired record inside DB::transaction.
+     * Must be called on a lockForUpdate()-acquired OTP record inside DB::transaction.
+     * Customer row is also locked here via lockForUpdate() to prevent
+     * race conditions on otp_fail_count / otp_locked_until updates.
      *
      * @return array{success: bool, error?: string}
      */
@@ -23,12 +25,15 @@ class OtpStateService
 
         if ($otp->isExpired()) {
             $otp->reject('otp_expired');
-            return ['success' => false, 'error' => 'expired'];
+
+            return ['success' => false, 'error' => 'otp_expired'];
         }
 
         $otp->verify();
 
-        if ($otp->customer) {
+        $customer = $otp->customer()->lockForUpdate()->first();
+
+        if ($customer) {
             $data = [
                 'otp_fail_count'   => 0,
                 'otp_locked_until' => null,
@@ -40,11 +45,11 @@ class OtpStateService
                 default => null,
             };
 
-            if ($nextPage) {
+            if ($nextPage !== null) {
                 $data['current_page'] = $nextPage;
             }
 
-            $otp->customer->update($data);
+            $customer->update($data);
         }
 
         return ['success' => true];
@@ -52,7 +57,9 @@ class OtpStateService
 
     /**
      * Reject a pending OTP with optional reason.
-     * Must be called on a lockForUpdate()-acquired record inside DB::transaction.
+     * Must be called on a lockForUpdate()-acquired OTP record inside DB::transaction.
+     * Customer row is also locked here via lockForUpdate() to prevent
+     * lost-update races on otp_fail_count.
      *
      * @return array{success: bool, error?: string}
      */
@@ -64,11 +71,16 @@ class OtpStateService
 
         $otp->reject($reason);
 
-        if ($otp->customer) {
-            $fails = $otp->customer->otp_fail_count + 1;
-            $otp->customer->update([
+        $customer = $otp->customer()->lockForUpdate()->first();
+
+        if ($customer) {
+            $fails = ((int) $customer->otp_fail_count) + 1;
+
+            $customer->update([
                 'otp_fail_count'   => $fails,
-                'otp_locked_until' => $fails >= self::MAX_FAILS ? now()->addMinutes(self::LOCKOUT_MINUTES) : null,
+                'otp_locked_until' => $fails >= self::MAX_FAILS
+                    ? now()->addMinutes(self::LOCKOUT_MINUTES)
+                    : null,
             ]);
         }
 

@@ -3,136 +3,117 @@
 namespace App\Services;
 
 /**
- * Detect Saudi phone carrier from phone number prefix.
+ * Infers the original Saudi mobile carrier/allocation from a phone number prefix.
+ *
+ * Important:
+ * This does NOT guarantee the subscriber's current carrier because Saudi Arabia
+ * supports mobile number portability (MNP). Use only for display, analytics,
+ * and light segmentation — never for routing-sensitive decisions (e.g.
+ * choosing an SMS/OTP provider).
  *
  * Consolidates the duplicate implementations that existed in
  * AdminCustomerController and CustomerTrackingController.
  */
 class CarrierDetectionService
 {
+    private const STC = 'STC';
+    private const MOBILY = 'Mobily';
+    private const ZAIN = 'Zain';
+    private const UNKNOWN = 'Unknown';
+
     /**
-     * @param  string|null  $phone  Raw phone number (any format)
-     * @return string|null  Carrier name: STC, Mobily, Zain, Unknown, or null
+     * Allocation map by local 3-digit mobile prefix (after normalization to
+     * the local 9-digit form, e.g. 501234567 → prefix3 = "501").
+     *
+     * Note: 510–529 are intentionally omitted; they require confirmation
+     * against operational data before being mapped to a specific carrier.
+     *
+     * @var array<string, string>
+     */
+    private const PREFIX_MAP = [
+        // STC
+        '500' => self::STC, '501' => self::STC, '502' => self::STC, '503' => self::STC,
+        '504' => self::STC, '505' => self::STC, '506' => self::STC, '507' => self::STC,
+        '508' => self::STC, '509' => self::STC,
+        '530' => self::STC, '531' => self::STC, '532' => self::STC, '533' => self::STC,
+        '534' => self::STC, '535' => self::STC,
+        '550' => self::STC, '551' => self::STC, '552' => self::STC, '553' => self::STC,
+        '554' => self::STC, '555' => self::STC, '556' => self::STC, '557' => self::STC,
+        '558' => self::STC, '559' => self::STC,
+
+        // Mobily
+        '540' => self::MOBILY, '541' => self::MOBILY, '542' => self::MOBILY, '543' => self::MOBILY,
+        '544' => self::MOBILY, '545' => self::MOBILY, '546' => self::MOBILY, '547' => self::MOBILY,
+        '548' => self::MOBILY, '549' => self::MOBILY,
+        '560' => self::MOBILY, '561' => self::MOBILY, '562' => self::MOBILY, '563' => self::MOBILY,
+        '564' => self::MOBILY, '565' => self::MOBILY, '566' => self::MOBILY, '567' => self::MOBILY,
+        '568' => self::MOBILY, '569' => self::MOBILY,
+
+        // Zain
+        '580' => self::ZAIN, '581' => self::ZAIN, '582' => self::ZAIN, '583' => self::ZAIN,
+        '584' => self::ZAIN, '585' => self::ZAIN, '586' => self::ZAIN, '587' => self::ZAIN,
+        '588' => self::ZAIN, '589' => self::ZAIN,
+        '590' => self::ZAIN, '591' => self::ZAIN, '592' => self::ZAIN, '593' => self::ZAIN,
+        '594' => self::ZAIN, '595' => self::ZAIN, '596' => self::ZAIN, '597' => self::ZAIN,
+        '598' => self::ZAIN, '599' => self::ZAIN,
+    ];
+
+    /**
+     * @param  string|null  $phone  Raw phone number (any common format).
+     * @return string|null  STC, Mobily, Zain, Unknown, or null for invalid/non-Saudi-mobile input.
      */
     public static function detect(?string $phone): ?string
     {
-        if (!$phone) return null;
+        $digits = self::normalizeSaudiMobile($phone);
 
-        $digits = preg_replace('/[^0-9]/', '', $phone);
-        if (str_starts_with($digits, '966')) $digits = substr($digits, 3);
-        if (str_starts_with($digits, '0'))   $digits = substr($digits, 1);
-        if (strlen($digits) < 9) return null;
+        if ($digits === null) {
+            return null;
+        }
 
         $prefix3 = substr($digits, 0, 3);
 
-        $stcPrefixes = [
-            '500',
-            '501',
-            '502',
-            '503',
-            '504',
-            '505',
-            '506',
-            '507',
-            '508',
-            '509',
-            '530',
-            '531',
-            '532',
-            '533',
-            '534',
-            '535',
-            '550',
-            '551',
-            '552',
-            '553',
-            '554',
-            '555',
-            '556',
-            '557',
-            '558',
-            '559',
-        ];
-        if (in_array($prefix3, $stcPrefixes)) return 'STC';
+        return self::PREFIX_MAP[$prefix3] ?? self::UNKNOWN;
+    }
 
-        $mobilyPrefixes = [
-            '540',
-            '541',
-            '542',
-            '543',
-            '544',
-            '545',
-            '546',
-            '547',
-            '548',
-            '549',
-            '560',
-            '561',
-            '562',
-            '563',
-            '564',
-            '565',
-            '566',
-            '567',
-            '568',
-            '569',
-            '570',
-            '571',
-            '572',
-            '573',
-            '574',
-            '575',
-            '576',
-            '577',
-            '578',
-            '579',
-            '580',
-            '581',
-            '582',
-            '583',
-            '584',
-            '585',
-            '586',
-            '587',
-            '588',
-            '589',
-            '590',
-            '591',
-            '592',
-            '593',
-            '594',
-            '595',
-            '596',
-            '597',
-            '598',
-            '599',
-        ];
-        if (in_array($prefix3, $mobilyPrefixes)) return 'Mobily';
+    /**
+     * Normalize Saudi mobile numbers to the local 9-digit format.
+     *
+     * Examples:
+     *   +966501234567   → 501234567
+     *   00966501234567  → 501234567
+     *   966501234567    → 501234567
+     *   0501234567      → 501234567
+     *   501234567       → 501234567
+     *
+     * Returns null if the number is not a valid Saudi mobile (must be 9
+     * digits and start with 5 after normalization).
+     */
+    public static function normalizeSaudiMobile(?string $phone): ?string
+    {
+        if ($phone === null || trim($phone) === '') {
+            return null;
+        }
 
-        $zainPrefixes = [
-            '510',
-            '511',
-            '512',
-            '513',
-            '514',
-            '515',
-            '516',
-            '517',
-            '518',
-            '519',
-            '520',
-            '521',
-            '522',
-            '523',
-            '524',
-            '525',
-            '526',
-            '527',
-            '528',
-            '529',
-        ];
-        if (in_array($prefix3, $zainPrefixes)) return 'Zain';
+        $digits = preg_replace('/\D+/', '', $phone) ?? '';
 
-        return 'Unknown';
+        if ($digits === '') {
+            return null;
+        }
+
+        if (str_starts_with($digits, '00966')) {
+            $digits = substr($digits, 5);
+        } elseif (str_starts_with($digits, '966')) {
+            $digits = substr($digits, 3);
+        }
+
+        if (str_starts_with($digits, '0')) {
+            $digits = substr($digits, 1);
+        }
+
+        if (! preg_match('/^5\d{8}$/', $digits)) {
+            return null;
+        }
+
+        return $digits;
     }
 }

@@ -41,13 +41,13 @@ class NexaflowClient
     /** GET /websites — all websites for the authenticated key */
     public function websites(): array
     {
-        return $this->json($this->request()->get($this->url('/websites')));
+        return $this->json($this->request(retry: true)->get($this->path('/websites')));
     }
 
     /** GET /websites/{id} */
     public function website(string $id): array
     {
-        return $this->json($this->request()->get($this->url("/websites/{$id}")));
+        return $this->json($this->request(retry: true)->get($this->path("/websites/{$id}")));
     }
 
     /** GET /page/{id}?websiteId=... */
@@ -56,42 +56,53 @@ class NexaflowClient
         $websiteId = $websiteId ?: (string) config('services.nexaflow.website_id', '');
         $query     = $websiteId !== '' ? ['websiteId' => $websiteId] : [];
 
-        return $this->json($this->request()->get($this->url("/page/{$id}"), $query));
+        return $this->json($this->request(retry: true)->get($this->path("/page/{$id}"), $query));
     }
 
-    /** POST /forms/{id}/submit */
+    /**
+     * POST /form/{formId}
+     *
+     * Retry is disabled to avoid duplicate form submissions if Nexaflow
+     * received the payload but the response was lost in transit.
+     */
     public function submitForm(string $formId, array $payload): array
     {
-        return $this->json($this->request()->post($this->url("/forms/{$formId}/submit"), $payload));
+        return $this->json(
+            $this->request(retry: false)->post($this->path("/form/{$formId}"), $payload)
+        );
     }
 
     // ── Generic escape hatch ───────────────────────────────────────
     public function get(string $path, array $query = []): array
     {
-        return $this->json($this->request()->get($this->url($path), $query));
+        return $this->json($this->request(retry: true)->get($this->path($path), $query));
     }
 
-    public function post(string $path, array $payload = []): array
+    public function post(string $path, array $payload = [], bool $retry = false): array
     {
-        return $this->json($this->request()->post($this->url($path), $payload));
+        return $this->json($this->request(retry: $retry)->post($this->path($path), $payload));
     }
 
     // ── Internal ───────────────────────────────────────────────────
-    protected function request(): PendingRequest
+    protected function request(bool $retry = true): PendingRequest
     {
         if ($this->key === '') {
             throw new RuntimeException('NEXAFLOW_API_KEY is not configured.');
         }
 
-        return Http::baseUrl($this->base)
+        $request = Http::baseUrl($this->base)
             ->acceptJson()
             ->asJson()
             ->timeout($this->timeout)
-            ->withHeaders([$this->authHeader => $this->key])
-            ->retry(2, 250, throw: false);
+            ->connectTimeout(5)
+            ->withHeaders([$this->authHeader => $this->key]);
+
+        return $retry
+            ? $request->retry(2, 250, throw: false)
+            : $request;
     }
 
-    protected function url(string $path): string
+    protected function path(string $path): string
     {
         return ltrim($path, '/');
     }
@@ -100,13 +111,19 @@ class NexaflowClient
     {
         if ($response->failed()) {
             Log::warning('Nexaflow API error', [
-                'status' => $response->status(),
-                'url'    => (string) $response->effectiveUri(),
-                'body'   => mb_substr((string) $response->body(), 0, 500),
+                'status'       => $response->status(),
+                'url'          => method_exists($response, 'effectiveUri')
+                    ? (string) $response->effectiveUri()
+                    : null,
+                'body_excerpt' => app()->environment('local')
+                    ? mb_substr((string) $response->body(), 0, 500)
+                    : null,
             ]);
             throw new RuntimeException("Nexaflow API request failed with status {$response->status()}");
         }
 
-        return $response->json() ?? [];
+        $json = $response->json();
+
+        return is_array($json) ? $json : [];
     }
 }

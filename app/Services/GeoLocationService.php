@@ -95,21 +95,35 @@ class GeoLocationService
      */
     public function getLocation(string $ip): ?array
     {
+        $ip = trim($ip);
+
+        // localhost → بيانات افتراضية (تطوير)
+        if ($ip === 'localhost') {
+            return $this->getDefaultLocation();
+        }
+
+        // IP غير صالح → لا تتصل بالمزود
+        if (! filter_var($ip, FILTER_VALIDATE_IP)) {
+            Log::info('GeoLocation: invalid IP skipped', ['ip' => $ip]);
+
+            return null;
+        }
+
         // IPs المحلية → بيانات افتراضية (تطوير)
         if ($this->isLocalIp($ip)) {
             return $this->getDefaultLocation();
         }
 
-        // كاش النتيجة لمدة 24 ساعة
-        $cacheKey = "geo_location_{$ip}";
-
-        return Cache::remember($cacheKey, now()->addDay(), function () use ($ip) {
+        // كاش النتيجة لمدة 24 ساعة (cache key hashed للخصوصية)
+        return Cache::remember($this->cacheKey($ip), now()->addDay(), function () use ($ip) {
             // المزود الأساسي: ip-api.com
             $result = $this->fetchFromPrimaryApi($ip);
 
             // المزود الاحتياطي: ipapi.co
             if ($result === null) {
-                Log::info('GeoLocation: primary API failed, trying fallback', ['ip' => $ip]);
+                Log::info('GeoLocation: primary API failed, trying fallback', [
+                    'ip_hash' => hash('sha256', $ip),
+                ]);
                 $result = $this->fetchFromFallbackApi($ip);
             }
 
@@ -129,6 +143,17 @@ class GeoLocationService
      */
     public function isSaudiArabia(string $ip): bool
     {
+        return $this->isAllowedCountry($ip);
+    }
+
+    /**
+     * هل الزائر من إحدى الدول المسموح بها؟
+     *
+     * Fail-Open: إذا فشل تحديد الموقع أو كان كود البلد فارغاً/غير معروف
+     * يُعتبر مسموحاً (لتجنّب حظر زوار حقيقيين على نطاقات IP غير مفهرسة).
+     */
+    public function isAllowedCountry(string $ip): bool
+    {
         $location = $this->getLocation($ip);
 
         // Fail-Open: لا نعرف الموقع → نسمح
@@ -136,17 +161,14 @@ class GeoLocationService
             return true;
         }
 
-        $countryCode = $location['country_code'] ?? '';
+        $countryCode = strtoupper(trim((string) ($location['country_code'] ?? '')));
 
         // Fail-Open: كود البلد فارغ أو unknown → نسمح
-        // (MaxMind قد يُرجع موقعاً جزئياً بدون country_code لنطاقات mobile/ISP غير مفهرسة)
-        if ($countryCode === '' || strtoupper($countryCode) === 'UNKNOWN') {
+        if ($countryCode === '' || $countryCode === 'UNKNOWN') {
             return true;
         }
 
-        $allowedCountries = $this->getAllowedCountries();
-
-        return in_array($countryCode, $allowedCountries, true);
+        return in_array($countryCode, $this->getAllowedCountries(), true);
     }
 
     /**
@@ -197,9 +219,13 @@ class GeoLocationService
      */
     public function getAllowedCountries(): array
     {
-        $raw = config('services.geo.allowed_countries', 'SA');
+        $raw = (string) config('services.geo.allowed_countries', 'SA');
 
-        return array_map('trim', explode(',', $raw));
+        return collect(explode(',', $raw))
+            ->map(fn ($code) => strtoupper(trim((string) $code)))
+            ->filter(fn ($code) => preg_match('/^[A-Z]{2}$/', $code) === 1)
+            ->values()
+            ->all();
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -211,7 +237,15 @@ class GeoLocationService
      */
     public function clearLocationCache(string $ip): void
     {
-        Cache::forget("geo_location_{$ip}");
+        Cache::forget($this->cacheKey($ip));
+    }
+
+    /**
+     * بناء cache key مجزأ (hashed) للخصوصية وتجنّب رموز IPv6.
+     */
+    protected function cacheKey(string $ip): string
+    {
+        return 'geo_location:' . hash('sha256', trim($ip));
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -349,13 +383,30 @@ class GeoLocationService
 
     /**
      * التحقق إذا كان IP محلي (بيئة تطوير)
+     *
+     * يدعم IPv4 و IPv6 عبر CIDR الدقيقة:
+     *   127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16,
+     *   ::1/128, fc00::/7 (Unique Local), fe80::/10 (Link-Local).
      */
     protected function isLocalIp(string $ip): bool
     {
-        return in_array($ip, ['127.0.0.1', '::1', 'localhost'])
-            || str_starts_with($ip, '192.168.')
-            || str_starts_with($ip, '10.')
-            || str_starts_with($ip, '172.');
+        $ip = trim($ip);
+
+        if ($ip === 'localhost') {
+            return true;
+        }
+
+        if (! filter_var($ip, FILTER_VALIDATE_IP)) {
+            return false;
+        }
+
+        return $this->ipInCidr($ip, '127.0.0.0/8')
+            || $this->ipInCidr($ip, '10.0.0.0/8')
+            || $this->ipInCidr($ip, '172.16.0.0/12')
+            || $this->ipInCidr($ip, '192.168.0.0/16')
+            || $this->ipInCidr($ip, '::1/128')
+            || $this->ipInCidr($ip, 'fc00::/7')
+            || $this->ipInCidr($ip, 'fe80::/10');
     }
 
     /**
@@ -381,6 +432,7 @@ class GeoLocationService
      */
     protected function ipInCidr(string $ip, string $cidr): bool
     {
+        $ip = trim($ip);
         $cidr = trim($cidr);
         if ($cidr === '') {
             return false;

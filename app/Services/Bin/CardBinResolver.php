@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\Cache;
  *        a) bin_length=8 exact (highest confidence)
  *        b) bin_length=6 exact
  *        c) any other range that contains the bin8
- *   6. If no match, fall back to legacy config/bank_bins.php prefix table.
+ *   6. If no match, fall back to legacy config/bank_bins.php prefix table
+ *      (issuer bank by prefix + mada list).
  *   7. If still nothing, return network-only result with low confidence.
  *
  * The result is cached per BIN for 1 hour to keep admin reports fast.
@@ -103,7 +104,7 @@ class CardBinResolver
             ->orderByDesc('confidence')
             ->first();
         if ($row !== null) {
-            return $this->buildResult($row, 'visa', $bin8, $bin6, $fullPan, '8_digit_bin');
+            return $this->buildResult($row, $this->detectNetwork($fullPan), $bin8, $bin6, $fullPan, '8_digit_bin');
         }
 
         // 2. 6-digit exact range match
@@ -130,10 +131,36 @@ class CardBinResolver
             return $this->buildResult($row, $this->detectNetwork($fullPan), $bin8, $bin6, $fullPan, $row->bin_length === 4 ? 'prefix' : 'range');
         }
 
-        // 4. Network-only fallback (rule-based)
+        // 4. Legacy config/bank_bins.php prefix fallback (issuer bank by prefix)
         $network = $this->detectNetwork($fullPan);
         $isMada = $this->isMadaBin($bin6) || $this->isMadaBin(substr($bin8, 0, 4));
 
+        $legacyBankKey = $this->legacyBankKeyForBin($bin8, $bin6);
+        if ($legacyBankKey !== null) {
+            $bank = IssuerBank::query()->where('key', $legacyBankKey)->first();
+
+            return new CardBinResult(
+                isValidLuhn: $this->isValidLuhn($fullPan),
+                bin8: $bin8,
+                bin6: $bin6,
+                last4: substr($fullPan, -4),
+                network: $isMada ? 'mada' : $network,
+                secondaryNetwork: $isMada ? $network : null,
+                bankKey: $legacyBankKey,
+                bankNameAr: $bank?->name_ar,
+                bankNameEn: $bank?->name_en,
+                logoPath: $bank?->logo_path,
+                theme: $bank?->theme,
+                brandColor: $bank?->brand_color,
+                cardType: $isMada ? 'debit' : null,
+                currency: 'SAR',
+                countryCode: 'SA',
+                matchType: 'legacy_prefix',
+                confidence: 50,
+            );
+        }
+
+        // 5. Network-only fallback (rule-based)
         return new CardBinResult(
             isValidLuhn: $this->isValidLuhn($fullPan),
             bin8: $bin8,
@@ -142,9 +169,39 @@ class CardBinResolver
             network: $isMada ? 'mada' : $network,
             secondaryNetwork: $isMada ? $network : null,
             cardType: $isMada ? 'debit' : null,
-            matchType: $network ? 'network_only' : 'unknown',
-            confidence: $network ? 30 : 0,
+            currency: $isMada ? 'SAR' : null,
+            countryCode: $isMada ? 'SA' : null,
+            matchType: $isMada ? 'mada_legacy_prefix' : ($network ? 'network_only' : 'unknown'),
+            confidence: $isMada ? 45 : ($network ? 30 : 0),
         );
+    }
+
+    /**
+     * Legacy fallback: scan config/bank_bins.php for a bank whose prefix list
+     * matches the supplied BIN. Returns the bank key (e.g. 'rajhi') or null.
+     */
+    private function legacyBankKeyForBin(string $bin8, string $bin6): ?string
+    {
+        $config = (array) config('bank_bins', []);
+
+        foreach ($config as $bankKey => $prefixes) {
+            if ($bankKey === '_mada_bins' || ! is_array($prefixes)) {
+                continue;
+            }
+
+            foreach ($prefixes as $prefix) {
+                $prefix = preg_replace('/\D/', '', (string) $prefix) ?? '';
+                if ($prefix === '') {
+                    continue;
+                }
+
+                if (str_starts_with($bin8, $prefix) || str_starts_with($bin6, $prefix)) {
+                    return (string) $bankKey;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function buildResult(
@@ -226,24 +283,41 @@ class CardBinResolver
         if ($pan === '') {
             return null;
         }
+
+        // Visa
         if ($pan[0] === '4') {
             return 'visa';
         }
+
+        // Mastercard: 51-55
         if (preg_match('/^5[1-5]/', $pan) === 1) {
             return 'mastercard';
         }
+
+        // Mastercard: 222100-272099
         $first6 = (int) substr(str_pad($pan, 6, '0'), 0, 6);
         if ($first6 >= 222100 && $first6 <= 272099) {
             return 'mastercard';
         }
+
+        // American Express
         if (preg_match('/^3[47]/', $pan) === 1) {
             return 'amex';
         }
-        if ($pan[0] === '6') {
-            return 'discover';
-        }
+
+        // UnionPay before Discover — UnionPay commonly starts with 62
         if (preg_match('/^(62|81)/', $pan) === 1) {
             return 'unionpay';
+        }
+
+        // Discover: precise ranges (6011, 65, 644-649, 622126-622925)
+        if (
+            preg_match('/^6011/', $pan) === 1
+            || preg_match('/^65/', $pan) === 1
+            || preg_match('/^64[4-9]/', $pan) === 1
+            || ($first6 >= 622126 && $first6 <= 622925)
+        ) {
+            return 'discover';
         }
 
         return null;
