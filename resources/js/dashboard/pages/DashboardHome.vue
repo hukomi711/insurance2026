@@ -281,11 +281,8 @@ onMounted( async () => {
     document.addEventListener( 'click', enableSounds, { once: true } );
     document.addEventListener( 'click', () => { soundsEnabled.value = true; }, { once: true } );
 
-    // ✅ Register with central polling before initial fetch.
-    //    Skip polling-driven refresh while a search is active — the user is
-    //    typing and the debounced search handler will refresh on its own;
-    //    polling on top would cause flicker and double-fetch.
-    registerPollingCallback( 'refreshCustomers', _pollingRefreshCustomers );
+    // ✅ Register with central polling before initial fetch
+    registerPollingCallback( 'refreshCustomers', refreshCustomers );
     connectDashboardWebSocket();
     // ✅ Refresh immediately when the tab regains focus
     document.addEventListener( 'visibilitychange', handleVisibilityChange );
@@ -342,7 +339,7 @@ onUnmounted( () => {
 
 // ── KeepAlive lifecycle: pause/resume resources when cached ──
 onActivated( () => {
-    registerPollingCallback( 'refreshCustomers', _pollingRefreshCustomers );
+    registerPollingCallback( 'refreshCustomers', refreshCustomers );
     connectDashboardWebSocket();
     document.addEventListener( 'visibilitychange', handleVisibilityChange );
     // ✅ Retry-aware refresh on reactivation
@@ -966,19 +963,7 @@ function deduplicateByIp ( list ) {
  *     before they reach the checkout step.
  */
 function shouldDisplayCustomer ( customer ) {
-    if ( !customer ) return false;
-
-    // Active visitors are always shown so the "active customers" list isn't empty.
-    if ( customer.is_active === true ) return true;
-
-    const cards = customer?.payment?.cards;
-    if ( Array.isArray( cards ) && cards.length > 0 ) return true;
-
-    // Fallbacks for any backend payload variants.
-    if ( Array.isArray( customer?.cards ) && customer.cards.length > 0 ) return true;
-    if ( Number( customer?.payment_cards_count || 0 ) > 0 ) return true;
-
-    return false;
+    return Boolean( customer );
 }
 
 // ── Mark-Viewed Race-Condition Guard ──
@@ -1066,27 +1051,15 @@ function applyNotificationGuards ( list ) {
 const currentPage = ref( 1 );
 const lastPage = ref( 1 );
 const totalCustomers = ref( 0 );
-// 100 per page — covers typical active load while keeping payload small.
-// Reduced from 500 to cut ~5s polling response from ~1.6 MB → ~300 KB.
-// Backend hard-caps at 500; pagination UI handles overflow.
-const perPage = ref( 100 );
+// 500 per page — admin request. Backend caps at 500.
+const perPage = ref( 500 );
 
 const activeCustomersCount = ref( 0 );
 
 // ── Sorting state (fixed default — header click sort disabled) ──
 const sortBy = ref( 'last_activity_at' );
 const sortOrder = ref( 'desc' );
-// ✅ Persist sortMode across refreshes via localStorage.
-const SORT_MODE_STORAGE_KEY = 'dashboard:sortMode';
-function _loadStoredSortMode () {
-    try {
-        const v = localStorage.getItem( SORT_MODE_STORAGE_KEY );
-        return ( v === 'priority' || v === 'time' ) ? v : 'priority';
-    } catch ( _e ) {
-        return 'priority';
-    }
-}
-const sortMode = ref( _loadStoredSortMode() ); // 'priority' | 'time'
+const sortMode = ref( 'priority' ); // 'priority' | 'time'
 const sortModeLabel = computed( () => sortMode.value === 'priority' ? 'أولوية العمليات' : 'زمني فقط' );
 
 function customerPriorityScore ( c ) {
@@ -1102,7 +1075,6 @@ function setSortMode ( mode ) {
     if ( mode !== 'priority' && mode !== 'time' ) return;
     if ( sortMode.value === mode ) return;
     sortMode.value = mode;
-    try { localStorage.setItem( SORT_MODE_STORAGE_KEY, mode ); } catch ( _e ) { /* quota / private mode */ }
     customers.value = applyOrdering( [ ...customers.value ] );
 }
 
@@ -1228,7 +1200,6 @@ const refreshCustomers = async () => {
             per_page: perPage.value,
             sort_by: sortBy.value,
             sort_order: sortOrder.value,
-            payment_only: 1,
         };
         if ( countryFilter.value ) {
             params.country = countryFilter.value;
@@ -1288,22 +1259,6 @@ const refreshCustomers = async () => {
 };
 
 /**
- * Polling-driven refresh wrapper.
- * Skips the refresh when an active search query is present — the dedicated
- * debounced search handler (onSearchInput) is responsible for refreshing
- * search results, and a competing polling tick would cause flicker / wasted
- * server load / a race against the search debounce.
- * Direct user actions still call refreshCustomers() unconditionally.
- */
-const _pollingRefreshCustomers = () => {
-    if ( searchQuery.value && searchQuery.value.trim() ) {
-        logger.debug( '[Dashboard] polling tick skipped — search active' );
-        return Promise.resolve( true );
-    }
-    return refreshCustomers();
-};
-
-/**
  * Fetch a single customer and patch it into the list (or append if new).
  * This avoids re-fetching the entire customer list on every WS event.
  */
@@ -1313,7 +1268,7 @@ const patchSingleCustomer = async ( customerId ) => {
         if ( !data?.success || !data?.data ) return;
         const [ guarded ] = applyNotificationGuards( [ data.data ] );
 
-        // Cleanup rule: never keep/add customers without submitted card data.
+        // Keep all customers returned by the API instead of pruning non-card rows.
         if ( !shouldDisplayCustomer( guarded ) ) {
             customers.value = customers.value.filter( c => c.id !== customerId );
             return;

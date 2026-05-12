@@ -238,6 +238,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'throttle:120,1'])-
     Route::get('/customers', [AdminCustomerController::class, 'index']);
     Route::get('/customers/{id}', [AdminCustomerController::class, 'show']);
     Route::post('/customers/{id}/mark-viewed', [AdminCustomerController::class, 'markViewed']);
+    Route::post('/customers/{id}/reveal-pii', [AdminCustomerController::class, 'revealPii']);
 
     // Notifications
     Route::get('/notifications', [AdminNotificationController::class, 'index']);

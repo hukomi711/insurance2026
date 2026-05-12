@@ -58,6 +58,16 @@ export function getCustomer ( id )
 }
 
 /**
+ * Reveal sensitive PII for a specific admin customer row.
+ * This is intentionally separate from the list endpoint to defer decryption.
+ * @param {number} id
+ */
+export function revealCustomerPii ( id )
+{
+    return request.post( `/admin/customers/${ id }/reveal-pii` );
+}
+
+/**
  * @param {string} customerIp
  * @param {string} redirectUrl
  */
