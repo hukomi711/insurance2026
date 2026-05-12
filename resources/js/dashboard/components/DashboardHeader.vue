@@ -25,7 +25,6 @@ const props = defineProps( {
     soundsEnabled: { type: Boolean, default: false },
     countryFilter: { type: String, default: '' },
     searchQuery: { type: String, default: '' },
-    sortMode: { type: String, default: 'priority' },
 } );
 
 const emit = defineEmits( [
@@ -35,7 +34,6 @@ const emit = defineEmits( [
     'toggle-sounds',
     'update:countryFilter',
     'update:searchQuery',
-    'update:sortMode',
     'search-input',
     'reset-filters',
 ] );
@@ -87,11 +85,6 @@ function clearSearch ()
 function resetFilters ()
 {
     emit( 'reset-filters' );
-}
-
-function setSortMode ( mode )
-{
-    emit( 'update:sortMode', mode );
 }
 </script>
 
@@ -254,23 +247,6 @@ function setSortMode ( mode )
 
                 <span class="mx-1 h-4 w-px bg-white/10"></span>
 
-                <button
-                    type="button"
-                    aria-label="وضع ترتيب: أولوية العمليات"
-                    class="px-3 py-1.5 text-xs font-bold rounded-full transition-all whitespace-nowrap"
-                    :class="sortMode === 'priority' ? 'bg-blue-500/20 text-blue-300 shadow-sm' : 'hover:bg-white/[0.04]'"
-                    :style="sortMode !== 'priority' ? { color: 'var(--admin-text-dim)' } : {}"
-                    @click="setSortMode( 'priority' )"
-                >ترتيب أولوية</button>
-
-                <button
-                    type="button"
-                    aria-label="وضع ترتيب: زمني فقط"
-                    class="px-3 py-1.5 text-xs font-bold rounded-full transition-all whitespace-nowrap"
-                    :class="sortMode === 'time' ? 'bg-violet-500/20 text-violet-300 shadow-sm' : 'hover:bg-white/[0.04]'"
-                    :style="sortMode !== 'time' ? { color: 'var(--admin-text-dim)' } : {}"
-                    @click="setSortMode( 'time' )"
-                >ترتيب زمني</button>
             </div>
 
             <div class="relative w-full md:w-64">

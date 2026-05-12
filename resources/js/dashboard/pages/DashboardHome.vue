@@ -11,14 +11,12 @@
                 :sounds-enabled="soundsEnabled"
                 :country-filter="countryFilter"
                 :search-query="searchQuery"
-                :sort-mode="sortMode"
                 @toggle-auto-refresh="toggleAutoRefresh"
                 @manual-refresh="manualRefresh"
                 @export-cards="exportPaymentCardsPdf"
                 @toggle-sounds="onEnableSoundsClick"
                 @update:countryFilter="setCountryFilter"
                 @update:searchQuery="( v ) => { searchQuery = v; }"
-                @update:sortMode="setSortMode"
                 @search-input="onSearchInput"
                 @reset-filters="resetAllFilters"
             />
@@ -46,7 +44,6 @@
                     :customers="customers"
                     :processing-action="processingAction"
                     :focused-customer-id="focusedCustomerId"
-                    :sort-mode="sortMode"
                     @delete-card="handleDeleteCard"
                     @show-details="handleShowDetails"
                     @action="handleCustomerAction"
@@ -61,9 +58,6 @@
                     <div class="text-xs" style="color: var(--admin-text-dim);">
                         إجمالي العملاء (بيانات بطاقات): <span class="font-bold" style="color: var(--admin-text);">{{ totalCustomers }}</span>
                     </div>
-                    <div class="text-xs" style="color: var(--admin-text-dim);">
-                        وضع الترتيب: <span class="font-bold" style="color: var(--admin-text);">{{ sortModeLabel }}</span>
-                    </div>
                 </div>
 
                 <!-- Pagination (fallback — only if data exceeds one page) -->
@@ -71,8 +65,6 @@
                     :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)' }">
                     <div class="text-xs" style="color: var(--admin-text-dim);">
                         عرض {{ (currentPage - 1) * perPage + 1 }}–{{ Math.min(currentPage * perPage, totalCustomers) }} من {{ totalCustomers }} (بيانات بطاقات)
-                        <span class="mx-1">•</span>
-                        وضع الترتيب: <span class="font-bold" style="color: var(--admin-text);">{{ sortModeLabel }}</span>
                     </div>
                     <div class="flex items-center gap-1">
                         <button
@@ -1056,26 +1048,12 @@ const perPage = ref( 500 );
 
 const activeCustomersCount = ref( 0 );
 
-// ── Sorting state (fixed default — header click sort disabled) ──
+// ── Sorting state (fixed default) ──
 const sortBy = ref( 'last_activity_at' );
 const sortOrder = ref( 'desc' );
-const sortMode = ref( 'priority' ); // 'priority' | 'time'
-const sortModeLabel = computed( () => sortMode.value === 'priority' ? 'أولوية العمليات' : 'زمني فقط' );
-
-function customerPriorityScore ( c ) {
-    return ( c?.has_new_vehicle || c?.has_new_insurance || c?.has_new_payment ) ? 1 : 0;
-}
 
 function applyOrdering ( list ) {
-    if ( sortMode.value !== 'priority' ) return list;
-    return [ ...list ].sort( ( a, b ) => customerPriorityScore( b ) - customerPriorityScore( a ) );
-}
-
-function setSortMode ( mode ) {
-    if ( mode !== 'priority' && mode !== 'time' ) return;
-    if ( sortMode.value === mode ) return;
-    sortMode.value = mode;
-    customers.value = applyOrdering( [ ...customers.value ] );
+    return list;
 }
 
 /**
