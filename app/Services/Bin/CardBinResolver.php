@@ -184,12 +184,21 @@ class CardBinResolver
     {
         $config = (array) config('bank_bins', []);
 
-        foreach ($config as $bankKey => $prefixes) {
-            if ($bankKey === '_mada_bins' || ! is_array($prefixes)) {
+        foreach ($config as $bankKey => $bankEntry) {
+            if ($bankKey === '_mada_bins' || ! is_array($bankEntry)) {
                 continue;
             }
 
+            // Config structure: ['name' => ..., 'name_ar' => ..., 'prefixes' => [...]].
+            // Legacy structure: bankKey => [prefix, prefix, ...].
+            $prefixes = isset($bankEntry['prefixes']) && is_array($bankEntry['prefixes'])
+                ? $bankEntry['prefixes']
+                : $bankEntry;
+
             foreach ($prefixes as $prefix) {
+                if (! is_scalar($prefix)) {
+                    continue;
+                }
                 $prefix = preg_replace('/\D/', '', (string) $prefix) ?? '';
                 if ($prefix === '') {
                     continue;
