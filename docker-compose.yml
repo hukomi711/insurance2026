@@ -17,8 +17,8 @@ services:
     restart: unless-stopped
     ulimits:
       nofile:
-        soft: 8192
-        hard: 8192
+        soft: 65535
+        hard: 65535
     ports:
       - "80:80"
       - "443:443"
