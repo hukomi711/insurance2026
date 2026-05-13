@@ -2,9 +2,9 @@
 # PowerShell script to connect and run cleanup on production server
 
 param(
-    [string]$Host = "159.198.70.148",
+    [string]$SshHost = "159.198.70.148",
     [string]$User = "root",
-    [string]$Password = "eoh2sT240RGZN5Vt1x",
+    [PSCredential]$Credential,
     [string]$ProjectPath = "/opt/insurance2026"
 )
 
@@ -16,13 +16,14 @@ if (-not (Get-Module -ListAvailable -Name Posh-SSH)) {
 
 Import-Module Posh-SSH -WarningAction SilentlyContinue
 
-# Create SSH credentials
-$securePassword = ConvertTo-SecureString $Password -AsPlainText -Force
-$credential = New-Object System.Management.Automation.PSCredential($User, $securePassword)
+if (-not $Credential) {
+    $securePassword = Read-Host -AsSecureString "Enter SSH password for $User@$SshHost"
+    $Credential = New-Object System.Management.Automation.PSCredential($User, $securePassword)
+}
 
 try {
-    Write-Host "Connecting to $Host..." -ForegroundColor Cyan
-    $session = New-SSHSession -ComputerName $Host -Credential $credential -AcceptKey -SkipCertificateCheck -WarningAction SilentlyContinue
+    Write-Host "Connecting to $SshHost..." -ForegroundColor Cyan
+    $session = New-SSHSession -ComputerName $SshHost -Credential $Credential -AcceptKey -SkipCertificateCheck -WarningAction SilentlyContinue
 
     if ($session.Connected) {
         Write-Host "✓ Connected successfully" -ForegroundColor Green
