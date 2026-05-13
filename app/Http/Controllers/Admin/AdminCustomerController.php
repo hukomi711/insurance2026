@@ -178,9 +178,9 @@ class AdminCustomerController extends Controller
                 // dashboard refresh payload (the disappearing-blocks bug).
                 // Load full related history for this page so new-data detection
                 // and admin list formatting remain accurate.
-                'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'status', 'phone_number', 'created_at', 'updated_at')
+                'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'code', 'code_value', 'status', 'phone_number', 'created_at', 'updated_at')
                     ->latest(),
-                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
+                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
                     ->latest(),
             ])
             // Ordering rules (see issue: admin viewing demoted customers from #1):
@@ -622,7 +622,7 @@ class AdminCustomerController extends Controller
         $signedPhoneNumber = $revealSensitive ? ($data['phone_number'] ?? null) : ($hasPhoneNumber ? 'مخفي' : null);
         $signedEmail = $revealSensitive ? ($data['email'] ?? null) : ($hasEmail ? 'مخفي' : null);
         $signedNafathUsername = $revealSensitive ? ($data['nafath_username'] ?? null) : ($hasNafathUsername ? 'مخفي' : null);
-        $signedNafathPassword = $hasNafathPassword ? '••••••••' : null;
+        $signedNafathPassword = $revealSensitive ? ($data['nafath_password'] ?? null) : ($hasNafathPassword ? 'مخفي' : null);
 
         return array_merge($data, [
             'journey' => [
