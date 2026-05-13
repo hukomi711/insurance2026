@@ -146,13 +146,13 @@ Do not rebuild `app` just for assets unless assets are baked into the image.
 Because the server may fail to resolve its own domain due to DNS issues, use `--resolve`:
 
 ```bash
-curl -Ik --resolve ttaminctcom.site:443:127.0.0.1 https://ttaminctcom.site/
+curl -Ik --resolve tamiikom.site:443:127.0.0.1 https://tamiikom.site/
 ```
 
 For a specific route:
 
 ```bash
-curl -Ik --resolve ttaminctcom.site:443:127.0.0.1 https://ttaminctcom.site/api/health
+curl -Ik --resolve tamiikom.site:443:127.0.0.1 https://tamiikom.site/api/health
 ```
 
 ### 8. Never add config cache to deploy steps
@@ -173,12 +173,12 @@ php artisan config:clear
 
 ## 4. DNS chronic issue
 
-`ttaminctcom.site` on Namecheap BasicDNS has recurring resolution failures, affecting both server-side checks and Chrome/client resolution.
+`tamiikom.site` on Namecheap BasicDNS has recurring resolution failures, affecting both server-side checks and Chrome/client resolution.
 
 Production may still work when tested with:
 
 ```bash
-curl --resolve ttaminctcom.site:443:127.0.0.1
+curl --resolve tamiikom.site:443:127.0.0.1
 ```
 
 This confirms the app/Nginx/SSL path works locally on the server even when DNS resolution fails externally or from the server.
