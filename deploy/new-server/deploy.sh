@@ -9,7 +9,7 @@
 #
 # Usage (fresh deploy, no dump):
 #   INS_SERVER_IP=159.198.70.148 \
-#   INS_DOMAIN=tamiicom.site \
+#   INS_DOMAIN=tamiikom.site \
 #   INS_REPO_URL=git@github.com:<user>/insurance2026.git \
 #   INS_BRANCH=hardening/clean-rebuild \
 #   bash deploy/new-server/deploy.sh
@@ -181,6 +181,11 @@ elif [[ -n "${INS_GIT_TOKEN:-}" ]]; then
   echo "  → HTTPS URL with INS_GIT_TOKEN; using token for clone, then scrubbing."
   CLONE_URL="$(printf '%s' "$REPO_URL" | sed -E "s|^https://([^@]+@)?|https://x-access-token:${INS_GIT_TOKEN}@|")"
   $SSH "set -e
+    if [[ -d $DEPLOY_DIR && ! -d $DEPLOY_DIR/.git && -n \"\
+      \\$(ls -A $DEPLOY_DIR 2>/dev/null)\" ]]; then
+      echo '  ✗ $DEPLOY_DIR exists and is not a Git repository. Remove or rename it before retrying.'
+      exit 1
+    fi
     mkdir -p $DEPLOY_DIR
     if [[ ! -d $DEPLOY_DIR/.git ]]; then
       git clone --branch '$BRANCH' '$CLONE_URL' $DEPLOY_DIR
@@ -194,7 +199,7 @@ elif [[ -n "${INS_GIT_TOKEN:-}" ]]; then
       git remote set-url origin '$REPO_URL'
     fi
     cd $DEPLOY_DIR && git log -1 --oneline
-  " 2>&1 | grep -v 'x-access-token' || true
+  " 2>&1 | grep -v 'x-access-token'
 else
   # ─ Plain HTTPS (anonymous; works only for public repos) ─
   $SSH "set -e
