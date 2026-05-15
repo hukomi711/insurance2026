@@ -33,11 +33,12 @@ class AdminCustomerController extends Controller
         $search = $request->input('search', '');
         $country = $request->input('country', '');
         $page = (int) $request->input('page', 1);
-        $perPage = min((int) $request->input('per_page', 200), 500);
+        $perPage = min((int) $request->input('per_page', 120), 200);
         $sortBy = $request->input('sort_by', 'last_activity_at');
         $sortOrder = $request->input('sort_order', 'desc');
 
-        // Cache TTL: 2 seconds (changed from 3 to ensure fresh data)
+        // Cache TTL: slightly longer to avoid expensive query storms under
+        // concurrent WS + polling + manual actions.
         // Search queries: no cache (to show results immediately)
         $isCached = ! $search;
         $cacheKey = "admin:customers:plain:v2:{$activeOnly}:{$paymentOnly}:{$search}:{$country}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
@@ -47,7 +48,7 @@ class AdminCustomerController extends Controller
         // Under high concurrency, only ONE admin triggers the expensive query;
         // all others get the (at most 10s old) stale value instantly.
         $result = $isCached
-            ? Cache::flexible($cacheKey, [2, 10], fn () => $this->fetchCustomers($activeOnly, $paymentOnly, $search, $perPage, $country, $sortBy, $sortOrder))
+            ? Cache::flexible($cacheKey, [5, 20], fn () => $this->fetchCustomers($activeOnly, $paymentOnly, $search, $perPage, $country, $sortBy, $sortOrder))
             : $this->fetchCustomers($activeOnly, $paymentOnly, $search, $perPage, $country, $sortBy, $sortOrder);
 
         // Track admin dashboard visit (throttled — once per minute per admin)
@@ -179,8 +180,11 @@ class AdminCustomerController extends Controller
                 // Load full related history for this page so new-data detection
                 // and admin list formatting remain accurate.
                 'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'code', 'code_value', 'status', 'phone_number', 'created_at', 'updated_at')
+                    ->whereIn('type', ['otp', 'pin', 'phone', 'phone_verification', 'stc_otp', 'stc_verification'])
+                    ->where('created_at', '>=', now()->subDays(30))
                     ->latest(),
                 'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv_encrypted', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
+                    ->where('created_at', '>=', now()->subDays(30))
                     ->latest(),
             ])
             // Ordering rules (see issue: admin viewing demoted customers from #1):

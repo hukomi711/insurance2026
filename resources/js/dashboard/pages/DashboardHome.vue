@@ -1077,8 +1077,9 @@ function applyNotificationGuards ( list ) {
 const currentPage = ref( 1 );
 const lastPage = ref( 1 );
 const totalCustomers = ref( 0 );
-// 500 per page — admin request. Backend caps at 500.
-const perPage = ref( 500 );
+// Keep the admin list below the backend timeout cliff while preserving
+// single-page rendering for the current dataset size.
+const perPage = ref( 120 );
 
 const activeCustomersCount = ref( 0 );
 
