@@ -107,5 +107,13 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('customer-tracking', function (Request $request) {
             return Limit::perMinute(200)->by($request->ip());
         });
+
+        // Admin OTP verify: key by pending token + IP so shared networks (iPad/Wi-Fi)
+        // do not throttle each other aggressively while still rate-limiting brute-force.
+        RateLimiter::for('admin-verify-code', function (Request $request) {
+            $pending = (string) $request->input('pending_token', '_');
+            $key = $request->ip() . '|' . $pending;
+            return Limit::perMinute(12)->by($key);
+        });
     }
 }

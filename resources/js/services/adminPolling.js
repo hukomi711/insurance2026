@@ -37,8 +37,8 @@ const MAX_BACKOFF_MULTIPLIER = 6; // max 35s between polls (6 × 5s tick + gap)
 
 // ── Tick intervals ─────────────────────────────────────────────
 const POLL_INTERVAL_MS = 5_000;         // 5s base tick
-const CUSTOMERS_EVERY = 1;             // كل 5 ثواني — always poll every 5s
-const CUSTOMERS_HIDDEN_EVERY = 6;      // كل 30 ثانية — when tab is hidden (was 60s)
+const CUSTOMERS_EVERY = 2;             // كل 10 ثواني — lighter fallback cadence
+const CUSTOMERS_HIDDEN_EVERY = 12;     // كل 60 ثانية — when tab is hidden
 const BADGE_EVERY = 6;                 // كل 30 ثانية (6 ticks)
 const NOTIFY_EVERY = 12;               // كل 60 ثانية (12 ticks)
 
@@ -76,7 +76,7 @@ async function _tick ()
             // reconnects within grace period can all silently drop events).
             // We keep a slow safety-net poll so the dashboard never freezes.
             const wsIsPrimary = _wsState === 'ready' && _initialLoadComplete;
-            const SAFETY_NET_EVERY = 12; // 12 × 5s = 60s
+            const SAFETY_NET_EVERY = 24; // 24 × 5s = 120s
             let customersDue = false;
 
             if ( _immediateRequested )
@@ -128,13 +128,13 @@ async function _tick ()
             _immediateRequested = false;
 
             // الشارات — كل 30 ثانية
-            if ( tickCount % BADGE_EVERY === 0 )
+            if ( tickCount % BADGE_EVERY === 2 )
             {
                 jobs.push( _safeFetchAsync( 'badgeStore', 'fetch' ) );
             }
 
             // الإشعارات — كل 60 ثانية
-            if ( tickCount % NOTIFY_EVERY === 0 )
+            if ( tickCount % NOTIFY_EVERY === 5 )
             {
                 jobs.push( _safeFetchAsync( 'notificationsStore', 'fetchNotifications' ) );
             }

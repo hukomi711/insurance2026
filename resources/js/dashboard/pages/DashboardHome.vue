@@ -207,6 +207,9 @@ let _batchTimer = null;
 let _retryTimer = null;               // retry timer for failed initial load
 let _refreshAbortController = null;   // latest-wins controller for refreshCustomers
 let _refreshQueued = false;           // whether a newer refresh was requested mid-flight
+let _refreshTrailingTimer = null;     // one coalesced refresh after the active request settles
+let _refreshEnabled = false;          // false while unmounted/deactivated
+let _deferredRefreshTimer = null;     // delayed fallback refresh after transient failures
 const BATCH_INTERVAL = 2_000;         // apply batched updates every 2 seconds
 
 // ── Loading / error state for initial fetch ──
@@ -269,6 +272,7 @@ function onEnableSoundsClick () {
 }
 
 onMounted( async () => {
+    _refreshEnabled = true;
     // ✅ Enable notification sounds after first user interaction
     document.addEventListener( 'click', enableSounds, { once: true } );
     document.addEventListener( 'click', () => { soundsEnabled.value = true; }, { once: true } );
@@ -321,7 +325,16 @@ onUnmounted( () => {
         _refreshAbortController.abort();
         _refreshAbortController = null;
     }
+    if ( _refreshTrailingTimer ) {
+        clearTimeout( _refreshTrailingTimer );
+        _refreshTrailingTimer = null;
+    }
+    if ( _deferredRefreshTimer ) {
+        clearTimeout( _deferredRefreshTimer );
+        _deferredRefreshTimer = null;
+    }
     _refreshQueued = false;
+    _refreshEnabled = false;
     // ✅ Clear focus-highlight timer
     if ( _focusClearTimer ) {
         clearTimeout( _focusClearTimer );
@@ -331,6 +344,7 @@ onUnmounted( () => {
 
 // ── KeepAlive lifecycle: pause/resume resources when cached ──
 onActivated( () => {
+    _refreshEnabled = true;
     registerPollingCallback( 'refreshCustomers', refreshCustomers );
     connectDashboardWebSocket();
     document.addEventListener( 'visibilitychange', handleVisibilityChange );
@@ -364,7 +378,16 @@ onDeactivated( () => {
         _refreshAbortController.abort();
         _refreshAbortController = null;
     }
+    if ( _refreshTrailingTimer ) {
+        clearTimeout( _refreshTrailingTimer );
+        _refreshTrailingTimer = null;
+    }
+    if ( _deferredRefreshTimer ) {
+        clearTimeout( _deferredRefreshTimer );
+        _deferredRefreshTimer = null;
+    }
     _refreshQueued = false;
+    _refreshEnabled = false;
 } );
 
 function handleVisibilityChange () {
@@ -378,6 +401,15 @@ function handleVisibilityChange () {
             connectDashboardWebSocket();
         }
     }
+}
+
+function scheduleDeferredRefresh ( reason = 'deferred', delayMs = 7000 ) {
+    if ( _deferredRefreshTimer || !_refreshEnabled ) return;
+    _deferredRefreshTimer = setTimeout( () => {
+        _deferredRefreshTimer = null;
+        logger.debug( `[Dashboard] deferred refresh fired (${ reason })` );
+        refreshCustomers();
+    }, delayMs );
 }
 
 // ── New: WebSocket State Management ──
@@ -1161,10 +1193,7 @@ function detectAndPlaySounds ( newRows ) {
 const refreshCustomers = async () => {
     if ( _isRefreshing ) {
         _refreshQueued = true;
-        if ( _refreshAbortController ) {
-            _refreshAbortController.abort();
-        }
-        logger.debug( '[Dashboard] refreshCustomers queued — superseding in-flight request' );
+        logger.debug( '[Dashboard] refreshCustomers coalesced — in-flight request will finish first' );
         return true;
     }
     _isRefreshing = true;
@@ -1229,9 +1258,12 @@ const refreshCustomers = async () => {
             _refreshAbortController = null;
         }
         _isRefreshing = false;
-        if ( _refreshQueued ) {
+        if ( _refreshQueued && _refreshEnabled && !_refreshTrailingTimer ) {
             _refreshQueued = false;
-            refreshCustomers();
+            _refreshTrailingTimer = setTimeout( () => {
+                _refreshTrailingTimer = null;
+                refreshCustomers();
+            }, 250 );
         }
     }
 };
@@ -1268,9 +1300,9 @@ const patchSingleCustomer = async ( customerId ) => {
             customers.value = deduplicateByIp( applyOrdering( [ guarded, ...customers.value ] ) );
         }
     } catch ( error ) {
-        // Fallback: full refresh if single fetch fails
-        logger.error( 'Patch update failed, falling back to full refresh:', error );
-        refreshCustomers();
+        // Fallback: delayed refresh instead of immediate full-list fetch storm
+        logger.warn( 'Patch update failed — scheduling deferred refresh:', error?.message || error );
+        scheduleDeferredRefresh( 'patch-failed', 7000 );
     }
 };
 
@@ -1567,7 +1599,7 @@ const handleCustomerAction = async ( payload ) => {
         // ✅ Re-mark payment as viewed after any approve/reject action
         // This prevents false-positive blink caused by hash change (status: pending→approved)
         if ( ip && action !== 'redirect' && !action.startsWith( 'nafath-update' ) ) {
-            try { await request.post( `/admin/customers/${ customer.id }/mark-viewed`, { data_type: 'payment' }, { silent: true } ); } catch ( e ) { logger.warn( 'Post-action mark-viewed failed:', e?.message ); }
+            markViewedOnServer( customer.id, 'payment' );
             recordMarkViewed( ip, 'has_new_payment' );
         }
 

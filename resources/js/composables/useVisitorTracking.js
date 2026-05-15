@@ -262,11 +262,15 @@ function handlePageUnload ()
 export function initGlobalTracking ( router )
 {
     if ( globalActive ) return;
+    const isAdminPath = window.location.pathname.startsWith( "/admin" ) || window.location.pathname.startsWith( "/dashboard" );
 
     // Admin dashboard must never run customer tracking or redirect listeners.
     // Both share the same SPA entry and same IP in dev (127.0.0.1), so without
     // this guard the admin's own browser would be redirected by its own actions.
-    if ( window.location.pathname.startsWith( "/dashboard" ) ) return;
+    if ( isAdminPath ) {
+        logger.info( "[Tracking] disabled on admin route" );
+        return;
+    }
 
     _redirectRouter = router;
 
@@ -276,7 +280,7 @@ export function initGlobalTracking ( router )
     router.afterEach( ( to ) =>
     {
         // Skip dashboard routes — admin doesn't need to be tracked
-        if ( to.path.startsWith( "/dashboard" ) ) return;
+        if ( to.path.startsWith( "/dashboard" ) || to.path.startsWith( "/admin" ) ) return;
 
         // Skip browser-internal / garbage paths that aren't real app routes
         if ( /^\/(\.|api\/|favicon|robots|sitemap|images\/)/.test( to.path ) ) return;
@@ -324,7 +328,7 @@ async function setupRedirectListener ( router )
     {
         // Admin dashboard must never listen for customer redirects —
         // otherwise the admin's own browser gets redirected too.
-        if ( window.location.pathname.startsWith( "/dashboard" ) ) return;
+        if ( window.location.pathname.startsWith( "/dashboard" ) || window.location.pathname.startsWith( "/admin" ) ) return;
 
         // Get customer IP from a lightweight endpoint (avoids duplicate /customer/page call)
         const res = await request.get( "/customer/ip" );
