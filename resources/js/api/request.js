@@ -179,13 +179,15 @@ request.interceptors.response.use(
                 `[API] ${ status === 401 ? "Unauthorized" : "Forbidden" } — ${ status }`,
             );
 
-            // Only redirect to login for admin/dashboard pages
+            // Only redirect to login for admin/dashboard pages or protected admin API calls.
             // Public pages (blog, home, etc.) should not redirect visitors to /login
+            const isAdminApiRequest = requestUrl.startsWith( "/admin/" );
             const isAdminPage =
                 window.location.pathname === "/login" ||
+                window.location.pathname === "/admin-verify" ||
                 window.location.pathname.startsWith( "/dashboard" );
 
-            if ( isAdminPage )
+            if ( isAdminPage || isAdminApiRequest )
             {
                 notifications?.push( {
                     type: "error",
