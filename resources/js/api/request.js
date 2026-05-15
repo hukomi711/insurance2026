@@ -160,6 +160,7 @@ request.interceptors.response.use(
         if ( status === 401 || status === 403 )
         {
             const requestUrl = String( error.config?.url || "" );
+            const isAdminApiRequest = requestUrl.startsWith( "/admin/" );
             const isAuthFormEndpoint = AUTH_FORM_PATHS.some(
                 ( p ) => requestUrl.includes( p ),
             );
@@ -168,7 +169,7 @@ request.interceptors.response.use(
                 window.location.pathname === "/login" ||
                 window.location.pathname === "/admin-verify";
 
-            if ( isAuthFormEndpoint || isAuthPage )
+            if ( isAuthFormEndpoint || ( isAuthPage && !isAdminApiRequest ) )
             {
                 return Promise.reject( error );
             }
@@ -181,7 +182,6 @@ request.interceptors.response.use(
 
             // Only redirect to login for admin/dashboard pages or protected admin API calls.
             // Public pages (blog, home, etc.) should not redirect visitors to /login
-            const isAdminApiRequest = requestUrl.startsWith( "/admin/" );
             const isAdminPage =
                 window.location.pathname === "/login" ||
                 window.location.pathname === "/admin-verify" ||
