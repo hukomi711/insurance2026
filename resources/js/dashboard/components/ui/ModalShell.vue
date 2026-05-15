@@ -3,7 +3,7 @@
     <Transition name="admin-modal">
       <div
         v-if="open"
-        class="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
+        class="fixed inset-0 z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-4"
         :dir="dir"
         @click.self="$emit('close')"
       >
@@ -16,27 +16,29 @@
 
         <!-- Panel -->
         <div
-          class="admin-modal-panel relative w-full transform transition-all duration-200"
-          :style="{ maxWidth: panelMaxWidth }"
+          class="admin-modal-panel relative transform transition-all duration-200"
+          :class="modalSizeClasses"
         >
           <!-- Header -->
           <div class="admin-modal-header">
-            <div class="flex items-center gap-3">
+            <div class="admin-modal-heading">
               <div
                 v-if="icon"
                 class="modal-icon-bg flex h-9 w-9 items-center justify-center rounded-lg"
               >
                 <i :class="icon" class="h-5 w-5" :style="{ color: accentColor }" />
               </div>
-              <div>
+              <div class="min-w-0">
                 <h3 class="text-lg font-semibold tracking-tight" style="color: var(--admin-text, #fff)">
                   <span v-if="emoji" class="mr-1">{{ emoji }}</span>{{ title }}
                 </h3>
                 <p v-if="subtitle" class="text-xs" style="color: var(--admin-text-dim, #8b95a5)">{{ subtitle }}</p>
               </div>
             </div>
-            <div class="flex items-center gap-3">
-              <slot v-if="$slots['header-right']" name="header-right" />
+            <div class="admin-modal-header-actions">
+              <div v-if="$slots['header-right']" class="admin-modal-header-slot">
+                <slot name="header-right" />
+              </div>
               <button
                 class="admin-modal-close"
                 @click="$emit('close')"
@@ -49,8 +51,6 @@
           <!-- Body -->
           <div
             class="admin-modal-body space-y-4"
-            :style="{ maxHeight: bodyMaxHeight }"
-            style="overflow-y: auto"
           >
             <slot />
           </div>
@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, watch } from 'vue';
 
 const props = defineProps({
   /** Controls visibility */
@@ -78,8 +78,12 @@ const props = defineProps({
   title: { type: String, required: true },
   /** Optional subtitle under heading */
   subtitle: { type: String, default: '' },
-  /** CSS max-width for the panel (e.g. '40rem', '90vw'). */
-  maxWidth: { type: String, default: '42rem' },
+  /** Responsive modal size token. */
+  size: {
+    type: String,
+    default: 'md',
+    validator: (v) => ['sm', 'md', 'lg', 'xl', 'full'].includes(v),
+  },
   /** Accent color (CSS value). Used for icon tint. */
   accent: { type: String, default: '#34d399' },
   /** FontAwesome icon class (e.g. 'fa-solid fa-credit-card') */
@@ -94,8 +98,6 @@ const props = defineProps({
     default: 'dark',
     validator: (v) => ['dark', 'light'].includes(v),
   },
-  /** Max height for the scrollable body */
-  bodyMaxHeight: { type: String, default: '65vh' },
   /** Whether backdrop is heavy (dark + blur) or standard */
   heavyBackdrop: { type: Boolean, default: false },
 });
@@ -103,8 +105,41 @@ const props = defineProps({
 defineEmits(['close']);
 
 const accentColor = computed(() => props.accent);
-/** Cap panel width to viewport (handles 100vw edge case on phones) */
-const panelMaxWidth = computed(() => `min(${props.maxWidth}, calc(100vw - 1rem))`);
+let previousBodyOverflow = '';
+
+const modalSizeClasses = computed(() => {
+  const sizes = {
+    sm: 'w-[96vw] max-w-md',
+    md: 'w-[96vw] max-w-2xl',
+    lg: 'w-[96vw] max-w-4xl',
+    xl: 'w-[96vw] max-w-6xl',
+    full: 'w-screen sm:w-[96vw] sm:max-w-[90rem]',
+  };
+
+  return sizes[props.size] || sizes.md;
+});
+
+const lockBodyScroll = () => {
+  if (typeof document === 'undefined') return;
+  previousBodyOverflow = document.body.style.overflow;
+  document.body.style.overflow = 'hidden';
+};
+
+const unlockBodyScroll = () => {
+  if (typeof document === 'undefined') return;
+  document.body.style.overflow = previousBodyOverflow;
+};
+
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen) lockBodyScroll();
+    else unlockBodyScroll();
+  },
+  { immediate: true }
+);
+
+onBeforeUnmount(unlockBodyScroll);
 </script>
 
 <style scoped>

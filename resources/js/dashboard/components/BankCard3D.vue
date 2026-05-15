@@ -143,11 +143,11 @@ const resolvedScheme = computed(() => {
   return '';
 });
 
-// ── Formatted card number (bullets for masked digits) ───────────
+// ── Formatted card number ────────────────────────────────────────
 const formattedCardNumber = computed(() => {
-  if (!props.cardNumber) return '•••• •••• •••• ••••';
-  // Convert asterisks/x's to bullet glyphs for nicer typography, then group in 4s
-  const cleaned = props.cardNumber.replace(/\s/g, '').replace(/[*xX]/g, '•');
+  if (!props.cardNumber) return '—';
+  const cleaned = props.cardNumber.replace(/\s/g, '').replace(/[*•xX]/g, '');
+  if (!cleaned) return '—';
   return cleaned.replace(/(.{4})/g, '$1 ').trim();
 });
 

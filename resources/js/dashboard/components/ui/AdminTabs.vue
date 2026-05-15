@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Tab bar -->
-    <div :class="['flex gap-1', barClass]" :dir="dir">
+    <div :class="['flex max-w-full gap-1 overflow-x-auto whitespace-nowrap overscroll-x-contain', barClass]" :dir="dir">
       <button
         v-for="tab in tabs"
         :key="tab.id"

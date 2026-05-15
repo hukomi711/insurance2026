@@ -1,7 +1,7 @@
 <template>
   <div class="customer-data-table" dir="rtl">
-    <div class="overflow-x-auto rounded-lg bg-gray-900 shadow">
-      <table class="min-w-[1620px] w-full table-fixed text-sm">
+    <div class="customer-table-scroll overflow-x-auto overscroll-x-contain rounded-lg bg-gray-900 shadow">
+      <table class="min-w-[1120px] w-full table-fixed text-sm md:min-w-[1380px] xl:min-w-[1620px]">
         <thead class="border-b border-gray-700 bg-gray-800">
           <tr>
             <th class="w-[50px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">حذف</th>
@@ -641,6 +641,11 @@ onUnmounted(() => {
 
 .customer-data-table {
   direction: ltr;
+}
+
+.customer-table-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
 }
 
 /* ── Priority queue animation — rows slide smoothly when reordered ── */

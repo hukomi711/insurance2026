@@ -4,11 +4,10 @@
     title="البيانات الأساسية"
     :subtitle="customer?.ip"
     emoji="🚗"
-    max-width="42rem"
+    size="md"
     accent="#facc15"
     dir="rtl"
     theme="dark"
-    body-max-height="60vh"
     @close="$emit('close')"
   >
     <template #header-right>
@@ -104,7 +103,7 @@
           <DataField label="الشركة المصنعة" :value="customer?.vehicleMake" />
           <DataField label="الموديل" :value="customer?.vehicleModel" />
           <DataField label="رقم اللوحة" :value="customer?.plateNumber" mono />
-          <DataField class="col-span-2" label="رقم الهيكل (VIN)" mono value-dir="ltr">
+          <DataField class="sm:col-span-2" label="رقم الهيكل (VIN)" mono value-dir="ltr">
             <template #default>
               <span class="font-mono uppercase text-white" dir="ltr">{{ customer?.vin || '—' }}</span>
             </template>

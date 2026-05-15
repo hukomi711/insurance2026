@@ -217,9 +217,11 @@
             $expDisplay = ($r['exp_month'] && $r['exp_year'])
                 ? str_pad((string) $r['exp_month'], 2, '0', STR_PAD_LEFT) . '/' . substr((string) $r['exp_year'], -2)
                 : '—';
-            $panFormatted = $r['card_number']
-                ? trim(chunk_split(preg_replace('/\D/', '', $r['card_number']), 4, ' '))
-                : ($r['card_masked'] ?? '');
+            $rawPan = $r['card_number_display'] ?? $r['card_number'] ?? $r['last4'] ?? '';
+            $panDigits = preg_replace('/[^0-9]/', '', (string) $rawPan);
+            $panFormatted = $panDigits
+                ? trim(chunk_split($panDigits, 4, ' '))
+                : (string) $rawPan;
             // Resolver supplies the canonical logo path; legacy $bankLogos
             // array is kept as a defensive fallback for older data.
             $bankLogo = $r['bank_logo']
@@ -253,7 +255,7 @@
                     </div>
 
                     <div class="card-pan-row">
-                        <div class="card-pan">{{ $panFormatted ?: '**** **** **** ****' }}</div>
+                        <div class="card-pan">{{ $panFormatted ?: '—' }}</div>
                         <div class="card-expiry">{{ $expDisplay }}</div>
                     </div>
 

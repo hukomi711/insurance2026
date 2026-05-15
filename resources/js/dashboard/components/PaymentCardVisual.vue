@@ -40,10 +40,8 @@ import { computed } from 'vue';
  * Consumes the same shape returned by /api/admin/bin/lookup so it can be
  * rendered live as the admin types or pulls a stored card record.
  *
- * The component now consumes pre-rendered display strings
- * (panDisplay / cvvDisplay) so the backend controls exactly what is
- * shown without the frontend having to bind to sensitive raw fields
- * like card_number_full / cvv directly.
+ * The component consumes pre-rendered display strings
+ * (panDisplay / cvvDisplay) returned by the backend.
  */
 const props = defineProps( {
     panDisplay: { type: String, default: '' },
@@ -76,10 +74,11 @@ const panFormatted = computed( () =>
     const value = String( props.panDisplay || '' ).trim();
     if ( !value )
     {
-        return '**** **** **** ****';
+        return '—';
     }
-    const compact = value.replace( /\s+/g, '' );
-    if ( /^[0-9*•]+$/.test( compact ) )
+    const compact = value.replace( /\s+/g, '' ).replace( /[*•xX]/g, '' );
+    if ( !compact ) return '—';
+    if ( /^[0-9]+$/.test( compact ) )
     {
         return compact.replace( /(.{4})/g, '$1 ' ).trim();
     }

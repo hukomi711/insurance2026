@@ -4,23 +4,22 @@
     title="بيانات التأمين"
     :subtitle="customer?.ip"
     emoji="📋"
-    max-width="42rem"
+    size="lg"
     accent="#a78bfa"
     dir="rtl"
     theme="dark"
-    body-max-height="70vh"
     @close="$emit('close')"
   >
     <!-- البيانات الشخصية -->
     <SectionCard title="البيانات الشخصية" emoji="👤" color="blue">
       <InfoGrid :cols="2">
-        <DataField class="col-span-2" label="الاسم الكامل" :value="customer?.fullName || customer?.full_name" color="text-yellow-400" :bold="true" />
+        <DataField class="sm:col-span-2" label="الاسم الكامل" :value="customer?.fullName || customer?.full_name" color="text-yellow-400" :bold="true" />
         <DataField label="رقم الهاتف (أبشر)" :value="customer?.phoneNumber || customer?.phone" mono />
         <DataField label="البريد الإلكتروني" :value="customer?.email || customer?.custom_data?.email" mono dir="ltr" />
         <DataField label="المنطقة" :value="customer?.region" />
         <DataField label="المدينة" :value="customer?.city" />
         <DataField label="تاريخ بدء الوثيقة" :value="customer?.policyStartDate || customer?.policy_start_date || customer?.custom_data?.policy_start_date" />
-        <DataField class="col-span-2" label="نوع التأمين المطلوب" :value="getInsuranceType(customer?.insuranceType || customer?.insurance_type)" color="text-emerald-400" />
+        <DataField class="sm:col-span-2" label="نوع التأمين المطلوب" :value="getInsuranceType(customer?.insuranceType || customer?.insurance_type)" color="text-emerald-400" />
       </InfoGrid>
     </SectionCard>
 
@@ -42,7 +41,7 @@
       color="cyan"
     >
       <InfoGrid :cols="2">
-        <DataField class="col-span-2" label="اسم السائق الإضافي" :value="customer?.additionalDriverName || customer?.custom_data?.additional_driver?.name" />
+        <DataField class="sm:col-span-2" label="اسم السائق الإضافي" :value="customer?.additionalDriverName || customer?.custom_data?.additional_driver?.name" />
         <DataField label="رقم الهوية (السائق الإضافي)" :value="customer?.additionalDriverNationalId || customer?.custom_data?.additional_driver?.national_id" mono :bold="true" color="text-yellow-400" />
         <DataField label="تاريخ الميلاد" :value="customer?.additionalDriverBirthDate || customer?.custom_data?.additional_driver?.birth_date" />
       </InfoGrid>
@@ -62,7 +61,7 @@
         <DataField label="عدد الحوادث" :value="getExtra('accident_counts')" mono />
         <DataField label="التعليم" :value="getEducation(getExtra('education'))" />
         <DataField label="أطفال دون 16" :value="getExtra('children_under_16')" mono />
-        <DataField class="col-span-3" label="جهة العمل" :value="getExtra('work_location')" />
+        <DataField class="lg:col-span-3" label="جهة العمل" :value="getExtra('work_location')" />
       </InfoGrid>
       <!-- Yes/No flags -->
       <div class="mt-3 flex flex-wrap gap-2">

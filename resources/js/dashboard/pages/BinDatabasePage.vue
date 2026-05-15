@@ -48,7 +48,7 @@
 
             <div
                 v-if="lookupResult"
-                class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs"
+                class="mt-4 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 lg:grid-cols-4"
             >
                 <div><b>البنك:</b> {{ lookupResult.bank_name_ar || '—' }}</div>
                 <div><b>الشبكة:</b> {{ lookupResult.network || '—' }}</div>
@@ -149,15 +149,15 @@
         </div>
 
         <!-- Modal -->
-        <div v-if="modal.open" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="modal.open = false">
+        <div v-if="modal.open" class="fixed inset-0 z-50 flex items-stretch justify-center bg-black/50 p-0 sm:items-center sm:p-4" @click.self="modal.open = false">
             <div
-                class="rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+                class="flex h-[100dvh] w-screen flex-col overflow-hidden rounded-none p-0 sm:h-auto sm:max-h-[92dvh] sm:w-[96vw] sm:max-w-2xl sm:rounded-2xl"
                 :style="{ backgroundColor: 'var(--admin-card-bg)' }"
             >
-                <h3 class="text-lg font-bold mb-4" :style="{ color: 'var(--admin-text)' }">
+                <h3 class="flex-shrink-0 border-b px-4 py-3 text-lg font-bold sm:px-6 sm:py-4" :style="{ color: 'var(--admin-text)', borderColor: 'var(--admin-card-border)' }">
                     {{ modal.id ? 'تعديل نطاق BIN' : 'نطاق BIN جديد' }}
                 </h3>
-                <div class="grid grid-cols-2 gap-3 text-sm">
+                <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto overscroll-contain px-4 py-4 text-sm sm:grid-cols-2 sm:px-6">
                     <label for="bin-start">
                         <span class="block mb-1">BIN Start</span>
                         <input id="bin-start" v-model.number="modal.form.bin_start" name="bin_start" type="number" class="w-full rounded-xl px-3 py-2 font-mono" :style="filterStyle" />
@@ -224,12 +224,12 @@
                         <span class="block mb-1">الثقة (0–100)</span>
                         <input id="bin-confidence" v-model.number="modal.form.confidence" name="confidence" type="number" min="0" max="100" class="w-full rounded-xl px-3 py-2" :style="filterStyle" />
                     </label>
-                    <label class="col-span-2 flex items-center gap-2" for="bin-is-active">
+                    <label class="flex items-center gap-2 sm:col-span-2" for="bin-is-active">
                         <input id="bin-is-active" v-model="modal.form.is_active" name="is_active" type="checkbox" />
                         <span>مفعّل</span>
                     </label>
                 </div>
-                <div class="mt-5 flex justify-end gap-2">
+                <div class="flex flex-shrink-0 justify-end gap-2 border-t px-4 py-3 sm:px-6" :style="{ borderColor: 'var(--admin-card-border)' }">
                     <button class="px-4 py-2 rounded-xl text-sm" :style="filterStyle" @click="modal.open = false">إلغاء</button>
                     <button class="px-4 py-2 rounded-xl text-sm text-white" style="background:#0f172a" :disabled="modal.busy" @click="saveModal">
                         {{ modal.busy ? '...' : 'حفظ' }}

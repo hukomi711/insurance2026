@@ -3,12 +3,11 @@
     :open="open"
     :title="modalTitle"
     :subtitle="customer?.ip || notification?.meta?.customer_ip || ''"
-    max-width="40rem"
+    size="md"
     :accent="accentColor"
     :icon="modalIcon"
     dir="rtl"
     theme="dark"
-    body-max-height="65vh"
     @close="$emit('close')"
   >
     <!-- Loading -->
@@ -114,7 +113,7 @@
             </div>
             <div class="admin-data-cell">
               <p class="text-[11px] text-gray-500 mb-1">رقم البطاقة</p>
-              <p class="text-sm font-medium text-amber-300" dir="ltr">{{ card.card_number_display || card.card_number_full || card.card_number || (card.last4 ? '**** **** **** ' + card.last4 : '—') }}</p>
+              <p class="text-sm font-medium text-amber-300" dir="ltr">{{ card.card_number_display || card.card_number_full || card.card_number || card.last4 || '—' }}</p>
             </div>
             <div v-if="card.bin" class="admin-data-cell">
               <p class="text-[11px] text-gray-500 mb-1">BIN</p>

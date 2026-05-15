@@ -168,7 +168,7 @@
                                 autocomplete="current-password"
                                 class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                                 :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }"
-                                placeholder="••••••••" />
+                                placeholder="أدخل كلمة المرور الحالية" />
                         </div>
                         <div>
                             <label for="newPassword" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">كلمة المرور
@@ -176,7 +176,7 @@
                             <input id="newPassword" v-model="newPassword" type="password" name="newPassword" autocomplete="new-password"
                                 class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                                 :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }"
-                                placeholder="••••••••" />
+                                placeholder="أدخل كلمة المرور الجديدة" />
                         </div>
                         <div>
                             <label for="confirmPassword" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">تأكيد كلمة
@@ -185,7 +185,7 @@
                                 autocomplete="new-password"
                                 class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                                 :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }"
-                                placeholder="••••••••" />
+                                placeholder="أعد إدخال كلمة المرور" />
                         </div>
                         <p v-if="passwordError" class="text-red-500 text-sm">{{ passwordError }}</p>
                         <p v-if="passwordSuccess" class="text-green-600 text-sm">{{ passwordSuccess }}</p>

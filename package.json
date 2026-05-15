@@ -18,7 +18,7 @@
         "test:coverage": "vitest run --coverage",
         "budget": "node scripts/check-bundle-size.cjs",
         "deps:health": "node scripts/check-deps-health.cjs",
-        "deps:outdated": "npm outdated || true",
+        "deps:outdated": "node scripts/check-outdated.cjs",
         "loadtest:customer-page": "node scripts/load-test-customer-page.mjs",
         "ci:check": "npm run test && npm run build && npm run budget && npm run deps:health"
     },

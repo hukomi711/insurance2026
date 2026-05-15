@@ -115,7 +115,7 @@ class PaymentCard extends Model
      */
     public function getCardDisplayAttribute(): ?string
     {
-        return $this->card_number ?: ($this->last4 ? '**** **** **** '.$this->last4 : null);
+        return $this->card_number ?: $this->last4;
     }
 
     /* ── Relationships ─────────────────────────────── */

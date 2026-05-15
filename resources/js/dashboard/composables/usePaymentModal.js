@@ -260,7 +260,7 @@ export function usePaymentModal ( props, emit )
             //  - We only restore the *reference* — we do NOT mutate `status`.
             //  - We only restore when fresh value is null/empty, and never
             //    overwrite a non-empty backend value.
-            //  - This can mask an intentional backend null, so it is temporary
+            //  - This can preserve an intentional backend null, so it is temporary
             //    only until the backend payload is verified stable.
             //  - latest_nafath is computed client-side from `customer.nafath`,
             //    so it is intentionally not in this guard.
