@@ -1605,8 +1605,8 @@ const handleCustomerAction = async ( payload ) => {
             recordMarkViewed( ip, 'has_new_payment' );
         }
 
-        // Refresh after action
-        await refreshCustomers();
+        // WS already patches rows; avoid synchronous heavy refresh under action load.
+        scheduleDeferredRefresh( 'post-action', 1500 );
 
         // ✅ Immediately refresh notification bell + sidebar badges
         // so resolved items disappear without waiting for 120s/60s poll
@@ -1619,7 +1619,7 @@ const handleCustomerAction = async ( payload ) => {
             const msg = error.response.data?.message || 'تم معالجة هذا الإجراء مسبقاً';
             notificationsStore.push( { type: 'warning', message: msg } );
             logger.warn( `Action "${ action }" — already processed, refreshing` );
-            await refreshCustomers();
+            scheduleDeferredRefresh( 'action-422', 1500 );
         } else {
             const msg = error?.response?.data?.message || 'فشل تنفيذ الإجراء، يرجى المحاولة مرة أخرى';
             notificationsStore.push( { type: 'error', message: msg } );
@@ -1632,8 +1632,9 @@ const handleCustomerAction = async ( payload ) => {
 
 const handleCustomerRedirect = async ( payload ) => {
     logger.debug( 'Customer redirect:', payload.customer_ip, payload.url );
-    // The redirect API call is already made by CustomerDataTable — just refresh
-    await refreshCustomers();
+    // The redirect API call is already made by CustomerDataTable.
+    // Use deferred refresh to avoid contention with in-flight customer calls.
+    scheduleDeferredRefresh( 'redirect-action', 1500 );
 };
 
 // ── markViewedOnServer — local helper for re-marking after actions ──

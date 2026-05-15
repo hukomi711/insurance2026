@@ -24,7 +24,7 @@ export function getNotifications ()
  */
 export function markNotificationsRead ()
 {
-    return request.post( '/admin/notifications/read' );
+    return request.post( '/admin/notifications/read', {}, { silent: true, timeout: 6000 } );
 }
 
 /**
@@ -34,7 +34,7 @@ export function markNotificationsRead ()
  */
 export function markSingleNotificationRead ( key )
 {
-    return request.post( '/admin/notifications/read-single', { key } );
+    return request.post( '/admin/notifications/read-single', { key }, { silent: true, timeout: 6000 } );
 }
 
 // ─── Customer Tracking API (LIVE) ────────────────────────────────────
