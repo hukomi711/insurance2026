@@ -15,7 +15,7 @@ import request from './request';
  */
 export function getNotifications ()
 {
-    return request.get( '/admin/notifications' );
+    return request.get( '/admin/notifications', { silent: true, timeout: 6000 } );
 }
 
 /**
@@ -54,7 +54,7 @@ export function getCustomers ( params = {}, config = {} )
  */
 export function getCustomer ( id )
 {
-    return request.get( `/admin/customers/${ id }` );
+    return request.get( `/admin/customers/${ id }`, { silent: true, timeout: 8000 } );
 }
 
 /**

@@ -7,6 +7,7 @@ export const useBadgeStore = defineStore( 'badges', {
         counts: {},
         /** @type {Record<string, number>} — absolute totals */
         totals: {},
+        loading: false,
 
     } ),
 
@@ -24,9 +25,11 @@ export const useBadgeStore = defineStore( 'badges', {
     actions: {
         async fetch ()
         {
+            if ( this.loading ) return;
+            this.loading = true;
             try
             {
-                const { data } = await request.get( '/admin/badge-counts' );
+                const { data } = await request.get( '/admin/badge-counts', { silent: true, timeout: 6000 } );
                 if ( data.success )
                 {
                     this.counts = data.badges || {};
@@ -35,6 +38,9 @@ export const useBadgeStore = defineStore( 'badges', {
             } catch
             {
                 // Silent — badge counts are non-critical
+            } finally
+            {
+                this.loading = false;
             }
         },
 

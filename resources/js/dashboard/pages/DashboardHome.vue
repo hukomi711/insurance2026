@@ -169,7 +169,9 @@ function applyFocusFromQuery () {
     nextTick( () => {
         const el = document.getElementById( `customer-row-${ idNum }` );
         if ( el ) {
-            el.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+            requestAnimationFrame( () => {
+                el.scrollIntoView( { block: 'center' } );
+            } );
         }
     } );
     // Auto-clear highlight after 3s, and strip ?focus from URL so refresh
@@ -1214,7 +1216,7 @@ const refreshCustomers = async () => {
         if ( searchQuery.value.trim() ) {
             params.search = searchQuery.value.trim();
         }
-        const { data } = await getCustomers( params, { signal: controller.signal, silent: true } );
+        const { data } = await getCustomers( params, { signal: controller.signal, silent: true, timeout: 10000 } );
         if ( controller.signal.aborted ) {
             return true;
         }
