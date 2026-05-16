@@ -33,7 +33,7 @@ class AdminCustomerController extends Controller
         $search = $request->input('search', '');
         $country = $request->input('country', '');
         $page = (int) $request->input('page', 1);
-        $perPage = min((int) $request->input('per_page', 120), 200);
+        $perPage = min((int) $request->input('per_page', 80), 150);
         $sortBy = $request->input('sort_by', 'last_activity_at');
         $sortOrder = $request->input('sort_order', 'desc');
 
@@ -41,7 +41,7 @@ class AdminCustomerController extends Controller
         // concurrent WS + polling + manual actions.
         // Search queries: no cache (to show results immediately)
         $isCached = ! $search;
-        $cacheKey = "admin:customers:plain:v2:{$activeOnly}:{$paymentOnly}:{$search}:{$country}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
+        $cacheKey = "admin:customers:plain:v3:{$activeOnly}:{$paymentOnly}:{$search}:{$country}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
 
         // ── Fetch data with stampede-safe caching ──
         // Cache::flexible [2, 10] = fresh for 2s, stale-while-revalidate up to 10s.
@@ -352,8 +352,10 @@ class AdminCustomerController extends Controller
 
         $customer->update(['data_viewed' => $viewed]);
 
-        // ✅ Flush cached customer list so next poll returns updated has_new_* flags
-        $this->flushCustomerCache();
+        // Do not flush the full customer-list cache here. WindowReadUpdated
+        // broadcasts clear the blink instantly for all connected admins, while
+        // keeping the short-lived list cache avoids expensive recomputation
+        // storms when modals open/close repeatedly.
 
         // ✅ Instant broadcast to ALL admins (including self) — blink disappears immediately
         try {

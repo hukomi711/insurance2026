@@ -209,7 +209,7 @@ export const useNotificationsStore = defineStore( 'notifications', {
          */
         async fetchNotifications ()
         {
-            if ( this.loading ) return;
+            if ( this.loading ) return true;
             this.loading = true;
             try
             {
@@ -234,9 +234,11 @@ export const useNotificationsStore = defineStore( 'notifications', {
                     // client-side merging is needed.
                     this.items = data.data;
                 }
+                return true;
             } catch
             {
                 // Silently fail — notifications are non-critical
+                return false;
             } finally
             {
                 this.loading = false;

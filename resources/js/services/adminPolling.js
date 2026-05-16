@@ -340,8 +340,15 @@ async function _safeFetchAsync ( storeKey, method )
         const store = registeredStores[ storeKey ];
         if ( store && typeof store[ method ] === 'function' )
         {
-            await store[ method ]();
-            _resetBackoff();
+            const result = await store[ method ]();
+            if ( result === false )
+            {
+                _incrementBackoff();
+            }
+            else
+            {
+                _resetBackoff();
+            }
         }
     } catch ( err )
     {

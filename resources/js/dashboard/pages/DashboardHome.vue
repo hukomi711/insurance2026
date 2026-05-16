@@ -199,6 +199,9 @@ let wsState = 'disconnected';           // 'disconnected', 'connecting', 'connec
 let subscribedChannels = new Map();     // registry: channel name -> channel object (prevent duplicates)
 
 const WS_REFRESH_THROTTLE = 2_000;   // minimum 2s between WS-triggered refreshes
+const WS_RECONNECT_CATCHUP_AFTER_MS = 30_000;
+const CUSTOMER_REFRESH_TIMEOUT_MS = 20_000;
+const TRANSIENT_REFRESH_RETRY_MS = 15_000;
 let _lastRefreshAt = 0;
 let _throttledRefreshTimer = null;    // trailing refresh timer – ensures last throttled event is never lost
 let _throttledRefreshPayload = null;  // stores the latest throttled event for trailing refresh
@@ -414,6 +417,19 @@ function scheduleDeferredRefresh ( reason = 'deferred', delayMs = 7000 ) {
     }, delayMs );
 }
 
+function isTransientRefreshError ( error ) {
+    const message = String( error?.message ?? '' );
+    const status = error?.response?.status;
+    return error?.code === 'ECONNABORTED'
+        || error?.code === 'ERR_NETWORK'
+        || status === 408
+        || status === 429
+        || status >= 500
+        || message.includes( 'timeout' )
+        || message.includes( 'Network Error' )
+        || message.includes( 'ERR_NETWORK_CHANGED' );
+}
+
 // ── New: WebSocket State Management ──
 function setWsState ( next ) {
     wsState = next;
@@ -548,8 +564,12 @@ async function connectDashboardWebSocket () {
                 }
                 wsConnected.value = true;
                 setWsConnected( true );
-                // Catch up on any events missed during disconnection
-                refreshCustomers();
+                // Catch up only when data is old; Pusher often emits connected
+                // during the initial load, and a full list refresh here can race
+                // with the already-running request.
+                if ( Date.now() - _lastRefreshAt > WS_RECONNECT_CATCHUP_AFTER_MS ) {
+                    scheduleDeferredRefresh( 'ws-connected-catchup', 750 );
+                }
                 logger.info( '[Dashboard WS] Pusher connected — polling stopped (WS primary)' );
             } );
             _bind( 'disconnected', () => {
@@ -570,7 +590,7 @@ async function connectDashboardWebSocket () {
                 if ( _wsDisconnectGrace ) { clearTimeout( _wsDisconnectGrace ); _wsDisconnectGrace = null; }
                 wsConnected.value = false;
                 setWsConnected( false );
-                logger.warn( '[Dashboard WS] Pusher unavailable (gave up) — scheduling forced reconnect' );
+                logger.debug( '[Dashboard WS] Pusher unavailable — scheduling forced reconnect' );
                 // Pusher gave up — tear down channels and reconnect from scratch
                 _dashboardChannel = null;
                 scheduleReconnect();
@@ -588,7 +608,12 @@ async function connectDashboardWebSocket () {
             _bind( 'error', ( err ) => {
                 // Stringify to capture full error details (code, message, type)
                 const detail = typeof err === 'object' ? JSON.stringify( err ) : err;
-                logger.error( '[Dashboard WS] Pusher error:', detail, err );
+                const code = err?.data?.code || err?.error?.data?.code;
+                if ( code === 1006 ) {
+                    logger.warn( '[Dashboard WS] Pusher transient close (1006) — waiting for auto-reconnect', detail );
+                } else {
+                    logger.error( '[Dashboard WS] Pusher error:', detail, err );
+                }
             } );
         }
 
@@ -1079,7 +1104,7 @@ const lastPage = ref( 1 );
 const totalCustomers = ref( 0 );
 // Keep the admin list below the backend timeout cliff while preserving
 // single-page rendering for the current dataset size.
-const perPage = ref( 120 );
+const perPage = ref( 80 );
 
 const activeCustomersCount = ref( 0 );
 
@@ -1217,7 +1242,7 @@ const refreshCustomers = async () => {
         if ( searchQuery.value.trim() ) {
             params.search = searchQuery.value.trim();
         }
-        const { data } = await getCustomers( params, { signal: controller.signal, silent: true, timeout: 10000 } );
+        const { data } = await getCustomers( params, { signal: controller.signal, silent: true, timeout: CUSTOMER_REFRESH_TIMEOUT_MS } );
         if ( controller.signal.aborted ) {
             return true;
         }
@@ -1251,6 +1276,14 @@ const refreshCustomers = async () => {
     } catch ( error ) {
         if ( error?.code === 'ERR_CANCELED' ) {
             return true;
+        }
+        if ( isTransientRefreshError( error ) && customers.value.length > 0 ) {
+            _refreshQueued = false;
+            logger.warn( `[Dashboard] refreshCustomers transient failure — keeping ${ customers.value.length } cached rows:`, error?.message || error );
+            loadError.value = false;
+            initialLoading.value = false;
+            scheduleDeferredRefresh( 'refresh-transient-failure', TRANSIENT_REFRESH_RETRY_MS );
+            return false;
         }
         logger.error( 'Failed to fetch customers:', error );
         loadError.value = true;

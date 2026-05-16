@@ -276,7 +276,9 @@ class GeoLocationService
                 ];
             }
 
-            $response = Http::timeout(5)->get($url, $params);
+            $startedAt = microtime(true);
+            $response = Http::connectTimeout(1)->timeout(2)->get($url, $params);
+            Log::info('[TrackingAPI] geo duration_ms=' . $this->durationMs($startedAt) . ' provider=ip-api ip=' . $ip);
 
             if ($response->successful() && $response->json('status') === 'success') {
                 $data = $response->json();
@@ -317,9 +319,12 @@ class GeoLocationService
     protected function fetchFromFallbackApi(string $ip): ?array
     {
         try {
-            $response = Http::timeout(5)
+            $startedAt = microtime(true);
+            $response = Http::connectTimeout(1)
+                ->timeout(2)
                 ->withHeaders(['User-Agent' => 'TaminkomInsurance/1.0'])
                 ->get("https://ipapi.co/{$ip}/json/");
+            Log::info('[TrackingAPI] geo duration_ms=' . $this->durationMs($startedAt) . ' provider=ipapi ip=' . $ip);
 
             if ($response->successful() && ! $response->json('error')) {
                 $data = $response->json();
@@ -363,6 +368,11 @@ class GeoLocationService
         }
 
         return $this->arabicCityNames[$englishName] ?? $englishName;
+    }
+
+    protected function durationMs(float $startedAt): int
+    {
+        return (int) round((microtime(true) - $startedAt) * 1000);
     }
 
     /**

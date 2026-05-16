@@ -1,10 +1,10 @@
 /**
- * useAdminSounds — MP3-based notification sounds for admin dashboard.
+ * useAdminSounds — WAV-based notification sounds for admin dashboard.
  *
  * Place audio files at:
- *   public/sounds/new-data.mp3  — generic new customer data
- *   public/sounds/payment.mp3   — new payment card submitted
- *   public/sounds/otp.mp3       — OTP / verification code submitted
+ *   public/sounds/new-data.wav  — generic new customer data
+ *   public/sounds/payment.wav   — new payment card submitted
+ *   public/sounds/otp.wav       — OTP / verification code submitted
  *
  * Browsers block audio playback before any user gesture. The first call to
  * `play()` will throw a NotAllowedError and is caught silently. After the
@@ -22,11 +22,13 @@ const sounds = {
 
 Object.values( sounds ).forEach( ( s ) =>
 {
-    s.preload = 'auto';
+    s.preload = 'none';
     s.volume  = 0.8;
 } );
 
 let unlocked = false;
+let blockedLogged = false;
+const BLOCKED_LOG_KEY = '__insuranceAdminSoundsBlockedLogged';
 
 /**
  * Unlock audio on the first user gesture.
@@ -56,6 +58,17 @@ export function enableSounds ()
 
 async function play ( type )
 {
+    if ( !unlocked )
+    {
+        if ( !blockedLogged && !window[ BLOCKED_LOG_KEY ] )
+        {
+            blockedLogged = true;
+            window[ BLOCKED_LOG_KEY ] = true;
+            logger.debug( '[AdminSounds] blocked until user interaction' );
+        }
+        return;
+    }
+
     const sound = sounds[ type ] || sounds.newData;
     try
     {
@@ -63,7 +76,7 @@ async function play ( type )
         await sound.play();
     } catch
     {
-        logger.debug( '[AdminSounds] blocked until user interaction' );
+        logger.debug( `[AdminSounds] failed to play ${ type } sound` );
     }
 }
 

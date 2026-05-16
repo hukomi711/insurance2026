@@ -2,18 +2,16 @@
     <main class="min-w-0 overflow-x-hidden p-4 sm:p-6 lg:p-8">
         <router-view v-slot="{ Component }">
             <template v-if="Component">
-                <transition name="fade" mode="out-in">
-                    <KeepAlive :max="5" :include="['DashboardHome', 'PoliciesPage', 'ClaimsPage', 'CompaniesPage', 'CustomerActivityPage', 'QuoteMonitorPage', 'LoginAttemptsPage']">
-                        <Suspense @fallback="onSuspenseFallback">
-                            <component :is="Component" :key="$route.path" />
-                            <template #fallback>
-                                <div class="flex items-center justify-center py-20">
-                                    <InsLoading text="جارٍ التحميل..." />
-                                </div>
-                            </template>
-                        </Suspense>
-                    </KeepAlive>
-                </transition>
+                <KeepAlive :max="5" :include="['DashboardHome', 'PoliciesPage', 'ClaimsPage', 'CompaniesPage', 'CustomerActivityPage', 'QuoteMonitorPage', 'LoginAttemptsPage']">
+                    <Suspense @fallback="onSuspenseFallback">
+                        <component :is="Component" :key="$route.path" />
+                        <template #fallback>
+                            <div class="flex items-center justify-center py-20">
+                                <InsLoading text="جارٍ التحميل..." />
+                            </div>
+                        </template>
+                    </Suspense>
+                </KeepAlive>
             </template>
         </router-view>
 

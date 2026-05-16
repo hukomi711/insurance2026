@@ -112,6 +112,9 @@ request.interceptors.response.use(
     async ( error ) =>
     {
         const { status } = error.response || {};
+        const requestUrl = String( error.config?.url || "" );
+        const isAdminMeRequest = requestUrl.includes( "/admin/me" );
+        const silent = error.config?.silent === true || isAdminMeRequest;
         let notifications;
         try
         {
@@ -125,9 +128,6 @@ request.interceptors.response.use(
         // ── Network / Timeout errors (no response from server) ──
         if ( !error.response )
         {
-            // Skip notifications for background/silent requests (heartbeats, tracking)
-            const silent = error.config?.silent === true;
-
             if ( error.code === "ECONNABORTED" )
             {
                 if ( !silent ) logger.warn( "[API] Request timeout" );
@@ -159,7 +159,6 @@ request.interceptors.response.use(
 
         if ( status === 401 || status === 403 )
         {
-            const requestUrl = String( error.config?.url || "" );
             const isAdminApiRequest = requestUrl.startsWith( "/admin/" );
             const isAuthFormEndpoint = AUTH_FORM_PATHS.some(
                 ( p ) => requestUrl.includes( p ),
@@ -255,6 +254,11 @@ request.interceptors.response.use(
 
         if ( status === 429 )
         {
+            if ( silent )
+            {
+                return Promise.reject( error );
+            }
+
             // Rate limited — retry with limit to prevent infinite loops
             const retryCount = parseInt(
                 error.config.headers?.[ RETRY_COUNT_HEADER ] || "0",
@@ -306,6 +310,11 @@ request.interceptors.response.use(
 
         if ( status === 422 )
         {
+            if ( silent )
+            {
+                return Promise.reject( error );
+            }
+
             // Validation error — pass through for form handling
             logger.warn( "[API] Validation error — 422", error.response.data );
             notifications?.push( {
@@ -318,6 +327,11 @@ request.interceptors.response.use(
 
         if ( status >= 500 )
         {
+            if ( silent )
+            {
+                return Promise.reject( error );
+            }
+
             logger.error( "[API] Server error", status );
             notifications?.push( {
                 type: "error",

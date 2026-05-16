@@ -25,19 +25,21 @@ export const useBadgeStore = defineStore( 'badges', {
     actions: {
         async fetch ()
         {
-            if ( this.loading ) return;
+            if ( this.loading ) return true;
             this.loading = true;
             try
             {
-                const { data } = await request.get( '/admin/badge-counts', { silent: true, timeout: 6000 } );
+                const { data } = await request.get( '/admin/badge-counts', { silent: true, timeout: 4000 } );
                 if ( data.success )
                 {
                     this.counts = data.badges || {};
                     this.totals = data.totals || {};
                 }
+                return true;
             } catch
             {
                 // Silent — badge counts are non-critical
+                return false;
             } finally
             {
                 this.loading = false;

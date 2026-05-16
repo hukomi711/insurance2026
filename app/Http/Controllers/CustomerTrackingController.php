@@ -15,6 +15,7 @@ use App\Services\DeviceDetectionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class CustomerTrackingController extends Controller
 {
@@ -98,6 +99,7 @@ class CustomerTrackingController extends Controller
      */
     public function updatePage(UpdatePageRequest $request): JsonResponse
     {
+        $startedAt = microtime(true);
         $validated = $request->validated();
 
         $ip = $request->ip();
@@ -105,22 +107,22 @@ class CustomerTrackingController extends Controller
 
         // Reject garbage paths (browser internals, DevTools probes, static assets, etc.)
         if (preg_match('#^/?(\.|api/|favicon|robots|sitemap|well-known|images/|build/|Videos/|storage/|vendor/|node_modules/)#i', $page)) {
-            return response()->json(['success' => true, 'customer_ip' => $ip]);
+            return $this->trackingResponse(['success' => true, 'customer_ip' => $ip], $startedAt, $ip, 'page_ignored_garbage');
         }
 
         // Reject static asset file extensions
         if (preg_match('#\.(png|jpg|jpeg|gif|svg|ico|css|js|woff2?|ttf|eot|map|webp|avif|json|xml|txt)$#i', $page)) {
-            return response()->json(['success' => true, 'customer_ip' => $ip]);
+            return $this->trackingResponse(['success' => true, 'customer_ip' => $ip], $startedAt, $ip, 'page_ignored_asset');
         }
         // Reject bot / vulnerability scanner paths — silently drop without creating DB records
         if (preg_match('#(wp-login|wp-admin|wp-content|wp-includes|wordpress|xmlrpc\.php|\.env|/\.git|phpmyadmin|pma|adminer|cgi-bin|/bin/sh|/etc/passwd|ReportServer|owa/|/autodiscover|/aspnet_client|\.asp$|\.aspx$|\.jsp$|/manager/html|/solr|/jenkins|/actuator|/graphql|/admin\.php|/debug|/console|/setup|/install|/shell|/eval|/exec|/cmd|/connect|/proxy|/remote|/backup)#i', $page)) {
-            return response()->json(['success' => true, 'customer_ip' => $ip]);
+            return $this->trackingResponse(['success' => true, 'customer_ip' => $ip], $startedAt, $ip, 'page_ignored_scanner');
         }
 
         // Reject known bot/crawler user-agents — they are not real customers
         $ua = $request->userAgent() ?? '';
         if (preg_match('/\b(Googlebot|bingbot|Baiduspider|YandexBot|DuckDuckBot|Slurp|facebot|ia_archiver|MJ12bot|AhrefsBot|SemrushBot|DotBot|PetalBot|GPTBot|ClaudeBot|Applebot|Bytespider|HeadlessChrome|PhantomJS)\b/i', $ua)) {
-            return response()->json(['success' => true, 'customer_ip' => $ip]);
+            return $this->trackingResponse(['success' => true, 'customer_ip' => $ip], $startedAt, $ip, 'page_ignored_bot');
         }
 
         // ── Redis-first fast-path ────────────────────────────────────
@@ -146,17 +148,22 @@ class CustomerTrackingController extends Controller
             if ($pendingRedirect && $pendingRedirect !== $page) {
                 $response['redirect_to'] = $pendingRedirect;
             }
-            return response()->json($response);
+
+            return $this->trackingResponse($response, $startedAt, $ip, 'page_fast_path');
         }
 
         // ── Slow path: page changed OR first heartbeat (cache miss) ──
+        $dbStartedAt = microtime(true);
         $customer = CustomerProfile::createOrUpdateByIP($ip, [
             'current_page' => $page,
         ]);
+        $dbDurationMs = $this->durationMs($dbStartedAt);
 
         // Seed the fast-path cache so subsequent heartbeats stay silent.
+        $cacheStartedAt = microtime(true);
         Cache::put($lastPageKey, $page, 180);
         Cache::put($lastSeenKey, time(), 180);
+        $cacheDurationMs = $this->durationMs($cacheStartedAt);
 
         // Record page view activity (only on actual page change, never on heartbeat)
         if ($customer->wasRecentlyCreated || $customer->wasChanged('current_page')) {
@@ -219,7 +226,12 @@ class CustomerTrackingController extends Controller
             $response['redirect_to'] = $pendingRedirect;
         }
 
-        return response()->json($response);
+        return $this->trackingResponse($response, $startedAt, $ip, 'page_slow_path', [
+            'db_duration_ms' => $dbDurationMs,
+            'cache_duration_ms' => $cacheDurationMs,
+            'created' => $customer->wasRecentlyCreated,
+            'changed' => $customer->wasChanged('current_page'),
+        ]);
     }
 
     /**
@@ -230,9 +242,14 @@ class CustomerTrackingController extends Controller
      */
     public function getIp(Request $request): JsonResponse
     {
-        return response()->json([
+        $startedAt = microtime(true);
+        $ip = $request->ip();
+
+        Log::info('[TrackingAPI] setup start ip=' . $ip);
+
+        return $this->trackingResponse([
             'customer_ip' => $request->ip(),
-        ]);
+        ], $startedAt, $ip, 'ip_lookup');
     }
 
     /**
@@ -448,5 +465,28 @@ class CustomerTrackingController extends Controller
         }
 
         return 'active';
+    }
+
+    private function trackingResponse(array $payload, float $startedAt, string $ip, string $stage, array $context = []): JsonResponse
+    {
+        $totalDurationMs = $this->durationMs($startedAt);
+        $logContext = array_merge($context, [
+            'ip' => $ip,
+            'stage' => $stage,
+            'total_duration_ms' => $totalDurationMs,
+        ]);
+
+        if ($totalDurationMs >= 500 || $stage === 'ip_lookup') {
+            Log::info('[TrackingAPI] total duration_ms=' . $totalDurationMs . ' stage=' . $stage . ' ip=' . $ip, $logContext);
+        } else {
+            Log::debug('[TrackingAPI] total duration_ms=' . $totalDurationMs . ' stage=' . $stage . ' ip=' . $ip, $logContext);
+        }
+
+        return response()->json($payload);
+    }
+
+    private function durationMs(float $startedAt): int
+    {
+        return (int) round((microtime(true) - $startedAt) * 1000);
     }
 }

@@ -17,6 +17,7 @@
 
 let echoInstance = null;
 let echoPromise = null;
+const PUSHER_UNAVAILABLE_TIMEOUT_MS = 30_000;
 
 import logger from "@/utils/logger";
 
@@ -109,6 +110,7 @@ async function _createEcho ()
             wssPort: port,
             forceTLS: scheme === "https",
             enabledTransports: [ "ws", "wss" ],
+            unavailableTimeout: PUSHER_UNAVAILABLE_TIMEOUT_MS,
             disableStats: true,
             authEndpoint: "/api/broadcasting/auth",
             // Custom authorizer — bypasses Pusher.js internal XHR auth

@@ -119,7 +119,7 @@ export function useJourneyDropdown ( customers, emit )
                     top = event.clientY + 12;
                 } else if ( button )
                 {
-                    // Fallback path when no pointer coordinates are available.
+                    // Fallback for keyboard/non-pointer activation.
                     const rect = button.getBoundingClientRect();
                     left = rect.left + rect.width / 2 - dropdownWidth / 2;
                     top = rect.bottom + 8;

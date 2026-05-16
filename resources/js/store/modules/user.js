@@ -3,6 +3,29 @@ import request, { initCsrf } from '@/api/request';
 import { stopAdminPolling } from '@/services/adminPolling';
 import { destroyEcho } from '@/services/echo';
 
+let getInfoPromise = null;
+
+const ME_TIMEOUT_MS = 20_000;
+const ME_RETRY_DELAY_MS = 1_000;
+
+function isTransientAuthInfoError ( error )
+{
+    const message = error?.message || '';
+    return !error?.response
+        && (
+            error?.code === 'ECONNABORTED'
+            || error?.code === 'ERR_NETWORK'
+            || message.includes( 'timeout' )
+            || message.includes( 'Network Error' )
+            || message.includes( 'ERR_NETWORK_CHANGED' )
+        );
+}
+
+function delay ( ms )
+{
+    return new Promise( resolve => setTimeout( resolve, ms ) );
+}
+
 /**
  * @typedef {'admin'|'editor'|'viewer'} UserRole
  * @typedef {{ name: string, email: string, role: UserRole, avatar: string }} UserInfo
@@ -136,22 +159,57 @@ export const useUserStore = defineStore( 'user', {
                 return this.userInfo;
             }
 
-            try
+            if ( getInfoPromise )
             {
-                const { data } = await request.get( '/admin/me' );
+                return getInfoPromise;
+            }
+
+            getInfoPromise = ( async () =>
+            {
+                let response;
+                try
+                {
+                    response = await request.get( '/admin/me', { silent: true, timeout: ME_TIMEOUT_MS } );
+                } catch ( error )
+                {
+                    if ( !isTransientAuthInfoError( error ) )
+                    {
+                        throw error;
+                    }
+
+                    await delay( ME_RETRY_DELAY_MS );
+                    response = await request.get( '/admin/me', { silent: true, timeout: ME_TIMEOUT_MS } );
+                }
+
+                const { data } = response;
                 this.name = data.user.name;
                 this.email = data.user.email;
                 this.role = data.user.role || 'admin';
                 this.isAuthenticated = true;
                 this._meLoadedAt = Date.now();
                 return this.userInfo;
-            } catch
+            } )();
+
+            try
             {
+                return await getInfoPromise;
+            } catch ( error )
+            {
+                if ( isTransientAuthInfoError( error ) && this.token )
+                {
+                    this.isAuthenticated = true;
+                    this._meLoadedAt = Date.now();
+                    return this.userInfo;
+                }
+
                 this.isAuthenticated = false;
                 this.token = null;
                 this._meLoadedAt = 0;
                 localStorage.removeItem( 'auth_token' );
-                throw new Error( 'Unauthorized' );
+                throw new Error( 'Unauthorized', { cause: error } );
+            } finally
+            {
+                getInfoPromise = null;
             }
         },
     },

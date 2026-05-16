@@ -30,7 +30,10 @@ const HEARTBEAT_INTERVAL = 30_000; // 30 seconds — keeps is_active fresh (must
 const THROTTLE_MS = 5_000; // minimum 5s between /customer/page calls
 const MAX_ERRORS = 3; // pause heartbeat after this many consecutive errors
 const BACKOFF_429_MS = 120_000; // 2 min backoff on rate-limit
-const BACKOFF_500_MS = 60_000; // 1 min backoff on server error
+const BACKOFF_500_MS = 120_000; // 2 min backoff on server/timeout errors
+const REDIRECT_IP_TIMEOUT_MS = 2_000;
+const REDIRECT_RETRY_MIN_MS = 10_000;
+const REDIRECT_RETRY_MAX_MS = 30_000;
 
 // ── Global State (singleton) ───────────────────────────────
 let heartbeatTimer = null;
@@ -42,6 +45,12 @@ let consecutiveErrors = 0;
 let isPaused = false;
 let inFlightController = null; // AbortController for the current in-flight request
 let _redirectRouter = null; // Router ref for polling-based redirects
+let _redirectEcho = null;
+let _redirectChannelName = null;
+let _redirectRetryTimer = null;
+let _redirectRetryAttempts = 0;
+let _redirectListenerSetupInFlight = false;
+let _lastTrackingErrorLogAt = 0;
 
 // ── Error Backoff ──────────────────────────────────────────
 
@@ -59,9 +68,14 @@ function handleApiError ( error )
     {
         consecutiveErrors++;
         const reason = isTimeout ? 'timeout' : isNetworkError ? 'network' : status;
-        logger.warn(
-            `[Tracking] ⚠️ Error ${ reason }, consecutive: ${ consecutiveErrors }`,
-        );
+        const now = Date.now();
+        if ( consecutiveErrors === 1 || consecutiveErrors >= MAX_ERRORS || now - _lastTrackingErrorLogAt > 60_000 )
+        {
+            _lastTrackingErrorLogAt = now;
+            logger.warn(
+                `[Tracking] ⚠️ Error ${ reason }, consecutive: ${ consecutiveErrors }`,
+            );
+        }
 
         if ( consecutiveErrors >= MAX_ERRORS )
         {
@@ -75,12 +89,51 @@ function handleApiError ( error )
     }
 }
 
+function isTransientNetworkError ( error )
+{
+    const message = String( error?.message ?? '' );
+    return !error?.response && (
+        error?.code === 'ECONNABORTED' ||
+        error?.code === 'ERR_NETWORK' ||
+        message.includes( 'timeout' ) ||
+        message.includes( 'Network Error' ) ||
+        message.includes( 'ERR_NETWORK_CHANGED' )
+    );
+}
+
+function isAdminRoute ()
+{
+    return window.location.pathname.startsWith( "/dashboard" ) ||
+        window.location.pathname.startsWith( "/admin" );
+}
+
+function scheduleRedirectListenerRetry ( router )
+{
+    if ( _redirectRetryTimer || !globalActive || isAdminRoute() ) return;
+
+    const delay = Math.min(
+        REDIRECT_RETRY_MAX_MS,
+        REDIRECT_RETRY_MIN_MS * ( 2 ** _redirectRetryAttempts ),
+    );
+    _redirectRetryAttempts++;
+
+    _redirectRetryTimer = setTimeout( () =>
+    {
+        _redirectRetryTimer = null;
+        setupRedirectListener( router );
+    }, delay );
+
+    logger.debug(
+        `[Tracking] redirect listener retry scheduled in ${ delay / 1000 }s`,
+    );
+}
+
 /** Pause heartbeat (error backoff or tab hidden). */
 function pauseHeartbeat ()
 {
     if ( heartbeatTimer )
     {
-        clearInterval( heartbeatTimer );
+        clearTimeout( heartbeatTimer );
         heartbeatTimer = null;
     }
     isPaused = true;
@@ -142,9 +195,11 @@ async function sendPageUpdate ( page, force = false )
         return;
     }
 
-    // Abort any previous in-flight request to prevent connection pileup
+    // Do not stack heartbeat requests. Only a real navigation is allowed to
+    // replace the current request because it carries newer page state.
     if ( inFlightController )
     {
+        if ( !force ) return;
         inFlightController.abort();
         inFlightController = null;
     }
@@ -193,12 +248,22 @@ async function sendPageUpdate ( page, force = false )
 function startHeartbeat ()
 {
     stopHeartbeat();
-    heartbeatTimer = setInterval( () =>
+    const tick = async () =>
     {
-        if ( !currentPage || document.hidden || isPaused ) return;
+        if ( !heartbeatTimer ) return;
 
-        sendPageUpdate( currentPage );
-    }, HEARTBEAT_INTERVAL );
+        if ( currentPage && !document.hidden && !isPaused )
+        {
+            await sendPageUpdate( currentPage );
+        }
+
+        if ( heartbeatTimer )
+        {
+            heartbeatTimer = setTimeout( tick, HEARTBEAT_INTERVAL );
+        }
+    };
+
+    heartbeatTimer = setTimeout( tick, HEARTBEAT_INTERVAL );
 }
 
 /** Stop the heartbeat interval. */
@@ -206,7 +271,7 @@ function stopHeartbeat ()
 {
     if ( heartbeatTimer )
     {
-        clearInterval( heartbeatTimer );
+        clearTimeout( heartbeatTimer );
         heartbeatTimer = null;
     }
 }
@@ -280,7 +345,11 @@ export function initGlobalTracking ( router )
     router.afterEach( ( to ) =>
     {
         // Skip dashboard routes — admin doesn't need to be tracked
-        if ( to.path.startsWith( "/dashboard" ) || to.path.startsWith( "/admin" ) ) return;
+        if ( to.path.startsWith( "/dashboard" ) || to.path.startsWith( "/admin" ) )
+        {
+            cleanupVisitorTracking();
+            return;
+        }
 
         // Skip browser-internal / garbage paths that aren't real app routes
         if ( /^\/(\.|api\/|favicon|robots|sitemap|images\/)/.test( to.path ) ) return;
@@ -288,12 +357,25 @@ export function initGlobalTracking ( router )
         // Skip static asset paths (images, fonts, etc.)
         if ( /\.(png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot|css|js|map)$/i.test( to.path ) ) return;
 
+        if ( !globalActive )
+        {
+            globalActive = true;
+            isPaused = false;
+            _redirectRouter = router;
+            document.addEventListener( "visibilitychange", handleVisibilityChange );
+            window.addEventListener( "beforeunload", handlePageUnload );
+            window.addEventListener( "pagehide", handlePageUnload );
+            setupRedirectListener( router );
+            logger.info( "[Tracking] resumed on public route" );
+        }
+
         const newPage = to.fullPath;
         const pageChanged = newPage !== currentPage;
         currentPage = newPage;
 
         // Force-send only when the page actually changed; heartbeat handles the rest
         sendPageUpdate( currentPage, pageChanged );
+        startHeartbeat();
     } );
 
     // Start heartbeat
@@ -324,14 +406,21 @@ export function initGlobalTracking ( router )
  */
 async function setupRedirectListener ( router )
 {
+    if ( _redirectListenerSetupInFlight || _redirectChannelName ) return;
+
     try
     {
         // Admin dashboard must never listen for customer redirects —
         // otherwise the admin's own browser gets redirected too.
-        if ( window.location.pathname.startsWith( "/dashboard" ) || window.location.pathname.startsWith( "/admin" ) ) return;
+        if ( isAdminRoute() ) return;
+
+        _redirectListenerSetupInFlight = true;
 
         // Get customer IP from a lightweight endpoint (avoids duplicate /customer/page call)
-        const res = await request.get( "/customer/ip" );
+        const res = await request.get(
+            "/customer/ip",
+            { silent: true, timeout: REDIRECT_IP_TIMEOUT_MS },
+        );
         const ip = res?.data?.customer_ip;
         if ( !ip ) return;
 
@@ -341,6 +430,9 @@ async function setupRedirectListener ( router )
         const { safeRedirect } = await import( '@/utils/safeRedirect' );
 
         const ch = echo.channel( `customer.${ ip }` );
+        _redirectEcho = echo;
+        _redirectChannelName = `customer.${ ip }`;
+        _redirectRetryAttempts = 0;
 
         const onRedirect = ( e ) =>
         {
@@ -357,10 +449,24 @@ async function setupRedirectListener ( router )
         logger.info( "[Tracking] 📡 Redirect listener active on customer." + ip );
     } catch ( err )
     {
+        if ( isTransientNetworkError( err ) )
+        {
+            logger.debug(
+                "[Tracking] Redirect listener unavailable — will retry later",
+                err.message,
+            );
+            scheduleRedirectListenerRetry( router );
+            return;
+        }
+
         logger.warn(
-            "[Tracking] ❌ Failed to setup redirect listener:",
+            "[Tracking] redirect listener setup failed — will retry later:",
             err.message,
         );
+        scheduleRedirectListenerRetry( router );
+    } finally
+    {
+        _redirectListenerSetupInFlight = false;
     }
 }
 
@@ -372,9 +478,39 @@ async function setupRedirectListener ( router )
  */
 export function cleanupVisitorTracking ()
 {
+    if ( !globalActive && !heartbeatTimer && !_redirectChannelName ) return;
+
     stopHeartbeat();
     isPaused = true;
     globalActive = false;
+    if ( pendingTimer )
+    {
+        clearTimeout( pendingTimer );
+        pendingTimer = null;
+    }
+    if ( _redirectRetryTimer )
+    {
+        clearTimeout( _redirectRetryTimer );
+        _redirectRetryTimer = null;
+    }
+    _redirectRetryAttempts = 0;
+    if ( inFlightController )
+    {
+        inFlightController.abort();
+        inFlightController = null;
+    }
+    if ( _redirectEcho && _redirectChannelName )
+    {
+        try
+        {
+            _redirectEcho.leave( _redirectChannelName );
+        } catch
+        {
+            // safe to ignore
+        }
+    }
+    _redirectEcho = null;
+    _redirectChannelName = null;
     document.removeEventListener( "visibilitychange", handleVisibilityChange );
     window.removeEventListener( "beforeunload", handlePageUnload );
     window.removeEventListener( "pagehide", handlePageUnload );

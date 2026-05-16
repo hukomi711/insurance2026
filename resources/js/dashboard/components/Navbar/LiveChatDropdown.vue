@@ -141,12 +141,11 @@
                         <div class="flex items-end gap-2">
                             <div class="flex-1 relative">
                                 <textarea id="livechat-reply" ref="inputRef" v-model="replyText"
-                                    rows="1" name="livechat-reply" autocomplete="off" aria-label="رد على المحادثة"
+                                    :rows="replyRows" name="livechat-reply" autocomplete="off" aria-label="رد على المحادثة"
                                     placeholder="اكتب رسالتك..."
-                                    class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/40 resize-none transition-all outline-none"
+                                    class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-gray-800 text-sm placeholder-gray-400 focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500/40 resize-none overflow-y-auto transition-all outline-none"
                                     style="max-height: 120px; min-height: 44px;"
-                                    @keydown.enter.exact.prevent="sendReplyMessage"
-                                    @input="autoResizeInput"></textarea>
+                                    @keydown.enter.exact.prevent="sendReplyMessage"></textarea>
                             </div>
 
                             <button :disabled="!replyText.trim() || isSending"
@@ -300,7 +299,7 @@
  * Uses project's request wrapper + logger utility.
  */
 
-import { ref, onMounted, onUnmounted, nextTick, inject, watch } from 'vue';
+import { computed, ref, onMounted, onUnmounted, nextTick, inject, watch } from 'vue';
 import { getConversations, getConversation, sendReply } from '@/api/livechatApi';
 import { registerPollingCallback, unregisterPollingCallback } from '@/services/adminPolling';
 import { OPEN_CHAT_TARGET } from '../../dashboardKeys';
@@ -323,8 +322,19 @@ const isLoadingConversation = ref( false );
 const containerRef = ref( null );
 const messagesContainerRef = ref( null );
 const inputRef = ref( null );
-let resizeRafId = null;
 let scrollRafId = null;
+
+const replyRows = computed( () =>
+{
+    const text = replyText.value || '';
+    const hardLines = text.split( '\n' );
+    const visualLines = hardLines.reduce( ( total, line ) =>
+    {
+        return total + Math.max( 1, Math.ceil( line.length / 32 ) );
+    }, 0 );
+
+    return Math.min( 4, Math.max( 1, visualLines ) );
+} );
 
 // Audio context — created after first user interaction
 let audioContext = null;
@@ -450,20 +460,6 @@ const scrollToBottom = () =>
             scrollRafId = null;
         } );
     }
-};
-
-const autoResizeInput = ( event ) =>
-{
-    const el = event?.target;
-    if ( !el ) return;
-
-    if ( resizeRafId ) cancelAnimationFrame( resizeRafId );
-    resizeRafId = requestAnimationFrame( () =>
-    {
-        el.style.height = 'auto';
-        el.style.height = `${ Math.min( el.scrollHeight, 120 ) }px`;
-        resizeRafId = null;
-    } );
 };
 
 // ─── Toggle / Close ──────────────────────────────────────
@@ -683,10 +679,6 @@ onUnmounted( () =>
 {
     unregisterPollingCallback( 'livechat' );
     stopMessagePolling();
-    if ( resizeRafId ) {
-        cancelAnimationFrame( resizeRafId );
-        resizeRafId = null;
-    }
     if ( scrollRafId ) {
         cancelAnimationFrame( scrollRafId );
         scrollRafId = null;
