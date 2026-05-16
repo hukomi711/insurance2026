@@ -7,21 +7,25 @@
 # ═══════════════════════════════════════════════════════════════════
 set -e
 
-# Read DB password from Docker secret if the file exists
-if [ -f "$DB_PASSWORD_FILE" ]; then
+# Read DB password from Docker secret if a non-empty secret was mounted.
+# An empty secret must not override a valid DB_PASSWORD from the runtime env.
+if [ -n "${DB_PASSWORD_FILE:-}" ] && [ -s "$DB_PASSWORD_FILE" ]; then
     # Ensure readable (Docker Compose bind-mounts may preserve host permissions)
     chmod 444 "$DB_PASSWORD_FILE" 2>/dev/null || true
     export DB_PASSWORD="$(cat "$DB_PASSWORD_FILE")"
     # Patch .env so Laravel reads the real password
     if [ -f /var/www/html/.env ]; then
+        escaped_db_password="$(printf '%s' "$DB_PASSWORD" | sed 's/[|&]/\\&/g')"
         if grep -q '^DB_PASSWORD=' /var/www/html/.env; then
-            sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" /var/www/html/.env
+            sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$escaped_db_password|" /var/www/html/.env
         else
             echo "DB_PASSWORD=$DB_PASSWORD" >> /var/www/html/.env
         fi
     fi
     # Remove .env.production to prevent it overriding .env values
     rm -f /var/www/html/.env.production
+elif [ -n "${DB_PASSWORD_FILE:-}" ] && [ -e "$DB_PASSWORD_FILE" ]; then
+    echo "DB password secret file is empty; keeping existing DB_PASSWORD value." >&2
 fi
 
 # Ensure .env is readable by appuser (entrypoint runs as root and `sed -i`

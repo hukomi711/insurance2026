@@ -54,6 +54,8 @@ services:
     image: insurance2026-app
     container_name: ins2026-app
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       DB_PASSWORD_FILE: /run/secrets/db_password
     secrets:
@@ -81,6 +83,8 @@ services:
     image: insurance2026-app
     container_name: ins2026-horizon
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       DB_PASSWORD_FILE: /run/secrets/db_password
     secrets:
@@ -106,6 +110,8 @@ services:
     image: insurance2026-app
     container_name: ins2026-reverb
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       DB_PASSWORD_FILE: /run/secrets/db_password
       REVERB_ALLOWED_ORIGINS: "*"
@@ -132,6 +138,8 @@ services:
     image: insurance2026-app
     container_name: ins2026-scheduler
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       DB_PASSWORD_FILE: /run/secrets/db_password
     secrets:
