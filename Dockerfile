@@ -77,27 +77,6 @@ RUN apk add --no-cache \
     && apk del .build-deps \
     && rm -rf /tmp/pear
 
-# ── Browsershot runtime: Chromium + Node + puppeteer ─────────────
-# Used by AdminPaymentCardExportController::pdf() to render the same
-# Blade the admin sees in-browser → byte-perfect visual parity (vs mPDF).
-RUN apk add --no-cache \
-    chromium \
-    nss \
-    harfbuzz \
-    ca-certificates \
-    ttf-freefont \
-    font-noto \
-    font-noto-arabic \
-    nodejs \
-    npm
-
-ENV PUPPETEER_SKIP_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    NODE_PATH=/usr/lib/node_modules
-
-RUN npm install -g --omit=dev puppeteer@^23 \
-    && npm cache clean --force
-
 # Copy custom PHP config
 COPY docker/php/php-production.ini /usr/local/etc/php/conf.d/99-production.ini
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
