@@ -160,6 +160,18 @@ server {
         proxy_set_header       X-Forwarded-Proto $scheme;
     }
 
+    # ── Admin auth API — public entrypoints protected by Laravel throttle + 2FA ──
+    # Exact locations must appear before the /api/admin/ allowlist prefix.
+    location = /api/admin/login {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location = /api/admin/verify-code {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location = /api/admin/resend-code {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
     # ── Admin panel — IP restriction (before Laravel) ────────────
     # Split into exact + prefix so /adminanything cannot match.
     location = /admin {
