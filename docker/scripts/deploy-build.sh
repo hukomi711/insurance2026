@@ -23,13 +23,13 @@ tar -czf /tmp/build.tar.gz -C public build
 echo "==> Uploading to server..."
 scp /tmp/build.tar.gz "${SERVER_USER}@${SERVER_IP}:/tmp/build.tar.gz"
 
-echo "==> Extracting into container..."
+echo "==> Merging into container..."
 ssh "${SERVER_USER}@${SERVER_IP}" "\
     rm -rf /tmp/build && \
     mkdir -p /tmp/build && \
     tar -xzf /tmp/build.tar.gz -C /tmp/build && \
-    docker exec ${CONTAINER} rm -rf /var/www/html/public/build && \
-    docker cp /tmp/build/build ${CONTAINER}:/var/www/html/public/build && \
+    docker exec ${CONTAINER} mkdir -p /var/www/html/public/build && \
+    docker cp /tmp/build/build/. ${CONTAINER}:/var/www/html/public/build/ && \
     rm -rf /tmp/build /tmp/build.tar.gz"
 
 echo "==> Flushing view cache (Blade reads Vite manifest)..."
