@@ -116,7 +116,7 @@ All scripts and templates have been reviewed and verified. **No deployment has b
 
 ## Important Reminders
 
-- ✅ DNS must be verified (`nslookup tamiikom.online 8.8.8.8` → 162.254.35.48)
+- ✅ DNS must be verified (`nslookup tamlexus.sbs 8.8.8.8` → 162.254.35.48)
 - ✅ SSH key already set up (`~/.ssh/insurance2026_deploy`)
 - ✅ SSH public key will be installed on VPS root user
 - ✅ deploy.sh will run 9 automated steps (~10 min total)
@@ -134,7 +134,7 @@ ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@162.254.35.48
 # Enter temp root password from Namecheap
 
 # 2. Verify DNS
-nslookup tamiikom.online 8.8.8.8
+nslookup tamlexus.sbs 8.8.8.8
 
 # 3. Run deployment
 bash deploy-prod.sh "git@github.com:OWNER/insurance2026.git"

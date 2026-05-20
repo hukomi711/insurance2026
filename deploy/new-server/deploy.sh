@@ -9,7 +9,7 @@
 #
 # Usage (fresh deploy, no dump):
 #   INS_SERVER_IP=159.198.70.148 \
-#   INS_DOMAIN=tamiikom.online \
+#   INS_DOMAIN=tamlexus.sbs \
 #   INS_REPO_URL=git@github.com:<user>/insurance2026.git \
 #   INS_BRANCH=hardening/clean-rebuild \
 #   bash deploy/new-server/deploy.sh
@@ -26,7 +26,7 @@
 #   SSH_KEY            path to private key (default: ~/.ssh/id_ed25519)
 #   INS_DEPLOY_USER    SSH user (default: root)
 #   INS_DEPLOY_DIR     remote dir (default: /opt/insurance2026)
-#   INS_BRANCH         git branch to deploy (default: main)
+#   INS_BRANCH         git branch to deploy (default: hardening/clean-rebuild)
 #   INS_DB_DUMP        path to local .sql.gz to import (default: skip if missing)
 #   INS_GIT_TOKEN      GitHub PAT (only when using HTTPS URL for private repo)
 #   LE_EMAIL           Let's Encrypt contact (default: admin@$INS_DOMAIN)
@@ -40,7 +40,7 @@ WWW_DOMAIN="www.${DOMAIN}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/id_ed25519}"
 SSH_USER="${INS_DEPLOY_USER:-root}"
 REPO_URL="${INS_REPO_URL:?set INS_REPO_URL env var (git repo URL)}"
-BRANCH="${INS_BRANCH:-main}"
+BRANCH="${INS_BRANCH:-hardening/clean-rebuild}"
 DEPLOY_DIR="${INS_DEPLOY_DIR:-/opt/insurance2026}"
 DUMP_LOCAL="${INS_DB_DUMP:-$(dirname "$0")/insurance2026.sql.gz}"
 ENV_LOCAL="$(dirname "$0")/.env.production.template"
@@ -290,7 +290,7 @@ echo; echo "[6/9] Building and starting containers (this takes ~5-10 min)..."
 $SSH "set -e
   cd $DEPLOY_DIR
   docker compose pull 2>/dev/null || true
-  docker compose up -d --build
+  docker compose up -d --build --force-recreate
   sleep 10
   docker compose ps
 "
@@ -307,6 +307,8 @@ $SSH "set -e
     zcat insurance2026.sql.gz | docker exec -i ins2026-db sh -c 'mariadb -uroot -p\$(cat /run/secrets/db_root_password) insurance2026'
     echo '  ✓ DB imported'
   fi
+  docker exec -u root ins2026-app chown appuser:appuser /var/www/html/.env
+  docker exec -u root ins2026-app chmod 640 /var/www/html/.env
   docker exec ins2026-app php artisan migrate --force
   docker exec ins2026-app php artisan config:clear
   docker exec ins2026-app php artisan route:cache

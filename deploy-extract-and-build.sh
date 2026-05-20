@@ -16,14 +16,14 @@
 #
 # Prerequisites (must exist on VPS):
 #   - /opt/insurance2026-upload.tar.gz (uploaded via scp)
-#   - domain: tamiikom.online (DNS already configured)
+#   - domain: tamlexus.sbs (DNS already configured)
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
 
 ARCHIVE_PATH="/opt/insurance2026-upload.tar.gz"
 DEPLOY_DIR="/opt/insurance2026"
-DOMAIN="tamiikom.online"
+DOMAIN="tamlexus.sbs"
 WWW_DOMAIN="www.${DOMAIN}"
 
 echo "═══════════════════════════════════════════════════════════════"

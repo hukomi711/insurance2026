@@ -53,7 +53,7 @@ Follow the **DEPLOYMENT-GUIDE.md** file (already created in repo root).
 **Server Information:**
 
 - IP: `162.254.35.48`
-- Domain: `tamiikom.online`
+- Domain: `tamlexus.sbs`
 - OS: AlmaLinux 9
 - Root user: `root`
 
@@ -72,7 +72,7 @@ Follow the **DEPLOYMENT-GUIDE.md** file (already created in repo root).
 2. **DNS Must Resolve First** — Before running deployment, verify:
 
    ```bash
-   nslookup tamiikom.online 8.8.8.8
+   nslookup tamlexus.sbs 8.8.8.8
    # Should return: 162.254.35.48
    ```
 
@@ -82,7 +82,7 @@ Follow the **DEPLOYMENT-GUIDE.md** file (already created in repo root).
 
    See "Update Missing Values" in DEPLOYMENT-GUIDE.md
 
-4. **First Admin Login** — Username/email: `admin@tamiikom.online`, password from `.env.production` (ADMIN_PASSWORD)
+4. **First Admin Login** — Username/email: `admin@tamlexus.sbs`, password from `.env.production` (ADMIN_PASSWORD)
 
 ---
 
@@ -98,7 +98,7 @@ Follow the **DEPLOYMENT-GUIDE.md** file (already created in repo root).
 
 ## ✨ After Deployment
 
-Your app will be available at: `https://tamiikom.online`
+Your app will be available at: `https://tamlexus.sbs`
 
 Services running:
 

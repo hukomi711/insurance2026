@@ -7,7 +7,7 @@
 - [ ] SSH key generated: `~/.ssh/insurance2026_deploy`
 - [ ] Public key installed on VPS root user
 - [ ] SSH access verified
-- [ ] DNS A records pointing `tamiikom.online` → `162.254.35.48` (verify with `nslookup`)
+- [ ] DNS A records pointing `tamlexus.sbs` → `162.254.35.48` (verify with `nslookup`)
 - [ ] GitHub repository URL available
 
 ### Step 1: Generate SSH Key (Local Machine)
@@ -38,7 +38,7 @@ ssh -i ~/.ssh/insurance2026_deploy root@162.254.35.48 'echo "✓ SSH OK"'
 ### Step 4: Verify DNS
 
 ```bash
-nslookup tamiikom.online 8.8.8.8
+nslookup tamlexus.sbs 8.8.8.8
 # Should show: Address: 162.254.35.48
 ```
 
@@ -61,7 +61,7 @@ cd deploy/new-server
 
 # Set environment variables
 export INS_SERVER_IP="162.254.35.48"
-export INS_DOMAIN="tamiikom.online"
+export INS_DOMAIN="tamlexus.sbs"
 export INS_REPO_URL="git@github.com:owner/insurance2026.git"
 export SSH_KEY="$HOME/.ssh/insurance2026_deploy"
 
@@ -143,24 +143,24 @@ Expected healthy status: `ins2026-nginx`, `ins2026-app`, `ins2026-db`, `ins2026-
 From the server:
 
 ```bash
-curl -s https://tamiikom.online/api/health | jq .
-curl -s https://tamiikom.online/api/health/queues | jq .
-curl -s https://tamiikom.online/api/health/realtime | jq .
+curl -s https://tamlexus.sbs/api/health | jq .
+curl -s https://tamlexus.sbs/api/health/queues | jq .
+curl -s https://tamlexus.sbs/api/health/realtime | jq .
 ```
 
 From your local machine:
 
 ```bash
-curl -k https://tamiikom.online/
-curl -k https://tamiikom.online/login
+curl -k https://tamlexus.sbs/
+curl -k https://tamlexus.sbs/login
 ```
 
 ### Test WebSocket Connection
 
-In browser console on `https://tamiikom.online`:
+In browser console on `https://tamlexus.sbs`:
 
 ```javascript
-new WebSocket('wss://tamiikom.online/app/a6e649918d7ad2d178125dde')
+new WebSocket('wss://tamlexus.sbs/app/a6e649918d7ad2d178125dde')
   .addEventListener('open', () => console.log('✓ WebSocket OK'));
 ```
 
@@ -230,8 +230,8 @@ ssh -i ~/.ssh/insurance2026_deploy root@162.254.35.48
 
 ```bash
 # Check DNS records at your registrar
-nslookup tamiikom.online
-nslookup tamiikom.online 8.8.8.8
+nslookup tamlexus.sbs
+nslookup tamlexus.sbs 8.8.8.8
 
 # If still not resolved, wait for DNS propagation (can take 15-30 min)
 # Then re-run deployment
@@ -247,8 +247,8 @@ docker compose stop nginx || true
 docker run --rm -p 80:80 \
   -v /opt/insurance2026/docker/certbot/conf:/etc/letsencrypt \
   certbot/certbot certonly --standalone --non-interactive --agree-tos \
-  -m admin@tamiikom.online \
-  -d tamiikom.online -d www.tamiikom.online
+  -m admin@tamlexus.sbs \
+  -d tamlexus.sbs -d www.tamlexus.sbs
 
 # Start nginx
 docker compose up -d nginx
