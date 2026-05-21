@@ -1,0 +1,292 @@
+# تحليل تغيير الدومين إلى `lexusforbon.it.com`
+
+تاريخ الفحص: 2026-05-21
+
+آخر إعادة فحص: 2026-05-21
+
+## الخلاصة التنفيذية
+
+تم تحديث ملفات التشغيل والوثائق وملفات البيئة المحلية/الإنتاجية إلى الدومين الجديد `lexusforbon.it.com`، وتم تحويل هدف النشر إلى VPS الجديد `69.57.161.222`. تم كذلك إعادة بناء `public/build` بعد تحديث `.env.production` حتى لا تبقى assets موجهة للدومين القديم. DNS أصبح صحيحا الآن ويشير إلى VPS الجديد من أكثر من resolver. SSH daemon يرد، لكن الدخول غير التفاعلي فشل لأن مفتاح النشر غير مثبت بعد أو لأن السيرفر يتطلب كلمة المرور المؤقتة لأول دخول.
+
+أخطر نقاط متبقية:
+
+1. `ssh -o BatchMode=yes root@69.57.161.222` فشل برسالة `Permission denied`.
+2. لا يمكن تنفيذ النشر الآلي قبل أول دخول بكلمة المرور المؤقتة وتثبيت مفتاح SSH.
+3. بعد نجاح SSH يمكن تنفيذ النشر وإصدار SSL.
+
+النتيجة: الكود والبيئة المحلية أصبحا متجهين إلى الدومين الجديد، لكن النشر يحتاج إصلاح DNS/SSH ثم إعادة build وإعادة إنشاء containers وإصدار SSL.
+
+## حالة DNS الحالية
+
+الفحص تم عبر resolver `8.8.8.8`.
+
+| النطاق | الحالة الحالية | المتوقع |
+| --- | --- | --- |
+| `lexusforbon.it.com` | A -> `69.57.161.222` | صحيح |
+| `www.lexusforbon.it.com` | A -> `69.57.161.222` | صحيح |
+
+تم التحقق أيضا عبر `1.1.1.1` وكانت النتيجة نفسها لكلا النطاقين. DNS جاهز لإصدار Let's Encrypt من ناحية توجيه النطاق. إذا فشل إصدار SSL بعد ذلك، فالسبب التالي الذي يجب فحصه هو وصول HTTP/HTTPS إلى السيرفر وتشغيل Nginx/Certbot.
+
+## حالة SSH الحالية
+
+تم فحص SSH على VPS الجديد:
+
+```text
+ssh -o BatchMode=yes root@69.57.161.222 echo SSH_OK
+Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
+```
+
+هذا يعني أن خدمة SSH ترد، لكن المفتاح المحلي غير مثبت بعد أو أن الدخول الأول يحتاج كلمة المرور المؤقتة. فحص `Test-NetConnection` ما زال يرجع `TcpTestSucceeded=False` من PowerShell، لكن نتيجة OpenSSH أدق هنا لأنها وصلت إلى daemon وأعادت رفض مصادقة.
+
+لا تحفظ كلمة مرور root داخل ملفات المشروع. بعد أول دخول يجب تغيير كلمة المرور المؤقتة، ثم تثبيت مفتاح SSH عام داخل `/root/.ssh/authorized_keys`.
+
+## الملفات التي تم تحديثها إلى الدومين الجديد
+
+### ملفات البيئة المحلية
+
+- `.env`
+  - تم تحديث `APP_URL`, `DOMAIN`, `SUPPORT_EMAIL_DOMAIN`, `SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS`, `REVERB_HOST`, `CORS_ALLOWED_ORIGINS`, `VITE_REVERB_HOST`, و`MAIL_FROM_ADDRESS` إلى `lexusforbon.it.com`.
+
+- `.env.production`
+  - تم تحديث نفس مفاتيح production حتى لا يحقن Vite الدومين القديم داخل ملفات JavaScript عند build.
+  - تم توحيد `VITE_REVERB_APP_KEY` مع `REVERB_APP_KEY` حتى يستخدم المتصفح نفس مفتاح Reverb الذي يعرفه السيرفر.
+  - تم قفل `REVERB_ALLOWED_ORIGINS` على الدومينات العامة بدل wildcard.
+
+- `.env.production.example`
+  - تم تحديث مثال production حتى لا يرجع أي إعداد جديد إلى الدومين القديم.
+
+- `deploy/new-server/.env.production.template`
+  - تم تحديث template النشر ليشمل `SANCTUM_STATEFUL_DOMAINS`.
+  - تم تصحيح تعليق Reverb القديم إلى `__DOMAIN__`.
+  - تم قفل `REVERB_ALLOWED_ORIGINS` على `https/http` للدومين و`www`.
+
+- `public/build`
+  - تمت إعادة بنائه بعد تحديث `.env.production`.
+  - الفحص أكد عدم وجود `tamlexus.sbs` أو `tamiikom.online` أو `tamiikom.site` أو `tamiicom.site` داخل build الحالي.
+  - ملف Echo المبني أصبح يستخدم `lexusforbon.it.com`.
+
+### Nginx وSSL
+
+- `docker/nginx/conf.d/default.conf`
+  - `server_name` أصبح `lexusforbon.it.com` و`www.lexusforbon.it.com`.
+  - التحويلات أصبحت إلى `https://lexusforbon.it.com`.
+  - مسارات الشهادات أصبحت:
+    - `/etc/nginx/ssl/live/lexusforbon.it.com/fullchain.pem`
+    - `/etc/nginx/ssl/live/lexusforbon.it.com/privkey.pem`
+    - `/etc/nginx/ssl/live/lexusforbon.it.com/chain.pem`
+
+- `docker/nginx/snippets/security-headers.conf`
+  - `connect-src` يسمح الآن بـ:
+    - `wss://lexusforbon.it.com`
+    - `wss://www.lexusforbon.it.com`
+
+ملاحظة: `docker/nginx/conf.d/default.conf.template` يستخدم `${DOMAIN}` وليس دومينا hardcoded، وهذا صحيح بشرط أن تكون قيمة `DOMAIN` في `.env` هي `lexusforbon.it.com`.
+
+### سكربتات النشر والإصلاح
+
+- `deploy-local-direct.sh`
+  - الدومين الافتراضي أصبح `lexusforbon.it.com`.
+  - تمت إضافة تحويلات من `tamlexus.sbs` إلى الدومين الجديد داخل `.env` و`.env.production` على السيرفر.
+
+- `deploy/new-server/repair-current-server.sh`
+  - الدومين الافتراضي أصبح `lexusforbon.it.com`.
+  - تمت إضافة تحويلات من `tamlexus.sbs` إلى الدومين الجديد داخل ملفات البيئة على السيرفر.
+
+- `deploy/new-server/issue-ssl-current-server.sh`
+  - الدومين الافتراضي أصبح `lexusforbon.it.com`.
+  - البريد الافتراضي أصبح `admin@lexusforbon.it.com`.
+
+- `deploy-prod.sh`
+  - `INS_DOMAIN` الافتراضي أصبح `lexusforbon.it.com`.
+
+- `deploy-extract-and-build.sh`
+  - `DOMAIN` أصبح `lexusforbon.it.com`.
+
+- `deploy/new-server/deploy.sh`
+  - مثال التشغيل أصبح يستخدم `INS_DOMAIN=lexusforbon.it.com`.
+  - السكربت نفسه يعتمد على `INS_DOMAIN` وملف `deploy/new-server/.env.production.template`، وهذا المسار أفضل من الاعتماد على `.env.production.example`.
+
+### أدوات admin وdiagnostics
+
+- `create-admin.sh`
+- `fix-admin.sh`
+- `diagnose-login.sh`
+- `production-setup.sh`
+- `scripts/watch-taminat-dns.sh`
+
+تم تحديث الروابط والبريد الإداري إلى `lexusforbon.it.com`.
+
+### الوثائق التشغيلية
+
+- `DEPLOYMENT-GUIDE.md`
+- `DEPLOYMENT-READY.md`
+- `PRE-DEPLOYMENT-REVIEW.md`
+- `PRODUCTION-FIX-GUIDE.md`
+- `deploy/new-server/RUNBOOK.md`
+- `docs/ops/laravel-docker-pitfalls.md`
+
+تم تحديث مراجع الدومين في هذه الملفات، لكنها لا تؤثر وحدها على التشغيل.
+
+## القيم المطلوبة بعد التحديث
+
+القيم العامة المطلوبة في `.env` و`.env.production`:
+
+```env
+APP_URL=https://lexusforbon.it.com
+DOMAIN=lexusforbon.it.com
+SESSION_DOMAIN=.lexusforbon.it.com
+REVERB_HOST=lexusforbon.it.com
+VITE_REVERB_HOST=lexusforbon.it.com
+MAIL_FROM_ADDRESS=no-reply@lexusforbon.it.com
+CORS_ALLOWED_ORIGINS=https://lexusforbon.it.com,https://www.lexusforbon.it.com
+SANCTUM_STATEFUL_DOMAINS=lexusforbon.it.com,www.lexusforbon.it.com
+SUPPORT_EMAIL_DOMAIN=lexusforbon.it.com
+```
+
+الأثر إذا تغيرت أو رجعت لقيم قديمة:
+
+- Laravel سيولد روابط Storage وURL على الدومين القديم.
+- Cookies قد تبقى مرتبطة بدومين قديم.
+- CORS سيرفض origin الجديد.
+- Reverb backend سيستخدم host قديم.
+- Docker Compose يمرر `DOMAIN` إلى Nginx template، وإذا بقيت قديمة سينتج Nginx runtime خاطئ.
+
+### `.env.production` وVite
+
+هذه نقطة حساسة جدا لأن `Dockerfile` يعمل:
+
+```dockerfile
+COPY .env.production .env.production
+RUN set -a && . ./.env.production && set +a \
+    && env | grep '^VITE_' > .env \
+    && npm run build
+```
+
+هذا يعني أن Vite يقرأ `VITE_REVERB_HOST` من `.env.production` وقت build. لذلك يجب إعادة build بعد أي تغيير في هذه القيم، حتى لو كان Nginx صحيحا.
+
+## مسارات الكود المتأثرة بالدومين
+
+### Laravel URL وStorage
+
+- `config/app.php`
+  - يعتمد على `APP_URL`.
+- `config/filesystems.php`
+  - يستخدم `APP_URL` لبناء روابط `/storage`.
+- `config/mail.php`
+  - يستخدم `APP_URL` لاشتقاق `MAIL_EHLO_DOMAIN` إذا لم تضبط صراحة.
+- `routes/api.php`
+  - يستخدم `SUPPORT_EMAIL_DOMAIN` أو host من `config('app.url')`.
+
+### Session وSanctum وCORS
+
+- `config/session.php`
+  - يعتمد على `SESSION_DOMAIN`.
+- `config/cors.php`
+  - يستخدم `CORS_ALLOWED_ORIGINS` أو `APP_URL`.
+- `.env.production.example`
+  - يحتوي `SANCTUM_STATEFUL_DOMAINS` ويجب تحديثه رغم أن البحث في config لم يظهر استخدامه المباشر في الملفات المفتوحة.
+
+### Reverb وWebSocket
+
+- `config/reverb.php`
+  - يعتمد على `REVERB_HOST`.
+- `config/broadcasting.php`
+  - يعتمد على `REVERB_PUBLISH_HOST` ثم `REVERB_HOST`.
+- `resources/js/services/echo.js`
+  - يستخدم `VITE_REVERB_HOST` وقت build.
+- `docker/nginx/snippets/security-headers.conf`
+  - يسمح باتصالات `wss` للدومين الجديد.
+
+الخطر الأكبر هنا هو build stale: إذا بنيت frontend قبل تعديل `.env.production` أو لم ترفع `public/build` الجديد، فقد يبقى WebSocket يحاول الاتصال بدومين قديم.
+
+### Nginx runtime
+
+- `docker-compose.yml`
+  - خدمة `nginx` تحتاج:
+
+```yaml
+DOMAIN: "${DOMAIN:?set DOMAIN env var (primary public domain)}"
+```
+
+- `docker/nginx/conf.d/default.conf.template`
+  - يستخدم `${DOMAIN}` لكل server_name ومسارات الشهادات.
+
+لذلك يجب أن يحتوي `.env` على:
+
+```env
+DOMAIN=lexusforbon.it.com
+```
+
+وإلا سيفشل `docker compose` أو ينتج config بدومين خاطئ.
+
+## خطة الإكمال الصحيحة
+
+### قبل النشر
+
+1. DNS:
+   - `lexusforbon.it.com` -> `69.57.161.222` تم التحقق منه.
+   - `www.lexusforbon.it.com` -> `69.57.161.222` تم التحقق منه.
+
+2. تسجيل الدخول لأول مرة بكلمة مرور root المؤقتة، تغييرها، ثم تثبيت مفتاح SSH عام في `/root/.ssh/authorized_keys`.
+
+3. إعادة build بدون الاعتماد على assets قديمة:
+   - لأن Vite يحقن `VITE_*` داخل build.
+   - تم تنفيذ `npm run build` محليا بنجاح بعد التعديل.
+
+4. التأكد من خلو build من الدومينات القديمة:
+
+```bash
+grep -R "tamlexus.sbs\|tamiikom.online\|tamiikom.site\|tamiicom.site" public/build || true
+```
+
+### على السيرفر `/opt/insurance2026`
+
+القيم المطلوبة في `.env` على السيرفر:
+
+```env
+APP_URL=https://lexusforbon.it.com
+DOMAIN=lexusforbon.it.com
+SESSION_DOMAIN=.lexusforbon.it.com
+SANCTUM_STATEFUL_DOMAINS=lexusforbon.it.com,www.lexusforbon.it.com
+CORS_ALLOWED_ORIGINS=https://lexusforbon.it.com,https://www.lexusforbon.it.com
+REVERB_HOST=lexusforbon.it.com
+VITE_REVERB_HOST=lexusforbon.it.com
+SUPPORT_EMAIL_DOMAIN=lexusforbon.it.com
+MAIL_FROM_ADDRESS=no-reply@lexusforbon.it.com
+```
+
+بعد تعديل DNS والبيئة:
+
+```bash
+cd /opt/insurance2026
+docker compose up -d --build --force-recreate
+docker exec ins2026-app php artisan config:clear
+docker exec ins2026-app php artisan route:cache
+docker exec ins2026-app php artisan view:cache
+docker exec ins2026-app php artisan event:cache
+```
+
+ثم إصدار SSL:
+
+```bash
+DOMAIN=lexusforbon.it.com bash deploy/new-server/issue-ssl-current-server.sh
+```
+
+ثم التحقق:
+
+```bash
+curl -Ik https://lexusforbon.it.com/api/health
+curl -Ik https://lexusforbon.it.com/api/health/realtime
+docker exec ins2026-nginx nginx -T | grep -E "server_name|lexusforbon|tamlexus|tamiikom|tamiicom"
+docker exec ins2026-app printenv | grep -E "APP_URL|DOMAIN|SESSION_DOMAIN|REVERB_HOST|VITE_REVERB_HOST|CORS_ALLOWED_ORIGINS"
+```
+
+## حكم الجاهزية
+
+الوضع الحالي غير جاهز للنشر الآلي الكامل على `lexusforbon.it.com` عبر SSH.
+
+السبب ليس الكود الأساسي ولا DNS، بل نقطة تشغيلية واحدة:
+
+1. مفتاح SSH غير مثبت/الدخول غير التفاعلي مرفوض حتى يتم أول دخول بكلمة المرور المؤقتة.
+
+بعد تثبيت SSH key ثم تنفيذ recreate وإصدار SSL، يصبح تغيير الدومين متسقا مع Laravel وNginx وReverb وCORS.

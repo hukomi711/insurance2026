@@ -22,7 +22,7 @@ git clone --branch '$BRANCH' '$REPO_URL' $DEPLOY_DIR
 
 These are **two different SSH keys**:
 
-- Local key: PC → VPS (162.254.35.48)
+- Local key: PC → VPS (69.57.161.222)
 - VPS key: VPS → GitHub API
 
 ---
@@ -76,7 +76,7 @@ These are **two different SSH keys**:
 **Steps:**
 
 1. Package locally: `tar -czf insurance2026.tar.gz --exclude=.git --exclude=node_modules --exclude=storage .`
-2. Upload: `scp insurance2026.tar.gz root@162.254.35.48:/opt/`
+2. Upload: `scp insurance2026.tar.gz root@69.57.161.222:/opt/`
 3. Extract on VPS: `cd /opt && tar -xzf insurance2026.tar.gz && rm insurance2026.tar.gz`
 4. Deploy: `cd /opt/insurance2026 && docker compose build && docker compose up -d`
 

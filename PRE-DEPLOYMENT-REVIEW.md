@@ -83,7 +83,7 @@ All scripts and templates have been reviewed and verified. **No deployment has b
 **Workflow:**
 
 1. Package locally: `tar -czf insurance2026.tar.gz --exclude=.git --exclude=node_modules --exclude=storage .`
-2. Upload: `scp insurance2026.tar.gz root@162.254.35.48:/opt/`
+2. Upload: `scp insurance2026.tar.gz root@69.57.161.222:/opt/`
 3. SSH to VPS and extract/deploy
 
 **Prerequisites:**
@@ -116,7 +116,7 @@ All scripts and templates have been reviewed and verified. **No deployment has b
 
 ## Important Reminders
 
-- ✅ DNS must be verified (`nslookup tamlexus.sbs 8.8.8.8` → 162.254.35.48)
+- ✅ DNS must be verified (`nslookup lexusforbon.it.com 8.8.8.8` → 69.57.161.222)
 - ✅ SSH key already set up (`~/.ssh/insurance2026_deploy`)
 - ✅ SSH public key will be installed on VPS root user
 - ✅ deploy.sh will run 9 automated steps (~10 min total)
@@ -130,11 +130,11 @@ All scripts and templates have been reviewed and verified. **No deployment has b
 
 ```bash
 # 1. Install SSH key on VPS
-ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@162.254.35.48
+ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@69.57.161.222
 # Enter temp root password from Namecheap
 
 # 2. Verify DNS
-nslookup tamlexus.sbs 8.8.8.8
+nslookup lexusforbon.it.com 8.8.8.8
 
 # 3. Run deployment
 bash deploy-prod.sh "git@github.com:OWNER/insurance2026.git"
@@ -144,13 +144,13 @@ bash deploy-prod.sh "git@github.com:OWNER/insurance2026.git"
 
 ```bash
 # 1. Install SSH key on VPS
-ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@162.254.35.48
+ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@69.57.161.222
 
 # 2. Package locally
 tar -czf insurance2026.tar.gz --exclude=.git --exclude=node_modules --exclude=storage .
 
 # 3. Upload (then deploy manually on VPS)
-scp insurance2026.tar.gz root@162.254.35.48:/opt/
+scp insurance2026.tar.gz root@69.57.161.222:/opt/
 ```
 
 ---

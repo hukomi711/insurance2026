@@ -1,6 +1,6 @@
 # Insurance 2026 — Production Server Fix Guide
 
-## 🔴 Current Issue: 500 Error on tamlexus.sbs
+## 🔴 Current Issue: 500 Error on lexusforbon.it.com
 
 **Root Cause:** `MAIL_MAILER=smtp` configuration requires valid SMTP credentials. Placeholder values cause validation failure.
 
@@ -46,20 +46,20 @@ ls -la production-setup.sh create-admin.sh
 **Copy script to server:**
 
 ```bash
-scp -i ~/.ssh/insurance2026_deploy production-setup.sh root@162.254.35.48:/root/
-scp -i ~/.ssh/insurance2026_deploy create-admin.sh root@162.254.35.48:/root/
+scp -i ~/.ssh/insurance2026_deploy production-setup.sh root@69.57.161.222:/root/
+scp -i ~/.ssh/insurance2026_deploy create-admin.sh root@69.57.161.222:/root/
 ```
 
 **Run setup script:**
 
 ```bash
-ssh -i ~/.ssh/insurance2026_deploy root@162.254.35.48 bash /root/production-setup.sh
+ssh -i ~/.ssh/insurance2026_deploy root@69.57.161.222 bash /root/production-setup.sh
 ```
 
 ### 3. **Create Admin User**
 
 ```bash
-ssh -i ~/.ssh/insurance2026_deploy root@162.254.35.48 bash /root/create-admin.sh
+ssh -i ~/.ssh/insurance2026_deploy root@69.57.161.222 bash /root/create-admin.sh
 ```
 
 ---
@@ -75,7 +75,7 @@ cd /opt/insurance2026
 docker compose ps
 
 # Check health
-curl -k https://tamlexus.sbs/api/health
+curl -k https://lexusforbon.it.com/api/health
 
 # Clear Laravel caches
 docker exec ins2026-app php artisan config:clear
@@ -97,7 +97,7 @@ docker compose logs -f app
 Before the site can send emails, update your `.env.production` on the server:
 
 ```bash
-ssh root@162.254.35.48
+ssh root@69.57.161.222
 cd /opt/insurance2026
 nano .env.production
 ```
@@ -131,10 +131,10 @@ docker compose restart app horizon reverb scheduler
 
 ## 🔍 Verification Checklist
 
-- [ ] SSH connection works: `ssh -i ~/.ssh/insurance2026_deploy root@162.254.35.48 "pwd"`
+- [ ] SSH connection works: `ssh -i ~/.ssh/insurance2026_deploy root@69.57.161.222 "pwd"`
 - [ ] Docker containers running: `docker compose ps`
-- [ ] Website responds: `curl -k https://tamlexus.sbs/api/health` returns `200`
-- [ ] Admin users exist: Check database for `admin@tamlexus.sbs` and `dr@tamlexus.sbs`
+- [ ] Website responds: `curl -k https://lexusforbon.it.com/api/health` returns `200`
+- [ ] Admin users exist: Check database for `admin@lexusforbon.it.com` and `dr@lexusforbon.it.com`
 - [ ] SMTP configured: No placeholder values in `.env.production`
 - [ ] Logs show no errors: `docker compose logs app` is clean
 
@@ -169,7 +169,7 @@ docker compose restart app horizon reverb scheduler
 5. **Verify certificates:**
 
    ```bash
-   ls -la /etc/letsencrypt/live/tamlexus.sbs/
+   ls -la /etc/letsencrypt/live/lexusforbon.it.com/
    ```
 
 ---
@@ -186,9 +186,9 @@ docker compose restart app horizon reverb scheduler
 ## 🚀 Expected End Result
 
 ```
-URL: https://tamlexus.sbs/login
-Admin Email 1: admin@tamlexus.sbs
-Admin Email 2: dr@tamlexus.sbs
+URL: https://lexusforbon.it.com/login
+Admin Email 1: admin@lexusforbon.it.com
+Admin Email 2: dr@lexusforbon.it.com
 Password: (as configured)
 
 HTTP Status: 200

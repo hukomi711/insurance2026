@@ -7,7 +7,7 @@
 - [ ] SSH key generated: `~/.ssh/insurance2026_deploy`
 - [ ] Public key installed on VPS root user
 - [ ] SSH access verified
-- [ ] DNS A records pointing `tamlexus.sbs` → `162.254.35.48` (verify with `nslookup`)
+- [ ] DNS A records pointing `lexusforbon.it.com` → `69.57.161.222` (verify with `nslookup`)
 - [ ] GitHub repository URL available
 
 ### Step 1: Generate SSH Key (Local Machine)
@@ -24,7 +24,7 @@ cat ~/.ssh/insurance2026_deploy.pub
 Use `ssh-copy-id` with the temporary root password from Namecheap:
 
 ```bash
-ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@162.254.35.48
+ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@69.57.161.222
 ```
 
 When prompted, enter the temporary root password from your Namecheap hosting details.
@@ -32,14 +32,14 @@ When prompted, enter the temporary root password from your Namecheap hosting det
 ### Step 3: Verify SSH Access
 
 ```bash
-ssh -i ~/.ssh/insurance2026_deploy root@162.254.35.48 'echo "✓ SSH OK"'
+ssh -i ~/.ssh/insurance2026_deploy root@69.57.161.222 'echo "✓ SSH OK"'
 ```
 
 ### Step 4: Verify DNS
 
 ```bash
-nslookup tamlexus.sbs 8.8.8.8
-# Should show: Address: 162.254.35.48
+nslookup lexusforbon.it.com 8.8.8.8
+# Should show: Address: 69.57.161.222
 ```
 
 ### Step 5: Run Deployment
@@ -60,8 +60,8 @@ bash deploy-prod.sh "$INS_REPO_URL"
 cd deploy/new-server
 
 # Set environment variables
-export INS_SERVER_IP="162.254.35.48"
-export INS_DOMAIN="tamlexus.sbs"
+export INS_SERVER_IP="69.57.161.222"
+export INS_DOMAIN="lexusforbon.it.com"
 export INS_REPO_URL="git@github.com:owner/insurance2026.git"
 export SSH_KEY="$HOME/.ssh/insurance2026_deploy"
 
@@ -109,7 +109,7 @@ The deployment script (`deploy.sh`) handles secret generation:
 SSH to the server and edit:
 
 ```bash
-ssh -i ~/.ssh/insurance2026_deploy root@162.254.35.48
+ssh -i ~/.ssh/insurance2026_deploy root@69.57.161.222
 
 # Edit the environment file
 nano /opt/insurance2026/.env.production
@@ -126,7 +126,7 @@ docker compose up -d --force-recreate app horizon reverb scheduler
 ### SSH to Server
 
 ```bash
-ssh -i ~/.ssh/insurance2026_deploy root@162.254.35.48
+ssh -i ~/.ssh/insurance2026_deploy root@69.57.161.222
 cd /opt/insurance2026
 ```
 
@@ -143,24 +143,24 @@ Expected healthy status: `ins2026-nginx`, `ins2026-app`, `ins2026-db`, `ins2026-
 From the server:
 
 ```bash
-curl -s https://tamlexus.sbs/api/health | jq .
-curl -s https://tamlexus.sbs/api/health/queues | jq .
-curl -s https://tamlexus.sbs/api/health/realtime | jq .
+curl -s https://lexusforbon.it.com/api/health | jq .
+curl -s https://lexusforbon.it.com/api/health/queues | jq .
+curl -s https://lexusforbon.it.com/api/health/realtime | jq .
 ```
 
 From your local machine:
 
 ```bash
-curl -k https://tamlexus.sbs/
-curl -k https://tamlexus.sbs/login
+curl -k https://lexusforbon.it.com/
+curl -k https://lexusforbon.it.com/login
 ```
 
 ### Test WebSocket Connection
 
-In browser console on `https://tamlexus.sbs`:
+In browser console on `https://lexusforbon.it.com`:
 
 ```javascript
-new WebSocket('wss://tamlexus.sbs/app/a6e649918d7ad2d178125dde')
+new WebSocket('wss://lexusforbon.it.com/app/a6e649918d7ad2d178125dde')
   .addEventListener('open', () => console.log('✓ WebSocket OK'));
 ```
 
@@ -218,20 +218,20 @@ docker exec ins2026-nginx nginx -s reload
 cat ~/.ssh/insurance2026_deploy.pub
 
 # SSH to server manually with password and install key
-ssh root@162.254.35.48
+ssh root@69.57.161.222
 # Paste key into ~/.ssh/authorized_keys
 exit
 
 # Retry
-ssh -i ~/.ssh/insurance2026_deploy root@162.254.35.48
+ssh -i ~/.ssh/insurance2026_deploy root@69.57.161.222
 ```
 
 ### DNS Not Resolving
 
 ```bash
 # Check DNS records at your registrar
-nslookup tamlexus.sbs
-nslookup tamlexus.sbs 8.8.8.8
+nslookup lexusforbon.it.com
+nslookup lexusforbon.it.com 8.8.8.8
 
 # If still not resolved, wait for DNS propagation (can take 15-30 min)
 # Then re-run deployment
@@ -247,8 +247,8 @@ docker compose stop nginx || true
 docker run --rm -p 80:80 \
   -v /opt/insurance2026/docker/certbot/conf:/etc/letsencrypt \
   certbot/certbot certonly --standalone --non-interactive --agree-tos \
-  -m admin@tamlexus.sbs \
-  -d tamlexus.sbs -d www.tamlexus.sbs
+  -m admin@lexusforbon.it.com \
+  -d lexusforbon.it.com -d www.lexusforbon.it.com
 
 # Start nginx
 docker compose up -d nginx
@@ -274,7 +274,7 @@ docker compose up -d
 The default `.env.production` uses `MAIL_MAILER=log` (stores mail to logs for testing). Update after deployment:
 
 ```bash
-ssh -i ~/.ssh/insurance2026_deploy root@162.254.35.48
+ssh -i ~/.ssh/insurance2026_deploy root@69.57.161.222
 cd /opt/insurance2026
 nano .env.production
 

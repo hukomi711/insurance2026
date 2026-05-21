@@ -8,7 +8,7 @@
 #   bash upload-to-vps.sh
 #
 # Prerequisites:
-#   1. SSH key installed on VPS: ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@162.254.35.48
+#   1. SSH key installed on VPS: ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@69.57.161.222
 #   2. insurance2026-vps.tar.gz created: bash package-for-vps.sh
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -17,7 +17,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ARCHIVE_PATH="${SCRIPT_DIR}/insurance2026-vps.tar.gz"
 SSH_KEY="${HOME}/.ssh/insurance2026_deploy"
-SERVER_IP="162.254.35.48"
+SERVER_IP="69.57.161.222"
 REMOTE_USER="root"
 REMOTE_PATH="/opt/insurance2026-upload.tar.gz"
 

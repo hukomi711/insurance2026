@@ -88,3 +88,6 @@ public/create-admin.php
 public/cleanup.php
 public/acme-helper.php
 public/mk-symlink.php
+
+# Backup of nested repo metadata (created during migration from submodule)
+todo-app/.git.bak

@@ -9,7 +9,7 @@ set -e
 cd /opt/insurance2026
 
 echo "════════════════════════════════════════════════════════════════"
-echo "Creating Admin User: dr@tamlexus.sbs"
+echo "Creating Admin User: dr@lexusforbon.it.com"
 echo "Password: Banihani00@@71"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
@@ -22,12 +22,12 @@ echo ""
 
 # Create/Update the admin user in database
 docker exec ins2026-db mysql -u insurance -pinsurance insurance2026 <<SQL_EOF
-DELETE FROM users WHERE email = 'dr@tamlexus.sbs';
+DELETE FROM users WHERE email = 'dr@lexusforbon.it.com';
 
 INSERT INTO users (name, email, password, role, created_at, updated_at)
 VALUES (
     'Dr',
-    'dr@tamlexus.sbs',
+    'dr@lexusforbon.it.com',
     '$HASHED_PASS',
     'admin',
     NOW(),
@@ -44,7 +44,7 @@ echo "✓ Admin user is ready!"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 echo "Login Details:"
-echo "  URL:      https://tamlexus.sbs/login"
-echo "  Email:    dr@tamlexus.sbs"
+echo "  URL:      https://lexusforbon.it.com/login"
+echo "  Email:    dr@lexusforbon.it.com"
 echo "  Password: Banihani00@@71"
 echo ""

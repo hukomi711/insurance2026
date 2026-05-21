@@ -2,7 +2,7 @@
 # PowerShell script to connect and run cleanup on production server
 
 param(
-    [string]$SshHost = "159.198.70.148",
+    [string]$SshHost = "69.57.161.222",
     [string]$User = "root",
     [PSCredential]$Credential,
     [string]$ProjectPath = "/opt/insurance2026"

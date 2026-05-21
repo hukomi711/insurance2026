@@ -39,7 +39,7 @@
 
 ### SSH Key Installation
 
-- Use: `ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@162.254.35.48`
+- Use: `ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@69.57.161.222`
 - Enter temporary root password from Namecheap when prompted
 - Key-based auth installed after first login
 

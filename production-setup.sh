@@ -2,7 +2,7 @@
 # ════════════════════════════════════════════════════════════════
 # Insurance 2026 — Production Server Setup Script
 # Run this directly on the production server:
-#   ssh root@162.254.35.48
+#   ssh root@69.57.161.222
 #   sudo bash < production-setup.sh
 # ════════════════════════════════════════════════════════════════
 
@@ -42,7 +42,7 @@ echo "════════════════════════�
 echo "Step 3: Health Check"
 echo "════════════════════════════════════════════════════════════════"
 
-HEALTH=$(curl -k -s -w "%{http_code}" -o /tmp/health.out https://tamlexus.sbs/api/health 2>/dev/null || echo "000")
+HEALTH=$(curl -k -s -w "%{http_code}" -o /tmp/health.out https://lexusforbon.it.com/api/health 2>/dev/null || echo "000")
 echo "Website Health: HTTP $HEALTH"
 
 if [ "$HEALTH" = "200" ]; then
@@ -72,6 +72,6 @@ echo "════════════════════════�
 echo "Setup Complete!"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
-echo "Next: To create admin user 'dr@tamlexus.sbs'"
+echo "Next: To create admin user 'dr@lexusforbon.it.com'"
 echo "Run: /root/create-admin.sh"
 echo ""

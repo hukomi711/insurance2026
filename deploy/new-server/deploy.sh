@@ -8,8 +8,8 @@
 #   3. Server has >= 2GB RAM (recommended 4GB)
 #
 # Usage (fresh deploy, no dump):
-#   INS_SERVER_IP=159.198.70.148 \
-#   INS_DOMAIN=tamlexus.sbs \
+#   INS_SERVER_IP=69.57.161.222 \
+#   INS_DOMAIN=lexusforbon.it.com \
 #   INS_REPO_URL=git@github.com:<user>/insurance2026.git \
 #   INS_BRANCH=hardening/clean-rebuild \
 #   bash deploy/new-server/deploy.sh

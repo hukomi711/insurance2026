@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-INS_SERVER_IP="${INS_SERVER_IP:-162.254.35.48}"
-INS_DOMAIN="${INS_DOMAIN:-tamlexus.sbs}"
+INS_SERVER_IP="${INS_SERVER_IP:-69.57.161.222}"
+INS_DOMAIN="${INS_DOMAIN:-lexusforbon.it.com}"
 INS_BRANCH_EXPECTED="${INS_BRANCH_EXPECTED:-hardening/clean-rebuild}"
 EXPECTED_HEAD="${EXPECTED_HEAD:-2cd5f80}"
 
@@ -128,6 +128,8 @@ for env_file in "\$DEPLOY_DIR/.env" "\$DEPLOY_DIR/.env.production"; do
     sed -i "s#tamiikom.online#\$DOMAIN#g" "\$env_file"
     sed -i "s#tamiicom.site#\$DOMAIN#g" "\$env_file"
     sed -i "s#tamiikom.site#\$DOMAIN#g" "\$env_file"
+    sed -i "s#https://tamlexus.sbs#https://\$DOMAIN#g" "\$env_file"
+    sed -i "s#tamlexus.sbs#\$DOMAIN#g" "\$env_file"
     grep -nE 'APP_URL|REVERB_HOST|VITE_REVERB_HOST' "\$env_file" || true
   fi
 done

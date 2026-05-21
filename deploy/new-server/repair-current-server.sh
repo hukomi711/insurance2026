@@ -3,7 +3,7 @@ set -euo pipefail
 
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/insurance2026}"
 BACKUP_DIR="${BACKUP_DIR:-/opt/insurance2026.backup.20260520171801}"
-DOMAIN="${DOMAIN:-tamlexus.sbs}"
+DOMAIN="${DOMAIN:-lexusforbon.it.com}"
 
 cd "$DEPLOY_DIR"
 TS="$(date +%Y%m%d%H%M%S)"
@@ -53,6 +53,8 @@ for env_file in .env .env.production; do
     sed -i "s#tamiikom.online#$DOMAIN#g" "$env_file"
     sed -i "s#tamiicom.site#$DOMAIN#g" "$env_file"
     sed -i "s#tamiikom.site#$DOMAIN#g" "$env_file"
+    sed -i "s#https://tamlexus.sbs#https://$DOMAIN#g" "$env_file"
+    sed -i "s#tamlexus.sbs#$DOMAIN#g" "$env_file"
     grep -nE 'APP_URL|REVERB_HOST|VITE_REVERB_HOST' "$env_file"
   fi
 done

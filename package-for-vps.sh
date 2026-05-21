@@ -55,6 +55,7 @@ tar -czf "$ARCHIVE_PATH" \
   --exclude='.git' \
   --exclude='node_modules' \
   --exclude='vendor' \
+  --exclude='todo-app' \
   --exclude='storage/logs' \
   --exclude='storage/framework/cache' \
   --exclude='storage/framework/sessions' \
@@ -62,6 +63,10 @@ tar -czf "$ARCHIVE_PATH" \
   --exclude='.env' \
   --exclude='.env.production' \
   --exclude='bootstrap/cache' \
+  --exclude='.phpunit.result.cache' \
+  --exclude='insurance2026-vps.tar.gz' \
+  --exclude='ali@Bon71' \
+  --exclude='ali@Bon71.pub' \
   --exclude='.DS_Store' \
   --exclude='Thumbs.db' \
   --exclude='.vscode' \
@@ -82,7 +87,7 @@ if [[ $? -eq 0 ]]; then
   echo "  bash upload-to-vps.sh"
   echo ""
   echo "Or manually:"
-  echo "  scp -i ~/.ssh/insurance2026_deploy $ARCHIVE_PATH root@162.254.35.48:/opt/"
+  echo "  scp -i ~/.ssh/insurance2026_deploy $ARCHIVE_PATH root@69.57.161.222:/opt/"
   echo "═══════════════════════════════════════════════════════════════"
 else
   echo "✗ Archive creation failed"

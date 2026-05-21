@@ -5,7 +5,7 @@
 # Usage:
 #   INS_SERVER_IP=<server-ip> INS_DOMAIN=<domain> INS_BRANCH=<branch> bash deploy-prod.sh <github-url>
 # Example:
-#   INS_SERVER_IP=162.254.35.48 INS_DOMAIN=tamlexus.sbs INS_BRANCH=hardening/clean-rebuild bash deploy-prod.sh git@github.com:tegarahowner-ui/insurance2026.git
+#   INS_SERVER_IP=69.57.161.222 INS_DOMAIN=lexusforbon.it.com INS_BRANCH=hardening/clean-rebuild bash deploy-prod.sh git@github.com:tegarahowner-ui/insurance2026.git
 #
 # Prerequisites:
 #   1. SSH key must exist: ~/.ssh/insurance2026_deploy
@@ -18,8 +18,8 @@ set -euo pipefail
 GITHUB_URL="${1:?Usage: INS_SERVER_IP=<server-ip> INS_DOMAIN=<domain> INS_BRANCH=<branch> bash deploy-prod.sh <github-url>}"
 
 # Configuration
-INS_SERVER_IP="${INS_SERVER_IP:-162.254.35.48}"
-INS_DOMAIN="${INS_DOMAIN:-tamlexus.sbs}"
+INS_SERVER_IP="${INS_SERVER_IP:-69.57.161.222}"
+INS_DOMAIN="${INS_DOMAIN:-lexusforbon.it.com}"
 INS_REPO_URL="$GITHUB_URL"
 INS_BRANCH="${INS_BRANCH:-hardening/clean-rebuild}"
 SSH_KEY="${SSH_KEY:-${HOME}/.ssh/insurance2026_deploy}"

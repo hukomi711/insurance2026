@@ -31,11 +31,11 @@ All cryptographic values have been generated:
 ssh-keygen -t ed25519 -f ~/.ssh/insurance2026_deploy -C "ins2026-deploy" -N ""
 
 # 2. Install public key on VPS (use temporary root password from Namecheap)
-scp -i ~/.ssh/insurance2026_deploy ~/.ssh/insurance2026_deploy.pub root@162.254.35.48:~/pk.pub
-ssh root@162.254.35.48 "mkdir -p ~/.ssh && cat ~/pk.pub >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && rm ~/pk.pub"
+scp -i ~/.ssh/insurance2026_deploy ~/.ssh/insurance2026_deploy.pub root@69.57.161.222:~/pk.pub
+ssh root@69.57.161.222 "mkdir -p ~/.ssh && cat ~/pk.pub >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && rm ~/pk.pub"
 
 # 3. Verify SSH works
-ssh -i ~/.ssh/insurance2026_deploy root@162.254.35.48 "echo ✓ SSH OK"
+ssh -i ~/.ssh/insurance2026_deploy root@69.57.161.222 "echo ✓ SSH OK"
 
 # 4. Run deployment
 cd d:\insurance2026.worktrees\copilot-vps-magnetar-hosting-details
@@ -52,8 +52,8 @@ Follow the **DEPLOYMENT-GUIDE.md** file (already created in repo root).
 
 **Server Information:**
 
-- IP: `162.254.35.48`
-- Domain: `tamlexus.sbs`
+- IP: `69.57.161.222`
+- Domain: `lexusforbon.it.com`
 - OS: AlmaLinux 9
 - Root user: `root`
 
@@ -72,8 +72,8 @@ Follow the **DEPLOYMENT-GUIDE.md** file (already created in repo root).
 2. **DNS Must Resolve First** — Before running deployment, verify:
 
    ```bash
-   nslookup tamlexus.sbs 8.8.8.8
-   # Should return: 162.254.35.48
+   nslookup lexusforbon.it.com 8.8.8.8
+   # Should return: 69.57.161.222
    ```
 
 3. **Post-Deploy Configuration** — After deployment succeeds, SSH to server and update:
@@ -82,7 +82,7 @@ Follow the **DEPLOYMENT-GUIDE.md** file (already created in repo root).
 
    See "Update Missing Values" in DEPLOYMENT-GUIDE.md
 
-4. **First Admin Login** — Username/email: `admin@tamlexus.sbs`, password from `.env.production` (ADMIN_PASSWORD)
+4. **First Admin Login** — Username/email: `admin@lexusforbon.it.com`, password from `.env.production` (ADMIN_PASSWORD)
 
 ---
 
@@ -98,7 +98,7 @@ Follow the **DEPLOYMENT-GUIDE.md** file (already created in repo root).
 
 ## ✨ After Deployment
 
-Your app will be available at: `https://tamlexus.sbs`
+Your app will be available at: `https://lexusforbon.it.com`
 
 Services running:
 

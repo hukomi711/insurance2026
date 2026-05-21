@@ -16,14 +16,14 @@
 #
 # Prerequisites (must exist on VPS):
 #   - /opt/insurance2026-upload.tar.gz (uploaded via scp)
-#   - domain: tamlexus.sbs (DNS already configured)
+#   - domain: lexusforbon.it.com (DNS already configured)
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
 
 ARCHIVE_PATH="/opt/insurance2026-upload.tar.gz"
 DEPLOY_DIR="/opt/insurance2026"
-DOMAIN="tamlexus.sbs"
+DOMAIN="lexusforbon.it.com"
 WWW_DOMAIN="www.${DOMAIN}"
 
 echo "═══════════════════════════════════════════════════════════════"
@@ -76,13 +76,21 @@ echo "[2/7] Setting up .env.production..."
 
 ENV_TEMPLATE="${DEPLOY_DIR}/.env.production.example"
 ENV_FILE="${DEPLOY_DIR}/.env.production"
+ENV_BACKUP_FILE="${DEPLOY_DIR}.backup/.env.production"
+ENV_SAVED_FILE="/tmp/insurance2026.env.production.backup"
 
 if [[ ! -f "$ENV_TEMPLATE" ]]; then
   echo "✗ .env.production.example not found in archive"
   exit 1
 fi
 
-cp "$ENV_TEMPLATE" "$ENV_FILE"
+if [[ -f "$ENV_SAVED_FILE" ]]; then
+  cp "$ENV_SAVED_FILE" "$ENV_FILE"
+elif [[ -f "$ENV_BACKUP_FILE" ]]; then
+  cp "$ENV_BACKUP_FILE" "$ENV_FILE"
+elif [[ ! -f "$ENV_FILE" ]]; then
+  cp "$ENV_TEMPLATE" "$ENV_FILE"
+fi
 
 # Substitute __DOMAIN__ placeholder
 sed -i "s|__DOMAIN__|${DOMAIN}|g" "$ENV_FILE"
