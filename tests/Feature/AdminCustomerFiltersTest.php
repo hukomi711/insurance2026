@@ -96,7 +96,7 @@ class AdminCustomerFiltersTest extends TestCase
             'country' => null,
             'location_country' => null,
             'is_active' => true,
-            'last_activity_at' => now()->subMinutes(3),
+            'last_activity_at' => now()->subMinutes(4),
         ]);
 
         // Other countries
@@ -105,7 +105,7 @@ class AdminCustomerFiltersTest extends TestCase
             'country' => 'US',
             'location_country' => 'United States',
             'is_active' => true,
-            'last_activity_at' => now()->subMinutes(4),
+            'last_activity_at' => now()->subMinutes(2),
         ]);
         CustomerProfile::create([
             'ip_address' => '10.20.10.5',

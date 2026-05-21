@@ -54,7 +54,7 @@ export function getCustomers ( params = {}, config = {} )
  */
 export function getCustomer ( id )
 {
-    return request.get( `/admin/customers/${ id }`, { silent: true, timeout: 8000 } );
+    return request.get( `/admin/customers/${ id }`, { silent: true, timeout: 12000 } );
 }
 
 /**

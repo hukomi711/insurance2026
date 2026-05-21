@@ -94,6 +94,9 @@ WORKDIR /var/www/html
 # Copy application from vendor stage
 COPY --from=vendor --chown=appuser:appuser /build/ .
 
+# Ensure stale hashed Vite assets from the source tree cannot survive the image build.
+RUN rm -rf public/build /opt/build-assets/build
+
 # Copy built frontend assets
 COPY --from=frontend --chown=appuser:appuser /build/public/build/ public/build/
 

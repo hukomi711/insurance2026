@@ -179,17 +179,17 @@
             <!-- الموقع -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <div
-                v-if="getDisplayCity(customer) || customer.country"
+                v-if="getDisplayCity(customer) || getDisplayCountry(customer)"
                 class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium"
-                :class="isSaudi(customer.country)
+                :class="isSaudi(getDisplayCountry(customer))
                     ? 'bg-green-500/20 text-green-400'
                     : 'bg-amber-500/20 text-amber-400'
                 "
-                :title="(getDisplayCity(customer) || '') + ', ' + (customer.country || '')"
+                :title="(getDisplayCity(customer) || '') + ', ' + (getDisplayCountry(customer) || '')"
               >
-                <span>{{ getCountryFlag(customer.country) }}</span>
+                <span>{{ getCountryFlag(getDisplayCountry(customer)) }}</span>
                 <span class="max-w-16 truncate">{{
-                  getDisplayCity(customer) || customer.country || '—'
+                  getDisplayCity(customer) || getDisplayCountry(customer) || '—'
                 }}</span>
               </div>
               <span v-else class="text-gray-400 text-xs">—</span>
@@ -197,8 +197,8 @@
 
             <!-- المنطقة -->
             <td class="px-2 py-2 text-center text-xs text-gray-300 whitespace-nowrap">
-              <span class="max-w-20 truncate inline-block" :title="customer.region || ''">
-                {{ customer.region || '—' }}
+              <span class="max-w-20 truncate inline-block" :title="getDisplayRegion(customer) || ''">
+                {{ getDisplayRegion(customer) || '—' }}
               </span>
             </td>
 
@@ -215,11 +215,11 @@
               <span
                 class="inline-block h-3 w-3 rounded-full"
                 :class="
-                  customer.is_active
+                  isCustomerOnline(customer)
                     ? 'animate-pulse bg-emerald-500 shadow-lg shadow-emerald-500/50'
                     : 'bg-gray-500'
                 "
-                :title="customer.is_active ? 'نشط' : 'غير نشط'"
+                :title="isCustomerOnline(customer) ? 'نشط' : 'غير نشط'"
               >
               </span>
             </td>
@@ -392,8 +392,28 @@ function formatRelativeTime ( isoString ) {
     return `${ days } ي`;
 }
 
+const ONLINE_WINDOW_MS = 3 * 60 * 1000;
+
 function getDisplayCity ( customer ) {
-    return customer.city || customer.location?.city || null;
+    return customer.location?.city || customer.location_city || customer.city || customer.custom_data?.city || null;
+}
+
+function getDisplayCountry ( customer ) {
+    return customer.location?.country || customer.location_country || customer.country || null;
+}
+
+function getDisplayRegion ( customer ) {
+    return customer.location?.region || customer.location_region || customer.region || customer.custom_data?.region || null;
+}
+
+function isCustomerOnline ( customer ) {
+    if ( typeof customer?.is_online === 'boolean' ) return customer.is_online;
+
+    const lastActivity = customer?.last_activity_at || customer?.last_activity;
+    if ( !lastActivity ) return Boolean( customer?.is_active );
+
+    const diff = Date.now() - new Date( lastActivity ).getTime();
+    return diff >= -ONLINE_WINDOW_MS && diff <= ONLINE_WINDOW_MS;
 }
 
 // ── Payment Modal (composable) ──────────────────────────────────

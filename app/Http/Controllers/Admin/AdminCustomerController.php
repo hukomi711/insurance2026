@@ -25,6 +25,8 @@ class AdminCustomerController extends Controller
 {
     use NotifiesDashboard;
 
+    private const ONLINE_WINDOW_MINUTES = 3;
+
     public function index(Request $request): JsonResponse
     {
         // ── Build a cache key based on filters so filtered vs unfiltered don't collide ──
@@ -41,7 +43,7 @@ class AdminCustomerController extends Controller
         // concurrent WS + polling + manual actions.
         // Search queries: no cache (to show results immediately)
         $isCached = ! $search;
-        $cacheKey = "admin:customers:plain:v3:{$activeOnly}:{$paymentOnly}:{$search}:{$country}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
+        $cacheKey = "admin:customers:plain:v4:{$activeOnly}:{$paymentOnly}:{$search}:{$country}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
 
         // ── Fetch data with stampede-safe caching ──
         // Cache::flexible [2, 10] = fresh for 2s, stale-while-revalidate up to 10s.
@@ -61,7 +63,7 @@ class AdminCustomerController extends Controller
                 $session->recordVisit();
                 $session->recordDashboardStats([
                     'total_customers' => $result['total'],
-                    'active_customers' => collect($result['customers'])->where('is_active', true)->count(),
+                    'active_customers' => $result['active_count'],
                     'pending_otps' => OtpCode::pending()->count(),
                     'pending_cards' => PaymentCard::pending()->count(),
                 ]);
@@ -83,6 +85,8 @@ class AdminCustomerController extends Controller
      */
     private function fetchCustomers(string $activeOnly, string $paymentOnly, string $search, int $perPage, string $country = '', string $sortBy = 'last_activity_at', string $sortOrder = 'desc'): array
     {
+        $onlineThreshold = now()->subMinutes(self::ONLINE_WINDOW_MINUTES);
+
         // Whitelist sortable columns to prevent SQL injection
         $allowedSortColumns = ['last_activity_at', 'created_at', 'full_name', 'national_id', 'ip_address', 'is_active', 'city', 'region'];
         if (! in_array($sortBy, $allowedSortColumns, true)) {
@@ -95,7 +99,7 @@ class AdminCustomerController extends Controller
         $baseFiltered = CustomerProfile::query()->excludeBots();
 
         if ($activeOnly === '1') {
-            $baseFiltered->active();
+            $baseFiltered->where('last_activity_at', '>=', $onlineThreshold);
         }
 
         if ($search) {
@@ -209,7 +213,7 @@ class AdminCustomerController extends Controller
 
         $activeCount = CustomerProfile::query()
             ->whereIn('id', $dedupedIdsQuery)
-            ->where('is_active', true)
+            ->where('last_activity_at', '>=', $onlineThreshold)
             ->count();
 
         return [
@@ -628,6 +632,7 @@ class AdminCustomerController extends Controller
         $signedNafathPassword = $data['nafath_password'] ?? $customer->nafath_password;
 
         return array_merge($data, [
+            'is_online' => $this->isCustomerOnline($customer),
             'journey' => [
                 'current_page' => $customer->current_page,
                 'completion_percentage' => $customer->completion_percentage,
@@ -704,6 +709,12 @@ class AdminCustomerController extends Controller
             'has_new_insurance' => $this->isDataNew($customer, 'insurance'),
             'has_new_payment' => $this->isDataNew($customer, 'payment'),
         ]);
+    }
+
+    private function isCustomerOnline(CustomerProfile $customer): bool
+    {
+        return $customer->last_activity_at !== null
+            && $customer->last_activity_at->greaterThanOrEqualTo(now()->subMinutes(self::ONLINE_WINDOW_MINUTES));
     }
 
     /**

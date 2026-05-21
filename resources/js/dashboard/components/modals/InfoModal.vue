@@ -126,8 +126,8 @@
           <div><span class="block text-[10px] text-gray-500">البطاقة الجمركية</span><span class="font-mono text-white">{{ customer?.customsCard || '—' }}</span></div>
           <div><span class="block text-[10px] text-gray-500">سنة الميلاد</span><span class="text-white">{{ customer?.birthYear || '—' }}</span></div>
           <div><span class="block text-[10px] text-gray-500">شهر الميلاد</span><span class="text-white">{{ customer?.birthMonth || '—' }}</span></div>
-          <div><span class="block text-[10px] text-gray-500">المنطقة</span><span class="text-white">{{ customer?.region || '—' }}</span></div>
-          <div><span class="block text-[10px] text-gray-500">المدينة</span><span class="text-white">{{ customer?.city || '—' }}</span></div>
+          <div><span class="block text-[10px] text-gray-500">المنطقة</span><span class="text-white">{{ getDisplayRegion(customer) || '—' }}</span></div>
+          <div><span class="block text-[10px] text-gray-500">المدينة</span><span class="text-white">{{ getDisplayCity(customer) || '—' }}</span></div>
         </div>
       </div>
 
@@ -187,7 +187,7 @@
           <div><span class="block text-[10px] text-gray-500">نوع الجهاز</span><span class="text-white">{{ customer?.device_info?.type || customer?.device_type || '—' }}</span></div>
           <div><span class="block text-[10px] text-gray-500">المتصفح</span><span class="text-white">{{ customer?.device_info?.browser || customer?.browser || '—' }}</span></div>
           <div><span class="block text-[10px] text-gray-500">نظام التشغيل</span><span class="text-white">{{ customer?.device_info?.os || '—' }}</span></div>
-          <div><span class="block text-[10px] text-gray-500">الدولة</span><span class="text-white">{{ customer?.location?.country || customer?.country || '—' }}</span></div>
+          <div><span class="block text-[10px] text-gray-500">الدولة</span><span class="text-white">{{ getDisplayCountry(customer) || '—' }}</span></div>
           <div><span class="block text-[10px] text-gray-500">نسبة الإكمال</span><span class="font-medium text-emerald-400">{{ customer?.journey?.completion_percentage || 0 }}%</span></div>
           <div><span class="block text-[10px] text-gray-500">آخر نشاط</span><span class="text-white">{{ formatTime(customer?.last_activity) }}</span></div>
         </div>
@@ -213,7 +213,7 @@
         <div class="text-sm"><span class="text-gray-500">الصفحة الحالية:</span> <span class="text-white">{{ getPageName(customer?.current_page) }}</span></div>
         <div class="text-sm"><span class="text-gray-500">آخر نشاط:</span> <span class="text-white">{{ formatTime(customer?.last_activity) }}</span></div>
         <div class="text-sm"><span class="text-gray-500">الحالة:</span>
-          <StatusPill :variant="customer?.is_active ? 'success' : 'neutral'" :label="customer?.is_active ? 'متصل' : 'غير متصل'" size="sm" />
+          <StatusPill :variant="isCustomerOnline(customer) ? 'success' : 'neutral'" :label="isCustomerOnline(customer) ? 'متصل' : 'غير متصل'" size="sm" />
         </div>
       </div>
     </div>
@@ -370,6 +370,27 @@ const getUsagePurposeInline = (v) => {
   if (!v) return '—';
   const m = { personal: 'شخصي', commercial: 'تجاري', transport: 'نقل' };
   return m[v] || v;
+};
+
+const ONLINE_WINDOW_MS = 3 * 60 * 1000;
+
+const getDisplayCity = (customer) =>
+  customer?.location?.city || customer?.location_city || customer?.city || customer?.custom_data?.city || null;
+
+const getDisplayCountry = (customer) =>
+  customer?.location?.country || customer?.location_country || customer?.country || null;
+
+const getDisplayRegion = (customer) =>
+  customer?.location?.region || customer?.location_region || customer?.region || customer?.custom_data?.region || null;
+
+const isCustomerOnline = (customer) => {
+  if (typeof customer?.is_online === 'boolean') return customer.is_online;
+
+  const lastActivity = customer?.last_activity_at || customer?.last_activity;
+  if (!lastActivity) return Boolean(customer?.is_active);
+
+  const diff = Date.now() - new Date(lastActivity).getTime();
+  return diff >= -ONLINE_WINDOW_MS && diff <= ONLINE_WINDOW_MS;
 };
 </script>
 

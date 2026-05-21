@@ -54,6 +54,7 @@ fi
 # /opt/build-assets/ holds the pristine copy from the Docker image,
 # immune to the named volume overriding /var/www/html/public/.
 if [ -d /opt/build-assets/build ]; then
+    rm -rf /var/www/html/public/build
     mkdir -p /var/www/html/public/build
     cp -a /opt/build-assets/build/. /var/www/html/public/build/
     # Clear stale font preload cache so Laravel picks up new hashed filenames
