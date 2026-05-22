@@ -11,6 +11,7 @@
 .env.*.local
 .phpactor.json
 .phpunit.result.cache
+.agent.md
 /.fleet
 /.idea
 /.nova
