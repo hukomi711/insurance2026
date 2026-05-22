@@ -21,7 +21,7 @@ class QuoteCalculationServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new QuoteCalculationService();
+        $this->service = app(QuoteCalculationService::class);
     }
 
     /**

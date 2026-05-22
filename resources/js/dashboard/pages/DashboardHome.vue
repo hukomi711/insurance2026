@@ -44,6 +44,8 @@
                     :customers="customers"
                     :processing-action="processingAction"
                     :focused-customer-id="focusedCustomerId"
+                    :current-page="currentPage"
+                    :per-page="perPage"
                     @delete-card="handleDeleteCard"
                     @show-details="handleShowDetails"
                     @action="handleCustomerAction"
@@ -1046,13 +1048,15 @@ function handleWindowRead ( event ) {
 const customers = shallowRef( [] );
 
 /**
- * Remove duplicate customers from list — keeps the FIRST occurrence per ip.
- * Prevents the same visitor from appearing in multiple rows after WS/polling races.
+ * Remove duplicate customers from list — prefer stable row id.
+ * Falls back to session/IP only when the backend did not send an id.
  */
 function deduplicateByIp ( list ) {
     const seen = new Set();
     return list.filter( c => {
-        const key = c.ip || String( c.id );
+        const key = c.id != null
+            ? `id:${ c.id }`
+            : ( c.session_id ? `session:${ c.session_id }` : `ip:${ c.ip || 'unknown' }` );
         if ( seen.has( key ) ) return false;
         seen.add( key );
         return true;
@@ -1064,7 +1068,18 @@ function deduplicateByIp ( list ) {
  * The API now returns every real visitor/customer row; keep every non-empty row.
  */
 function shouldDisplayCustomer ( customer ) {
-    return Boolean( customer );
+    if ( !customer ) return false;
+
+    if ( countryFilter.value && !matchesCountryFilter( customer, countryFilter.value ) ) {
+        return false;
+    }
+
+    const query = normalizeSearchValue( searchQuery.value );
+    if ( query && !matchesSearchFilter( customer, query ) ) {
+        return false;
+    }
+
+    return true;
 }
 
 // ── Mark-Viewed Race-Condition Guard ──
@@ -1163,7 +1178,88 @@ const sortBy = ref( 'last_activity_at' );
 const sortOrder = ref( 'desc' );
 
 function applyOrdering ( list ) {
-    return list;
+    const direction = sortOrder.value === 'asc' ? 1 : -1;
+    const field = sortBy.value || 'last_activity_at';
+
+    return [ ...list ].sort( ( a, b ) => {
+        const aValue = sortableValue( a, field );
+        const bValue = sortableValue( b, field );
+
+        if ( aValue < bValue ) return -1 * direction;
+        if ( aValue > bValue ) return 1 * direction;
+
+        return ( b.id || 0 ) - ( a.id || 0 );
+    } );
+}
+
+function sortableValue ( customer, field ) {
+    if ( field === 'last_activity_at' || field === 'created_at' ) {
+        const value = customer?.[ field ] || customer?.last_activity || customer?.created_at || '';
+        return value ? new Date( value ).getTime() || 0 : 0;
+    }
+
+    const value = customer?.[ field ];
+    if ( typeof value === 'string' ) return value.toLowerCase();
+    if ( typeof value === 'boolean' ) return value ? 1 : 0;
+    return value ?? '';
+}
+
+function normalizeSearchValue ( value ) {
+    return String( value || '' )
+        .replace( /[٠-٩]/g, d => String( '٠١٢٣٤٥٦٧٨٩'.indexOf( d ) ) )
+        .replace( /[۰-۹]/g, d => String( '۰۱۲۳۴۵۶۷۸۹'.indexOf( d ) ) )
+        .trim()
+        .toLowerCase();
+}
+
+function searchDigits ( value ) {
+    return normalizeSearchValue( value ).replace( /\D+/g, '' );
+}
+
+function matchesSearchFilter ( customer, query ) {
+    const digitQuery = searchDigits( query );
+    const values = [
+        customer.ip,
+        customer.ip_address,
+        customer.fullName,
+        customer.full_name,
+        customer.nationalId,
+        customer.phoneNumber,
+        customer.phone,
+        customer.email,
+        customer.city,
+        customer.region,
+        customer.location?.city,
+        customer.location?.country,
+        customer.country,
+    ].filter( Boolean );
+
+    return values.some( value => {
+        const normalized = normalizeSearchValue( value );
+        if ( normalized.includes( query ) ) return true;
+        return digitQuery && searchDigits( value ).includes( digitQuery );
+    } );
+}
+
+function customerCountryCode ( customer ) {
+    const value = customer?.country || customer?.location?.country || customer?.location_country || '';
+    if ( !value ) return '';
+    if ( value.length === 2 ) return value.toUpperCase();
+
+    const map = {
+        'السعودية': 'SA',
+        'المملكة العربية السعودية': 'SA',
+        'Saudi Arabia': 'SA',
+    };
+
+    return map[ value ] || value;
+}
+
+function matchesCountryFilter ( customer, filter ) {
+    const code = customerCountryCode( customer );
+    if ( filter === 'SA' ) return code === 'SA' || !code;
+    if ( filter === 'other' ) return Boolean( code ) && code !== 'SA';
+    return true;
 }
 
 /**

@@ -3,9 +3,9 @@ import { useToast } from 'vue-toastification';
 import { getNotifications, markNotificationsRead, markSingleNotificationRead } from '@/api/dashboard';
 
 /**
- * @typedef {'claim'|'policy'|'alert'|'system'} NotificationType
+ * @typedef {'otp'|'pin'|'payment'|'phone'|'customer'|'claim'|'policy'|'alert'|'system'} NotificationType
  * @typedef {'success'|'error'|'warning'|'info'} ToastType
- * @typedef {{ id: number, type: NotificationType, message: string, time: string, read: boolean, key: string }} Notification
+ * @typedef {{ id: number, type: NotificationType, message: string, time: string, created_at?: string, read: boolean, key?: string, meta?: Object }} Notification
  * @typedef {{ id: number, type: ToastType, message: string, timeout: number, priority: number }} QueuedToast
  */
 
@@ -26,6 +26,15 @@ export const useNotificationsStore = defineStore( 'notifications', {
         /** Whether notifications are currently being fetched */
         loading: false,
 
+        /** Whether "mark all read" is currently syncing with the server */
+        markingAllRead: false,
+
+        /** Last successful fetch timestamp */
+        lastFetchedAt: null,
+
+        /** Last non-critical fetch/sync error */
+        error: null,
+
     } ),
 
     getters: {
@@ -37,6 +46,9 @@ export const useNotificationsStore = defineStore( 'notifications', {
 
         /** @returns {number} */
         pendingToasts: ( state ) => state.toastQueue.length,
+
+        /** @returns {boolean} */
+        hasUnread: ( state ) => state.items.some( ( n ) => !n.read ),
     },
 
     actions: {
@@ -45,15 +57,25 @@ export const useNotificationsStore = defineStore( 'notifications', {
         /**
          * @param {number} id
          */
-        markAsRead ( id )
+        async markAsRead ( id )
         {
             const item = this.items.find( ( n ) => n.id === id );
-            if ( item )
+            if ( !item || item.read )
             {
-                item.read = true;
-                // Persist to server
-                const key = _notifKey( item );
-                markSingleNotificationRead( key ).catch( () => { } );
+                return true;
+            }
+
+            item.read = true;
+
+            try
+            {
+                await markSingleNotificationRead( _notifKey( item ) );
+                return true;
+            } catch
+            {
+                item.read = false;
+                this.error = 'تعذر تحديث حالة الإشعار';
+                return false;
             }
         },
 
@@ -216,9 +238,11 @@ export const useNotificationsStore = defineStore( 'notifications', {
                 const { data } = await getNotifications();
                 if ( data?.success && Array.isArray( data.data ) )
                 {
+                    this.error = null;
+
                     // Check for new unread items to toast
-                    const prevIds = new Set( this.items.filter( n => !n.read ).map( n => `${ n.type }-${ n.meta?.otp_id || n.meta?.card_id || n.id }` ) );
-                    const newItems = data.data.filter( n => !n.read && !prevIds.has( `${ n.type }-${ n.meta?.otp_id || n.meta?.card_id || n.id }` ) );
+                    const prevIds = new Set( this.items.filter( n => !n.read ).map( _notifKey ) );
+                    const newItems = data.data.filter( n => !n.read && !prevIds.has( _notifKey( n ) ) );
 
                     // Toast only genuinely new items (max 3 to avoid spam)
                     if ( this.items.length > 0 )
@@ -233,11 +257,13 @@ export const useNotificationsStore = defineStore( 'notifications', {
                     // AdminDashboardSession.dismissed_notifications), so no
                     // client-side merging is needed.
                     this.items = data.data;
+                    this.lastFetchedAt = new Date().toISOString();
                 }
                 return true;
             } catch
             {
                 // Silently fail — notifications are non-critical
+                this.error = 'تعذر تحديث الإشعارات';
                 return false;
             } finally
             {
@@ -250,13 +276,24 @@ export const useNotificationsStore = defineStore( 'notifications', {
          */
         async markAllReadOnServer ()
         {
+            if ( this.markingAllRead ) return false;
+
+            this.markingAllRead = true;
             this.markAllRead();
             try
             {
                 await markNotificationsRead();
+                await this.fetchNotifications();
+                this.error = null;
+                return true;
             } catch
             {
-                // Ignore
+                this.error = 'تعذر تحديث حالة الإشعارات';
+                await this.fetchNotifications();
+                return false;
+            } finally
+            {
+                this.markingAllRead = false;
             }
         },
 

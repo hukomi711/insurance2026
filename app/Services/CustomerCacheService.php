@@ -21,17 +21,20 @@ class CustomerCacheService
 
         if ($driver === 'redis') {
             self::flushRedis();
+            self::forgetAdminNotificationKeys();
 
             return;
         }
 
         if ($driver === 'database') {
             self::flushDatabase();
+            self::forgetAdminNotificationKeys();
 
             return;
         }
 
         self::forgetCommonKeys();
+        self::forgetAdminNotificationKeys();
     }
 
     private static function flushRedis(): void
@@ -143,5 +146,15 @@ class CustomerCacheService
                 }
             }
         }
+    }
+
+    /**
+     * Notification and badge caches are fed by the same pending OTP/card data
+     * that changes when customer/admin actions flush the dashboard list.
+     */
+    private static function forgetAdminNotificationKeys(): void
+    {
+        Cache::forget('admin:notifications:raw');
+        Cache::forget('admin:badge_counts');
     }
 }

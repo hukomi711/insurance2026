@@ -258,7 +258,6 @@ import { trackStepViewed, trackQuoteSelected, trackStepCompleted } from '@/compo
 import { usePricingSignature } from '@/composables/usePricingSignature';
 import { usePricingConstants } from '@/composables/usePricingConstants';
 import { useInsuranceStore } from '@/store/modules/insurance';
-import { usePricingEngine } from '@/utils/pricingEngine';
 import { formatNumber } from '@/utils/formatters';
 import { getCompanyLogo } from '@/utils/companyLogos';
 import SarIcon from '@/components/SarIcon.vue';
@@ -280,7 +279,6 @@ const route = useRoute();
 const router = useRouter();
 const { trackStep, resumeSession } = useQuoteTracking();
 const insuranceStore = useInsuranceStore();
-const { calculateAllQuotes, recalculateSinglePlan } = usePricingEngine();
 
 // ── Quotes data (loaded from API) ──
 const quotesData = ref( [] );
@@ -321,7 +319,7 @@ async function startLoadingQuotes() {
 
         // استدعاء API مع بيانات النموذج للتسعير الديناميكي
         const result = await getQuotes( insuranceStore.allFormData );
-        quotesData.value = result.plans || [];
+        quotesData.value = withDisplayCoverage( result.plans || [] );
 
         // حفظ الأسعار المحسوبة في المتجر
         insuranceStore.setCalculatedQuotes( quotesData.value );
@@ -370,11 +368,10 @@ onMounted( async () => {
 
     resumeSession( 'compare' );
     trackStepViewed( 'compare', { ui_variant: 'quotecard_v3_benefits3_details_unified' } );
+    insuranceStore.hydrateFromSession();
     loadVehicleInfo();
-    startLoadingQuotes();
 
     // مزامنة التبويب النشط مع نوع التغطية المختار
-    // hydrateFromSession already called inside startLoadingQuotes before await
     const ct = insuranceStore.policy.coverageType;
     if ( ct === 'comprehensive' ) {
         activeTab.value = 'comprehensive';
@@ -398,6 +395,13 @@ onMounted( async () => {
     } else if ( storeLimit && storeLimit !== 55667 ) {
         quoteOptions.coverageLimit = storeLimit;
     }
+
+    insuranceStore.setPolicyData( {
+        repairMethod: quoteOptions.repairMethod,
+        coverageLimit: quoteOptions.coverageLimit,
+    } );
+
+    startLoadingQuotes();
 
     // Countdown timer
     countdownInterval = setInterval( updateCountdown, 1000 );
@@ -489,9 +493,36 @@ watch( () => [ quoteOptions.repairMethod, quoteOptions.coverageLimit ], () => {
     }
 } );
 
-function updateQuoteOptions() {
+function formDataWithPolicyOverrides ( overrides = {} ) {
+    return {
+        ...insuranceStore.allFormData,
+        policy: {
+            ...insuranceStore.allFormData.policy,
+            repairMethod: quoteOptions.repairMethod,
+            coverageLimit: quoteOptions.coverageLimit,
+            ...overrides,
+        },
+    };
+}
+
+function withDisplayCoverage ( plans ) {
+    const userLimit = quoteOptions.coverageLimit;
+    const affectedSubTypes = [ 'comprehensive', 'vehicleDamagePlus', 'thirdPartyPlus' ];
+    return plans.map( p => ( {
+        ...p,
+        coverageLimit: affectedSubTypes.includes( p.subType ) && userLimit ? userLimit : p.coverageLimit,
+    } ) );
+}
+
+async function pricePlansFromServer ( plans, overrides = {} ) {
+    const result = await getQuotes( formDataWithPolicyOverrides( overrides ), plans );
+    return withDisplayCoverage( result.plans || [] );
+}
+
+async function updateQuoteOptions() {
     clearTimeout( _quoteDebounce );
     isUpdatingQuotes.value = true;
+    selectionError.value = '';
 
     // تحديث بيانات الوثيقة في المتجر
     insuranceStore.setPolicyData( {
@@ -499,28 +530,18 @@ function updateQuoteOptions() {
         coverageLimit: quoteOptions.coverageLimit,
     } );
 
-    // إعادة حساب الأسعار فورياً مع تمرير طريقة الإصلاح وحد التغطية
-    const recalculated = calculateAllQuotes(
-        quotesData.value,
-        insuranceStore.allFormData,
-        { repairMethod: quoteOptions.repairMethod, coverageLimit: quoteOptions.coverageLimit }
-    );
-
-    // تحديث مكان الإصلاح + حد التغطية على كل باقة
-    const repairLabel = quoteOptions.repairMethod === 'agency' ? 'الوكالة' : 'الورش المعتمدة';
-    const userLimit = quoteOptions.coverageLimit;
-    const affectedSubTypes = [ 'comprehensive', 'vehicleDamagePlus', 'thirdPartyPlus' ];
-    quotesData.value = recalculated.map( p => ( {
-        ...p,
-        repairLocation: repairLabel,
-        // تحديث حد التغطية المعروض للباقات المتأثرة
-        coverageLimit: affectedSubTypes.includes( p.subType ) && userLimit ? userLimit : p.coverageLimit,
-    } ) );
-    insuranceStore.setCalculatedQuotes( quotesData.value );
-
-    updatingDoneTimer = setTimeout( () => {
-        isUpdatingQuotes.value = false;
-    }, 300 );
+    try {
+        const repriced = await pricePlansFromServer( quotesData.value );
+        quotesData.value = repriced;
+        insuranceStore.setCalculatedQuotes( quotesData.value );
+    } catch ( err ) {
+        logger.error( '[ComparePage] Failed to reprice quote options:', err );
+        selectionError.value = 'تعذّر تحديث الأسعار من السيرفر. تحقق من اتصالك وأعد المحاولة.';
+    } finally {
+        updatingDoneTimer = setTimeout( () => {
+            isUpdatingQuotes.value = false;
+        }, 300 );
+    }
 }
 
 // Vehicle info from store / sessionStorage
@@ -563,17 +584,32 @@ function loadVehicleInfo() {
 /**
  * إعادة حساب سعر خطة واحدة عند تغيير الخصم من القائمة المنسدلة في الكارت
  */
-function onPlanDeductibleChange( planId, newDeductible ) {
+async function onPlanDeductibleChange( planId, newDeductible ) {
     const idx = quotesData.value.findIndex( p => p.id === planId );
     if ( idx === -1 ) return;
 
-    const updatedPlan = recalculateSinglePlan(
-        quotesData.value[ idx ],
-        insuranceStore.allFormData,
-        Number( newDeductible )
-    );
-    // تحديث الخطة في القائمة
-    quotesData.value[ idx ] = { ...updatedPlan, deductible: Number( newDeductible ) };
+    const deductible = Number( newDeductible );
+    isUpdatingQuotes.value = true;
+    selectionError.value = '';
+
+    try {
+        const [ updatedPlan ] = await pricePlansFromServer(
+            [ { ...quotesData.value[ idx ], deductible } ],
+            { deductible },
+        );
+
+        if ( updatedPlan ) {
+            quotesData.value[ idx ] = { ...quotesData.value[ idx ], ...updatedPlan, deductible };
+            insuranceStore.setCalculatedQuotes( quotesData.value );
+        }
+    } catch ( err ) {
+        logger.error( '[ComparePage] Failed to reprice deductible change:', err );
+        selectionError.value = 'تعذّر تحديث السعر حسب قيمة التحمل. الرجاء المحاولة مرة أخرى.';
+    } finally {
+        updatingDoneTimer = setTimeout( () => {
+            isUpdatingQuotes.value = false;
+        }, 300 );
+    }
 }
 
 const filters = reactive( {
@@ -734,6 +770,9 @@ async function issueQuoteLock ( selection ) {
     return {
         quoteLockToken: data.quote_lock_token,
         quoteLockExpiresAt: data.expires_at,
+        pricingSignature: data.pricing_signature,
+        pricingTimestamp: data.pricing_timestamp,
+        pricingExpiresAt: data.pricing_expires_at,
         subtotal,
         vatAmount: vat,
         totalPrice: total,
@@ -782,9 +821,9 @@ async function selectPlan( plan, source = 'card_expanded' ) {
         storePricingSignature( {
             planId: plan.id,
             totalPrice: lock.totalPrice,
-            signature: plan.signature,
-            timestamp: plan.timestamp,
-            expiresAt: plan.expiresAt,
+            signature: lock.pricingSignature,
+            timestamp: lock.pricingTimestamp,
+            expiresAt: lock.pricingExpiresAt,
             companyId: plan.companyId,
             subType: plan.subType,
             annualPrice: plan.annualPrice,
@@ -813,9 +852,9 @@ async function selectPlan( plan, source = 'card_expanded' ) {
         subtotalBeforeVAT: lock.subtotal,
         vatAmount: lock.vatAmount,
         totalPrice: lock.totalPrice,
-        pricingSignature: plan.signature,
-        pricingTimestamp: plan.timestamp,
-        pricingExpiresAt: plan.expiresAt,
+        pricingSignature: lock.pricingSignature,
+        pricingTimestamp: lock.pricingTimestamp,
+        pricingExpiresAt: lock.pricingExpiresAt,
     } );
     trackQuoteSelected( { plan_id: plan.id, source } );
     trackStepCompleted( 'compare', 'orderReview' );
@@ -836,19 +875,33 @@ async function handleOfferSelect( selection ) {
     const source = offerSheetEntrySource.value || 'offer_sheet';
     const addons = selection.addons || [];
     const addonsTotal = addons.reduce( ( sum, a ) => sum + Number( a?.price || 0 ), 0 );
+    const selectedDeductible = Number( selection.deductible ?? p.deductible ?? 0 );
 
-    if ( !ensureSignatureFields( p ) ) return;
+    let signedPlan;
+    try {
+        [ signedPlan ] = await pricePlansFromServer(
+            [ { ...p, deductible: selectedDeductible } ],
+            { deductible: selectedDeductible },
+        );
+        signedPlan = signedPlan ? { ...p, ...signedPlan, deductible: selectedDeductible } : null;
+    } catch ( err ) {
+        logger.error( '[ComparePage] Failed to reprice offer selection:', err );
+        selectionError.value = 'تعذّر تحديث سعر العرض قبل الاختيار. الرجاء المحاولة مرة أخرى.';
+        return;
+    }
+
+    if ( !ensureSignatureFields( signedPlan ) ) return;
 
     let lock;
     try {
         lock = await issueQuoteLock( {
-            id: p.id,
-            name: p.name,
-            companyName: p.company?.nameAr,
-            type: p.type,
-            subType: p.subType,
-            annualPrice: Number( selection.annualPrice || p.annualPrice || 0 ),
-            deductible: selection.deductible ?? p.deductible,
+            id: signedPlan.id,
+            name: signedPlan.name,
+            companyName: signedPlan.company?.nameAr,
+            type: signedPlan.type,
+            subType: signedPlan.subType,
+            annualPrice: Number( signedPlan.annualPrice || 0 ),
+            deductible: selectedDeductible,
             addons,
             addonsTotal,
         } );
@@ -861,15 +914,15 @@ async function handleOfferSelect( selection ) {
     // Store signed quote packet in in-memory shared state (secure flow)
     try {
         storePricingSignature( {
-            planId: p.id,
+            planId: signedPlan.id,
             totalPrice: lock.totalPrice,
-            signature: p.signature,
-            timestamp: p.timestamp,
-            expiresAt: p.expiresAt,
-            companyId: p.companyId,
-            subType: p.subType,
-            annualPrice: Number( selection.annualPrice || p.annualPrice || 0 ),
-            pricingFactors: p.pricingFactors || null,
+            signature: lock.pricingSignature,
+            timestamp: lock.pricingTimestamp,
+            expiresAt: lock.pricingExpiresAt,
+            companyId: signedPlan.companyId,
+            subType: signedPlan.subType,
+            annualPrice: Number( signedPlan.annualPrice || 0 ),
+            pricingFactors: signedPlan.pricingFactors || null,
         } );
     } catch ( err ) {
         logger.error( '[ComparePage] Failed to store pricing signature packet (offer select):', err );
@@ -878,26 +931,26 @@ async function handleOfferSelect( selection ) {
     }
 
     insuranceStore.setSelectedPlan( {
-        id: p.id,
-        name: p.name,
-        companyName: p.company?.nameAr,
-        annualPrice: Number( selection.annualPrice || p.annualPrice || 0 ),
-        originalPrice: Number( p.originalPrice || selection.annualPrice || p.annualPrice || 0 ),
-        monthlyPrice: selection.monthlyPrice || p.monthlyPrice || Math.ceil( Number( selection.annualPrice || p.annualPrice || 0 ) / 12 ),
-        type: p.type,
-        deductible: selection.deductible ?? p.deductible,
+        id: signedPlan.id,
+        name: signedPlan.name,
+        companyName: signedPlan.company?.nameAr,
+        annualPrice: Number( signedPlan.annualPrice || 0 ),
+        originalPrice: Number( signedPlan.originalPrice || signedPlan.annualPrice || 0 ),
+        monthlyPrice: signedPlan.monthlyPrice || Math.ceil( Number( signedPlan.annualPrice || 0 ) / 12 ),
+        type: signedPlan.type,
+        deductible: selectedDeductible,
         addons,
         totalPrice: lock.totalPrice,
         subtotal: lock.subtotal,
         vatAmount: lock.vatAmount,
         quoteLockToken: lock.quoteLockToken,
         quoteLockExpiresAt: lock.quoteLockExpiresAt,
-        pricingSignature: p.signature,
-        pricingTimestamp: p.timestamp,
-        pricingExpiresAt: p.expiresAt,
+        pricingSignature: lock.pricingSignature,
+        pricingTimestamp: lock.pricingTimestamp,
+        pricingExpiresAt: lock.pricingExpiresAt,
     } );
-    trackStep( 'select_plan', 4, { selected_plan_id: p.id, source }, 'next' );
-    trackQuoteSelected( { plan_id: p.id, source } );
+    trackStep( 'select_plan', 4, { selected_plan_id: signedPlan.id, source }, 'next' );
+    trackQuoteSelected( { plan_id: signedPlan.id, source } );
     trackStepCompleted( 'compare', 'orderReview' );
     offerSheetEntrySource.value = 'offer_sheet';
     router.push( { name: 'orderReview' } );

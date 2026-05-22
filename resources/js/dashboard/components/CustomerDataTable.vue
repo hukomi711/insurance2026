@@ -227,7 +227,7 @@
             <!-- # -->
             <td class="px-2 py-2 text-center whitespace-nowrap">
               <div class="flex flex-col items-center gap-1">
-                <span class="text-gray-400">{{ index + 1 }}</span>
+                <span class="text-gray-400">{{ rowNumber(index) }}</span>
               </div>
             </td>
           </tr>
@@ -375,9 +375,21 @@ const props = defineProps({
     type: [Number, String],
     default: null,
   },
+  currentPage: {
+    type: Number,
+    default: 1,
+  },
+  perPage: {
+    type: Number,
+    default: 80,
+  },
 });
 
 const emit = defineEmits(['delete-card', 'show-details', 'action', 'redirect', 'modal-opened', 'modal-closed']);
+
+function rowNumber ( index ) {
+    return ( Math.max( props.currentPage, 1 ) - 1 ) * Math.max( props.perPage, 1 ) + index + 1;
+}
 
 function formatRelativeTime ( isoString ) {
     if ( !isoString ) return '—';

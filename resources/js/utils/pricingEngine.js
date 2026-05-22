@@ -23,6 +23,7 @@ import
     REPAIR_METHOD_FACTORS,
     COVERAGE_LIMIT_FACTORS,
     COMPANY_PRICING_FACTORS,
+    SUBTYPE_COMPANY_PRICING_FACTORS,
     NCD_FACTORS,
 } from '@/data/pricingConstants';
 
@@ -335,7 +336,9 @@ export function usePricingEngine ()
             const policyFactor = getPolicyFactor( effectivePolicy, overrides.deductible ?? plan.deductible );
 
             // معامل الشركة
-            const companyFactor = COMPANY_PRICING_FACTORS[ plan.companyId ] || 1.0;
+            const companyFactor = SUBTYPE_COMPANY_PRICING_FACTORS[ plan.subType ]?.[ plan.companyId ]
+                ?? COMPANY_PRICING_FACTORS[ plan.companyId ]
+                ?? 1.0;
 
             // معامل NCD (خصم عدم وجود مطالبات)
             const ncdFactor = getNcdFactor( d?.ncdYears );

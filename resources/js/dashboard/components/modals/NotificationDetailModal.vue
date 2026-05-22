@@ -248,7 +248,7 @@
 import { ref, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { ModalShell } from '../ui';
-import { getCustomers } from '@/api/dashboard';
+import { getCustomer, getCustomers } from '@/api/dashboard';
 import { useCustomerFormatters } from '@/dashboard/utils/customerFormatters';
 
 const { formatDateTimeAR } = useCustomerFormatters();
@@ -313,9 +313,10 @@ watch(() => props.open, async (isOpen) => {
     return;
   }
 
+  const customerId = props.notification.meta?.customer_id;
   const ip = props.notification.meta?.customer_ip;
-  if (!ip) {
-    error.value = 'لا يوجد عنوان IP للعميل';
+  if (!customerId && !ip) {
+    error.value = 'لا يوجد معرف أو عنوان IP للعميل';
     return;
   }
 
@@ -323,12 +324,23 @@ watch(() => props.open, async (isOpen) => {
   error.value = '';
 
   try {
-    const { data } = await getCustomers({ search: ip, per_page: 1 });
-    if (data?.success && data.data?.length > 0) {
-      customer.value = data.data[0];
-    } else {
-      error.value = 'لم يتم العثور على بيانات العميل';
+    if (customerId) {
+      const { data } = await getCustomer(customerId);
+      if (data?.success && data.data) {
+        customer.value = data.data;
+        return;
+      }
     }
+
+    if (ip) {
+      const { data } = await getCustomers({ search: ip, per_page: 1 });
+      if (data?.success && data.data?.length > 0) {
+        customer.value = data.data[0];
+        return;
+      }
+    }
+
+    error.value = 'لم يتم العثور على بيانات العميل';
   } catch {
     error.value = 'حدث خطأ أثناء تحميل البيانات';
   } finally {

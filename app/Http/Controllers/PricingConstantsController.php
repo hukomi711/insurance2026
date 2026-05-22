@@ -52,6 +52,7 @@ class PricingConstantsController extends Controller
                 'repair_method_factors' => $config['repair_method_factors'],
                 'coverage_limit_factors' => $config['coverage_limit_factors'],
                 'company_pricing_factors' => $config['company_pricing_factors'],
+                'subtype_company_pricing_factors' => $config['subtype_company_pricing_factors'] ?? [],
                 'ncd_factors' => $config['ncd_factors'],
                 'manufacturer_factors' => $config['manufacturer_factors'] ?? [],
                 'experience_factors' => $config['experience_factors'],

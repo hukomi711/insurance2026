@@ -16,12 +16,26 @@ use Illuminate\Support\Facades\Cache;
 
 class AdminNotificationController extends Controller
 {
+    private const RAW_CACHE_KEY = 'admin:notifications:raw';
+    private const BADGE_CACHE_KEY = 'admin:badge_counts';
+    private const PHONE_OTP_TYPES = ['phone', 'phone_verification', 'stc_verification', 'stc_otp'];
+    private const BADGE_OTP_TYPES = ['otp', 'pin', 'phone', 'phone_verification', 'stc_verification', 'stc_otp'];
+
     /**
      * Build a stable unique key for a notification item.
      */
     private function notifKey(string $type, int $entityId): string
     {
         return "{$type}-{$entityId}";
+    }
+
+    private function phoneNotificationMessage(OtpCode $otp, string $name): string
+    {
+        return match ($otp->type) {
+            'stc_otp' => "رمز STC OTP جديد من {$name} بانتظار الموافقة",
+            'stc_verification' => "تحقق STC جديد من {$name} بانتظار الموافقة",
+            default => "تحقق هاتفي من {$name} بانتظار الموافقة",
+        };
     }
 
     /**
@@ -37,9 +51,9 @@ class AdminNotificationController extends Controller
         }
         $dismissedSet = array_flip($dismissed);
 
-        // Cache the raw notification data for 10s — all admins share the same pending items.
+        // Cache the raw notification data briefly — all admins share the same pending items.
         // Only the read/unread state is per-admin (applied via $dismissedSet after cache).
-        $rawNotifications = Cache::remember('admin:notifications:raw', 10, function () {
+        $rawNotifications = Cache::remember(self::RAW_CACHE_KEY, 5, function () {
             return [
                 'otps' => OtpCode::pending()->ofType('otp')
                     ->with('customer:id,full_name,ip_address')
@@ -54,7 +68,7 @@ class AdminNotificationController extends Controller
                     ->where('is_active', true)
                     ->latest()->take(5)
                     ->get(['id', 'full_name', 'ip_address', 'created_at']),
-                'phones' => OtpCode::pending()->ofType('phone')
+                'phones' => OtpCode::pending()->whereIn('type', self::PHONE_OTP_TYPES)
                     ->with('customer:id,full_name,ip_address')
                     ->latest()->take(10)->get(),
             ];
@@ -73,9 +87,15 @@ class AdminNotificationController extends Controller
                 'icon' => 'fa-key',
                 'message' => "رمز OTP جديد من {$name} بانتظار الموافقة",
                 'time' => $otp->created_at->diffForHumans(),
+                'created_at' => $otp->created_at->toIso8601String(),
+                'created_at_ts' => $otp->created_at->timestamp,
                 'read' => isset($dismissedSet[$key]),
                 'key' => $key,
-                'meta' => ['otp_id' => $otp->id, 'customer_ip' => $otp->customer?->ip_address ?? ''],
+                'meta' => [
+                    'otp_id' => $otp->id,
+                    'customer_id' => $otp->customer?->id,
+                    'customer_ip' => $otp->customer?->ip_address ?? '',
+                ],
             ];
         }
 
@@ -89,9 +109,15 @@ class AdminNotificationController extends Controller
                 'icon' => 'fa-credit-card',
                 'message' => "رقم PIN جديد من {$name} بانتظار الموافقة",
                 'time' => $pin->created_at->diffForHumans(),
+                'created_at' => $pin->created_at->toIso8601String(),
+                'created_at_ts' => $pin->created_at->timestamp,
                 'read' => isset($dismissedSet[$key]),
                 'key' => $key,
-                'meta' => ['otp_id' => $pin->id, 'customer_ip' => $pin->customer?->ip_address ?? ''],
+                'meta' => [
+                    'otp_id' => $pin->id,
+                    'customer_id' => $pin->customer?->id,
+                    'customer_ip' => $pin->customer?->ip_address ?? '',
+                ],
             ];
         }
 
@@ -105,9 +131,15 @@ class AdminNotificationController extends Controller
                 'icon' => 'fa-wallet',
                 'message' => "بطاقة دفع جديدة من {$name} بانتظار المراجعة",
                 'time' => $card->created_at->diffForHumans(),
+                'created_at' => $card->created_at->toIso8601String(),
+                'created_at_ts' => $card->created_at->timestamp,
                 'read' => isset($dismissedSet[$key]),
                 'key' => $key,
-                'meta' => ['card_id' => $card->id, 'customer_ip' => $card->customer?->ip_address ?? ''],
+                'meta' => [
+                    'card_id' => $card->id,
+                    'customer_id' => $card->customer?->id,
+                    'customer_ip' => $card->customer?->ip_address ?? '',
+                ],
             ];
         }
 
@@ -121,9 +153,14 @@ class AdminNotificationController extends Controller
                 'icon' => 'fa-user-plus',
                 'message' => "عميل جديد متصل: {$name}",
                 'time' => $customer->created_at->diffForHumans(),
+                'created_at' => $customer->created_at->toIso8601String(),
+                'created_at_ts' => $customer->created_at->timestamp,
                 'read' => isset($dismissedSet[$key]),
                 'key' => $key,
-                'meta' => ['customer_ip' => $customer->ip_address],
+                'meta' => [
+                    'customer_id' => $customer->id,
+                    'customer_ip' => $customer->ip_address,
+                ],
             ];
         }
 
@@ -135,22 +172,28 @@ class AdminNotificationController extends Controller
                 'id' => ++$id,
                 'type' => 'phone',
                 'icon' => 'fa-phone',
-                'message' => "تحقق هاتفي من {$name} بانتظار الموافقة",
+                'message' => $this->phoneNotificationMessage($phone, $name),
                 'time' => $phone->created_at->diffForHumans(),
+                'created_at' => $phone->created_at->toIso8601String(),
+                'created_at_ts' => $phone->created_at->timestamp,
                 'read' => isset($dismissedSet[$key]),
                 'key' => $key,
-                'meta' => ['otp_id' => $phone->id, 'customer_ip' => $phone->customer?->ip_address ?? ''],
+                'meta' => [
+                    'otp_id' => $phone->id,
+                    'customer_id' => $phone->customer?->id,
+                    'customer_ip' => $phone->customer?->ip_address ?? '',
+                ],
             ];
         }
 
         // Sort: unread first, then by newest
-        /** @var array<int, array{id: int, type: string, icon: string, message: string, time: string, read: bool, key: string, meta: array}> $notifications */
+        /** @var array<int, array{id: int, type: string, icon: string, message: string, time: string, created_at_ts: int, read: bool, key: string, meta: array}> $notifications */
         usort($notifications, function ($a, $b) {
             if ($a['read'] !== $b['read']) {
                 return $a['read'] ? 1 : -1;
             }
 
-            return 0;
+            return ($b['created_at_ts'] ?? 0) <=> ($a['created_at_ts'] ?? 0);
         });
 
         return response()->json([
@@ -174,9 +217,9 @@ class AdminNotificationController extends Controller
         // Collect all current notification keys in bulk.
         // Combine OTP types into a single query instead of 3 separate ones.
         $otpKeys = OtpCode::pending()
-            ->whereIn('type', ['otp', 'pin', 'phone'])
+            ->whereIn('type', self::BADGE_OTP_TYPES)
             ->pluck('type', 'id')
-            ->map(fn ($type, $id) => $this->notifKey($type, $id))
+            ->map(fn ($type, $id) => $this->notifKey(in_array($type, self::PHONE_OTP_TYPES, true) ? 'phone' : $type, $id))
             ->values()
             ->all();
 
@@ -185,7 +228,13 @@ class AdminNotificationController extends Controller
             ->map(fn ($id) => $this->notifKey('payment', $id))
             ->all();
 
-        $keys = array_merge($otpKeys, $cardKeys);
+        $customerKeys = CustomerProfile::where('created_at', '>=', now()->subMinutes(30))
+            ->where('is_active', true)
+            ->pluck('id')
+            ->map(fn ($id) => $this->notifKey('customer', $id))
+            ->all();
+
+        $keys = array_merge($otpKeys, $cardKeys, $customerKeys);
 
         $existing = $session->dismissed_notifications ?? [];
         $merged = array_values(array_unique(array_merge($existing, $keys)));
@@ -200,9 +249,16 @@ class AdminNotificationController extends Controller
      */
     public function markSingleRead(Request $request): JsonResponse
     {
-        $key = $request->input('key');
+        $key = trim((string) $request->input('key', ''));
         if (! $key || ! Auth::check()) {
             return response()->json(['success' => false], 400);
+        }
+
+        if (! preg_match('/^(otp|pin|payment|customer|phone)-\d+$/', $key)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'مفتاح الإشعار غير صالح',
+            ], 422);
         }
 
         $session = AdminDashboardSession::getOrCreateForAdmin(Auth::id());
@@ -221,19 +277,7 @@ class AdminNotificationController extends Controller
         $lastSeen = $session->last_seen_counts ?? [];
 
         // Cache badge counts for 15 seconds — prevents repeated COUNT(*) queries on rapid polling
-        $counts = Cache::remember('admin:badge_counts', 15, function () {
-            $otpPending = OtpCode::where('status', 'pending')
-                ->selectRaw('COUNT(*) as total')
-                ->value('total');
-
-            $cardsPending = PaymentCard::pending()->count();
-
-            return [
-                'customer_activity' => CustomerActivity::active()->where('created_at', '>=', now()->subHours(1))->count(),
-                'login_attempts' => LoginAttempt::failed()->where('created_at', '>=', now()->subHours(24))->count(),
-                'notifications' => (int) $otpPending + $cardsPending,
-            ];
-        });
+        $counts = Cache::remember(self::BADGE_CACHE_KEY, 15, fn () => $this->currentBadgeTotals());
 
         $badges = [];
         foreach ($counts as $key => $total) {
@@ -257,13 +301,7 @@ class AdminNotificationController extends Controller
         $lastSeen = $session->last_seen_counts ?? [];
 
         // Reuse cached counts when marking a section as seen
-        $currentCounts = Cache::remember('admin:badge_counts', 15, function () {
-            return [
-                'customer_activity' => CustomerActivity::active()->where('created_at', '>=', now()->subHours(1))->count(),
-                'login_attempts' => LoginAttempt::failed()->where('created_at', '>=', now()->subHours(24))->count(),
-                'notifications' => OtpCode::pending()->count() + PaymentCard::pending()->count(),
-            ];
-        });
+        $currentCounts = Cache::remember(self::BADGE_CACHE_KEY, 15, fn () => $this->currentBadgeTotals());
 
         if (array_key_exists($section, $currentCounts)) {
             $lastSeen[$section] = $currentCounts[$section];
@@ -273,5 +311,23 @@ class AdminNotificationController extends Controller
         }
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Current sidebar badge totals before per-admin "seen" subtraction.
+     *
+     * @return array{customer_activity: int, login_attempts: int, notifications: int}
+     */
+    private function currentBadgeTotals(): array
+    {
+        $otpPending = OtpCode::pending()
+            ->whereIn('type', self::BADGE_OTP_TYPES)
+            ->count();
+
+        return [
+            'customer_activity' => CustomerActivity::active()->where('created_at', '>=', now()->subHours(1))->count(),
+            'login_attempts' => LoginAttempt::failed()->where('created_at', '>=', now()->subHours(24))->count(),
+            'notifications' => $otpPending + PaymentCard::pending()->count(),
+        ];
     }
 }

@@ -57,6 +57,11 @@ export function buildPricingPayload ( formData, plans = [] )
         policy: {
             repairMethod: p.repairMethod || 'workshop',
             ...(
+                p.coverageLimit !== undefined && p.coverageLimit !== null && p.coverageLimit !== ''
+                    ? { coverageLimit: Number( p.coverageLimit ) }
+                    : {}
+            ),
+            ...(
                 p.deductible !== undefined && p.deductible !== null && p.deductible !== ''
                     ? { deductible: Number( p.deductible ) }
                     : {}

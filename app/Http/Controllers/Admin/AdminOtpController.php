@@ -35,11 +35,11 @@ class AdminOtpController extends Controller
 
             if (! $result['success']) {
                 $msg = match ($result['error']) {
-                    'expired' => 'انتهت صلاحية رمز التحقق',
+                    'otp_expired' => 'انتهت صلاحية رمز التحقق',
                     default   => 'هذا الرمز تم معالجته مسبقاً',
                 };
                 $payload = ['success' => false, 'message' => $msg];
-                if ($result['error'] === 'expired') {
+                if ($result['error'] === 'otp_expired') {
                     $payload['expired'] = true;
                 }
                 return [$otp, response()->json($payload, 422)];

@@ -60,12 +60,26 @@
                                     class="text-xs text-red-500 font-semibold">
                                     {{ notificationsStore.unreadCount }} جديد
                                 </span>
-                                <button v-if="notificationsStore.unreadCount > 0"
-                                    class="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
-                                    @click="handleMarkAllRead">
-                                    قراءة الكل
+                                <button
+                                    class="admin-touch inline-flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-blue-700 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                                    :disabled="notificationsStore.loading"
+                                    aria-label="تحديث الإشعارات"
+                                    title="تحديث الإشعارات"
+                                    @click.stop="refreshNotifications">
+                                    <i class="fa-solid text-xs"
+                                        :class="notificationsStore.loading ? 'fa-spinner fa-spin' : 'fa-rotate'"></i>
+                                </button>
+                                <button v-if="notificationsStore.hasUnread"
+                                    class="text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors disabled:opacity-50"
+                                    :disabled="notificationsStore.markingAllRead"
+                                    @click.stop="handleMarkAllRead">
+                                    {{ notificationsStore.markingAllRead ? 'جاري الحفظ...' : 'قراءة الكل' }}
                                 </button>
                             </div>
+                        </div>
+                        <div v-if="notificationsStore.loading && notificationsStore.items.length > 0"
+                            class="h-0.5 bg-blue-100 overflow-hidden">
+                            <div class="h-full w-1/2 bg-blue-500 animate-pulse"></div>
                         </div>
 
                         <!-- Notification List -->
@@ -86,7 +100,7 @@
 
                             <!-- Items -->
                             <template v-else>
-                                <button v-for="item in notificationsStore.items" :key="item.id"
+                                <button v-for="item in notificationsStore.items" :key="notificationKey(item)"
                                     class="w-full flex items-start gap-3 px-4 py-3 text-right hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
                                     :class="{ 'bg-blue-50/40': !item.read }"
                                     @click="handleNotificationClick(item)">
@@ -101,12 +115,30 @@
                                             :class="{ 'font-semibold': !item.read }">
                                             {{ item.message }}
                                         </p>
-                                        <p class="text-[11px] text-gray-400 mt-1">{{ item.time }}</p>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <p class="text-[11px] text-gray-400"
+                                                :title="formatNotificationDate(item)">
+                                                {{ displayNotificationTime(item) }}
+                                            </p>
+                                            <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                                                {{ typeLabel(item.type) }}
+                                            </span>
+                                        </div>
                                     </div>
                                     <!-- Unread dot -->
                                     <div v-if="!item.read" class="flex-shrink-0 mt-2 w-2 h-2 bg-blue-500 rounded-full"></div>
                                 </button>
                             </template>
+                        </div>
+
+                        <div v-if="notificationsStore.error || notificationsStore.lastFetchedAt"
+                            class="px-4 py-2 border-t border-gray-100 bg-gray-50 text-[11px]">
+                            <span v-if="notificationsStore.error" class="text-red-500">
+                                {{ notificationsStore.error }}
+                            </span>
+                            <span v-else class="text-gray-400">
+                                آخر تحديث: {{ lastFetchedLabel }}
+                            </span>
                         </div>
                     </div>
                 </Transition>
@@ -305,6 +337,9 @@ function onSearchClickOutside(e) {
 // ── Dropdown toggle ──
 function toggleDropdown() {
     showDropdown.value = !showDropdown.value;
+    if (showDropdown.value) {
+        notificationsStore.fetchNotifications();
+    }
 }
 
 // ── Close on click outside ──
@@ -351,9 +386,46 @@ const typeConfig = {
     system:   { bg: 'bg-gray-100',   color: 'text-gray-600',   icon: 'fa-gear' },
 };
 
+const typeLabels = {
+    otp: 'OTP',
+    pin: 'PIN',
+    payment: 'دفع',
+    customer: 'عميل',
+    phone: 'هاتف',
+    claim: 'مطالبة',
+    policy: 'وثيقة',
+    alert: 'تنبيه',
+    system: 'نظام',
+};
+
+const lastFetchedLabel = computed(() => {
+    if (!notificationsStore.lastFetchedAt) return '';
+    return new Date(notificationsStore.lastFetchedAt).toLocaleTimeString('ar-SA', {
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+});
+
 function iconBg(type)    { return typeConfig[type]?.bg    || 'bg-gray-100'; }
 function iconColor(type) { return typeConfig[type]?.color || 'text-gray-600'; }
 function iconClass(item) { return item.icon || typeConfig[item.type]?.icon || 'fa-bell'; }
+function typeLabel(type) { return typeLabels[type] || 'إشعار'; }
+function notificationKey(item) { return item.key || `${ item.type }-${ item.meta?.otp_id || item.meta?.card_id || item.meta?.customer_id || item.id }`; }
+function displayNotificationTime(item) { return item.time || formatNotificationDate(item) || 'الآن'; }
+function formatNotificationDate(item) {
+    if (!item.created_at) return item.time || '';
+    return new Date(item.created_at).toLocaleString('ar-SA', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
+function refreshNotifications() {
+    notificationsStore.fetchNotifications();
+}
 
 // ── Lifecycle ──
 onMounted(() => {

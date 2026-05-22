@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreQuoteLockRequest;
+use App\Services\PricingSignatureService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -10,6 +11,10 @@ use Illuminate\Support\Str;
 class QuoteLockController extends Controller
 {
     private const LOCK_TTL_MINUTES = 60;
+
+    public function __construct(
+        private PricingSignatureService $signatureService
+    ) {}
 
     /**
      * Issue a short-lived quote lock token for checkout consistency.
@@ -25,6 +30,11 @@ class QuoteLockController extends Controller
 
         $token = (string) Str::ulid();
         $expiresAt = now()->addMinutes(self::LOCK_TTL_MINUTES);
+        $signedTotal = (int) round((float) $validated['total']);
+        $signaturePacket = $this->signatureService->generateSignature(
+            (int) $validated['plan_id'],
+            $signedTotal
+        );
 
         Cache::put('quote_lock:' . $token, [
             'plan_id'           => (int) $validated['plan_id'],
@@ -47,6 +57,9 @@ class QuoteLockController extends Controller
             'quote_lock_token' => $token,
             'expires_at' => $expiresAt->toIso8601String(),
             'ttl_minutes' => self::LOCK_TTL_MINUTES,
+            'pricing_signature' => $signaturePacket['signature'],
+            'pricing_timestamp' => $signaturePacket['timestamp'],
+            'pricing_expires_at' => $signaturePacket['expiresAt'],
         ]);
     }
 }

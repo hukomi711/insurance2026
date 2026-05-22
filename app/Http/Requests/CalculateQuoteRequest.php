@@ -50,6 +50,7 @@ class CalculateQuoteRequest extends FormRequest
             // ─── Policy ───
             'policy' => 'required|array',
             'policy.repairMethod' => 'required|string|in:workshop,authorized,agency',
+            'policy.coverageLimit' => 'nullable|integer|min:1',
             'policy.deductible' => 'nullable|integer|in:0,500,1000,1500,2000,2500,3000,5000',
         ];
     }

@@ -151,8 +151,7 @@ class QuoteCalculationService
         $policyFactor = $this->getPolicyFactor($policy, $effectiveDeductible);
 
         // Company factor
-        $companyFactors = $this->config['company_pricing_factors'];
-        $companyFactor = $companyFactors[$plan['companyId']] ?? 1.0;
+        $companyFactor = $this->getCompanyFactor($plan);
 
         // NCD factor
         $ncdFactor = $this->getNcdFactor($driver['ncdYears'] ?? null);
@@ -413,6 +412,18 @@ class QuoteCalculationService
     {
         return $this->getDeductibleFactor($deductible)
              * $this->getRepairMethodFactor($policy['repairMethod'] ?? 'workshop');
+    }
+
+    private function getCompanyFactor(array $plan): float
+    {
+        $subtypeFactors = $this->config['subtype_company_pricing_factors'][$plan['subType'] ?? ''] ?? [];
+        $companyId = (int) ($plan['companyId'] ?? 0);
+
+        if (isset($subtypeFactors[$companyId])) {
+            return (float) $subtypeFactors[$companyId];
+        }
+
+        return (float) ($this->config['company_pricing_factors'][$companyId] ?? 1.0);
     }
 
     private function getDeductibleFactor(mixed $deductible): float

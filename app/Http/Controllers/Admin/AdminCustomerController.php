@@ -30,9 +30,9 @@ class AdminCustomerController extends Controller
     public function index(Request $request): JsonResponse
     {
         // ── Build a cache key based on filters so filtered vs unfiltered don't collide ──
-        $activeOnly = $request->filled('active_only') ? '1' : '0';
+        $activeOnly = $request->boolean('active_only') ? '1' : '0';
         $paymentOnly = $request->boolean('payment_only') ? '1' : '0';
-        $search = $request->input('search', '');
+        $search = $this->normalizeSearchTerm((string) $request->input('search', ''));
         $country = $request->input('country', '');
         $page = (int) $request->input('page', 1);
         $perPage = min((int) $request->input('per_page', 80), 150);
@@ -43,7 +43,7 @@ class AdminCustomerController extends Controller
         // concurrent WS + polling + manual actions.
         // Search queries: no cache (to show results immediately)
         $isCached = ! $search;
-        $cacheKey = "admin:customers:plain:v4:{$activeOnly}:{$paymentOnly}:{$search}:{$country}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
+        $cacheKey = "admin:customers:plain:v5:{$activeOnly}:{$paymentOnly}:{$search}:{$country}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
 
         // ── Fetch data with stampede-safe caching ──
         // Cache::flexible [2, 10] = fresh for 2s, stale-while-revalidate up to 10s.
@@ -103,13 +103,23 @@ class AdminCustomerController extends Controller
         }
 
         if ($search) {
-            $escaped = str_replace(['%', '_'], ['\%', '\_'], $search);
+            $escaped = addcslashes($search, '\%_');
+            $digitsOnly = preg_replace('/\D+/', '', $search) ?: '';
             $piiHash = CustomerProfile::hashPii($search);
-            $baseFiltered->where(function ($q) use ($escaped, $piiHash) {
+            $digitsHash = $digitsOnly !== '' && $digitsOnly !== $search
+                ? CustomerProfile::hashPii($digitsOnly)
+                : null;
+
+            $baseFiltered->where(function ($q) use ($escaped, $piiHash, $digitsHash) {
                 $q->where('ip_address', 'like', "%{$escaped}%")
                     ->orWhere('full_name', 'like', "%{$escaped}%")
                     ->orWhere('national_id_hash', $piiHash)
                     ->orWhere('phone_number_hash', $piiHash);
+
+                if ($digitsHash) {
+                    $q->orWhere('national_id_hash', $digitsHash)
+                        ->orWhere('phone_number_hash', $digitsHash);
+                }
             });
         }
 
@@ -159,14 +169,23 @@ class AdminCustomerController extends Controller
             });
         }
 
-        // Dedupe by IP before pagination: keep latest row per ip_address.
+        // Dedupe by IP before pagination: keep latest activity per ip_address.
         // Legacy duplicated rows can still exist; deduping at SQL level makes
         // pagination + totals stable and removes per-page unique() side effects.
         // Customers with no IP address should not be collapsed into a single row,
         // so group null IPs uniquely by row id.
-        $dedupedIdsQuery = (clone $baseFiltered)
-            ->selectRaw('MAX(id) as id')
-            ->groupBy(DB::raw('IFNULL(ip_address, CONCAT("null-", id))'));
+        $partitionExpr = DB::connection()->getDriverName() === 'sqlite'
+            ? "COALESCE(ip_address, 'null-' || id)"
+            : "IFNULL(ip_address, CONCAT('null-', id))";
+
+        $rankedDedupedRows = (clone $baseFiltered)
+            ->select('id')
+            ->selectRaw("ROW_NUMBER() OVER (PARTITION BY {$partitionExpr} ORDER BY COALESCE(last_activity_at, created_at) DESC, id DESC) as rn");
+
+        $dedupedIdsQuery = DB::query()
+            ->fromSub($rankedDedupedRows, 'deduped_customers')
+            ->select('id')
+            ->where('rn', 1);
 
         $query = CustomerProfile::query()
             ->whereIn('id', $dedupedIdsQuery)
@@ -288,6 +307,14 @@ class AdminCustomerController extends Controller
             'action' => $action,
             'metadata' => $metadata,
         ]);
+    }
+
+    private function normalizeSearchTerm(string $value): string
+    {
+        $arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩', '۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        $latinDigits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+        return trim(str_replace($arabicDigits, $latinDigits, $value));
     }
 
     /**
