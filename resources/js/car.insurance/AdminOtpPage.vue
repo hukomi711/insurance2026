@@ -111,6 +111,7 @@ async function handleVerify() {
     resendSuccess.value = '';
     try {
         await userStore.verifyCode(pendingToken, code.value);
+        await userStore.getInfo({ force: true });
         const redirect = route.query.redirect;
         router.push(redirect && typeof redirect === 'string' ? redirect : '/dashboard');
     } catch (e) {

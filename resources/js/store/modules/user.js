@@ -151,15 +151,17 @@ export const useUserStore = defineStore( 'user', {
          * Fetch current user info from API (cached for 60 seconds)
          * @returns {Promise<UserInfo>}
          */
-        async getInfo ()
+        async getInfo ( options = {} )
         {
+            const force = options?.force === true;
+
             // ✅ Cache — skip if loaded within last 60 seconds
-            if ( this.name && this.isAuthenticated && Date.now() - this._meLoadedAt < 60_000 )
+            if ( !force && this.name && this.isAuthenticated && Date.now() - this._meLoadedAt < 60_000 )
             {
                 return this.userInfo;
             }
 
-            if ( getInfoPromise )
+            if ( getInfoPromise && !force )
             {
                 return getInfoPromise;
             }

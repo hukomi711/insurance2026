@@ -80,6 +80,7 @@ request.interceptors.request.use(
         {
             config.headers.Authorization = `Bearer ${ token }`;
         }
+        config._authToken = token || null;
 
         // Inject session token for customer identification
         config.headers[ "X-Session-Token" ] = getSessionToken();
@@ -163,10 +164,19 @@ request.interceptors.response.use(
             const isAuthFormEndpoint = AUTH_FORM_PATHS.some(
                 ( p ) => requestUrl.includes( p ),
             );
+            const currentToken = localStorage.getItem( "auth_token" );
+            const requestToken = error.config?._authToken || null;
+            const staleAuthFailure = currentToken && requestToken !== currentToken;
 
             const isAuthPage =
                 window.location.pathname === "/login" ||
                 window.location.pathname === "/admin-verify";
+
+            if ( staleAuthFailure )
+            {
+                logger.warn( "[API] Ignoring stale admin auth failure from superseded token" );
+                return Promise.reject( error );
+            }
 
             if ( isAuthFormEndpoint || ( isAuthPage && !isAdminApiRequest ) )
             {
