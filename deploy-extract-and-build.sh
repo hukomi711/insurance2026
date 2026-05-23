@@ -25,6 +25,7 @@ ARCHIVE_PATH="/opt/insurance2026-upload.tar.gz"
 DEPLOY_DIR="/opt/insurance2026"
 DOMAIN="lexusforbon.it.com"
 WWW_DOMAIN="www.${DOMAIN}"
+CERTBOT_SAVED_DIR="/tmp/insurance2026.certbot.backup"
 
 echo "═══════════════════════════════════════════════════════════════"
 echo "Insurance 2026 — VPS Deployment (Path B - Extract & Build)"
@@ -57,6 +58,13 @@ echo ""
 # ───── 1. Extract archive ─────
 echo "[1/7] Extracting archive to $DEPLOY_DIR..."
 
+rm -rf "$CERTBOT_SAVED_DIR"
+if [[ -d "${DEPLOY_DIR}/docker/certbot" ]]; then
+  cp -a "${DEPLOY_DIR}/docker/certbot" "$CERTBOT_SAVED_DIR"
+elif [[ -d "${DEPLOY_DIR}.backup/docker/certbot" ]]; then
+  cp -a "${DEPLOY_DIR}.backup/docker/certbot" "$CERTBOT_SAVED_DIR"
+fi
+
 if [[ -d "$DEPLOY_DIR" ]]; then
   # Backup existing if it exists
   if [[ -d "${DEPLOY_DIR}.backup" ]]; then
@@ -80,6 +88,7 @@ ENV_BACKUP_FILE="${DEPLOY_DIR}.backup/.env.production"
 ENV_SAVED_FILE="/tmp/insurance2026.env.production.backup"
 DB_SECRET_BACKUP_FILE="${DEPLOY_DIR}.backup/docker/secrets/db_password.txt"
 DB_ROOT_SECRET_BACKUP_FILE="${DEPLOY_DIR}.backup/docker/secrets/db_root_password.txt"
+CERTBOT_BACKUP_DIR="${DEPLOY_DIR}.backup/docker/certbot"
 
 set_env_value() {
   local file="$1"
@@ -195,6 +204,12 @@ echo "[4/7] Issuing SSL certificate via Let's Encrypt..."
 cd "$DEPLOY_DIR"
 
 mkdir -p docker/certbot/conf docker/certbot/www
+
+if [[ -d "$CERTBOT_SAVED_DIR" && ! -f "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" ]]; then
+  cp -a "${CERTBOT_SAVED_DIR}/." "docker/certbot/"
+elif [[ -d "$CERTBOT_BACKUP_DIR" && ! -f "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" ]]; then
+  cp -a "${CERTBOT_BACKUP_DIR}/." "docker/certbot/"
+fi
 
 if [[ ! -f "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" ]]; then
   echo "  Issuing cert for $DOMAIN and $WWW_DOMAIN..."
