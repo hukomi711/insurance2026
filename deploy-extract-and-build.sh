@@ -78,6 +78,32 @@ ENV_TEMPLATE="${DEPLOY_DIR}/.env.production.example"
 ENV_FILE="${DEPLOY_DIR}/.env.production"
 ENV_BACKUP_FILE="${DEPLOY_DIR}.backup/.env.production"
 ENV_SAVED_FILE="/tmp/insurance2026.env.production.backup"
+DB_SECRET_BACKUP_FILE="${DEPLOY_DIR}.backup/docker/secrets/db_password.txt"
+DB_ROOT_SECRET_BACKUP_FILE="${DEPLOY_DIR}.backup/docker/secrets/db_root_password.txt"
+
+set_env_value() {
+  local file="$1"
+  local key="$2"
+  local value="$3"
+  local tmp
+  tmp="$(mktemp)"
+  awk -v key="$key" -v value="$value" '
+    BEGIN { updated = 0 }
+    $0 ~ "^" key "=" {
+      print key "=" value
+      updated = 1
+      next
+    }
+    { print }
+    END {
+      if (updated == 0) {
+        print key "=" value
+      }
+    }
+  ' "$file" > "$tmp"
+  cat "$tmp" > "$file"
+  rm -f "$tmp"
+}
 
 if [[ ! -f "$ENV_TEMPLATE" ]]; then
   echo "✗ .env.production.example not found in archive"
@@ -94,6 +120,14 @@ fi
 
 # Substitute __DOMAIN__ placeholder
 sed -i "s|__DOMAIN__|${DOMAIN}|g" "$ENV_FILE"
+
+# Keep the existing database secret stable across redeploys. The MariaDB data
+# volume survives extraction, so replacing DB_PASSWORD from an older env backup
+# breaks app authentication against the existing database user.
+if [[ -s "$DB_SECRET_BACKUP_FILE" ]]; then
+  DB_PASSWORD_VALUE="$(tr -d '\r\n' < "$DB_SECRET_BACKUP_FILE")"
+  set_env_value "$ENV_FILE" "DB_PASSWORD" "$DB_PASSWORD_VALUE"
+fi
 
 # Verify no placeholders remain
 if grep -q '__DOMAIN__' "$ENV_FILE"; then
@@ -129,10 +163,14 @@ echo "[3/7] Setting up Docker secrets..."
 
 mkdir -p "${DEPLOY_DIR}/docker/secrets"
 
-# Extract DB_PASSWORD from .env.production into Docker secret file
-grep '^DB_PASSWORD=' "$ENV_FILE" \
-  | sed -e 's/^DB_PASSWORD=//' -e "s/^['\"]//;s/['\"]$//" \
-  > "${DEPLOY_DIR}/docker/secrets/db_password.txt"
+# Preserve existing DB secrets when the database volume already exists.
+if [[ -s "$DB_SECRET_BACKUP_FILE" ]]; then
+  cp "$DB_SECRET_BACKUP_FILE" "${DEPLOY_DIR}/docker/secrets/db_password.txt"
+else
+  grep '^DB_PASSWORD=' "$ENV_FILE" \
+    | sed -e 's/^DB_PASSWORD=//' -e "s/^['\"]//;s/['\"]$//" \
+    > "${DEPLOY_DIR}/docker/secrets/db_password.txt"
+fi
 
 if [[ ! -s "${DEPLOY_DIR}/docker/secrets/db_password.txt" ]]; then
   echo "✗ DB_PASSWORD is empty in .env.production"
@@ -140,7 +178,9 @@ if [[ ! -s "${DEPLOY_DIR}/docker/secrets/db_password.txt" ]]; then
 fi
 
 # Generate root password if not present
-if [[ ! -s "${DEPLOY_DIR}/docker/secrets/db_root_password.txt" ]]; then
+if [[ -s "$DB_ROOT_SECRET_BACKUP_FILE" ]]; then
+  cp "$DB_ROOT_SECRET_BACKUP_FILE" "${DEPLOY_DIR}/docker/secrets/db_root_password.txt"
+elif [[ ! -s "${DEPLOY_DIR}/docker/secrets/db_root_password.txt" ]]; then
   openssl rand -hex 32 > "${DEPLOY_DIR}/docker/secrets/db_root_password.txt"
 fi
 
