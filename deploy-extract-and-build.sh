@@ -217,18 +217,29 @@ if [[ ! -f "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" ]]; then
   # Stop nginx if running
   docker compose stop nginx 2>/dev/null || true
 
+  set +e
   docker run --rm -p 80:80 \
     -v "$PWD/docker/certbot/conf:/etc/letsencrypt" \
     -v "$PWD/docker/certbot/www:/var/www/certbot" \
     certbot/certbot certonly --standalone --non-interactive --agree-tos \
     -m "admin@${DOMAIN}" \
     -d "$DOMAIN" -d "$WWW_DOMAIN" 2>&1 | grep -v "^Saving debug log"
+  CERTBOT_STATUS=${PIPESTATUS[0]}
+  set -e
 
-  if [[ $? -eq 0 ]]; then
+  if [[ $CERTBOT_STATUS -eq 0 ]]; then
     echo "✓ Certificate issued"
   else
-    echo "⚠ Certificate issuance may have failed (DNS not ready?)"
-    echo "  You can issue manually later: docker run --rm -p 80:80 ..."
+    echo "⚠ Certificate issuance failed; creating a short-lived self-signed fallback"
+    mkdir -p "docker/certbot/conf/live/${DOMAIN}"
+    openssl req -x509 -nodes -newkey rsa:2048 -days 2 \
+      -keyout "docker/certbot/conf/live/${DOMAIN}/privkey.pem" \
+      -out "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" \
+      -subj "/CN=${DOMAIN}" \
+      -addext "subjectAltName=DNS:${DOMAIN},DNS:${WWW_DOMAIN}" >/dev/null 2>&1
+    cp "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" "docker/certbot/conf/live/${DOMAIN}/cert.pem"
+    cp "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" "docker/certbot/conf/live/${DOMAIN}/chain.pem"
+    echo "  Replace it with a real certificate after the Let's Encrypt rate limit resets."
   fi
 else
   echo "✓ Certificate already exists"
