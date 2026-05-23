@@ -269,7 +269,7 @@ echo "[6/7] Running database migrations..."
 
 # Wait for DB to be ready
 for i in $(seq 1 30); do
-  if docker exec ins2026-db sh -c 'mariadb -uinsurance -p$(cat /run/secrets/db_password) insurance2026 -e "SELECT 1"' >/dev/null 2>&1; then
+  if docker exec ins2026-db sh -c 'DB_PASS="$(cat /run/secrets/db_password)"; mariadb -uinsurance -p"$DB_PASS" insurance2026 -e "SELECT 1"' >/dev/null 2>&1; then
     echo "✓ Database ready"
     break
   fi
