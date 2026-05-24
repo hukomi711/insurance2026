@@ -25,7 +25,7 @@
                         </div>
                     </a>
 
-                    <a href="mailto:info@example.com" class="contact-channel">
+                    <a :href="`mailto:${contactEmail}`" class="contact-channel">
                         <div class="contact-channel__icon contact-channel__icon--green">
                             <svg style="width:24px;height:24px" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -34,7 +34,7 @@
                         </div>
                         <div>
                             <p class="contact-channel__label">البريد الإلكتروني</p>
-                            <span class="contact-channel__value">info@example.com</span>
+                            <span class="contact-channel__value">{{ contactEmail }}</span>
                         </div>
                     </a>
 
@@ -219,10 +219,12 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { submitContact } from '@/api/contactApi';
+import { supportEmail } from '@/constants/contact';
 
 const submitted = ref( false );
 const submitting = ref( false );
 const submitError = ref( '' );
+const contactEmail = supportEmail( 'support' );
 const form = reactive( { name: '', email: '', phone: '', subject: '', message: '' } );
 const errors = reactive( {} );
 

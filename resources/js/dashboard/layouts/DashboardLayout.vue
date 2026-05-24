@@ -140,9 +140,10 @@ onMounted( () => {
         characterData: true,
     } );
 
-    // 🔊 لوحة التحكم: تفعيل السجلات دائماً
-    if ( !logger.isVerbose() ) {
-        logger.setVerbose( true );
+    // Keep production admin console quiet by default.
+    // Verbose dashboard logs can still be enabled manually with logger.setVerbose(true).
+    if ( import.meta.env.PROD && logger.isVerbose() ) {
+        logger.setVerbose( false );
     }
 
     // 🎯 مؤقت واحد مركزي — بدل 3+ timers منفصلة

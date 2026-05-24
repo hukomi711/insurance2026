@@ -112,9 +112,7 @@ class NexaflowClient
         if ($response->failed()) {
             Log::warning('Nexaflow API error', [
                 'status'       => $response->status(),
-                'url'          => method_exists($response, 'effectiveUri')
-                    ? (string) $response->effectiveUri()
-                    : null,
+                'url'          => (string) $response->effectiveUri(),
                 'body_excerpt' => app()->environment('local')
                     ? mb_substr((string) $response->body(), 0, 500)
                     : null,

@@ -22,13 +22,23 @@ class AuthController extends Controller
     /** Lockout duration in minutes */
     private const LOCKOUT_MINUTES = 15;
 
-    private static function verificationEmail(?User $user = null): string
+    /**
+     * @return list<string>
+     */
+    private static function verificationEmails(?User $user = null): array
     {
         $configured = config('services.admin.verification_email');
+        $emails = [];
+
         if (is_string($configured) && trim($configured) !== '') {
-            return trim($configured);
+            $emails = preg_split('/\s*,\s*/', trim($configured), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         }
-        return $user?->email ?? '';
+
+        if (is_string($user?->email) && trim($user->email) !== '') {
+            $emails[] = trim($user->email);
+        }
+
+        return array_values(array_unique(array_filter($emails, static fn (string $email): bool => filter_var($email, FILTER_VALIDATE_EMAIL) !== false)));
     }
 
     /**
@@ -90,7 +100,7 @@ class AuthController extends Controller
 
         // ── Generate 2FA code and send to the configured verification email ─────
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
-        Mail::to(self::verificationEmail($user))->send(new AdminLoginVerification($loginCode));
+        Mail::to(self::verificationEmails($user))->send(new AdminLoginVerification($loginCode));
 
         // Use a short-lived opaque token instead of exposing the user_id.
         // TTL must match AdminLoginCode::generateFor expires_at (5 min) so the
@@ -217,7 +227,7 @@ class AuthController extends Controller
         }
 
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
-        Mail::to(self::verificationEmail($user))->send(new AdminLoginVerification($loginCode));
+        Mail::to(self::verificationEmails($user))->send(new AdminLoginVerification($loginCode));
 
         return response()->json([
             'success' => true,

@@ -187,13 +187,26 @@ class AdminNotificationController extends Controller
         }
 
         // Sort: unread first, then by newest
-        /** @var array<int, array{id: int, type: string, icon: string, message: string, time: string, created_at_ts: int, read: bool, key: string, meta: array}> $notifications */
+        /**
+         * @var list<array{
+         *     id: int,
+         *     type: string,
+         *     icon: string,
+         *     message: string,
+         *     time: mixed,
+         *     created_at: mixed,
+         *     created_at_ts: int,
+         *     read: bool,
+         *     key: string,
+         *     meta: array<string, mixed>
+         * }> $notifications
+         */
         usort($notifications, function ($a, $b) {
             if ($a['read'] !== $b['read']) {
                 return $a['read'] ? 1 : -1;
             }
 
-            return ($b['created_at_ts'] ?? 0) <=> ($a['created_at_ts'] ?? 0);
+            return $b['created_at_ts'] <=> $a['created_at_ts'];
         });
 
         return response()->json([

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/insurance2026}"
-DOMAIN="${DOMAIN:-lexusforbon.it.com}"
-EMAIL="${EMAIL:-admin@lexusforbon.it.com}"
+DOMAIN="${DOMAIN:-lwxustotamin.online}"
+EMAIL="${EMAIL:-admin@lwxustotamin.online}"
 
 cd "$DEPLOY_DIR"
 
@@ -12,6 +12,7 @@ WEBROOT="docker/certbot/www"
 
 echo "== temporary certificate =="
 mkdir -p "$CERT_DIR" "$WEBROOT"
+TEMP_CERT_CREATED=false
 
 if [[ ! -s "$CERT_DIR/fullchain.pem" || ! -s "$CERT_DIR/privkey.pem" || ! -s "$CERT_DIR/chain.pem" ]]; then
   openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
@@ -20,11 +21,19 @@ if [[ ! -s "$CERT_DIR/fullchain.pem" || ! -s "$CERT_DIR/privkey.pem" || ! -s "$C
     -subj "/CN=$DOMAIN" \
     -addext "subjectAltName=DNS:$DOMAIN,DNS:www.$DOMAIN"
   cp "$CERT_DIR/fullchain.pem" "$CERT_DIR/chain.pem"
+  TEMP_CERT_CREATED=true
 fi
 
 echo "== start nginx with temporary certificate =="
 docker compose up -d nginx
 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep -E 'ins2026-nginx|NAMES'
+
+if [[ "$TEMP_CERT_CREATED" == "true" ]]; then
+  rm -rf \
+    "$CERT_DIR" \
+    "docker/certbot/conf/archive/$DOMAIN" \
+    "docker/certbot/conf/renewal/$DOMAIN.conf"
+fi
 
 echo "== request letsencrypt certificate =="
 docker run --rm \

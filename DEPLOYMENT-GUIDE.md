@@ -7,7 +7,7 @@
 - [ ] SSH key generated: `~/.ssh/insurance2026_deploy`
 - [ ] Public key installed on VPS root user
 - [ ] SSH access verified
-- [ ] DNS A records pointing `lexusforbon.it.com` → `69.57.161.222` (verify with `nslookup`)
+- [ ] DNS A records pointing `lwxustotamin.online` → `69.57.161.222` (verify with `nslookup`)
 - [ ] GitHub repository URL available
 
 ### Step 1: Generate SSH Key (Local Machine)
@@ -38,7 +38,7 @@ ssh -i ~/.ssh/insurance2026_deploy root@69.57.161.222 'echo "✓ SSH OK"'
 ### Step 4: Verify DNS
 
 ```bash
-nslookup lexusforbon.it.com 8.8.8.8
+nslookup lwxustotamin.online 8.8.8.8
 # Should show: Address: 69.57.161.222
 ```
 
@@ -61,7 +61,7 @@ cd deploy/new-server
 
 # Set environment variables
 export INS_SERVER_IP="69.57.161.222"
-export INS_DOMAIN="lexusforbon.it.com"
+export INS_DOMAIN="lwxustotamin.online"
 export INS_REPO_URL="git@github.com:owner/insurance2026.git"
 export SSH_KEY="$HOME/.ssh/insurance2026_deploy"
 
@@ -143,24 +143,24 @@ Expected healthy status: `ins2026-nginx`, `ins2026-app`, `ins2026-db`, `ins2026-
 From the server:
 
 ```bash
-curl -s https://lexusforbon.it.com/api/health | jq .
-curl -s https://lexusforbon.it.com/api/health/queues | jq .
-curl -s https://lexusforbon.it.com/api/health/realtime | jq .
+curl -s https://lwxustotamin.online/api/health | jq .
+curl -s https://lwxustotamin.online/api/health/queues | jq .
+curl -s https://lwxustotamin.online/api/health/realtime | jq .
 ```
 
 From your local machine:
 
 ```bash
-curl -k https://lexusforbon.it.com/
-curl -k https://lexusforbon.it.com/login
+curl -k https://lwxustotamin.online/
+curl -k https://lwxustotamin.online/login
 ```
 
 ### Test WebSocket Connection
 
-In browser console on `https://lexusforbon.it.com`:
+In browser console on `https://lwxustotamin.online`:
 
 ```javascript
-new WebSocket('wss://lexusforbon.it.com/app/a6e649918d7ad2d178125dde')
+new WebSocket('wss://lwxustotamin.online/app/a6e649918d7ad2d178125dde')
   .addEventListener('open', () => console.log('✓ WebSocket OK'));
 ```
 
@@ -230,8 +230,8 @@ ssh -i ~/.ssh/insurance2026_deploy root@69.57.161.222
 
 ```bash
 # Check DNS records at your registrar
-nslookup lexusforbon.it.com
-nslookup lexusforbon.it.com 8.8.8.8
+nslookup lwxustotamin.online
+nslookup lwxustotamin.online 8.8.8.8
 
 # If still not resolved, wait for DNS propagation (can take 15-30 min)
 # Then re-run deployment
@@ -247,8 +247,8 @@ docker compose stop nginx || true
 docker run --rm -p 80:80 \
   -v /opt/insurance2026/docker/certbot/conf:/etc/letsencrypt \
   certbot/certbot certonly --standalone --non-interactive --agree-tos \
-  -m admin@lexusforbon.it.com \
-  -d lexusforbon.it.com -d www.lexusforbon.it.com
+  -m admin@lwxustotamin.online \
+  -d lwxustotamin.online -d www.lwxustotamin.online
 
 # Start nginx
 docker compose up -d nginx

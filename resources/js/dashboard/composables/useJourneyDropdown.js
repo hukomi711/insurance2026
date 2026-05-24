@@ -241,7 +241,7 @@ export function useJourneyDropdown ( customers, emit )
         if ( basePath.startsWith( '/blog/' ) ) return '📰 مقال';
 
         // Flag known bot / vulnerability scanner paths
-        if ( /(\.env|\.git|wp-login|wp-admin|wp-content|xmlrpc|phpmyadmin|cgi-bin|bin\/sh|ReportServer|owa\/|autodiscover|aspnet|admin\.php|\.asp$|\.aspx$|\.jsp$|solr|jenkins|actuator|shell|eval|exec|cmd|passwd)/i.test( basePath ) ) return '🤖 بوت / فحص';
+        if ( /(\.env|\.git|wp-login|wp-admin|wp-content|xmlrpc|phpmyadmin|cgi-bin|bin\/sh|containers\/json|docker\/|ReportServer|owa\/|autodiscover|aspnet|admin\.php|\.asp$|\.aspx$|\.jsp$|solr|jenkins|actuator|shell|eval|exec|cmd|passwd)/i.test( basePath ) ) return '🤖 بوت / فحص';
 
         return page || null;
     };

@@ -141,9 +141,6 @@ class DeviceDetectionService
 
         if (
             str_contains($ua, 'Safari/')
-            && ! str_contains($ua, 'Chrome/')
-            && ! str_contains($ua, 'CriOS/')
-            && ! str_contains($ua, 'Chromium/')
             && ! str_contains($ua, 'Android')
         ) {
             return 'Safari';

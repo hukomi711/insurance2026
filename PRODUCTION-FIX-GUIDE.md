@@ -1,6 +1,6 @@
 # Insurance 2026 — Production Server Fix Guide
 
-## 🔴 Current Issue: 500 Error on lexusforbon.it.com
+## 🔴 Current Issue: 500 Error on lwxustotamin.online
 
 **Root Cause:** `MAIL_MAILER=smtp` configuration requires valid SMTP credentials. Placeholder values cause validation failure.
 
@@ -75,7 +75,7 @@ cd /opt/insurance2026
 docker compose ps
 
 # Check health
-curl -k https://lexusforbon.it.com/api/health
+curl -k https://lwxustotamin.online/api/health
 
 # Clear Laravel caches
 docker exec ins2026-app php artisan config:clear
@@ -133,8 +133,8 @@ docker compose restart app horizon reverb scheduler
 
 - [ ] SSH connection works: `ssh -i ~/.ssh/insurance2026_deploy root@69.57.161.222 "pwd"`
 - [ ] Docker containers running: `docker compose ps`
-- [ ] Website responds: `curl -k https://lexusforbon.it.com/api/health` returns `200`
-- [ ] Admin users exist: Check database for `admin@lexusforbon.it.com` and `dr@lexusforbon.it.com`
+- [ ] Website responds: `curl -k https://lwxustotamin.online/api/health` returns `200`
+- [ ] Admin users exist: Check database for `admin@lwxustotamin.online` and `dr@lwxustotamin.online`
 - [ ] SMTP configured: No placeholder values in `.env.production`
 - [ ] Logs show no errors: `docker compose logs app` is clean
 
@@ -169,7 +169,7 @@ docker compose restart app horizon reverb scheduler
 5. **Verify certificates:**
 
    ```bash
-   ls -la /etc/letsencrypt/live/lexusforbon.it.com/
+   ls -la /etc/letsencrypt/live/lwxustotamin.online/
    ```
 
 ---
@@ -186,9 +186,9 @@ docker compose restart app horizon reverb scheduler
 ## 🚀 Expected End Result
 
 ```
-URL: https://lexusforbon.it.com/login
-Admin Email 1: admin@lexusforbon.it.com
-Admin Email 2: dr@lexusforbon.it.com
+URL: https://lwxustotamin.online/login
+Admin Email 1: admin@lwxustotamin.online
+Admin Email 2: dr@lwxustotamin.online
 Password: (as configured)
 
 HTTP Status: 200

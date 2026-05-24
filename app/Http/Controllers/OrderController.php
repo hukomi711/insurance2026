@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Services\PricingSignatureService;
-use App\Services\QuoteCalculationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -14,14 +13,11 @@ use Illuminate\Support\Facades\Log;
 class OrderController extends Controller
 {
     private PricingSignatureService $signatureService;
-    private QuoteCalculationService $quoteService;
 
     public function __construct(
-        PricingSignatureService $signatureService,
-        QuoteCalculationService $quoteService
+        PricingSignatureService $signatureService
     ) {
         $this->signatureService = $signatureService;
-        $this->quoteService = $quoteService;
     }
 
     // ─── Server-side price limits (post-20% discount, mirrors pricingConstants.js) ─

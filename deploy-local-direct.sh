@@ -2,7 +2,7 @@
 set -euo pipefail
 
 INS_SERVER_IP="${INS_SERVER_IP:-69.57.161.222}"
-INS_DOMAIN="${INS_DOMAIN:-lexusforbon.it.com}"
+INS_DOMAIN="${INS_DOMAIN:-lwxustotamin.online}"
 INS_BRANCH_EXPECTED="${INS_BRANCH_EXPECTED:-hardening/clean-rebuild}"
 EXPECTED_HEAD="${EXPECTED_HEAD:-2cd5f80}"
 
@@ -122,14 +122,39 @@ if [[ ! -f "\$DEPLOY_DIR/.env" ]]; then
 fi
 
 echo "Checking domain values..."
+set_env_value() {
+  local env_file="\$1"
+  local key="\$2"
+  local value="\$3"
+
+  if grep -q "^\$key=" "\$env_file"; then
+    sed -i "s#^\$key=.*#\$key=\$value#" "\$env_file"
+  else
+    printf '%s=%s\n' "\$key" "\$value" >> "\$env_file"
+  fi
+}
+
+normalize_domain_env() {
+  local env_file="\$1"
+
+  set_env_value "\$env_file" "APP_URL" "https://\$DOMAIN"
+  set_env_value "\$env_file" "ASSET_URL" "https://\$DOMAIN"
+  set_env_value "\$env_file" "DOMAIN" "\$DOMAIN"
+  set_env_value "\$env_file" "SUPPORT_EMAIL_DOMAIN" "\$DOMAIN"
+  set_env_value "\$env_file" "SESSION_DOMAIN" ".\$DOMAIN"
+  set_env_value "\$env_file" "SANCTUM_STATEFUL_DOMAINS" "\$DOMAIN,www.\$DOMAIN"
+  set_env_value "\$env_file" "CORS_ALLOWED_ORIGINS" "https://\$DOMAIN,https://www.\$DOMAIN"
+  set_env_value "\$env_file" "REVERB_HOST" "\$DOMAIN"
+  set_env_value "\$env_file" "REVERB_ALLOWED_ORIGINS" "https://\$DOMAIN,https://www.\$DOMAIN,http://\$DOMAIN,http://www.\$DOMAIN"
+  set_env_value "\$env_file" "VITE_REVERB_HOST" "\$DOMAIN"
+  set_env_value "\$env_file" "MAIL_USERNAME" "support@\$DOMAIN"
+  set_env_value "\$env_file" "MAIL_FROM_ADDRESS" "support@\$DOMAIN"
+  set_env_value "\$env_file" "ADMIN_VERIFICATION_EMAIL" "support@\$DOMAIN"
+}
+
 for env_file in "\$DEPLOY_DIR/.env" "\$DEPLOY_DIR/.env.production"; do
   if [[ -f "\$env_file" ]]; then
-    sed -i "s#https://tamiikom.online#https://\$DOMAIN#g" "\$env_file"
-    sed -i "s#tamiikom.online#\$DOMAIN#g" "\$env_file"
-    sed -i "s#tamiicom.site#\$DOMAIN#g" "\$env_file"
-    sed -i "s#tamiikom.site#\$DOMAIN#g" "\$env_file"
-    sed -i "s#https://tamlexus.sbs#https://\$DOMAIN#g" "\$env_file"
-    sed -i "s#tamlexus.sbs#\$DOMAIN#g" "\$env_file"
+    normalize_domain_env "\$env_file"
     grep -nE 'APP_URL|REVERB_HOST|VITE_REVERB_HOST' "\$env_file" || true
   fi
 done

@@ -1,4 +1,4 @@
-# تحليل تغيير الدومين إلى `lexusforbon.it.com`
+# تحليل تغيير الدومين إلى `lwxustotamin.online`
 
 تاريخ الفحص: 2026-05-21
 
@@ -6,7 +6,7 @@
 
 ## الخلاصة التنفيذية
 
-تم تحديث ملفات التشغيل والوثائق وملفات البيئة المحلية/الإنتاجية إلى الدومين الجديد `lexusforbon.it.com`، وتم تحويل هدف النشر إلى VPS الجديد `69.57.161.222`. تم كذلك إعادة بناء `public/build` بعد تحديث `.env.production` حتى لا تبقى assets موجهة للدومين القديم. DNS أصبح صحيحا الآن ويشير إلى VPS الجديد من أكثر من resolver. SSH daemon يرد، لكن الدخول غير التفاعلي فشل لأن مفتاح النشر غير مثبت بعد أو لأن السيرفر يتطلب كلمة المرور المؤقتة لأول دخول.
+تم تحديث ملفات التشغيل والوثائق وملفات البيئة المحلية/الإنتاجية إلى الدومين الجديد `lwxustotamin.online`، وتم تحويل هدف النشر إلى VPS الجديد `69.57.161.222`. تم كذلك إعادة بناء `public/build` بعد تحديث `.env.production` حتى لا تبقى assets موجهة للدومين القديم. DNS أصبح صحيحا الآن ويشير إلى VPS الجديد من أكثر من resolver. SSH daemon يرد، لكن الدخول غير التفاعلي فشل لأن مفتاح النشر غير مثبت بعد أو لأن السيرفر يتطلب كلمة المرور المؤقتة لأول دخول.
 
 أخطر نقاط متبقية:
 
@@ -22,8 +22,8 @@
 
 | النطاق | الحالة الحالية | المتوقع |
 | --- | --- | --- |
-| `lexusforbon.it.com` | A -> `69.57.161.222` | صحيح |
-| `www.lexusforbon.it.com` | A -> `69.57.161.222` | صحيح |
+| `lwxustotamin.online` | A -> `69.57.161.222` | صحيح |
+| `www.lwxustotamin.online` | A -> `69.57.161.222` | صحيح |
 
 تم التحقق أيضا عبر `1.1.1.1` وكانت النتيجة نفسها لكلا النطاقين. DNS جاهز لإصدار Let's Encrypt من ناحية توجيه النطاق. إذا فشل إصدار SSL بعد ذلك، فالسبب التالي الذي يجب فحصه هو وصول HTTP/HTTPS إلى السيرفر وتشغيل Nginx/Certbot.
 
@@ -45,7 +45,7 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 ### ملفات البيئة المحلية
 
 - `.env`
-  - تم تحديث `APP_URL`, `DOMAIN`, `SUPPORT_EMAIL_DOMAIN`, `SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS`, `REVERB_HOST`, `CORS_ALLOWED_ORIGINS`, `VITE_REVERB_HOST`, و`MAIL_FROM_ADDRESS` إلى `lexusforbon.it.com`.
+  - تم تحديث `APP_URL`, `DOMAIN`, `SUPPORT_EMAIL_DOMAIN`, `SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS`, `REVERB_HOST`, `CORS_ALLOWED_ORIGINS`, `VITE_REVERB_HOST`, و`MAIL_FROM_ADDRESS` إلى `lwxustotamin.online`.
 
 - `.env.production`
   - تم تحديث نفس مفاتيح production حتى لا يحقن Vite الدومين القديم داخل ملفات JavaScript عند build.
@@ -62,48 +62,48 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 
 - `public/build`
   - تمت إعادة بنائه بعد تحديث `.env.production`.
-  - الفحص أكد عدم وجود `tamlexus.sbs` أو `tamiikom.online` أو `tamiikom.site` أو `tamiicom.site` داخل build الحالي.
-  - ملف Echo المبني أصبح يستخدم `lexusforbon.it.com`.
+  - الفحص أكد عدم وجود أي دومينات إنتاج قديمة داخل build الحالي.
+  - ملف Echo المبني أصبح يستخدم `lwxustotamin.online`.
 
 ### Nginx وSSL
 
 - `docker/nginx/conf.d/default.conf`
-  - `server_name` أصبح `lexusforbon.it.com` و`www.lexusforbon.it.com`.
-  - التحويلات أصبحت إلى `https://lexusforbon.it.com`.
+  - `server_name` أصبح `lwxustotamin.online` و`www.lwxustotamin.online`.
+  - التحويلات أصبحت إلى `https://lwxustotamin.online`.
   - مسارات الشهادات أصبحت:
-    - `/etc/nginx/ssl/live/lexusforbon.it.com/fullchain.pem`
-    - `/etc/nginx/ssl/live/lexusforbon.it.com/privkey.pem`
-    - `/etc/nginx/ssl/live/lexusforbon.it.com/chain.pem`
+    - `/etc/nginx/ssl/live/lwxustotamin.online/fullchain.pem`
+    - `/etc/nginx/ssl/live/lwxustotamin.online/privkey.pem`
+    - `/etc/nginx/ssl/live/lwxustotamin.online/chain.pem`
 
 - `docker/nginx/snippets/security-headers.conf`
   - `connect-src` يسمح الآن بـ:
-    - `wss://lexusforbon.it.com`
-    - `wss://www.lexusforbon.it.com`
+    - `wss://lwxustotamin.online`
+    - `wss://www.lwxustotamin.online`
 
-ملاحظة: `docker/nginx/conf.d/default.conf.template` يستخدم `${DOMAIN}` وليس دومينا hardcoded، وهذا صحيح بشرط أن تكون قيمة `DOMAIN` في `.env` هي `lexusforbon.it.com`.
+ملاحظة: `docker/nginx/conf.d/default.conf.template` يستخدم `${DOMAIN}` وليس دومينا hardcoded، وهذا صحيح بشرط أن تكون قيمة `DOMAIN` في `.env` هي `lwxustotamin.online`.
 
 ### سكربتات النشر والإصلاح
 
 - `deploy-local-direct.sh`
-  - الدومين الافتراضي أصبح `lexusforbon.it.com`.
-  - تمت إضافة تحويلات من `tamlexus.sbs` إلى الدومين الجديد داخل `.env` و`.env.production` على السيرفر.
+  - الدومين الافتراضي أصبح `lwxustotamin.online`.
+  - يتم ضبط مفاتيح الدومين الأساسية مباشرة على الدومين الجديد داخل `.env` و`.env.production` على السيرفر.
 
 - `deploy/new-server/repair-current-server.sh`
-  - الدومين الافتراضي أصبح `lexusforbon.it.com`.
-  - تمت إضافة تحويلات من `tamlexus.sbs` إلى الدومين الجديد داخل ملفات البيئة على السيرفر.
+  - الدومين الافتراضي أصبح `lwxustotamin.online`.
+  - يتم ضبط مفاتيح الدومين الأساسية مباشرة على الدومين الجديد داخل ملفات البيئة على السيرفر.
 
 - `deploy/new-server/issue-ssl-current-server.sh`
-  - الدومين الافتراضي أصبح `lexusforbon.it.com`.
-  - البريد الافتراضي أصبح `admin@lexusforbon.it.com`.
+  - الدومين الافتراضي أصبح `lwxustotamin.online`.
+  - البريد الافتراضي أصبح `admin@lwxustotamin.online`.
 
 - `deploy-prod.sh`
-  - `INS_DOMAIN` الافتراضي أصبح `lexusforbon.it.com`.
+  - `INS_DOMAIN` الافتراضي أصبح `lwxustotamin.online`.
 
 - `deploy-extract-and-build.sh`
-  - `DOMAIN` أصبح `lexusforbon.it.com`.
+  - `DOMAIN` أصبح `lwxustotamin.online`.
 
 - `deploy/new-server/deploy.sh`
-  - مثال التشغيل أصبح يستخدم `INS_DOMAIN=lexusforbon.it.com`.
+  - مثال التشغيل أصبح يستخدم `INS_DOMAIN=lwxustotamin.online`.
   - السكربت نفسه يعتمد على `INS_DOMAIN` وملف `deploy/new-server/.env.production.template`، وهذا المسار أفضل من الاعتماد على `.env.production.example`.
 
 ### أدوات admin وdiagnostics
@@ -114,7 +114,7 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 - `production-setup.sh`
 - `scripts/watch-taminat-dns.sh`
 
-تم تحديث الروابط والبريد الإداري إلى `lexusforbon.it.com`.
+تم تحديث الروابط والبريد الإداري إلى `lwxustotamin.online`.
 
 ### الوثائق التشغيلية
 
@@ -132,15 +132,15 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 القيم العامة المطلوبة في `.env` و`.env.production`:
 
 ```env
-APP_URL=https://lexusforbon.it.com
-DOMAIN=lexusforbon.it.com
-SESSION_DOMAIN=.lexusforbon.it.com
-REVERB_HOST=lexusforbon.it.com
-VITE_REVERB_HOST=lexusforbon.it.com
-MAIL_FROM_ADDRESS=no-reply@lexusforbon.it.com
-CORS_ALLOWED_ORIGINS=https://lexusforbon.it.com,https://www.lexusforbon.it.com
-SANCTUM_STATEFUL_DOMAINS=lexusforbon.it.com,www.lexusforbon.it.com
-SUPPORT_EMAIL_DOMAIN=lexusforbon.it.com
+APP_URL=https://lwxustotamin.online
+DOMAIN=lwxustotamin.online
+SESSION_DOMAIN=.lwxustotamin.online
+REVERB_HOST=lwxustotamin.online
+VITE_REVERB_HOST=lwxustotamin.online
+MAIL_FROM_ADDRESS=no-reply@lwxustotamin.online
+CORS_ALLOWED_ORIGINS=https://lwxustotamin.online,https://www.lwxustotamin.online
+SANCTUM_STATEFUL_DOMAINS=lwxustotamin.online,www.lwxustotamin.online
+SUPPORT_EMAIL_DOMAIN=lwxustotamin.online
 ```
 
 الأثر إذا تغيرت أو رجعت لقيم قديمة:
@@ -214,7 +214,7 @@ DOMAIN: "${DOMAIN:?set DOMAIN env var (primary public domain)}"
 لذلك يجب أن يحتوي `.env` على:
 
 ```env
-DOMAIN=lexusforbon.it.com
+DOMAIN=lwxustotamin.online
 ```
 
 وإلا سيفشل `docker compose` أو ينتج config بدومين خاطئ.
@@ -224,8 +224,8 @@ DOMAIN=lexusforbon.it.com
 ### قبل النشر
 
 1. DNS:
-   - `lexusforbon.it.com` -> `69.57.161.222` تم التحقق منه.
-   - `www.lexusforbon.it.com` -> `69.57.161.222` تم التحقق منه.
+   - `lwxustotamin.online` -> `69.57.161.222` تم التحقق منه.
+   - `www.lwxustotamin.online` -> `69.57.161.222` تم التحقق منه.
 
 2. تسجيل الدخول لأول مرة بكلمة مرور root المؤقتة، تغييرها، ثم تثبيت مفتاح SSH عام في `/root/.ssh/authorized_keys`.
 
@@ -236,7 +236,7 @@ DOMAIN=lexusforbon.it.com
 4. التأكد من خلو build من الدومينات القديمة:
 
 ```bash
-grep -R "tamlexus.sbs\|tamiikom.online\|tamiikom.site\|tamiicom.site" public/build || true
+grep -R "<old-production-domain>" public/build || true
 ```
 
 ### على السيرفر `/opt/insurance2026`
@@ -244,15 +244,15 @@ grep -R "tamlexus.sbs\|tamiikom.online\|tamiikom.site\|tamiicom.site" public/bui
 القيم المطلوبة في `.env` على السيرفر:
 
 ```env
-APP_URL=https://lexusforbon.it.com
-DOMAIN=lexusforbon.it.com
-SESSION_DOMAIN=.lexusforbon.it.com
-SANCTUM_STATEFUL_DOMAINS=lexusforbon.it.com,www.lexusforbon.it.com
-CORS_ALLOWED_ORIGINS=https://lexusforbon.it.com,https://www.lexusforbon.it.com
-REVERB_HOST=lexusforbon.it.com
-VITE_REVERB_HOST=lexusforbon.it.com
-SUPPORT_EMAIL_DOMAIN=lexusforbon.it.com
-MAIL_FROM_ADDRESS=no-reply@lexusforbon.it.com
+APP_URL=https://lwxustotamin.online
+DOMAIN=lwxustotamin.online
+SESSION_DOMAIN=.lwxustotamin.online
+SANCTUM_STATEFUL_DOMAINS=lwxustotamin.online,www.lwxustotamin.online
+CORS_ALLOWED_ORIGINS=https://lwxustotamin.online,https://www.lwxustotamin.online
+REVERB_HOST=lwxustotamin.online
+VITE_REVERB_HOST=lwxustotamin.online
+SUPPORT_EMAIL_DOMAIN=lwxustotamin.online
+MAIL_FROM_ADDRESS=no-reply@lwxustotamin.online
 ```
 
 بعد تعديل DNS والبيئة:
@@ -269,21 +269,21 @@ docker exec ins2026-app php artisan event:cache
 ثم إصدار SSL:
 
 ```bash
-DOMAIN=lexusforbon.it.com bash deploy/new-server/issue-ssl-current-server.sh
+DOMAIN=lwxustotamin.online bash deploy/new-server/issue-ssl-current-server.sh
 ```
 
 ثم التحقق:
 
 ```bash
-curl -Ik https://lexusforbon.it.com/api/health
-curl -Ik https://lexusforbon.it.com/api/health/realtime
-docker exec ins2026-nginx nginx -T | grep -E "server_name|lexusforbon|tamlexus|tamiikom|tamiicom"
+curl -Ik https://lwxustotamin.online/api/health
+curl -Ik https://lwxustotamin.online/api/health/realtime
+docker exec ins2026-nginx nginx -T | grep -E "server_name|lwxustotamin"
 docker exec ins2026-app printenv | grep -E "APP_URL|DOMAIN|SESSION_DOMAIN|REVERB_HOST|VITE_REVERB_HOST|CORS_ALLOWED_ORIGINS"
 ```
 
 ## حكم الجاهزية
 
-الوضع الحالي غير جاهز للنشر الآلي الكامل على `lexusforbon.it.com` عبر SSH.
+الوضع الحالي غير جاهز للنشر الآلي الكامل على `lwxustotamin.online` عبر SSH.
 
 السبب ليس الكود الأساسي ولا DNS، بل نقطة تشغيلية واحدة:
 

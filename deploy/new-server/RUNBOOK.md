@@ -7,7 +7,7 @@ repository. Follow sections in order. Every command is idempotent unless noted.
 > **No real IPs or secrets appear in this document.**
 > Replace placeholders before running:
 >
-> - `lexusforbon.it.com` → your apex domain
+> - `lwxustotamin.online` → your apex domain
 > - `${INS_SERVER_IP}` → your server's public IPv4
 > - `CHANGE_ME` → any value flagged in `.env.production.example`
 
@@ -35,15 +35,15 @@ Outbound access required to: `download.docker.com`, `github.com`, GHCR, `letsenc
 Before any deployment, configure A records at your registrar:
 
 ```text
-A     lexusforbon.it.com          → ${INS_SERVER_IP}    TTL 300
-A     www.lexusforbon.it.com      → ${INS_SERVER_IP}    TTL 300
+A     lwxustotamin.online          → ${INS_SERVER_IP}    TTL 300
+A     www.lwxustotamin.online      → ${INS_SERVER_IP}    TTL 300
 ```
 
 Verify propagation from your local machine:
 
 ```bash
-nslookup lexusforbon.it.com 8.8.8.8
-nslookup www.lexusforbon.it.com 8.8.8.8
+nslookup lwxustotamin.online 8.8.8.8
+nslookup www.lwxustotamin.online 8.8.8.8
 ```
 
 Both must resolve to `${INS_SERVER_IP}` **before** Let's Encrypt issuance (section L), otherwise certbot will fail.
@@ -124,7 +124,7 @@ chmod 600 .env.production
 ## G) Fill in Real Values
 
 Edit `.env.production` and replace **every** `CHANGE_ME` and every
-`lexusforbon.it.com` occurrence. Required substitutions:
+`lwxustotamin.online` occurrence. Required substitutions:
 
 | Key                        | How to generate                                                             |
 | -------------------------- | --------------------------------------------------------------------------- |
@@ -224,8 +224,8 @@ docker run --rm -p 80:80 \
   -v $PWD/docker/certbot/conf:/etc/letsencrypt \
   -v $PWD/docker/certbot/www:/var/www/certbot \
   certbot/certbot certonly --standalone --non-interactive --agree-tos \
-  -m admin@lexusforbon.it.com \
-  -d lexusforbon.it.com -d www.lexusforbon.it.com
+  -m admin@lwxustotamin.online \
+  -d lwxustotamin.online -d www.lwxustotamin.online
 docker compose up -d nginx
 ```
 
@@ -264,26 +264,26 @@ docker compose up -d --force-recreate app horizon reverb scheduler
 From the server:
 
 ```bash
-curl -sk https://lexusforbon.it.com/api/health         | jq .
-curl -sk https://lexusforbon.it.com/api/health/queues  | jq .
-curl -sk https://lexusforbon.it.com/api/health/realtime | jq .
+curl -sk https://lwxustotamin.online/api/health         | jq .
+curl -sk https://lwxustotamin.online/api/health/queues  | jq .
+curl -sk https://lwxustotamin.online/api/health/realtime | jq .
 ```
 
 From your local machine:
 
 ```bash
 for path in / /login /sitemap.xml /robots.txt; do
-  printf '  %s  https://lexusforbon.it.com%s\n' \
-    "$(curl -sk -o /dev/null -w '%{http_code}' https://lexusforbon.it.com$path)" "$path"
+  printf '  %s  https://lwxustotamin.online%s\n' \
+    "$(curl -sk -o /dev/null -w '%{http_code}' https://lwxustotamin.online$path)" "$path"
 done
 ```
 
 Expected: `200` for `/`, `/login`, `/sitemap.xml`, `/robots.txt`.
 
-WebSocket smoke from a browser console on `https://lexusforbon.it.com`:
+WebSocket smoke from a browser console on `https://lwxustotamin.online`:
 
 ```js
-new WebSocket('wss://lexusforbon.it.com/app/' + import.meta.env.VITE_REVERB_APP_KEY)
+new WebSocket('wss://lwxustotamin.online/app/' + import.meta.env.VITE_REVERB_APP_KEY)
   .addEventListener('open', () => console.log('WS OK'));
 ```
 
@@ -333,7 +333,7 @@ check `docker compose ps redis` is `healthy`.
 
 ### Reverb: clients can't connect / 403 origin
 - Verify `REVERB_ALLOWED_ORIGINS` includes the exact scheme + host
-  (e.g. `https://lexusforbon.it.com`, no trailing slash).
+  (e.g. `https://lwxustotamin.online`, no trailing slash).
 - After editing `.env.production`, **force-recreate** reverb (a `restart`
   re-uses stale env): `docker compose up -d --force-recreate reverb`.
 - Confirm nginx proxies `/app/*` and `/apps/*` to `reverb:8080` with WebSocket

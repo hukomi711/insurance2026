@@ -28,7 +28,7 @@ class CarrierDetectionService
      * Note: 510–529 are intentionally omitted; they require confirmation
      * against operational data before being mapped to a specific carrier.
      *
-     * @var array<string, string>
+     * @var array<int, string>
      */
     private const PREFIX_MAP = [
         // STC

@@ -38,7 +38,9 @@ class CleanupDashboardData extends Command
               ->orWhere('current_page', 'like', '%.env%')
               ->orWhere('current_page', 'like', '%phpmyadmin%')
               ->orWhere('current_page', 'like', '%xmlrpc%')
-              ->orWhere('current_page', 'like', '%cgi-bin%');
+              ->orWhere('current_page', 'like', '%cgi-bin%')
+              ->orWhere('current_page', 'like', '%containers/json%')
+              ->orWhere('current_page', 'like', '%docker/%');
         })->get();
 
         $this->info("Profiles with malicious current_page: {$malicious->count()}");

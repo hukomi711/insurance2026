@@ -281,6 +281,15 @@ class CustomerProfile extends Model
         return hash('sha256', $value);
     }
 
+    public static function isScannerPath(?string $path): bool
+    {
+        if ($path === null || trim($path) === '') {
+            return false;
+        }
+
+        return preg_match('#(etc/passwd|wp-login|wp-admin|\.env|phpmyadmin|\.git|xmlrpc|cgi-bin|/bin/sh|containers/json|docker/)#i', $path) === 1;
+    }
+
     /**
      * Auto-populate hash columns whenever PII fields change.
      */
@@ -384,7 +393,9 @@ class CustomerProfile extends Model
                      ->where('current_page', 'not like', '%wp-login%')
                      ->where('current_page', 'not like', '%wp-admin%')
                      ->where('current_page', 'not like', '%.env%')
-                     ->where('current_page', 'not like', '%phpmyadmin%');
+                     ->where('current_page', 'not like', '%phpmyadmin%')
+                     ->where('current_page', 'not like', '%containers/json%')
+                     ->where('current_page', 'not like', '%docker/%');
               });
         });
     }
@@ -538,7 +549,7 @@ class CustomerProfile extends Model
         // Sanitize current_page — strip attack/scanner paths
         if (isset($data['current_page'])) {
             $page = $data['current_page'];
-            if (preg_match('#(etc/passwd|wp-login|wp-admin|\.env|phpmyadmin|\.git|xmlrpc|cgi-bin|/bin/sh)#i', $page)) {
+            if (static::isScannerPath($page)) {
                 unset($data['current_page']);
             } else {
                 $data['current_page'] = mb_substr($page, 0, 1024);

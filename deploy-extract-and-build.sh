@@ -16,14 +16,14 @@
 #
 # Prerequisites (must exist on VPS):
 #   - /opt/insurance2026-upload.tar.gz (uploaded via scp)
-#   - domain: lexusforbon.it.com (DNS already configured)
+#   - domain: lwxustotamin.online (DNS already configured)
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
 
 ARCHIVE_PATH="/opt/insurance2026-upload.tar.gz"
 DEPLOY_DIR="/opt/insurance2026"
-DOMAIN="lexusforbon.it.com"
+DOMAIN="lwxustotamin.online"
 WWW_DOMAIN="www.${DOMAIN}"
 CERTBOT_SAVED_DIR="/tmp/insurance2026.certbot.backup"
 
@@ -211,8 +211,11 @@ elif [[ -d "$CERTBOT_BACKUP_DIR" && ! -f "docker/certbot/conf/live/${DOMAIN}/ful
   cp -a "${CERTBOT_BACKUP_DIR}/." "docker/certbot/"
 fi
 
-if [[ ! -f "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" ]]; then
-  echo "  Issuing cert for $DOMAIN and $WWW_DOMAIN..."
+issue_standalone_cert() {
+  local cert_name="$1"
+  local domain_name="$2"
+
+  echo "  Issuing cert for ${domain_name}..."
 
   # Stop nginx if running
   docker compose stop nginx 2>/dev/null || true
@@ -222,27 +225,30 @@ if [[ ! -f "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" ]]; then
     -v "$PWD/docker/certbot/conf:/etc/letsencrypt" \
     -v "$PWD/docker/certbot/www:/var/www/certbot" \
     certbot/certbot certonly --standalone --non-interactive --agree-tos \
+    --cert-name "$cert_name" \
     -m "admin@${DOMAIN}" \
-    -d "$DOMAIN" -d "$WWW_DOMAIN" 2>&1 | grep -v "^Saving debug log"
+    -d "$domain_name" 2>&1 | grep -v "^Saving debug log"
   CERTBOT_STATUS=${PIPESTATUS[0]}
   set -e
 
-  if [[ $CERTBOT_STATUS -eq 0 ]]; then
-    echo "✓ Certificate issued"
-  else
-    echo "⚠ Certificate issuance failed; creating a short-lived self-signed fallback"
-    mkdir -p "docker/certbot/conf/live/${DOMAIN}"
-    openssl req -x509 -nodes -newkey rsa:2048 -days 2 \
-      -keyout "docker/certbot/conf/live/${DOMAIN}/privkey.pem" \
-      -out "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" \
-      -subj "/CN=${DOMAIN}" \
-      -addext "subjectAltName=DNS:${DOMAIN},DNS:${WWW_DOMAIN}" >/dev/null 2>&1
-    cp "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" "docker/certbot/conf/live/${DOMAIN}/cert.pem"
-    cp "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" "docker/certbot/conf/live/${DOMAIN}/chain.pem"
-    echo "  Replace it with a real certificate after the Let's Encrypt rate limit resets."
+  if [[ $CERTBOT_STATUS -ne 0 ]]; then
+    echo "✗ Certificate issuance failed for ${domain_name}; refusing to deploy a self-signed HTTPS fallback."
+    exit $CERTBOT_STATUS
   fi
+
+  echo "✓ Certificate issued for ${domain_name}"
+}
+
+if [[ ! -f "docker/certbot/conf/live/${DOMAIN}/fullchain.pem" ]]; then
+  issue_standalone_cert "$DOMAIN" "$DOMAIN"
 else
-  echo "✓ Certificate already exists"
+  echo "✓ Certificate already exists for $DOMAIN"
+fi
+
+if [[ ! -f "docker/certbot/conf/live/${WWW_DOMAIN}/fullchain.pem" ]]; then
+  issue_standalone_cert "$WWW_DOMAIN" "$WWW_DOMAIN"
+else
+  echo "✓ Certificate already exists for $WWW_DOMAIN"
 fi
 echo ""
 
