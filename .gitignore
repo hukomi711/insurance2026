@@ -60,6 +60,11 @@ docker/certbot/www/
 # ── SQL backups ──────────────────────────────────────────────────
 backup*.sql
 
+# ── Deployment archives (rebuild locally; may contain secrets) ────
+*.tar.gz
+*.zip
+*.7z
+
 # ── Orphan / temp files ──────────────────────────────────────────
 base
 CountryRestriction_server.php
