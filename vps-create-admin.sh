@@ -18,7 +18,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
 $user = User::updateOrCreate(
-    ["email" => "dr@lwxustotamin.online"],
+    ["email" => "dr@tamminzonlinez.online"],
     [
         "name" => "Dr",
         "password" => Hash::make(getenv("ADMIN_PASS")),

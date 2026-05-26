@@ -53,7 +53,7 @@ Follow the **DEPLOYMENT-GUIDE.md** file (already created in repo root).
 **Server Information:**
 
 - IP: `69.57.161.222`
-- Domain: `lwxustotamin.online`
+- Domain: `tamminzonlinez.online`
 - OS: AlmaLinux 9
 - Root user: `root`
 
@@ -72,7 +72,7 @@ Follow the **DEPLOYMENT-GUIDE.md** file (already created in repo root).
 2. **DNS Must Resolve First** — Before running deployment, verify:
 
    ```bash
-   nslookup lwxustotamin.online 8.8.8.8
+   nslookup tamminzonlinez.online 8.8.8.8
    # Should return: 69.57.161.222
    ```
 
@@ -82,7 +82,7 @@ Follow the **DEPLOYMENT-GUIDE.md** file (already created in repo root).
 
    See "Update Missing Values" in DEPLOYMENT-GUIDE.md
 
-4. **First Admin Login** — Username/email: `admin@lwxustotamin.online`, password from `.env.production` (ADMIN_PASSWORD)
+4. **First Admin Login** — Username/email: `admin@tamminzonlinez.online`, password from `.env.production` (ADMIN_PASSWORD)
 
 ---
 
@@ -98,7 +98,7 @@ Follow the **DEPLOYMENT-GUIDE.md** file (already created in repo root).
 
 ## ✨ After Deployment
 
-Your app will be available at: `https://lwxustotamin.online`
+Your app will be available at: `https://tamminzonlinez.online`
 
 Services running:
 

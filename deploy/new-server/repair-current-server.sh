@@ -3,7 +3,7 @@ set -euo pipefail
 
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/insurance2026}"
 BACKUP_DIR="${BACKUP_DIR:-/opt/insurance2026.backup.20260520171801}"
-DOMAIN="${DOMAIN:-lwxustotamin.online}"
+DOMAIN="${DOMAIN:-tamminzonlinez.online}"
 
 cd "$DEPLOY_DIR"
 TS="$(date +%Y%m%d%H%M%S)"

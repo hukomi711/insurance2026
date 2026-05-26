@@ -4,6 +4,7 @@ namespace Tests\Feature\Auth;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class AdminLoginTest extends TestCase
@@ -109,5 +110,33 @@ class AdminLoginTest extends TestCase
         ]);
 
         $response->assertStatus(429);
+    }
+
+    /**
+     * Login returns 503 when verification email transport fails.
+     */
+    public function test_login_returns_503_when_verification_mail_fails(): void
+    {
+        config(['services.admin.verification_email' => 'admin@test.com']);
+
+        User::factory()->create([
+            'role'     => 'admin',
+            'email'    => 'admin@test.com',
+            'password' => bcrypt('secret123'),
+        ]);
+
+        Mail::shouldReceive('to')
+            ->once()
+            ->andThrow(new \RuntimeException('SMTP down'));
+
+        $response = $this->postJson($this->loginUrl, [
+            'email'    => 'admin@test.com',
+            'password' => 'secret123',
+        ]);
+
+        $response->assertStatus(503)
+            ->assertJson([
+                'success' => false,
+            ]);
     }
 }

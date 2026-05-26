@@ -232,9 +232,9 @@ function validateClient ()
     {
         fieldErrors.password = 'كلمة المرور مطلوبة';
         ok = false;
-    } else if ( form.password.length < 6 )
+    } else if ( form.password.length < 8 )
     {
-        fieldErrors.password = 'كلمة المرور يجب ألا تقل عن 6 أحرف';
+        fieldErrors[ 'password' ] = 'كلمة المرور يجب ألا تقل عن 8 أحرف';
         ok = false;
     }
     return ok;

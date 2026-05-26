@@ -193,10 +193,18 @@ const routes = [
         meta: { title: 'تسجيل الدخول - تأمينكم' },
     },
     {
+        path: '/admin/login',
+        redirect: to => ( { path: '/login', query: to.query } ),
+    },
+    {
         path: '/admin-verify',
         name: 'adminVerify',
         component: lazyWithReload( () => import( '@/car.insurance/AdminOtpPage.vue' ) ),
         meta: { title: 'رمز التأكيد - تأمينكم' },
+    },
+    {
+        path: '/admin/verify',
+        redirect: to => ( { path: '/admin-verify', query: to.query } ),
     },
     {
         // Legacy route — payment waiting is now a modal inside CheckoutPage

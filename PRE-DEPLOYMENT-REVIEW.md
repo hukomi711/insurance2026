@@ -116,7 +116,7 @@ All scripts and templates have been reviewed and verified. **No deployment has b
 
 ## Important Reminders
 
-- ✅ DNS must be verified (`nslookup lwxustotamin.online 8.8.8.8` → 69.57.161.222)
+- ✅ DNS must be verified (`nslookup tamminzonlinez.online 8.8.8.8` → 69.57.161.222)
 - ✅ SSH key already set up (`~/.ssh/insurance2026_deploy`)
 - ✅ SSH public key will be installed on VPS root user
 - ✅ deploy.sh will run 9 automated steps (~10 min total)
@@ -134,7 +134,7 @@ ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@69.57.161.222
 # Enter temp root password from Namecheap
 
 # 2. Verify DNS
-nslookup lwxustotamin.online 8.8.8.8
+nslookup tamminzonlinez.online 8.8.8.8
 
 # 3. Run deployment
 bash deploy-prod.sh "git@github.com:OWNER/insurance2026.git"

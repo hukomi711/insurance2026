@@ -16,14 +16,14 @@
 #
 # Prerequisites (must exist on VPS):
 #   - /opt/insurance2026-upload.tar.gz (uploaded via scp)
-#   - domain: lwxustotamin.online (DNS already configured)
+#   - domain: tamminzonlinez.online (DNS already configured)
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
 
 ARCHIVE_PATH="/opt/insurance2026-upload.tar.gz"
 DEPLOY_DIR="/opt/insurance2026"
-DOMAIN="lwxustotamin.online"
+DOMAIN="tamminzonlinez.online"
 WWW_DOMAIN="www.${DOMAIN}"
 CERTBOT_SAVED_DIR="/tmp/insurance2026.certbot.backup"
 

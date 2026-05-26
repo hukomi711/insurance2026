@@ -1,8 +1,8 @@
-# تحليل لوحة التحكم - lwxustotamin.online
+# تحليل لوحة التحكم - tamminzonlinez.online
 
 ## الهدف
 
-تحليل واجهة إدارة `https://lwxustotamin.online/dashboard` لتحديد سبب الأخطاء التي تظهر في سجل المتصفح، خاصة `403 Forbidden` على طلبات `/api/admin/*`.
+تحليل واجهة إدارة `https://tamminzonlinez.online/dashboard` لتحديد سبب الأخطاء التي تظهر في سجل المتصفح، خاصة `403 Forbidden` على طلبات `/api/admin/*`.
 
 ## النتائج الرئيسية
 

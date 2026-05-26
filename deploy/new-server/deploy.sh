@@ -9,7 +9,7 @@
 #
 # Usage (fresh deploy, no dump):
 #   INS_SERVER_IP=69.57.161.222 \
-#   INS_DOMAIN=lwxustotamin.online \
+#   INS_DOMAIN=tamminzonlinez.online \
 #   INS_REPO_URL=git@github.com:<user>/insurance2026.git \
 #   INS_BRANCH=hardening/clean-rebuild \
 #   bash deploy/new-server/deploy.sh

@@ -21,10 +21,10 @@ echo AdminLoginCode::count();
 )"
 
 response="$(
-  curl -skS -X POST 'https://lwxustotamin.online/api/admin/login' \
+  curl -skS -X POST 'https://tamminzonlinez.online/api/admin/login' \
     -H 'Accept: application/json' \
     -H 'Content-Type: application/json' \
-    --data "{\"email\":\"dr@lwxustotamin.online\",\"password\":\"${ADMIN_PASS}\"}"
+    --data "{\"email\":\"dr@tamminzonlinez.online\",\"password\":\"${ADMIN_PASS}\"}"
 )"
 
 after_count="$(

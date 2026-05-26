@@ -9,7 +9,7 @@ set -e
 cd /opt/insurance2026
 
 echo "════════════════════════════════════════════════════════════════"
-echo "Creating Admin User: dr@lwxustotamin.online"
+echo "Creating Admin User: dr@tamminzonlinez.online"
 echo "Password: Banihani00@@71"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
@@ -22,12 +22,12 @@ echo ""
 
 # Create/Update the admin user in database
 docker exec ins2026-db mysql -u insurance -pinsurance insurance2026 <<SQL_EOF
-DELETE FROM users WHERE email = 'dr@lwxustotamin.online';
+DELETE FROM users WHERE email = 'dr@tamminzonlinez.online';
 
 INSERT INTO users (name, email, password, role, created_at, updated_at)
 VALUES (
     'Dr',
-    'dr@lwxustotamin.online',
+    'dr@tamminzonlinez.online',
     '$HASHED_PASS',
     'admin',
     NOW(),
@@ -44,7 +44,7 @@ echo "✓ Admin user is ready!"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 echo "Login Details:"
-echo "  URL:      https://lwxustotamin.online/login"
-echo "  Email:    dr@lwxustotamin.online"
+echo "  URL:      https://tamminzonlinez.online/login"
+echo "  Email:    dr@tamminzonlinez.online"
 echo "  Password: Banihani00@@71"
 echo ""

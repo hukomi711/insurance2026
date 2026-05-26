@@ -42,7 +42,7 @@ echo "════════════════════════�
 echo "Step 3: Health Check"
 echo "════════════════════════════════════════════════════════════════"
 
-HEALTH=$(curl -k -s -w "%{http_code}" -o /tmp/health.out https://lwxustotamin.online/api/health 2>/dev/null || echo "000")
+HEALTH=$(curl -k -s -w "%{http_code}" -o /tmp/health.out https://tamminzonlinez.online/api/health 2>/dev/null || echo "000")
 echo "Website Health: HTTP $HEALTH"
 
 if [ "$HEALTH" = "200" ]; then
@@ -72,6 +72,6 @@ echo "════════════════════════�
 echo "Setup Complete!"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
-echo "Next: To create admin user 'dr@lwxustotamin.online'"
+echo "Next: To create admin user 'dr@tamminzonlinez.online'"
 echo "Run: /root/create-admin.sh"
 echo ""

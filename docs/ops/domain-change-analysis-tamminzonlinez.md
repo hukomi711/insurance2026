@@ -1,4 +1,4 @@
-# تحليل تغيير الدومين إلى `lwxustotamin.online`
+# تحليل تغيير الدومين إلى `tamminzonlinez.online`
 
 تاريخ الفحص: 2026-05-21
 
@@ -6,7 +6,7 @@
 
 ## الخلاصة التنفيذية
 
-تم تحديث ملفات التشغيل والوثائق وملفات البيئة المحلية/الإنتاجية إلى الدومين الجديد `lwxustotamin.online`، وتم تحويل هدف النشر إلى VPS الجديد `69.57.161.222`. تم كذلك إعادة بناء `public/build` بعد تحديث `.env.production` حتى لا تبقى assets موجهة للدومين القديم. DNS أصبح صحيحا الآن ويشير إلى VPS الجديد من أكثر من resolver. SSH daemon يرد، لكن الدخول غير التفاعلي فشل لأن مفتاح النشر غير مثبت بعد أو لأن السيرفر يتطلب كلمة المرور المؤقتة لأول دخول.
+تم تحديث ملفات التشغيل والوثائق وملفات البيئة المحلية/الإنتاجية إلى الدومين الجديد `tamminzonlinez.online`، وتم تحويل هدف النشر إلى VPS الجديد `69.57.161.222`. تم كذلك إعادة بناء `public/build` بعد تحديث `.env.production` حتى لا تبقى assets موجهة للدومين القديم. DNS أصبح صحيحا الآن ويشير إلى VPS الجديد من أكثر من resolver. SSH daemon يرد، لكن الدخول غير التفاعلي فشل لأن مفتاح النشر غير مثبت بعد أو لأن السيرفر يتطلب كلمة المرور المؤقتة لأول دخول.
 
 أخطر نقاط متبقية:
 
@@ -22,8 +22,8 @@
 
 | النطاق | الحالة الحالية | المتوقع |
 | --- | --- | --- |
-| `lwxustotamin.online` | A -> `69.57.161.222` | صحيح |
-| `www.lwxustotamin.online` | A -> `69.57.161.222` | صحيح |
+| `tamminzonlinez.online` | A -> `69.57.161.222` | صحيح |
+| `www.tamminzonlinez.online` | A -> `69.57.161.222` | صحيح |
 
 تم التحقق أيضا عبر `1.1.1.1` وكانت النتيجة نفسها لكلا النطاقين. DNS جاهز لإصدار Let's Encrypt من ناحية توجيه النطاق. إذا فشل إصدار SSL بعد ذلك، فالسبب التالي الذي يجب فحصه هو وصول HTTP/HTTPS إلى السيرفر وتشغيل Nginx/Certbot.
 
@@ -45,7 +45,7 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 ### ملفات البيئة المحلية
 
 - `.env`
-  - تم تحديث `APP_URL`, `DOMAIN`, `SUPPORT_EMAIL_DOMAIN`, `SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS`, `REVERB_HOST`, `CORS_ALLOWED_ORIGINS`, `VITE_REVERB_HOST`, و`MAIL_FROM_ADDRESS` إلى `lwxustotamin.online`.
+  - تم تحديث `APP_URL`, `DOMAIN`, `SUPPORT_EMAIL_DOMAIN`, `SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS`, `REVERB_HOST`, `CORS_ALLOWED_ORIGINS`, `VITE_REVERB_HOST`, و`MAIL_FROM_ADDRESS` إلى `tamminzonlinez.online`.
 
 - `.env.production`
   - تم تحديث نفس مفاتيح production حتى لا يحقن Vite الدومين القديم داخل ملفات JavaScript عند build.
@@ -63,47 +63,47 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 - `public/build`
   - تمت إعادة بنائه بعد تحديث `.env.production`.
   - الفحص أكد عدم وجود أي دومينات إنتاج قديمة داخل build الحالي.
-  - ملف Echo المبني أصبح يستخدم `lwxustotamin.online`.
+  - ملف Echo المبني أصبح يستخدم `tamminzonlinez.online`.
 
 ### Nginx وSSL
 
 - `docker/nginx/conf.d/default.conf`
-  - `server_name` أصبح `lwxustotamin.online` و`www.lwxustotamin.online`.
-  - التحويلات أصبحت إلى `https://lwxustotamin.online`.
+  - `server_name` أصبح `tamminzonlinez.online` و`www.tamminzonlinez.online`.
+  - التحويلات أصبحت إلى `https://tamminzonlinez.online`.
   - مسارات الشهادات أصبحت:
-    - `/etc/nginx/ssl/live/lwxustotamin.online/fullchain.pem`
-    - `/etc/nginx/ssl/live/lwxustotamin.online/privkey.pem`
-    - `/etc/nginx/ssl/live/lwxustotamin.online/chain.pem`
+    - `/etc/nginx/ssl/live/tamminzonlinez.online/fullchain.pem`
+    - `/etc/nginx/ssl/live/tamminzonlinez.online/privkey.pem`
+    - `/etc/nginx/ssl/live/tamminzonlinez.online/chain.pem`
 
 - `docker/nginx/snippets/security-headers.conf`
   - `connect-src` يسمح الآن بـ:
-    - `wss://lwxustotamin.online`
-    - `wss://www.lwxustotamin.online`
+    - `wss://tamminzonlinez.online`
+    - `wss://www.tamminzonlinez.online`
 
-ملاحظة: `docker/nginx/conf.d/default.conf.template` يستخدم `${DOMAIN}` وليس دومينا hardcoded، وهذا صحيح بشرط أن تكون قيمة `DOMAIN` في `.env` هي `lwxustotamin.online`.
+ملاحظة: `docker/nginx/conf.d/default.conf.template` يستخدم `${DOMAIN}` وليس دومينا hardcoded، وهذا صحيح بشرط أن تكون قيمة `DOMAIN` في `.env` هي `tamminzonlinez.online`.
 
 ### سكربتات النشر والإصلاح
 
 - `deploy-local-direct.sh`
-  - الدومين الافتراضي أصبح `lwxustotamin.online`.
+  - الدومين الافتراضي أصبح `tamminzonlinez.online`.
   - يتم ضبط مفاتيح الدومين الأساسية مباشرة على الدومين الجديد داخل `.env` و`.env.production` على السيرفر.
 
 - `deploy/new-server/repair-current-server.sh`
-  - الدومين الافتراضي أصبح `lwxustotamin.online`.
+  - الدومين الافتراضي أصبح `tamminzonlinez.online`.
   - يتم ضبط مفاتيح الدومين الأساسية مباشرة على الدومين الجديد داخل ملفات البيئة على السيرفر.
 
 - `deploy/new-server/issue-ssl-current-server.sh`
-  - الدومين الافتراضي أصبح `lwxustotamin.online`.
-  - البريد الافتراضي أصبح `admin@lwxustotamin.online`.
+  - الدومين الافتراضي أصبح `tamminzonlinez.online`.
+  - البريد الافتراضي أصبح `admin@tamminzonlinez.online`.
 
 - `deploy-prod.sh`
-  - `INS_DOMAIN` الافتراضي أصبح `lwxustotamin.online`.
+  - `INS_DOMAIN` الافتراضي أصبح `tamminzonlinez.online`.
 
 - `deploy-extract-and-build.sh`
-  - `DOMAIN` أصبح `lwxustotamin.online`.
+  - `DOMAIN` أصبح `tamminzonlinez.online`.
 
 - `deploy/new-server/deploy.sh`
-  - مثال التشغيل أصبح يستخدم `INS_DOMAIN=lwxustotamin.online`.
+  - مثال التشغيل أصبح يستخدم `INS_DOMAIN=tamminzonlinez.online`.
   - السكربت نفسه يعتمد على `INS_DOMAIN` وملف `deploy/new-server/.env.production.template`، وهذا المسار أفضل من الاعتماد على `.env.production.example`.
 
 ### أدوات admin وdiagnostics
@@ -114,7 +114,7 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 - `production-setup.sh`
 - `scripts/watch-taminat-dns.sh`
 
-تم تحديث الروابط والبريد الإداري إلى `lwxustotamin.online`.
+تم تحديث الروابط والبريد الإداري إلى `tamminzonlinez.online`.
 
 ### الوثائق التشغيلية
 
@@ -132,15 +132,15 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 القيم العامة المطلوبة في `.env` و`.env.production`:
 
 ```env
-APP_URL=https://lwxustotamin.online
-DOMAIN=lwxustotamin.online
-SESSION_DOMAIN=.lwxustotamin.online
-REVERB_HOST=lwxustotamin.online
-VITE_REVERB_HOST=lwxustotamin.online
-MAIL_FROM_ADDRESS=no-reply@lwxustotamin.online
-CORS_ALLOWED_ORIGINS=https://lwxustotamin.online,https://www.lwxustotamin.online
-SANCTUM_STATEFUL_DOMAINS=lwxustotamin.online,www.lwxustotamin.online
-SUPPORT_EMAIL_DOMAIN=lwxustotamin.online
+APP_URL=https://tamminzonlinez.online
+DOMAIN=tamminzonlinez.online
+SESSION_DOMAIN=.tamminzonlinez.online
+REVERB_HOST=tamminzonlinez.online
+VITE_REVERB_HOST=tamminzonlinez.online
+MAIL_FROM_ADDRESS=no-reply@tamminzonlinez.online
+CORS_ALLOWED_ORIGINS=https://tamminzonlinez.online,https://www.tamminzonlinez.online
+SANCTUM_STATEFUL_DOMAINS=tamminzonlinez.online,www.tamminzonlinez.online
+SUPPORT_EMAIL_DOMAIN=tamminzonlinez.online
 ```
 
 الأثر إذا تغيرت أو رجعت لقيم قديمة:
@@ -214,7 +214,7 @@ DOMAIN: "${DOMAIN:?set DOMAIN env var (primary public domain)}"
 لذلك يجب أن يحتوي `.env` على:
 
 ```env
-DOMAIN=lwxustotamin.online
+DOMAIN=tamminzonlinez.online
 ```
 
 وإلا سيفشل `docker compose` أو ينتج config بدومين خاطئ.
@@ -224,8 +224,8 @@ DOMAIN=lwxustotamin.online
 ### قبل النشر
 
 1. DNS:
-   - `lwxustotamin.online` -> `69.57.161.222` تم التحقق منه.
-   - `www.lwxustotamin.online` -> `69.57.161.222` تم التحقق منه.
+   - `tamminzonlinez.online` -> `69.57.161.222` تم التحقق منه.
+   - `www.tamminzonlinez.online` -> `69.57.161.222` تم التحقق منه.
 
 2. تسجيل الدخول لأول مرة بكلمة مرور root المؤقتة، تغييرها، ثم تثبيت مفتاح SSH عام في `/root/.ssh/authorized_keys`.
 
@@ -244,15 +244,15 @@ grep -R "<old-production-domain>" public/build || true
 القيم المطلوبة في `.env` على السيرفر:
 
 ```env
-APP_URL=https://lwxustotamin.online
-DOMAIN=lwxustotamin.online
-SESSION_DOMAIN=.lwxustotamin.online
-SANCTUM_STATEFUL_DOMAINS=lwxustotamin.online,www.lwxustotamin.online
-CORS_ALLOWED_ORIGINS=https://lwxustotamin.online,https://www.lwxustotamin.online
-REVERB_HOST=lwxustotamin.online
-VITE_REVERB_HOST=lwxustotamin.online
-SUPPORT_EMAIL_DOMAIN=lwxustotamin.online
-MAIL_FROM_ADDRESS=no-reply@lwxustotamin.online
+APP_URL=https://tamminzonlinez.online
+DOMAIN=tamminzonlinez.online
+SESSION_DOMAIN=.tamminzonlinez.online
+SANCTUM_STATEFUL_DOMAINS=tamminzonlinez.online,www.tamminzonlinez.online
+CORS_ALLOWED_ORIGINS=https://tamminzonlinez.online,https://www.tamminzonlinez.online
+REVERB_HOST=tamminzonlinez.online
+VITE_REVERB_HOST=tamminzonlinez.online
+SUPPORT_EMAIL_DOMAIN=tamminzonlinez.online
+MAIL_FROM_ADDRESS=no-reply@tamminzonlinez.online
 ```
 
 بعد تعديل DNS والبيئة:
@@ -269,21 +269,21 @@ docker exec ins2026-app php artisan event:cache
 ثم إصدار SSL:
 
 ```bash
-DOMAIN=lwxustotamin.online bash deploy/new-server/issue-ssl-current-server.sh
+DOMAIN=tamminzonlinez.online bash deploy/new-server/issue-ssl-current-server.sh
 ```
 
 ثم التحقق:
 
 ```bash
-curl -Ik https://lwxustotamin.online/api/health
-curl -Ik https://lwxustotamin.online/api/health/realtime
-docker exec ins2026-nginx nginx -T | grep -E "server_name|lwxustotamin"
+curl -Ik https://tamminzonlinez.online/api/health
+curl -Ik https://tamminzonlinez.online/api/health/realtime
+docker exec ins2026-nginx nginx -T | grep -E "server_name|tamminzonlinez"
 docker exec ins2026-app printenv | grep -E "APP_URL|DOMAIN|SESSION_DOMAIN|REVERB_HOST|VITE_REVERB_HOST|CORS_ALLOWED_ORIGINS"
 ```
 
 ## حكم الجاهزية
 
-الوضع الحالي غير جاهز للنشر الآلي الكامل على `lwxustotamin.online` عبر SSH.
+الوضع الحالي غير جاهز للنشر الآلي الكامل على `tamminzonlinez.online` عبر SSH.
 
 السبب ليس الكود الأساسي ولا DNS، بل نقطة تشغيلية واحدة:
 

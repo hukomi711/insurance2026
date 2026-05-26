@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\LoginAttempt;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -100,7 +102,22 @@ class AuthController extends Controller
 
         // ── Generate 2FA code and send to the configured verification email ─────
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
-        Mail::to(self::verificationEmails($user))->send(new AdminLoginVerification($loginCode));
+
+        try {
+            Mail::to(self::verificationEmails($user))->send(new AdminLoginVerification($loginCode));
+        } catch (Throwable $exception) {
+            Log::error('Admin login verification email failed', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'ip' => $request->ip(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'تعذر إرسال رمز التحقق حالياً. يرجى المحاولة لاحقاً أو التواصل مع الدعم.',
+            ], 503);
+        }
 
         // Use a short-lived opaque token instead of exposing the user_id.
         // TTL must match AdminLoginCode::generateFor expires_at (5 min) so the
@@ -227,7 +244,22 @@ class AuthController extends Controller
         }
 
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
-        Mail::to(self::verificationEmails($user))->send(new AdminLoginVerification($loginCode));
+
+        try {
+            Mail::to(self::verificationEmails($user))->send(new AdminLoginVerification($loginCode));
+        } catch (Throwable $exception) {
+            Log::error('Admin verification resend email failed', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'ip' => $request->ip(),
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'تعذر إعادة إرسال رمز التحقق حالياً. يرجى المحاولة لاحقاً أو التواصل مع الدعم.',
+            ], 503);
+        }
 
         return response()->json([
             'success' => true,

@@ -174,6 +174,15 @@ server {
         try_files $uri $uri/ /index.php?$query_string;
     }
 
+    # ── Legacy admin login paths (safe redirects to SPA auth routes) ──────────
+    # Keep old bookmarks working without exposing /admin/* behind allowlist.
+    location = /admin/login {
+        return 302 /login$is_args$args;
+    }
+    location = /admin/verify {
+        return 302 /admin-verify$is_args$args;
+    }
+
     # ── Admin panel — IP restriction (before Laravel) ────────────
     # Split into exact + prefix so /adminanything cannot match.
     location = /admin {
