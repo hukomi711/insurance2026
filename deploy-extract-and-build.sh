@@ -130,6 +130,19 @@ fi
 # Substitute __DOMAIN__ placeholder
 sed -i "s|__DOMAIN__|${DOMAIN}|g" "$ENV_FILE"
 
+set_env_value "$ENV_FILE" "APP_URL" "https://${DOMAIN}"
+set_env_value "$ENV_FILE" "ASSET_URL" "https://${DOMAIN}"
+set_env_value "$ENV_FILE" "DOMAIN" "${DOMAIN}"
+set_env_value "$ENV_FILE" "SUPPORT_EMAIL_DOMAIN" "${DOMAIN}"
+set_env_value "$ENV_FILE" "SESSION_DOMAIN" ".${DOMAIN}"
+set_env_value "$ENV_FILE" "SANCTUM_STATEFUL_DOMAINS" "${DOMAIN},www.${DOMAIN}"
+set_env_value "$ENV_FILE" "CORS_ALLOWED_ORIGINS" "https://${DOMAIN},https://www.${DOMAIN}"
+set_env_value "$ENV_FILE" "REVERB_HOST" "${DOMAIN}"
+set_env_value "$ENV_FILE" "REVERB_ALLOWED_ORIGINS" "https://${DOMAIN},https://www.${DOMAIN},http://${DOMAIN},http://www.${DOMAIN}"
+set_env_value "$ENV_FILE" "VITE_REVERB_HOST" "${DOMAIN}"
+set_env_value "$ENV_FILE" "MAIL_FROM_ADDRESS" "support@${DOMAIN}"
+set_env_value "$ENV_FILE" "ADMIN_VERIFICATION_EMAIL" "support@${DOMAIN}"
+
 # Keep the existing database secret stable across redeploys. The MariaDB data
 # volume survives extraction, so replacing DB_PASSWORD from an older env backup
 # breaks app authentication against the existing database user.
