@@ -193,12 +193,13 @@ server {
         include /etc/nginx/snippets/admin-allowlist.conf;
         try_files $uri $uri/ /index.php?$query_string;
     }
+    # Admin API is protected by Laravel Sanctum + admin middleware. Do not apply
+    # the Nginx IP allowlist here, otherwise valid 2FA logins from dynamic IPs
+    # receive an HTML 403 before /api/admin/me reaches Laravel.
     location = /api/admin {
-        include /etc/nginx/snippets/admin-allowlist.conf;
         try_files $uri $uri/ /index.php?$query_string;
     }
     location ^~ /api/admin/ {
-        include /etc/nginx/snippets/admin-allowlist.conf;
         try_files $uri $uri/ /index.php?$query_string;
     }
 
