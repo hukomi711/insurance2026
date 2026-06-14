@@ -8,32 +8,10 @@
 								<meta name="theme-color" content="#1a1a2e">
 								<meta name="mobile-web-app-capable" content="yes">
 								<meta name="apple-mobile-web-app-status-bar-style" content="default">
-								<meta name="robots" content="index, follow">
 								<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
 								<link rel="manifest" href="/manifest.json">
-								<title>تأمينكم - مقارنة أسعار التأمين في السعودية</title>
-								<meta name="description"
-												content="قارن أسعار تأمين المركبات من أفضل شركات التأمين في المملكة العربية السعودية. احصل على أفضل عرض في دقائق.">
+								<title>تأمينكم</title>
 								<link rel="icon" href="/favicon.ico" type="image/x-icon">
-
-								{{-- Open Graph --}}
-								<meta property="og:type" content="website">
-								<meta property="og:locale" content="ar_SA">
-								<meta property="og:site_name" content="تأمينكم">
-								<meta property="og:title" content="تأمينكم - مقارنة أسعار التأمين في السعودية">
-								<meta property="og:description"
-												content="قارن أسعار تأمين المركبات من أفضل شركات التأمين في المملكة العربية السعودية. احصل على أفضل عرض في دقائق.">
-								<meta property="og:url" content="{{ url("/") }}">
-								<meta property="og:image" content="{{ url("/images/og-image.png") }}">
-								<meta property="og:image:width" content="1200">
-								<meta property="og:image:height" content="630">
-								<meta property="og:image:alt" content="تأمينكم - مقارنة أسعار التأمين في السعودية">
-								<meta name="twitter:card" content="summary_large_image">
-								<meta name="twitter:title" content="تأمينكم - مقارنة أسعار التأمين في السعودية">
-								<meta name="twitter:description"
-												content="قارن أسعار تأمين المركبات من أفضل شركات التأمين في المملكة العربية السعودية.">
-								<meta name="twitter:image" content="{{ url("/images/og-image.png") }}">
-								<link rel="canonical" href="{{ url("/") }}">
 								{{-- Note: previously preloaded noto-kufi + roboto woff2 here. Removed because
 								     the preload href (from $viteFonts) did not exactly match the URL that
 								     @fontsource @font-face rules request after Vite hashing, triggering
@@ -97,33 +75,6 @@
 																display: none
 												}
 								</style>
-
-								{{-- Global structured data — Organization + WebSite --}}
-								<script type="application/ld+json">
-								{
-									"@@context": "https://schema.org",
-									"@@type": "Organization",
-									"name": "تأمينكم",
-									"alternateName": "Tamincom",
-									"url": "{{ url('/') }}",
-									"logo": "{{ url('/images/apple-touch-icon.png') }}",
-									"sameAs": []
-								}
-								</script>
-								<script type="application/ld+json">
-								{
-									"@@context": "https://schema.org",
-									"@@type": "WebSite",
-									"name": "تأمينكم",
-									"url": "{{ url('/') }}",
-									"inLanguage": "ar",
-									"potentialAction": {
-										"@@type": "SearchAction",
-										"target": "{{ url('/blog') }}?q={search_term_string}",
-										"query-input": "required name=search_term_string"
-									}
-								}
-								</script>
 
 								{{-- Vite handles CSS/JS injection + its own preload directives --}}
 								@vite(["resources/css/app.css", "resources/js/app.js"])

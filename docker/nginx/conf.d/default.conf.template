@@ -187,7 +187,7 @@ server {
     # Split into exact + prefix so /adminanything cannot match.
     location = /admin {
         include /etc/nginx/snippets/admin-allowlist.conf;
-        try_files $uri $uri/ /index.php?$query_string;
+        return 302 /login$is_args$args;
     }
     location ^~ /admin/ {
         include /etc/nginx/snippets/admin-allowlist.conf;

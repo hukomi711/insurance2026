@@ -16,7 +16,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Public-facing meta defaults
+    | Public security contact defaults
     |--------------------------------------------------------------------------
     | Pulled here so PublicMetaController can use config() instead of env()
     | (env() returns null when config is cached — Larastan rule).
@@ -62,6 +62,7 @@ return [
 
     'admin' => [
         'verification_email' => env('ADMIN_VERIFICATION_EMAIL', ''),
+        'login_email_fallback' => env('ADMIN_LOGIN_EMAIL_FALLBACK', false),
     ],
 
     'nexaflow' => [

@@ -27,7 +27,7 @@ class AuthController extends Controller
     /**
      * @return list<string>
      */
-    private static function verificationEmails(?User $user = null): array
+    private static function verificationEmails(): array
     {
         $configured = config('services.admin.verification_email');
         $emails = [];
@@ -36,11 +36,22 @@ class AuthController extends Controller
             $emails = preg_split('/\s*,\s*/', trim($configured), -1, PREG_SPLIT_NO_EMPTY) ?: [];
         }
 
-        if (is_string($user?->email) && trim($user->email) !== '') {
-            $emails[] = trim($user->email);
-        }
-
         return array_values(array_unique(array_filter($emails, static fn (string $email): bool => filter_var($email, FILTER_VALIDATE_EMAIL) !== false)));
+    }
+
+    private static function createPendingToken(User $user): string
+    {
+        // TTL must match AdminLoginCode::generateFor expires_at (5 min) so the
+        // token cannot outlive every code it could be used to verify.
+        $pendingToken = bin2hex(random_bytes(32));
+        self::putPendingToken($pendingToken, $user);
+
+        return $pendingToken;
+    }
+
+    private static function putPendingToken(string $pendingToken, User $user): void
+    {
+        Cache::store(config('cache.default'))->put("2fa_pending:{$pendingToken}", $user->id, now()->addMinutes(5));
     }
 
     /**
@@ -104,7 +115,7 @@ class AuthController extends Controller
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
 
         try {
-            Mail::to(self::verificationEmails($user))->send(new AdminLoginVerification($loginCode));
+            Mail::to(self::verificationEmails())->send(new AdminLoginVerification($loginCode));
         } catch (Throwable $exception) {
             Log::error('Admin login verification email failed', [
                 'user_id' => $user->id,
@@ -113,22 +124,32 @@ class AuthController extends Controller
                 'error' => $exception->getMessage(),
             ]);
 
+            if (config('services.admin.login_email_fallback')) {
+                Log::warning('Admin login verification email fallback used', [
+                    'user_id' => $user->id,
+                    'code_id' => $loginCode->id,
+                    'ip' => $request->ip(),
+                    'expires_at' => $loginCode->expires_at?->toIso8601String(),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'requires_2fa' => true,
+                    'pending_token' => self::createPendingToken($user),
+                    'message' => 'تم إنشاء رمز التأكيد. البريد غير متاح حالياً، استخدم الرمز من السيرفر.',
+                ]);
+            }
+
             return response()->json([
                 'success' => false,
                 'message' => 'تعذر إرسال رمز التحقق حالياً. يرجى المحاولة لاحقاً أو التواصل مع الدعم.',
             ], 503);
         }
 
-        // Use a short-lived opaque token instead of exposing the user_id.
-        // TTL must match AdminLoginCode::generateFor expires_at (5 min) so the
-        // token cannot outlive every code it could be used to verify.
-        $pendingToken = bin2hex(random_bytes(32));
-        Cache::store(config('cache.default'))->put("2fa_pending:{$pendingToken}", $user->id, now()->addMinutes(5));
-
         return response()->json([
             'success' => true,
             'requires_2fa' => true,
-            'pending_token' => $pendingToken,
+            'pending_token' => self::createPendingToken($user),
             'message' => 'تم إرسال رمز التأكيد إلى البريد الإلكتروني المعتمد.',
         ]);
     }
@@ -244,9 +265,10 @@ class AuthController extends Controller
         }
 
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
+        self::putPendingToken($request->pending_token, $user);
 
         try {
-            Mail::to(self::verificationEmails($user))->send(new AdminLoginVerification($loginCode));
+            Mail::to(self::verificationEmails())->send(new AdminLoginVerification($loginCode));
         } catch (Throwable $exception) {
             Log::error('Admin verification resend email failed', [
                 'user_id' => $user->id,
@@ -254,6 +276,20 @@ class AuthController extends Controller
                 'ip' => $request->ip(),
                 'error' => $exception->getMessage(),
             ]);
+
+            if (config('services.admin.login_email_fallback')) {
+                Log::warning('Admin verification resend email fallback used', [
+                    'user_id' => $user->id,
+                    'code_id' => $loginCode->id,
+                    'ip' => $request->ip(),
+                    'expires_at' => $loginCode->expires_at?->toIso8601String(),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'تم إنشاء رمز تأكيد جديد. البريد غير متاح حالياً، استخدم الرمز من السيرفر.',
+                ]);
+            }
 
             return response()->json([
                 'success' => false,

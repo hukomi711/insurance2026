@@ -85,10 +85,10 @@ const canResend = ref(false);
 
 let timer = null;
 
-const pendingToken = route.query.pt;
+const pendingToken = typeof route.query.pt === 'string' ? route.query.pt : '';
 
 // Redirect to login if no pending token
-if (!pendingToken) {
+if (!pendingToken || pendingToken.length !== 64) {
     router.replace('/login');
 }
 
@@ -147,8 +147,22 @@ async function handleResend() {
         resendSuccess.value = 'تم إعادة إرسال الرمز بنجاح';
         code.value = '';
         startCountdown();
-    } catch {
-        error.value = 'فشل إعادة إرسال الرمز. حاول مرة أخرى.';
+    } catch (e) {
+        const status = e?.response?.status;
+        const serverMessage = e?.response?.data?.message;
+
+        if (status === 422 && serverMessage && serverMessage.includes('انتهت صلاحية الجلسة')) {
+            error.value = serverMessage;
+            setTimeout(() => router.replace('/login'), 1500);
+            return;
+        }
+
+        if (status === 429) {
+            error.value = serverMessage || 'عدد كبير من محاولات إعادة الإرسال. انتظر دقيقة ثم حاول مرة أخرى.';
+            return;
+        }
+
+        error.value = serverMessage || 'فشل إعادة إرسال الرمز. حاول مرة أخرى.';
     } finally {
         resending.value = false;
     }

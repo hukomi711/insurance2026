@@ -28,8 +28,16 @@ class DatabaseSeeder extends Seeder
             );
         }
 
+        $adminEmail = trim((string) env('ADMIN_EMAIL', 'admin@insurance.com'));
+        $adminEmail = $adminEmail !== '' ? $adminEmail : 'admin@insurance.com';
+
+        $legacyAdmin = User::where('email', 'admin@insurance.com')->first();
+        if ($legacyAdmin && $legacyAdmin->email !== $adminEmail) {
+            $legacyAdmin->forceFill(['email' => $adminEmail])->save();
+        }
+
         User::updateOrCreate(
-            ['email' => 'admin@insurance.com'],
+            ['email' => $adminEmail],
             [
                 'name' => 'مدير النظام',
                 'password' => Hash::make($adminPassword),

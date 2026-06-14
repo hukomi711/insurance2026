@@ -23,6 +23,16 @@ class TrackCustomerActivity
         'sanctum',
         '_ignition',
         'livewire',
+        'robots.txt',
+        'sitemap.xml',
+        '.well-known',
+        'favicon.ico',
+        'build',
+        'assets',
+        'images',
+        'img',
+        'fonts',
+        'Fonts',
     ];
 
     public function handle(Request $request, Closure $next): Response

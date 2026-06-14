@@ -82,6 +82,10 @@ services:
 
   # ── Laravel Horizon (queue workers) ──────────────────────────
   horizon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
     image: insurance2026-app
     container_name: ins2026-horizon
     restart: unless-stopped
@@ -109,6 +113,10 @@ services:
 
   # ── Laravel Reverb (WebSocket server) ────────────────────────
   reverb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
     image: insurance2026-app
     container_name: ins2026-reverb
     restart: unless-stopped
@@ -137,6 +145,10 @@ services:
 
   # ── Laravel Scheduler (cron replacement) ─────────────────────
   scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
     image: insurance2026-app
     container_name: ins2026-scheduler
     restart: unless-stopped

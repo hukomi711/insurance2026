@@ -2,8 +2,8 @@
 set -euo pipefail
 
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/insurance2026}"
-DOMAIN="${DOMAIN:-tamminzonlinez.online}"
-EMAIL="${EMAIL:-admin@tamminzonlinez.online}"
+DOMAIN="${DOMAIN:-tttaaammmin.xyz}"
+EMAIL="${EMAIL:-admin@tttaaammmin.xyz}"
 
 cd "$DEPLOY_DIR"
 

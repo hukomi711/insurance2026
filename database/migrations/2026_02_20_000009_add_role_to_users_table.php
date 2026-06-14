@@ -12,8 +12,11 @@ return new class extends Migration
             $table->string('role', 20)->default('user')->after('email');
         });
 
-        // Set existing admin user role
-        \App\Models\User::where('email', 'admin@insurance.com')->update(['role' => 'admin']);
+        // Set the admin role on the configured admin account (fallback to the legacy email).
+        $adminEmail = trim((string) env('ADMIN_EMAIL', 'admin@insurance.com'));
+        $adminEmail = $adminEmail !== '' ? $adminEmail : 'admin@insurance.com';
+
+        \App\Models\User::where('email', $adminEmail)->update(['role' => 'admin']);
     }
 
     public function down(): void

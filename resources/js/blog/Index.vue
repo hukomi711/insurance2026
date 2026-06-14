@@ -85,8 +85,13 @@ const articles = ref( [
 const categories = computed( () =>
 {
     const cats = new Set( articles.value.map( a => a.category ) );
-    return [ ...cats ].map( name => ( { name } ) );
+    return [ ...cats ].map( name => ( {
+        name,
+        count: articles.value.filter( article => article.category === name ).length,
+    } ) );
 } );
+
+const featuredArticle = computed( () => articles.value[0] );
 
 // البحث والفلترة
 const searchQuery = ref( '' );
@@ -146,6 +151,15 @@ onMounted( () =>
     document.title = t( 'blog.title' ) + ' - تأمينكم';
 
     const origin = publicOrigin();
+    const canonicalUrl = `${ origin }/blog`;
+    const description = 'مقالات وإرشادات عملية عن تأمين السيارات والتأمين الصحي والحقوق التأمينية في السعودية.';
+
+    setHeadTag( 'meta', 'name', 'description', { content: description } );
+    setHeadTag( 'link', 'rel', 'canonical', { href: canonicalUrl } );
+    setHeadTag( 'meta', 'property', 'og:title', { content: `${ t( 'blog.title' ) } - تأمينكم` } );
+    setHeadTag( 'meta', 'property', 'og:description', { content: description } );
+    setHeadTag( 'meta', 'property', 'og:url', { content: canonicalUrl } );
+
     injectJsonLd( 'seo-breadcrumb', {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
@@ -170,7 +184,30 @@ onUnmounted( () =>
 {
     clearTimeout( newsletterTimer );
     cleanupJsonLd();
+    cleanupHeadTags();
 } );
+
+const managedHeadTags = [];
+
+function setHeadTag ( tagName, keyName, keyValue, attributes )
+{
+    const selector = `${ tagName }[${ keyName }="${ keyValue }"]`;
+    let element = document.head.querySelector( selector );
+    if ( !element )
+    {
+        element = document.createElement( tagName );
+        element.setAttribute( keyName, keyValue );
+        document.head.appendChild( element );
+    }
+
+    Object.entries( attributes ).forEach( ( [ key, value ] ) => element.setAttribute( key, value ) );
+    managedHeadTags.push( element );
+}
+
+function cleanupHeadTags ()
+{
+    managedHeadTags.splice( 0 ).forEach( element => element.remove() );
+}
 </script>
 
 <template>
@@ -190,6 +227,34 @@ onUnmounted( () =>
         <!-- Search & Filter -->
         <section class="py-8">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <article v-if="featuredArticle && !searchQuery && !selectedCategory"
+                    class="mb-10 grid gap-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[1.1fr_0.9fr]">
+                    <div class="aspect-video bg-slate-100 lg:aspect-auto">
+                        <img :src="featuredArticle.image" :alt="featuredArticle.title"
+                            class="h-full w-full object-cover" loading="eager" decoding="async" width="1024"
+                            height="562" fetchpriority="high" />
+                    </div>
+                    <div class="flex flex-col justify-center p-6 lg:p-8">
+                        <div class="mb-4 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                            <span class="rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700">
+                                {{ featuredArticle.category }}
+                            </span>
+                            <span>{{ featuredArticle.date }}</span>
+                            <span>{{ featuredArticle.read_time }}</span>
+                        </div>
+                        <h2 class="text-2xl font-bold leading-snug text-slate-950 lg:text-3xl">
+                            {{ featuredArticle.title }}
+                        </h2>
+                        <p class="mt-4 text-base leading-8 text-slate-600">
+                            {{ featuredArticle.excerpt }}
+                        </p>
+                        <RouterLink :to="{ name: 'blog.show', params: { slug: featuredArticle.slug } }"
+                            class="mt-6 inline-flex w-fit items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700">
+                            {{ t( 'blog.readMore' ) }}
+                        </RouterLink>
+                    </div>
+                </article>
+
                 <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
                     <!-- Search -->
                     <div class="relative flex-1 max-w-md w-full">
@@ -222,7 +287,20 @@ onUnmounted( () =>
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             ]" @click="selectedCategory = category.name">
                             {{ category.name }}
+                            <span class="ms-1 text-xs opacity-75">({{ category.count }})</span>
                         </button>
+                    </div>
+                </div>
+
+                <div class="mt-8 grid grid-cols-1 gap-3 text-sm text-slate-600 md:grid-cols-3">
+                    <div class="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                        محتوى موجه للسوق السعودي ومراجع تشغيلية واضحة.
+                    </div>
+                    <div class="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                        لا نعرض وعودًا مضللة أو روابط تحميل مشبوهة.
+                    </div>
+                    <div class="rounded-lg border border-slate-200 bg-white px-4 py-3">
+                        روابط فهرسة واضحة عبر sitemap و robots.
                     </div>
                 </div>
             </div>
@@ -322,13 +400,16 @@ onUnmounted( () =>
                     <input id="newsletter-email" v-model="newsletterEmail" name="newsletter-email" type="email"
                         :placeholder="t( 'blog.newsletter.placeholder' )" autocomplete="email" required
                         class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                    <button type="submit"
-                        class="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors">
-                        {{ t( 'blog.newsletter.button' ) }}
+                    <button type="submit" :disabled="newsletterLoading"
+                        class="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors">
+                        {{ newsletterLoading ? 'جاري الإرسال...' : t( 'blog.newsletter.button' ) }}
                     </button>
                 </form>
                 <p v-if="newsletterSubmitted" class="mt-4 text-green-600 font-medium">
                     {{ t( 'blog.newsletter.success' ) }}
+                </p>
+                <p v-if="newsletterError" class="mt-4 text-red-600 font-medium">
+                    {{ newsletterError }}
                 </p>
             </div>
         </section>

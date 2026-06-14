@@ -16,10 +16,10 @@
         "test": "vitest run",
         "test:watch": "vitest",
         "test:coverage": "vitest run --coverage",
-        "budget": "node scripts/check-bundle-size.cjs",
-        "deps:health": "node scripts/check-deps-health.cjs",
-        "deps:outdated": "node scripts/check-outdated.cjs",
-        "loadtest:customer-page": "node scripts/load-test-customer-page.mjs",
+        "budget": "node scripts/quality/check-bundle-size.cjs",
+        "deps:health": "node scripts/quality/check-deps-health.cjs",
+        "deps:outdated": "node scripts/quality/check-outdated.cjs",
+        "loadtest:customer-page": "node scripts/quality/load-test-customer-page.mjs",
         "ci:check": "npm run test && npm run build && npm run budget && npm run deps:health"
     },
     "dependencies": {

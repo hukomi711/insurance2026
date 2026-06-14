@@ -3,7 +3,8 @@ set -euo pipefail
 
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/insurance2026}"
 BACKUP_DIR="${BACKUP_DIR:-/opt/insurance2026.backup.20260520171801}"
-DOMAIN="${DOMAIN:-tamminzonlinez.online}"
+DOMAIN="${DOMAIN:-tttaaammmin.xyz}"
+ADMIN_VERIFICATION_EMAIL="${ADMIN_VERIFICATION_EMAIL:-support@lexusforbon.it.com}"
 
 cd "$DEPLOY_DIR"
 TS="$(date +%Y%m%d%H%M%S)"
@@ -71,9 +72,9 @@ normalize_domain_env() {
   set_env_value "$env_file" "REVERB_HOST" "$DOMAIN"
   set_env_value "$env_file" "REVERB_ALLOWED_ORIGINS" "https://$DOMAIN,https://www.$DOMAIN,http://$DOMAIN,http://www.$DOMAIN"
   set_env_value "$env_file" "VITE_REVERB_HOST" "$DOMAIN"
-  set_env_value "$env_file" "MAIL_USERNAME" "support@$DOMAIN"
-  set_env_value "$env_file" "MAIL_FROM_ADDRESS" "support@$DOMAIN"
-  set_env_value "$env_file" "ADMIN_VERIFICATION_EMAIL" "support@$DOMAIN"
+  set_env_value "$env_file" "MAIL_USERNAME" "$ADMIN_VERIFICATION_EMAIL"
+  set_env_value "$env_file" "MAIL_FROM_ADDRESS" "$ADMIN_VERIFICATION_EMAIL"
+  set_env_value "$env_file" "ADMIN_VERIFICATION_EMAIL" "$ADMIN_VERIFICATION_EMAIL"
 }
 
 for env_file in .env .env.production; do

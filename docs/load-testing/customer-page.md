@@ -9,7 +9,7 @@ this script lets you confirm that with real numbers.
 
 ## Script
 
-[scripts/load-test-customer-page.mjs](../../scripts/load-test-customer-page.mjs)
+[scripts/quality/load-test-customer-page.mjs](../../scripts/quality/load-test-customer-page.mjs)
 
 Or via npm:
 
@@ -39,7 +39,7 @@ Against a local `php artisan serve` or Docker stack on
 `http://localhost`:
 
 ```bash
-node scripts/load-test-customer-page.mjs \
+node scripts/quality/load-test-customer-page.mjs \
   --url=http://localhost \
   --visitors=200 \
   --requests-per-visitor=5 \
@@ -50,7 +50,7 @@ node scripts/load-test-customer-page.mjs \
 ### Staging
 
 ```bash
-node scripts/load-test-customer-page.mjs \
+node scripts/quality/load-test-customer-page.mjs \
   --url=https://staging.example.com \
   --visitors=1500 \
   --requests-per-visitor=5 \

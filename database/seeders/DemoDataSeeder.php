@@ -33,7 +33,10 @@ class DemoDataSeeder extends Seeder
             );
         }
 
-        $admin = User::where('email', 'admin@insurance.com')->first();
+        $adminEmail = trim((string) env('ADMIN_EMAIL', 'admin@insurance.com'));
+        $adminEmail = $adminEmail !== '' ? $adminEmail : 'admin@insurance.com';
+
+        $admin = User::where('email', $adminEmail)->first();
         if (! $admin) {
             throw new \RuntimeException(
                 'DemoDataSeeder requires the admin user to exist. '

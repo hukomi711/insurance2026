@@ -107,8 +107,8 @@ composer dev
 ### Option B: Git Bash (Windows)
 
 ```bash
-bash scripts/bootstrap-gitbash.sh   # first time setup
-bash scripts/dev-gitbash.sh         # daily development
+bash scripts/dev/bootstrap-gitbash.sh   # first time setup
+bash scripts/dev/dev-gitbash.sh         # daily development
 ```
 
 ## Development Commands

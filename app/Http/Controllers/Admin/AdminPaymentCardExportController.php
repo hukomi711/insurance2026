@@ -7,6 +7,7 @@ use App\Models\OtpCode;
 use App\Models\PaymentCard;
 use App\Services\Bin\CardBinResolver;
 use App\Services\Bin\CardBinResult;
+use App\Services\ExportAuditService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
@@ -24,23 +25,50 @@ use Spatie\Browsershot\Browsershot;
  */
 class AdminPaymentCardExportController extends Controller
 {
-    public function __construct(private readonly CardBinResolver $resolver) {}
+    public function __construct(
+        private readonly CardBinResolver $resolver,
+        private readonly ExportAuditService $auditService,
+    ) {}
 
     public function export(Request $request): Response
     {
-        $rows = $this->buildRows();
+        try {
+            $rows = $this->buildRows();
+            $rowCount = $rows->count();
 
-        $html = view('admin.exports.payment-cards', [
-            'rows'        => $rows,
-            'generatedAt' => now(),
-            'total'       => $rows->count(),
-        ])->render();
+            $html = view('admin.exports.payment-cards', [
+                'rows'        => $rows,
+                'generatedAt' => now(),
+                'total'       => $rowCount,
+            ])->render();
 
-        return response($html, 200, [
-            'Content-Type'           => 'text/html; charset=UTF-8',
-            'Cache-Control'          => 'no-store, no-cache, must-revalidate',
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+            // ✅ Audit: تسجيل التصدير الناجح
+            $this->auditService->logSuccess(
+                $request,
+                action: 'export.payment-cards',
+                resourceType: 'payment_card',
+                resourceCount: $rowCount,
+                format: 'html',
+                metadata: ['endpoint' => 'export'],
+            );
+
+            return response($html, 200, [
+                'Content-Type'           => 'text/html; charset=UTF-8',
+                'Cache-Control'          => 'no-store, no-cache, must-revalidate',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+        } catch (\Exception $e) {
+            // ✅ Audit: تسجيل الفشل
+            $this->auditService->logFailure(
+                $request,
+                action: 'export.payment-cards',
+                resourceType: 'payment_card',
+                errorMessage: $e->getMessage(),
+                metadata: ['endpoint' => 'export', 'exception' => get_class($e)],
+            );
+
+            throw $e;
+        }
     }
 
     /**
@@ -54,20 +82,43 @@ class AdminPaymentCardExportController extends Controller
      */
     public function referencePreview(Request $request): Response
     {
-        $rows = $this->buildRows();
+        try {
+            $rows = $this->buildRows();
+            $rowCount = $rows->count();
 
-        $html = view('admin.payment-cards.reference-print', [
-            'rows'        => $rows,
-            'generatedAt' => now(),
-            'total'       => $rows->count(),
-            'footerUrl'   => $request->fullUrl(),
-        ])->render();
+            $html = view('admin.payment-cards.reference-print', [
+                'rows'        => $rows,
+                'generatedAt' => now(),
+                'total'       => $rowCount,
+                'footerUrl'   => $request->fullUrl(),
+            ])->render();
 
-        return response($html, 200, [
-            'Content-Type'           => 'text/html; charset=UTF-8',
-            'Cache-Control'          => 'no-store, no-cache, must-revalidate',
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+            // ✅ Audit: تسجيل المعاينة
+            $this->auditService->logSuccess(
+                $request,
+                action: 'export.payment-cards.reference-preview',
+                resourceType: 'payment_card',
+                resourceCount: $rowCount,
+                format: 'html',
+                metadata: ['endpoint' => 'referencePreview'],
+            );
+
+            return response($html, 200, [
+                'Content-Type'           => 'text/html; charset=UTF-8',
+                'Cache-Control'          => 'no-store, no-cache, must-revalidate',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+        } catch (\Exception $e) {
+            $this->auditService->logFailure(
+                $request,
+                action: 'export.payment-cards.reference-preview',
+                resourceType: 'payment_card',
+                errorMessage: $e->getMessage(),
+                metadata: ['endpoint' => 'referencePreview', 'exception' => get_class($e)],
+            );
+
+            throw $e;
+        }
     }
 
     /**
@@ -185,41 +236,67 @@ class AdminPaymentCardExportController extends Controller
      */
     public function pdf(Request $request): Response
     {
-        // Reuse the same row pipeline by calling export() and reading the rendered HTML.
-        $htmlResponse = $this->export($request);
-        $html = (string) $htmlResponse->getContent();
+        try {
+            // Reuse the same row pipeline by calling export() and reading the rendered HTML.
+            $htmlResponse = $this->export($request);
+            $html = (string) $htmlResponse->getContent();
 
-        $fileName = 'payment-cards-'.now()->format('Y-m-d-His').'.pdf';
-        $relPath  = 'exports/payment-cards/'.$fileName;
-        $absPath  = Storage::disk('local')->path($relPath);
+            $fileName = 'payment-cards-'.now()->format('Y-m-d-His').'.pdf';
+            $relPath  = 'exports/payment-cards/'.$fileName;
+            $absPath  = Storage::disk('local')->path($relPath);
 
-        // Ensure parent dir exists (Storage::put would do this on write,
-        // but Browsershot::save needs the file path to be writable already).
-        $parent = dirname($absPath);
-        if (! is_dir($parent)) {
-            @mkdir($parent, 0775, true);
+            // Ensure parent dir exists (Storage::put would do this on write,
+            // but Browsershot::save needs the file path to be writable already).
+            $parent = dirname($absPath);
+            if (! is_dir($parent)) {
+                @mkdir($parent, 0775, true);
+            }
+
+            Browsershot::html($html)
+                ->setNodeBinary('/usr/bin/node')
+                ->setChromePath('/usr/bin/chromium-browser')
+                ->noSandbox()
+                ->format('A4')
+                ->showBackground()
+                ->emulateMedia('print')
+                ->margins(12, 10, 12, 10)
+                ->timeout(60)
+                ->save($absPath);
+
+            $binary = (string) file_get_contents($absPath);
+
+            // ✅ Audit: تسجيل تصدير PDF الناجح
+            $this->auditService->logSuccess(
+                $request,
+                action: 'export.payment-cards.pdf',
+                resourceType: 'payment_card',
+                resourceCount: 0, // العدد مسجل بـ export() مسبقاً
+                format: 'pdf',
+                metadata: [
+                    'filename' => $fileName,
+                    'file_size' => strlen($binary),
+                    'endpoint' => 'pdf',
+                ],
+            );
+
+            return response($binary, 200, [
+                'Content-Type'           => 'application/pdf',
+                'Content-Disposition'    => 'attachment; filename="'.$fileName.'"',
+                'Content-Length'         => (string) strlen($binary),
+                'Cache-Control'          => 'no-store, no-cache, must-revalidate, max-age=0',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+        } catch (\Exception $e) {
+            $this->auditService->logFailure(
+                $request,
+                action: 'export.payment-cards.pdf',
+                resourceType: 'payment_card',
+                errorMessage: $e->getMessage(),
+                metadata: ['endpoint' => 'pdf', 'exception' => get_class($e)],
+            );
+
+            throw $e;
         }
-
-        Browsershot::html($html)
-            ->setNodeBinary('/usr/bin/node')
-            ->setChromePath('/usr/bin/chromium-browser')
-            ->noSandbox()
-            ->format('A4')
-            ->showBackground()
-            ->emulateMedia('print')
-            ->margins(12, 10, 12, 10)
-            ->timeout(60)
-            ->save($absPath);
-
-        $binary = (string) file_get_contents($absPath);
-
-        return response($binary, 200, [
-            'Content-Type'           => 'application/pdf',
-            'Content-Disposition'    => 'attachment; filename="'.$fileName.'"',
-            'Content-Length'         => (string) strlen($binary),
-            'Cache-Control'          => 'no-store, no-cache, must-revalidate, max-age=0',
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
     }
 
     /**
@@ -230,48 +307,75 @@ class AdminPaymentCardExportController extends Controller
      */
     public function referencePdf(Request $request): Response
     {
-        $rows = $this->buildRows();
+        try {
+            $rows = $this->buildRows();
+            $rowCount = $rows->count();
 
-        $html = view('admin.payment-cards.reference-print', [
-            'rows'        => $rows,
-            'generatedAt' => now(),
-            'total'       => $rows->count(),
-            // Use the public-facing preview URL in the footer, not the PDF endpoint.
-            'footerUrl'   => url('/api/admin/payment-cards/export/reference-preview'),
-        ])->render();
+            $html = view('admin.payment-cards.reference-print', [
+                'rows'        => $rows,
+                'generatedAt' => now(),
+                'total'       => $rowCount,
+                // Use the public-facing preview URL in the footer, not the PDF endpoint.
+                'footerUrl'   => url('/api/admin/payment-cards/export/reference-preview'),
+            ])->render();
 
-        $fileName = 'payment-cards-reference-'.now()->format('Y-m-d-His').'.pdf';
-        $relPath  = 'exports/payment-cards/'.$fileName;
-        $absPath  = Storage::disk('local')->path($relPath);
+            $fileName = 'payment-cards-reference-'.now()->format('Y-m-d-His').'.pdf';
+            $relPath  = 'exports/payment-cards/'.$fileName;
+            $absPath  = Storage::disk('local')->path($relPath);
 
-        $parent = dirname($absPath);
-        if (! is_dir($parent)) {
-            @mkdir($parent, 0775, true);
+            $parent = dirname($absPath);
+            if (! is_dir($parent)) {
+                @mkdir($parent, 0775, true);
+            }
+
+            // Letter page, no extra margin — the Blade `.sheet` already enforces
+            // 8.5"x11" with internal padding. `emulateMedia('print')` activates
+            // `@media print` rules (hides the toolbar, removes screen background).
+            Browsershot::html($html)
+                ->setNodeBinary('/usr/bin/node')
+                ->setChromePath('/usr/bin/chromium-browser')
+                ->noSandbox()
+                ->format('Letter')
+                ->showBackground()
+                ->emulateMedia('print')
+                ->margins(0, 0, 0, 0)
+                ->timeout(60)
+                ->save($absPath);
+
+            $binary = (string) file_get_contents($absPath);
+
+            // ✅ Audit: تسجيل تصدير PDF Reference الناجح
+            $this->auditService->logSuccess(
+                $request,
+                action: 'export.payment-cards.reference-pdf',
+                resourceType: 'payment_card',
+                resourceCount: $rowCount,
+                format: 'pdf',
+                metadata: [
+                    'filename' => $fileName,
+                    'file_size' => strlen($binary),
+                    'endpoint' => 'referencePdf',
+                ],
+            );
+
+            return response($binary, 200, [
+                'Content-Type'           => 'application/pdf',
+                'Content-Disposition'    => 'attachment; filename="'.$fileName.'"',
+                'Content-Length'         => (string) strlen($binary),
+                'Cache-Control'          => 'no-store, no-cache, must-revalidate, max-age=0',
+                'X-Content-Type-Options' => 'nosniff',
+            ]);
+        } catch (\Exception $e) {
+            $this->auditService->logFailure(
+                $request,
+                action: 'export.payment-cards.reference-pdf',
+                resourceType: 'payment_card',
+                errorMessage: $e->getMessage(),
+                metadata: ['endpoint' => 'referencePdf', 'exception' => get_class($e)],
+            );
+
+            throw $e;
         }
-
-        // Letter page, no extra margin — the Blade `.sheet` already enforces
-        // 8.5"x11" with internal padding. `emulateMedia('print')` activates
-        // `@media print` rules (hides the toolbar, removes screen background).
-        Browsershot::html($html)
-            ->setNodeBinary('/usr/bin/node')
-            ->setChromePath('/usr/bin/chromium-browser')
-            ->noSandbox()
-            ->format('Letter')
-            ->showBackground()
-            ->emulateMedia('print')
-            ->margins(0, 0, 0, 0)
-            ->timeout(60)
-            ->save($absPath);
-
-        $binary = (string) file_get_contents($absPath);
-
-        return response($binary, 200, [
-            'Content-Type'           => 'application/pdf',
-            'Content-Disposition'    => 'attachment; filename="'.$fileName.'"',
-            'Content-Length'         => (string) strlen($binary),
-            'Cache-Control'          => 'no-store, no-cache, must-revalidate, max-age=0',
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Models\AdminLoginCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -138,5 +139,43 @@ class AdminLoginTest extends TestCase
             ->assertJson([
                 'success' => false,
             ]);
+    }
+
+    public function test_resend_code_extends_pending_token_lifetime(): void
+    {
+        config(['services.admin.verification_email' => 'admin@test.com']);
+        Mail::fake();
+
+        $user = User::factory()->create([
+            'role'     => 'admin',
+            'email'    => 'admin@test.com',
+            'password' => bcrypt('secret123'),
+        ]);
+
+        $login = $this->postJson($this->loginUrl, [
+            'email'    => 'admin@test.com',
+            'password' => 'secret123',
+        ])->assertOk();
+
+        $pendingToken = $login->json('pending_token');
+
+        $this->travel(4)->minutes();
+
+        $this->postJson('/api/admin/resend-code', [
+            'pending_token' => $pendingToken,
+        ])->assertOk();
+
+        $this->travel(2)->minutes();
+
+        $code = AdminLoginCode::query()
+            ->where('user_id', $user->id)
+            ->where('used', false)
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->postJson('/api/admin/verify-code', [
+            'pending_token' => $pendingToken,
+            'code' => $code->code,
+        ])->assertOk();
     }
 }

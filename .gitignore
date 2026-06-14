@@ -64,6 +64,7 @@ backup*.sql
 *.tar.gz
 *.zip
 *.7z
+.deploy-tmp/
 
 # ── Orphan / temp files ──────────────────────────────────────────
 base
