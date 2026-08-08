@@ -103,6 +103,12 @@ class CountryRestriction
             return $next($request);
         }
 
+        // Emergency fallback for external pixel verifiers when upstream layers
+        // do not preserve distinguishable UA headers.
+        if (filter_var(env('SNAP_PIXEL_VERIFIER_FORCE_ALLOW', false), FILTER_VALIDATE_BOOL)) {
+            return $next($request);
+        }
+
         // Temporary bypass for Snap Pixel verifier bots to avoid false negatives
         // during Ads Manager validation. Remove this block after verification.
         if ($this->shouldBypassForSnapVerifier($request)) {
