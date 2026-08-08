@@ -56,6 +56,25 @@ async function _createEcho ()
         return null;
     }
 
+    // Skip Echo on public pages and when the browser is clearly offline.
+    if ( typeof window === "undefined" || !window.navigator?.onLine )
+    {
+        logger.info( "[Echo] Browser offline or unavailable — WebSocket disabled" );
+        return null;
+    }
+
+    const path = window.location.pathname;
+    const isPublicPage =
+        path === "/" ||
+        path.includes( "/blog" ) ||
+        path.startsWith( "/login" ) ||
+        path.startsWith( "/admin-verify" );
+    if ( isPublicPage )
+    {
+        logger.info( "[Echo] Public page detected — WebSocket disabled" );
+        return null;
+    }
+
     try
     {
         const [ echoMod, pusherMod ] = await Promise.all( [
