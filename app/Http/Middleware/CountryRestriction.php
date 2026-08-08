@@ -104,7 +104,7 @@ class CountryRestriction
         }
 
         // Temporary bypass for Snap Pixel verifier bots to avoid false negatives
-        // during Ads Manager validation. Disable via env after verification.
+        // during Ads Manager validation. Remove this block after verification.
         if ($this->shouldBypassForSnapVerifier($request)) {
             return $next($request);
         }
@@ -164,10 +164,6 @@ class CountryRestriction
 
     protected function shouldBypassForSnapVerifier(Request $request): bool
     {
-        if (! filter_var(env('SNAP_PIXEL_VERIFIER_BYPASS', false), FILTER_VALIDATE_BOOL)) {
-            return false;
-        }
-
         if (! in_array($request->method(), ['GET', 'HEAD'], true)) {
             return false;
         }
