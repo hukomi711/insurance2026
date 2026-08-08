@@ -18,8 +18,8 @@ import logger from "@/utils/logger";
  */
 
 const STORAGE_KEY = "quoteSessionUUID";
-const CLEAR_403_LOG_KEY = "quoteSessionClear403Logged";
 const HEARTBEAT_INTERVAL = 30_000; // 30 seconds
+const QUOTE_DIAGNOSTICS_ENABLED = String( import.meta.env.VITE_QUOTE_DIAGNOSTICS || "false" ).toLowerCase() === "true";
 
 // Shared state across components (singleton-like via module scope)
 const sessionUUID = ref( sessionStorage.getItem( STORAGE_KEY ) || null );
@@ -31,10 +31,14 @@ let startSessionInFlight = false; // prevent parallel startSession calls
 function logClearOnForbiddenOnce ( uuid, source )
 {
     if ( typeof window === "undefined" ) return;
-    if ( sessionStorage.getItem( CLEAR_403_LOG_KEY ) === "1" ) return;
+    if ( !QUOTE_DIAGNOSTICS_ENABLED ) return;
 
-    sessionStorage.setItem( CLEAR_403_LOG_KEY, "1" );
-    const shortUuid = typeof uuid === "string" ? uuid.slice( 0, 8 ) : "unknown";
+    const normalizedUuid = typeof uuid === "string" && uuid.length > 0 ? uuid : "unknown";
+    const diagnosticKey = `quote_403_cleanup_logged:${ normalizedUuid }`;
+    if ( sessionStorage.getItem( diagnosticKey ) === "1" ) return;
+
+    sessionStorage.setItem( diagnosticKey, "1" );
+    const shortUuid = normalizedUuid === "unknown" ? normalizedUuid : normalizedUuid.slice( 0, 8 );
 
     // One-time diagnostic log to confirm the 403 cleanup path is working.
     console.info(
