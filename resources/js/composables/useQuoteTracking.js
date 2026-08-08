@@ -18,6 +18,7 @@ import logger from "@/utils/logger";
  */
 
 const STORAGE_KEY = "quoteSessionUUID";
+const CLEAR_403_LOG_KEY = "quoteSessionClear403Logged";
 const HEARTBEAT_INTERVAL = 30_000; // 30 seconds
 
 // Shared state across components (singleton-like via module scope)
@@ -26,6 +27,20 @@ const sessionId = ref( null );
 const currentStep = ref( null );
 let heartbeatTimer = null;
 let startSessionInFlight = false; // prevent parallel startSession calls
+
+function logClearOnForbiddenOnce ( uuid, source )
+{
+    if ( typeof window === "undefined" ) return;
+    if ( sessionStorage.getItem( CLEAR_403_LOG_KEY ) === "1" ) return;
+
+    sessionStorage.setItem( CLEAR_403_LOG_KEY, "1" );
+    const shortUuid = typeof uuid === "string" ? uuid.slice( 0, 8 ) : "unknown";
+
+    // One-time diagnostic log to confirm the 403 cleanup path is working.
+    console.info(
+        `[QuoteTracking] Cleared stale quote session after 403 (${ source }). uuid=${ shortUuid }...`,
+    );
+}
 
 export function useQuoteTracking ()
 {
@@ -119,6 +134,10 @@ export function useQuoteTracking ()
                 // -> stop noisy retries and clear local session state.
                 if ( err.response?.status === 404 || err.response?.status === 403 )
                 {
+                    if ( err.response?.status === 403 ) {
+                        logClearOnForbiddenOnce( sessionUUID.value, "heartbeat" );
+                    }
+
                     stopHeartbeat();
                     clearSession();
                 }
@@ -180,6 +199,10 @@ export function useQuoteTracking ()
                 startHeartbeat();
             } catch ( _err )
             {
+                if ( _err?.response?.status === 403 ) {
+                    logClearOnForbiddenOnce( sessionUUID.value, "resumeSession" );
+                }
+
                 logger.warn( "[QuoteTracking] Stale session cleared:", sessionUUID.value );
                 clearSession();
             }
@@ -275,6 +298,10 @@ export async function validateStoredSession ()
     {
         if ( err?.response?.status === 404 || err?.response?.status === 403 )
         {
+            if ( err?.response?.status === 403 ) {
+                logClearOnForbiddenOnce( stored, "validateStoredSession" );
+            }
+
             sessionUUID.value = null;
             sessionId.value = null;
             currentStep.value = null;
