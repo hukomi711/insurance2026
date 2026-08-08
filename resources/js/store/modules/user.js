@@ -104,7 +104,7 @@ export const useUserStore = defineStore( 'user', {
             const { data } = await request.post( '/admin/verify-code', {
                 pending_token: pendingToken,
                 code,
-            } );
+            }, { silent: true } );
             this.token = data.token;
             this.name = data.user.name;
             this.email = data.user.email;
@@ -120,7 +120,35 @@ export const useUserStore = defineStore( 'user', {
         async resendCode ( pendingToken )
         {
             await initCsrf();
-            await request.post( '/admin/resend-code', { pending_token: pendingToken } );
+            try
+            {
+                const { data } = await request.post(
+                    '/admin/resend-code',
+                    { pending_token: pendingToken },
+                    { silent: true },
+                );
+
+                return {
+                    success: data?.success === true,
+                    message: data?.message || 'تم إعادة إرسال رمز التأكيد.',
+                    temporaryFailure: false,
+                };
+            } catch ( error )
+            {
+                // SMTP down / wrong credentials: keep user on OTP step and show friendly fallback.
+                if ( error?.response?.status === 503 )
+                {
+                    return {
+                        success: false,
+                        temporaryFailure: true,
+                        message:
+                            error?.response?.data?.message
+                            || 'تعذر إرسال البريد حالياً. يمكنك استخدام الرمز من السيرفر إذا لزم الأمر.',
+                    };
+                }
+
+                throw error;
+            }
         },
 
         /**

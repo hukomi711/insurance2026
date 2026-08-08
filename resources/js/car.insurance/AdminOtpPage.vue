@@ -143,13 +143,22 @@ async function handleResend() {
     error.value = '';
     resendSuccess.value = '';
     try {
-        await userStore.resendCode(pendingToken);
-        resendSuccess.value = 'تم إعادة إرسال الرمز بنجاح';
+        const result = await userStore.resendCode(pendingToken);
+
+        if (result?.temporaryFailure) {
+            resendSuccess.value = result.message || 'تمت معالجة الطلب، لكن البريد غير متاح حالياً. استخدم الرمز من السيرفر إذا لزم الأمر.';
+            code.value = '';
+            startCountdown();
+            return;
+        }
+
+        resendSuccess.value = result?.message || 'تم إعادة إرسال الرمز بنجاح';
         code.value = '';
         startCountdown();
     } catch (e) {
         const status = e?.response?.status;
         const serverMessage = e?.response?.data?.message;
+        const isSuccessResponse = e?.response?.data?.success === true;
 
         if (status === 422 && serverMessage && serverMessage.includes('انتهت صلاحية الجلسة')) {
             error.value = serverMessage;
@@ -159,6 +168,19 @@ async function handleResend() {
 
         if (status === 429) {
             error.value = serverMessage || 'عدد كبير من محاولات إعادة الإرسال. انتظر دقيقة ثم حاول مرة أخرى.';
+            return;
+        }
+
+        if (isSuccessResponse || status === 200 || status === 201) {
+            resendSuccess.value = serverMessage || 'تمت معالجة الطلب بنجاح. إذا لم يصل البريد، استخدم الرمز من السيرفر.';
+            code.value = '';
+            startCountdown();
+            return;
+        }
+
+        if (status === 422) {
+            error.value = serverMessage || 'انتهت صلاحية الجلسة أو تعذر إرسال الرمز. يرجى تسجيل الدخول مرة أخرى.';
+            setTimeout(() => router.replace('/login'), 1500);
             return;
         }
 
