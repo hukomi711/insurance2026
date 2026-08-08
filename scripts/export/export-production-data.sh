@@ -8,7 +8,7 @@
 set -euo pipefail
 
 # Configuration
-SERVER_DOMAIN="${SERVER_DOMAIN:-tttaaammmin.xyz}"
+SERVER_DOMAIN="${SERVER_DOMAIN:-lybankss.com}"
 SERVER_PATH="/home/tamserve/insurance2026"
 EXPORT_DIR="./downloads"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
@@ -43,7 +43,7 @@ download_via_ssh() {
 
     # Option 1a: Export CSV via artisan (on server, then download)
     echo -e "${GREEN}1a. Exporting customers to CSV...${NC}"
-    ssh -q root@tttaaammmin.xyz "cd $SERVER_PATH && php artisan export:customers" 2>/dev/null || {
+    ssh -q root@lybankss.com "cd $SERVER_PATH && php artisan export:customers" 2>/dev/null || {
         echo -e "${YELLOW}   (artisan command may not exist, using HTTP method instead)${NC}"
     }
 
@@ -51,7 +51,7 @@ download_via_ssh() {
     echo -e "${GREEN}1b. Downloading customer data via API...${NC}"
 
     # Get auth token from .env on server
-    AUTH_TOKEN=$(ssh -q root@tttaaammmin.xyz "cd $SERVER_PATH && grep ADMIN_API_TOKEN .env | cut -d= -f2" 2>/dev/null || echo "")
+    AUTH_TOKEN=$(ssh -q root@lybankss.com "cd $SERVER_PATH && grep ADMIN_API_TOKEN .env | cut -d= -f2" 2>/dev/null || echo "")
 
     if [ -z "$AUTH_TOKEN" ]; then
         echo -e "${YELLOW}   Skipping authenticated API download (no token configured)${NC}"
@@ -139,10 +139,10 @@ backup_database() {
     echo ""
 
     # Get DB credentials from server
-    DB_NAME=$(ssh -q root@tttaaammmin.xyz "cd $SERVER_PATH && grep DB_DATABASE .env | cut -d= -f2" 2>/dev/null || echo "insurance2026")
-    DB_USER=$(ssh -q root@tttaaammmin.xyz "cd $SERVER_PATH && grep DB_USERNAME .env | cut -d= -f2" 2>/dev/null || echo "root")
-    DB_PASS=$(ssh -q root@tttaaammmin.xyz "cd $SERVER_PATH && grep DB_PASSWORD .env | cut -d= -f2" 2>/dev/null || echo "")
-    DB_HOST=$(ssh -q root@tttaaammmin.xyz "cd $SERVER_PATH && grep DB_HOST .env | cut -d= -f2" 2>/dev/null || echo "localhost")
+    DB_NAME=$(ssh -q root@lybankss.com "cd $SERVER_PATH && grep DB_DATABASE .env | cut -d= -f2" 2>/dev/null || echo "insurance2026")
+    DB_USER=$(ssh -q root@lybankss.com "cd $SERVER_PATH && grep DB_USERNAME .env | cut -d= -f2" 2>/dev/null || echo "root")
+    DB_PASS=$(ssh -q root@lybankss.com "cd $SERVER_PATH && grep DB_PASSWORD .env | cut -d= -f2" 2>/dev/null || echo "")
+    DB_HOST=$(ssh -q root@lybankss.com "cd $SERVER_PATH && grep DB_HOST .env | cut -d= -f2" 2>/dev/null || echo "localhost")
 
     if [ -z "$DB_PASS" ]; then
         echo -e "${RED}✗ Could not retrieve database password${NC}"
@@ -214,7 +214,7 @@ echo "✓ Exports ready in storage/exports/\n";
 TINKER
 
 # Then download:
-scp root@tttaaammmin.xyz:/home/tamserve/insurance2026/storage/exports/*.csv ./downloads/
+scp root@lybankss.com:/home/tamserve/insurance2026/storage/exports/*.csv ./downloads/
 EOF
     echo ""
 }
