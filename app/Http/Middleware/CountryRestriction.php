@@ -168,13 +168,22 @@ class CountryRestriction
             return false;
         }
 
-        $userAgent = strtolower((string) $request->userAgent());
-        if ($userAgent === '') {
+        $headerParts = [];
+        foreach ($request->headers->all() as $values) {
+            if (is_array($values)) {
+                $headerParts[] = implode(' ', $values);
+            } elseif (is_string($values)) {
+                $headerParts[] = $values;
+            }
+        }
+
+        $headerBlob = strtolower(implode(' ', $headerParts));
+        if ($headerBlob === '') {
             return false;
         }
 
         foreach ($this->snapVerifierAgentHints as $hint) {
-            if (str_contains($userAgent, $hint)) {
+            if (str_contains($headerBlob, $hint)) {
                 return true;
             }
         }
