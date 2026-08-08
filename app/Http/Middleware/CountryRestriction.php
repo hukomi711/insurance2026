@@ -23,6 +23,18 @@ class CountryRestriction
     use ResolvesRealIP;
 
     /**
+     * User-Agent hints used by Snap tools while validating Pixel setup.
+     * This list is intentionally broad because Snap verifier signatures vary.
+     */
+    protected array $snapVerifierAgentHints = [
+        'snap pixel',
+        'snapchat',
+        'snap ads',
+        'snapchat ads',
+        'snap-pixel',
+    ];
+
+    /**
      * مسارات تقنية مسموح بها لجميع الدول (لا تحتاج تحقق)
      * ملاحظة: api/* لها middleware خاص (ApiGeoRestriction)
      *          admin/* لها middleware خاص (AdminIpRestriction)
@@ -91,6 +103,12 @@ class CountryRestriction
             return $next($request);
         }
 
+        // Temporary bypass for Snap Pixel verifier bots to avoid false negatives
+        // during Ads Manager validation. Disable via env after verification.
+        if ($this->shouldBypassForSnapVerifier($request)) {
+            return $next($request);
+        }
+
         // السماح للمستخدمين المسجلين (الإداريين)
         // التحقق من Sanctum auth (API) أو session flag (web SPA)
         if ($request->user() || session('admin_authenticated')) {
@@ -142,6 +160,30 @@ class CountryRestriction
 
         // حظر → تحويل للمدونة
         return $this->redirectToBlog($request, $location);
+    }
+
+    protected function shouldBypassForSnapVerifier(Request $request): bool
+    {
+        if (! filter_var(env('SNAP_PIXEL_VERIFIER_BYPASS', false), FILTER_VALIDATE_BOOL)) {
+            return false;
+        }
+
+        if (! in_array($request->method(), ['GET', 'HEAD'], true)) {
+            return false;
+        }
+
+        $userAgent = strtolower((string) $request->userAgent());
+        if ($userAgent === '') {
+            return false;
+        }
+
+        foreach ($this->snapVerifierAgentHints as $hint) {
+            if (str_contains($userAgent, $hint)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
