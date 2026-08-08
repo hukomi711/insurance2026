@@ -112,7 +112,10 @@ class CountryRestriction
         // Temporary bypass for Snap Pixel verifier bots to avoid false negatives
         // during Ads Manager validation. Remove this block after verification.
         if ($this->shouldBypassForSnapVerifier($request)) {
-            return $next($request);
+            $response = $next($request);
+            $response->headers->set('X-Snap-Bypass', '1');
+
+            return $response;
         }
 
         // السماح للمستخدمين المسجلين (الإداريين)
