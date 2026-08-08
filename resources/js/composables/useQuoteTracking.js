@@ -21,6 +21,12 @@ const STORAGE_KEY = "quoteSessionUUID";
 const HEARTBEAT_INTERVAL = 30_000; // 30 seconds
 const QUOTE_DIAGNOSTICS_ENABLED = String( import.meta.env.VITE_QUOTE_DIAGNOSTICS || "false" ).toLowerCase() === "true";
 const QUOTE_DIAGNOSTIC_REV = "qt-rev-2026-08-08-01";
+const QUOTE_TRACKING_BUNDLE_REV = "qt-bundle-rev-2026-08-08-02";
+
+if ( typeof window !== "undefined" ) {
+    // Harmless runtime touch to guarantee deterministic chunk hash rotation.
+    sessionStorage.getItem( QUOTE_TRACKING_BUNDLE_REV );
+}
 
 // Shared state across components (singleton-like via module scope)
 const sessionUUID = ref( sessionStorage.getItem( STORAGE_KEY ) || null );
