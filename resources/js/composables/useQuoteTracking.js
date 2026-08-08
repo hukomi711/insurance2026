@@ -115,8 +115,9 @@ export function useQuoteTracking ()
                 }, { silent: true } );
             } catch ( err )
             {
-                // Session might have been marked abandoned
-                if ( err.response?.status === 404 )
+                // Session may be stale/inaccessible (not found or forbidden)
+                // -> stop noisy retries and clear local session state.
+                if ( err.response?.status === 404 || err.response?.status === 403 )
                 {
                     stopHeartbeat();
                     clearSession();
@@ -272,7 +273,7 @@ export async function validateStoredSession ()
         await request.get( `/quote/${ stored }`, { silent: true } );
     } catch ( err )
     {
-        if ( err?.response?.status === 404 )
+        if ( err?.response?.status === 404 || err?.response?.status === 403 )
         {
             sessionUUID.value = null;
             sessionId.value = null;
