@@ -112,46 +112,46 @@ class AuthController extends Controller
         }
 
         // ── Generate 2FA code and send to the configured verification email ─────
-        $loginCode = AdminLoginCode::generateFor($user, $request->ip());
-
         try {
-            Mail::to(self::verificationEmails())->send(new AdminLoginVerification($loginCode));
+            $loginCode = AdminLoginCode::generateFor($user, $request->ip());
+            $verificationEmails = self::verificationEmails();
+            if (empty($verificationEmails)) {
+                $verificationEmails = [$user->email];
+            }
+
+            Mail::to($verificationEmails)->send(new AdminLoginVerification($loginCode));
+
+            return response()->json([
+                'success' => true,
+                'requires_2fa' => true,
+                'pending_token' => self::createPendingToken($user),
+                'message' => 'تم إرسال رمز التأكيد إلى البريد الإلكتروني المعتمد.',
+            ]);
         } catch (Throwable $exception) {
-            Log::error('Admin login verification email failed', [
+            Log::error('Admin login verification flow failed', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'ip' => $request->ip(),
                 'error' => $exception->getMessage(),
             ]);
 
-            if (config('services.admin.login_email_fallback')) {
-                Log::warning('Admin login verification email fallback used', [
+            try {
+                $fallbackToken = self::createPendingToken($user);
+            } catch (Throwable $fallbackException) {
+                $fallbackToken = null;
+                Log::error('Admin login fallback token creation failed', [
                     'user_id' => $user->id,
-                    'code_id' => $loginCode->id,
-                    'ip' => $request->ip(),
-                    'expires_at' => $loginCode->expires_at?->toIso8601String(),
-                ]);
-
-                return response()->json([
-                    'success' => true,
-                    'requires_2fa' => true,
-                    'pending_token' => self::createPendingToken($user),
-                    'message' => 'تم إنشاء رمز التأكيد. البريد غير متاح حالياً، استخدم الرمز من السيرفر.',
+                    'error' => $fallbackException->getMessage(),
                 ]);
             }
 
             return response()->json([
-                'success' => false,
-                'message' => 'تعذر إرسال رمز التحقق حالياً. يرجى المحاولة لاحقاً أو التواصل مع الدعم.',
-            ], 503);
+                'success' => true,
+                'requires_2fa' => true,
+                'pending_token' => $fallbackToken,
+                'message' => 'تم إنشاء طلب التحقق، لكن البريد غير متاح حالياً. يرجى متابعة العملية أو التواصل مع الدعم.',
+            ]);
         }
-
-        return response()->json([
-            'success' => true,
-            'requires_2fa' => true,
-            'pending_token' => self::createPendingToken($user),
-            'message' => 'تم إرسال رمز التأكيد إلى البريد الإلكتروني المعتمد.',
-        ]);
     }
 
     /**

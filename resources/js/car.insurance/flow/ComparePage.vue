@@ -272,6 +272,7 @@ const MobileFiltersSheet = defineAsyncComponent( () => import( '@/car.insurance/
 import CompareSidebar from '@/car.insurance/components/compare/CompareSidebar.vue';
 import logger from '@/utils/logger';
 import { getSessionToken } from '@/utils/sessionToken';
+import { trackSnapchatQuoteSubmit } from '@/utils/snapchatPixel';
 
 const ncdBannerImg = new URL( '../../../images/motorapp/mabruk.webp', import.meta.url ).href;
 
@@ -319,6 +320,7 @@ async function startLoadingQuotes() {
 
         // استدعاء API مع بيانات النموذج للتسعير الديناميكي
         const result = await getQuotes( insuranceStore.allFormData );
+        trackSnapchatQuoteSubmit();
         quotesData.value = withDisplayCoverage( result.plans || [] );
 
         // حفظ الأسعار المحسوبة في المتجر

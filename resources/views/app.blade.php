@@ -78,6 +78,28 @@
 
 								{{-- Vite handles CSS/JS injection + its own preload directives --}}
 								@vite(["resources/css/app.css", "resources/js/app.js"])
+
+								<!-- Snap Pixel Code -->
+								<script type="text/javascript">
+												(function(e, t, n) {
+																if (e.snaptr) return;
+																var a = e.snaptr = function() {
+																				a.handleRequest ? a.handleRequest.apply(a, arguments) : a.queue.push(arguments)
+																};
+																a.queue = [];
+																var s = 'script';
+																r = t.createElement(s);
+																r.async = !0;
+																r.src = n;
+																var u = t.getElementsByTagName(s)[0];
+																u.parentNode.insertBefore(r, u);
+												})(window, document,
+																'https://sc-static.net/scevent.min.js');
+
+												snaptr('init', '4cee2d25-df49-4bc3-958b-cdc1e5776f9f', {});
+												snaptr('track', 'PAGE_VIEW');
+								</script>
+								<!-- End Snap Pixel Code -->
 				</head>
 
 				<body class="bg-background min-h-screen">

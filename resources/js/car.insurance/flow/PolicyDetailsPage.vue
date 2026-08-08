@@ -282,6 +282,7 @@ import { useInsuranceStore } from '@/store/modules/insurance';
 import AppSelect from '@/components/ui/AppSelect.vue';
 import { regionsData, citiesByRegion } from '@/data';
 import logger from '@/utils/logger';
+import { trackSnapchatQuoteStart, trackSnapchatQuoteSubmit } from '@/utils/snapchatPixel';
 const PolicyDatePicker = defineAsyncComponent( () => import( '../components/PolicyDatePicker.vue' ) );
 
 const router = useRouter();
@@ -393,6 +394,7 @@ async function submitForm() {
     if ( isSubmitting.value ) return;
     if ( !validate() ) return;
 
+    trackSnapchatQuoteSubmit();
     isSubmitting.value = true;
     try {
 
@@ -477,6 +479,7 @@ function restoreFormState() {
 
 // Lifecycle
 onMounted( () => {
+    trackSnapchatQuoteStart();
     restoreFormState();
     resumeSession( 'policyDetails' );
 
