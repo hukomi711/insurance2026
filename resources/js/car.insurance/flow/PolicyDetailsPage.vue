@@ -71,7 +71,7 @@
 
                 <!-- Left Content — 4/6 on desktop -->
                 <div class="w-full flex flex-col lg:w-4/6 p-4">
-                    <form class="space-y-8" @submit.prevent="submitForm">
+                    <form ref="policyFormRef" class="space-y-8" @submit.prevent="submitForm">
 
                         <!-- Section: اختر تاريخ بدء الوثيقة -->
                         <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">اختر تاريخ بدء الوثيقة</h3>
@@ -275,14 +275,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, defineAsyncComponent } from 'vue';
+import { ref, reactive, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { useInsuranceStore } from '@/store/modules/insurance';
 import AppSelect from '@/components/ui/AppSelect.vue';
 import { regionsData, citiesByRegion } from '@/data';
 import logger from '@/utils/logger';
-import { trackSnapchatQuoteStart, trackSnapchatQuoteSubmit } from '@/utils/snapchatPixel';
+import { trackSnapchatQuoteStart } from '@/utils/snapchatPixel';
 const PolicyDatePicker = defineAsyncComponent( () => import( '../components/PolicyDatePicker.vue' ) );
 
 const router = useRouter();
@@ -328,6 +328,46 @@ watch( () => form.region, () => {
 
 const errors = reactive( {} );
 const isSubmitting = ref( false );
+const policyFormRef = ref( null );
+const hasTrackedQuoteStart = ref( false );
+
+function createDedupId() {
+    if ( typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ) {
+        return crypto.randomUUID();
+    }
+
+    return `${ Date.now() }-${ Math.random().toString( 36 ).slice( 2, 12 ) }`;
+}
+
+function trackQuoteStartOnFirstInteraction() {
+    if ( hasTrackedQuoteStart.value ) return;
+
+    hasTrackedQuoteStart.value = true;
+    const dedupId = createDedupId();
+    sessionStorage.setItem( 'snapchat_start_quote_dedup_id', dedupId );
+    trackSnapchatQuoteStart( {
+        client_dedup_id: dedupId,
+        event_id: dedupId,
+    } );
+}
+
+function bindFirstInteractionTracking() {
+    const formElement = policyFormRef.value;
+    if ( !formElement ) return () => {};
+
+    const interactionHandler = () => {
+        trackQuoteStartOnFirstInteraction();
+    };
+
+    const events = [ 'input', 'change', 'click' ];
+    events.forEach( eventName => formElement.addEventListener( eventName, interactionHandler, true ) );
+
+    return () => {
+        events.forEach( eventName => formElement.removeEventListener( eventName, interactionHandler, true ) );
+    };
+}
+
+let unbindFirstInteractionTracking = () => {};
 
 // User/Vehicle data from session
 const userFullName = ref( '' );
@@ -394,7 +434,9 @@ async function submitForm() {
     if ( isSubmitting.value ) return;
     if ( !validate() ) return;
 
-    trackSnapchatQuoteSubmit();
+    const quoteSubmitDedupId = createDedupId();
+    sessionStorage.setItem( 'snapchat_quote_submit_pending_dedup_id', quoteSubmitDedupId );
+
     isSubmitting.value = true;
     try {
 
@@ -479,11 +521,15 @@ function restoreFormState() {
 
 // Lifecycle
 onMounted( () => {
-    trackSnapchatQuoteStart();
     restoreFormState();
     resumeSession( 'policyDetails' );
+    unbindFirstInteractionTracking = bindFirstInteractionTracking();
 
     // Prefetch next step chunk so it's cached before user navigates
     import( '@/car.insurance/flow/ComparePage.vue' ).catch( () => {} );
+} );
+
+onUnmounted( () => {
+    unbindFirstInteractionTracking();
 } );
 </script>

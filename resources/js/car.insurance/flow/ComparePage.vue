@@ -291,6 +291,18 @@ const loadingProgress = ref( 0 );
 let loadingInterval;
 let loadingAborted = false;
 
+function trackPendingQuoteSubmitEvent() {
+    const pendingDedupId = sessionStorage.getItem( 'snapchat_quote_submit_pending_dedup_id' );
+    if ( !pendingDedupId ) return;
+
+    trackSnapchatQuoteSubmit( {
+        client_dedup_id: pendingDedupId,
+        event_id: pendingDedupId,
+    } );
+
+    sessionStorage.removeItem( 'snapchat_quote_submit_pending_dedup_id' );
+}
+
 /**
  * Fetch quotes from API with progress indication.
  * Progress bar animates independently — completes when API responds.
@@ -320,7 +332,7 @@ async function startLoadingQuotes() {
 
         // استدعاء API مع بيانات النموذج للتسعير الديناميكي
         const result = await getQuotes( insuranceStore.allFormData );
-        trackSnapchatQuoteSubmit();
+        trackPendingQuoteSubmitEvent();
         quotesData.value = withDisplayCoverage( result.plans || [] );
 
         // حفظ الأسعار المحسوبة في المتجر
