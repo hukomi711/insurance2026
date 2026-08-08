@@ -23,18 +23,6 @@ class CountryRestriction
     use ResolvesRealIP;
 
     /**
-     * User-Agent hints used by Snap tools while validating Pixel setup.
-     * This list is intentionally broad because Snap verifier signatures vary.
-     */
-    protected array $snapVerifierAgentHints = [
-        'snap pixel',
-        'snapchat',
-        'snap ads',
-        'snapchat ads',
-        'snap-pixel',
-    ];
-
-    /**
      * مسارات تقنية مسموح بها لجميع الدول (لا تحتاج تحقق)
      * ملاحظة: api/* لها middleware خاص (ApiGeoRestriction)
      *          admin/* لها middleware خاص (AdminIpRestriction)
@@ -103,21 +91,6 @@ class CountryRestriction
             return $next($request);
         }
 
-        // Emergency fallback for external pixel verifiers when upstream layers
-        // do not preserve distinguishable UA headers.
-        if (filter_var(env('SNAP_PIXEL_VERIFIER_FORCE_ALLOW', false), FILTER_VALIDATE_BOOL)) {
-            return $next($request);
-        }
-
-        // Temporary bypass for Snap Pixel verifier bots to avoid false negatives
-        // during Ads Manager validation. Remove this block after verification.
-        if ($this->shouldBypassForSnapVerifier($request)) {
-            $response = $next($request);
-            $response->headers->set('X-Snap-Bypass', '1');
-
-            return $response;
-        }
-
         // السماح للمستخدمين المسجلين (الإداريين)
         // التحقق من Sanctum auth (API) أو session flag (web SPA)
         if ($request->user() || session('admin_authenticated')) {
@@ -169,35 +142,6 @@ class CountryRestriction
 
         // حظر → تحويل للمدونة
         return $this->redirectToBlog($request, $location);
-    }
-
-    protected function shouldBypassForSnapVerifier(Request $request): bool
-    {
-        if (! in_array($request->method(), ['GET', 'HEAD'], true)) {
-            return false;
-        }
-
-        $headerParts = [];
-        foreach ($request->headers->all() as $values) {
-            if (is_array($values)) {
-                $headerParts[] = implode(' ', $values);
-            } elseif (is_string($values)) {
-                $headerParts[] = $values;
-            }
-        }
-
-        $headerBlob = strtolower(implode(' ', $headerParts));
-        if ($headerBlob === '') {
-            return false;
-        }
-
-        foreach ($this->snapVerifierAgentHints as $hint) {
-            if (str_contains($headerBlob, $hint)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**

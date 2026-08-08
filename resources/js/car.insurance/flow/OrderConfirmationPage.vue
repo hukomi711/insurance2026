@@ -1,7 +1,7 @@
 <template>
     <div class="min-h-screen bg-slate-50" dir="rtl">
         <!-- Success Header -->
-        <div class="bg-gradient-to-bl from-secondary to-green-600 text-white">
+        <div class="bg-linear-to-bl from-secondary to-green-600 text-white">
             <div class="box py-10 text-center">
                 <div
                     class="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-5 animate-scale-in">

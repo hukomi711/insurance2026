@@ -31,7 +31,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="w-full md:max-w-[80rem] px-0 md:px-4 mx-auto my-5 relative">
+        <div class="w-full md:max-w-7xl px-0 md:px-4 mx-auto my-5 relative">
             <div class="flex flex-col lg:flex-row w-full">
 
                 <!-- Mobile: User + Vehicle card -->
@@ -130,7 +130,7 @@
                                 :aria-checked="form.insuranceType === 'tpl'"
                                 tabindex="0"
                                 @click="form.insuranceType = 'tpl'" @keydown.enter.prevent="form.insuranceType = 'tpl'" @keydown.space.prevent="form.insuranceType = 'tpl'">
-                                <div v-if="form.insuranceType === 'tpl'" class="absolute top-1.5 start-1.5 sm:top-2 sm:start-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                                <div v-if="form.insuranceType === 'tpl'" class="absolute top-1.5 inset-s-1.5 sm:top-2 sm:inset-s-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 flex items-center justify-center">
                                     <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                                 </div>
                                 <img :src="tplIconSrc" alt="ضد الغير" class="w-10 h-10 sm:w-14 sm:h-14" loading="lazy" width="56" height="56" />
@@ -149,7 +149,7 @@
                                 :aria-checked="form.insuranceType === 'comp'"
                                 tabindex="0"
                                 @click="form.insuranceType = 'comp'" @keydown.enter.prevent="form.insuranceType = 'comp'" @keydown.space.prevent="form.insuranceType = 'comp'">
-                                <div v-if="form.insuranceType === 'comp'" class="absolute top-1.5 start-1.5 sm:top-2 sm:start-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                                <div v-if="form.insuranceType === 'comp'" class="absolute top-1.5 inset-s-1.5 sm:top-2 sm:inset-s-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 flex items-center justify-center">
                                     <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                                 </div>
                                 <img :src="compIconSrc" alt="شامل" class="w-10 h-10 sm:w-14 sm:h-14" loading="lazy" width="56" height="56" />
@@ -231,12 +231,12 @@
                             </router-link>
 
                             <button type="submit" :disabled="isSubmitting"
-                                class="cursor-pointer whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-center min-h-14 min-w-[10.625rem] px-6 text-base font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-slate-400 disabled:cursor-not-allowed w-full md:w-auto inline-flex items-center justify-center gap-2">
+                                class="cursor-pointer whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-center min-h-14 min-w-42.5 px-6 text-base font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-slate-400 disabled:cursor-not-allowed w-full md:w-auto inline-flex items-center justify-center gap-2">
                                 <div class="flex items-center w-full gap-2 justify-center">
                                     <div class="w-full overflow-hidden self-center">
                                         <div>{{ isSubmitting ? 'جاري المعالجة...' : 'احصل على التسعيرة' }}</div>
                                     </div>
-                                    <span class="flex-shrink-0" aria-hidden="true">
+                                    <span class="shrink-0" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
                                             width="18" height="18" class="shrink-0 text-white">
                                             <path d="M5 12H19" stroke="currentColor" stroke-width="1.5"

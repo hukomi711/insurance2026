@@ -13,7 +13,7 @@
                 <div v-if="banner" role="alert" aria-live="assertive"
                     class="mb-5 flex items-start gap-3 rounded-xl border p-3.5"
                     :class="bannerClasses">
-                    <svg class="w-5 h-5 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    <svg class="w-5 h-5 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <template v-if="banner.kind === 'lockout'">
                             <circle cx="12" cy="12" r="10" />

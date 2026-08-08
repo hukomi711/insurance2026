@@ -2,7 +2,7 @@
     <div class="min-h-screen relative overflow-hidden" dir="rtl">
         <!-- Background -->
         <div class="absolute inset-0 z-0">
-            <div class="absolute inset-0 bg-gradient-to-b from-[#000062]/95 via-[#000062]/85 to-[#000062]/95"></div>
+            <div class="absolute inset-0 bg-linear-to-b from-[#000062]/95 via-[#000062]/85 to-[#000062]/95"></div>
         </div>
 
         <!-- Main Content -->

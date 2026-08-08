@@ -68,7 +68,7 @@
                                 class="inline-flex items-center justify-center whitespace-nowrap transition-all focus-visible:outline-none typ-s2 font-bold text-slate-500 py-2 sm:py-2.5 px-2.5 sm:px-3 flex-col flex-none sm:flex-1 min-w-fit sm:min-w-0 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:rounded-lg data-[state=active]:text-primary">
                                 <span class="flex flex-col items-center gap-0.5">
                                     <span>{{ tab.label }}</span>
-                                    <span class="typ-c1 !text-slate-400 ltr-nums">{{ tab.priceLabel }}</span>
+                                    <span class="typ-c1 text-slate-400! ltr-nums">{{ tab.priceLabel }}</span>
                                 </span>
                             </TabsTrigger>
                         </TabsList>
@@ -93,7 +93,7 @@
                                 name="repairMethod" />
                         </div>
                         <div v-if="showCoverageLimit" class="sm:col-span-5">
-                            <div class="group relative flex border border-slate-300 rounded-lg min-h-[3.25rem] sm:min-h-[3.5rem] px-3 sm:px-4 py-2 items-center gap-1.5 sm:gap-2 w-full
+                            <div class="group relative flex border border-slate-300 rounded-lg min-h-13 sm:min-h-14 px-3 sm:px-4 py-2 items-center gap-1.5 sm:gap-2 w-full
                                         focus-within:border-primary transition">
                                 <input id="coverageLimit" v-model.number="quoteOptions.coverageLimit" type="number" autocomplete="off"
                                     name="coverageLimit"
@@ -101,7 +101,7 @@
                                     placeholder=" " />
                                 <SarIcon className="size-4 sm:size-5 shrink-0 text-muted self-center" />
                                 <label for="coverageLimit"
-                                    class="absolute text-sm text-slate-500 transition-all top-4 start-3 sm:start-4
+                                    class="absolute text-sm text-slate-500 transition-all top-4 inset-s-3 sm:inset-s-4
                                               peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-primary
                                               peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs">
                                     حد التغطية لمركبتك
@@ -109,7 +109,7 @@
                             </div>
                         </div>
                         <div class="sm:col-span-3">
-                            <button :disabled="isUpdatingQuotes" class="w-full min-h-[3.25rem] sm:min-h-[3.5rem] px-4 sm:px-6 typ-t3 font-bold rounded-lg bg-primary text-white
+                            <button :disabled="isUpdatingQuotes" class="w-full min-h-13 sm:min-h-14 px-4 sm:px-6 typ-t3 font-bold rounded-lg bg-primary text-white
                                        hover:bg-primary-dark active:bg-primary-darker disabled:bg-slate-400
                                        disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center cursor-pointer"
                                 @click="updateQuoteOptions">
@@ -156,9 +156,9 @@
                             class="hidden md:flex items-center gap-2 cursor-pointer typ-s2 text-muted">
                             <span>عرض مختصر</span>
                             <SwitchRoot id="compact-toggle" v-model:checked="compactView" name="compactView"
-                                class="w-10 h-[22px] bg-slate-300 rounded-full relative data-[state=checked]:bg-primary transition-colors">
+                                class="w-10 h-5.5 bg-slate-300 rounded-full relative data-[state=checked]:bg-primary transition-colors">
                                 <SwitchThumb
-                                    class="block w-[18px] h-[18px] bg-white rounded-full shadow transition-transform translate-x-[2px] data-[state=checked]:translate-x-[20px]" />
+                                    class="block w-4.5 h-4.5 bg-white rounded-full shadow transition-transform translate-x-0.5 data-[state=checked]:translate-x-5" />
                             </SwitchRoot>
                         </label>
                     </div>
