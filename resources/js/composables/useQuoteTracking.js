@@ -20,6 +20,7 @@ import logger from "@/utils/logger";
 const STORAGE_KEY = "quoteSessionUUID";
 const HEARTBEAT_INTERVAL = 30_000; // 30 seconds
 const QUOTE_DIAGNOSTICS_ENABLED = String( import.meta.env.VITE_QUOTE_DIAGNOSTICS || "false" ).toLowerCase() === "true";
+const QUOTE_DIAGNOSTIC_REV = "qt-rev-2026-08-08-01";
 
 // Shared state across components (singleton-like via module scope)
 const sessionUUID = ref( sessionStorage.getItem( STORAGE_KEY ) || null );
@@ -42,7 +43,7 @@ function logClearOnForbiddenOnce ( uuid, source )
 
     // One-time diagnostic log to confirm the 403 cleanup path is working.
     console.info(
-        `[QuoteTracking] Cleared stale quote session after 403 (${ source }). uuid=${ shortUuid }...`,
+        `[QuoteTracking] Cleared stale quote session after 403 (${ source }). uuid=${ shortUuid }... rev=${ QUOTE_DIAGNOSTIC_REV }`,
     );
 }
 
