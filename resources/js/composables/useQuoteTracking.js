@@ -253,6 +253,17 @@ export function useQuoteTracking ()
  */
 export async function validateStoredSession ()
 {
+    if ( typeof window !== 'undefined' ) {
+        const path = window.location.pathname;
+        const isPublicPage =
+            path === '/' ||
+            path.includes( '/blog' ) ||
+            path.startsWith( '/login' ) ||
+            path.startsWith( '/admin-verify' );
+
+        if ( isPublicPage ) return;
+    }
+
     const stored = sessionStorage.getItem( STORAGE_KEY );
     if ( !stored ) return;
 
