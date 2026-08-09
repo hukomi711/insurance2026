@@ -46,15 +46,17 @@ class ApiGeoRestriction
         }
 
         // المسارات المستثناة
+        \Log::warning('GeoRestriction check', ['path' => $request->path(), 'patterns' => $this->exemptPaths]);
         foreach ($this->exemptPaths as $path) {
             if ($request->is($path)) {
-                \Log::debug('GeoRestriction: exempt path allowed', [
+                \Log::warning('GeoRestriction: exempt path allowed', [
                     'request_path' => $request->path(),
                     'matched_pattern' => $path,
                 ]);
                 return $next($request);
             }
         }
+        \Log::warning('GeoRestriction: no pattern matched', ['path' => $request->path()]);
 
         // الأدمن المسجّل عبر Sanctum أو session → وصول كامل
         if ($request->user() || session('admin_authenticated')) {
