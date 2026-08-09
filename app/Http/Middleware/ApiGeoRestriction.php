@@ -40,8 +40,16 @@ class ApiGeoRestriction
 
     public function handle(Request $request, Closure $next): Response
     {
+        \Log::warning('GeoRestriction middleware CALLED', [
+            'path' => $request->path(),
+            'request_ip_via_ip()' => $request->ip(),
+            'request_ips()' => $request->ips(),
+            'server_remote_addr' => $_SERVER['REMOTE_ADDR'] ?? 'null',
+        ]);
+
         // التقييد الجغرافي معطّل
         if (! $this->geoService->isEnabled()) {
+            \Log::warning('GeoRestriction disabled');
             return $next($request);
         }
 
