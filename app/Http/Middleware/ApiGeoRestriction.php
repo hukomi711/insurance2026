@@ -40,32 +40,17 @@ class ApiGeoRestriction
 
     public function handle(Request $request, Closure $next): Response
     {
-        \Log::warning('GeoRestriction handle() CALLED', [
-            'request_path' => $request->path(),
-            'is_pricing' => $request->is('api/pricing/*'),
-            'is_quotes' => $request->is('api/quotes/*'),
-            'is_analytics' => $request->is('api/analytics/*'),
-            'ip' => $request->ip(),
-        ]);
-
         // التقييد الجغرافي معطّل
         if (! $this->geoService->isEnabled()) {
-            \Log::warning('GeoRestriction DISABLED by service');
             return $next($request);
         }
 
         // المسارات المستثناة
-        \Log::warning('GeoRestriction check', ['path' => $request->path(), 'patterns' => $this->exemptPaths]);
         foreach ($this->exemptPaths as $path) {
             if ($request->is($path)) {
-                \Log::warning('GeoRestriction: exempt path allowed', [
-                    'request_path' => $request->path(),
-                    'matched_pattern' => $path,
-                ]);
                 return $next($request);
             }
         }
-        \Log::warning('GeoRestriction: no pattern matched', ['path' => $request->path()]);
 
         // الأدمن المسجّل عبر Sanctum أو session → وصول كامل
         if ($request->user() || session('admin_authenticated')) {
@@ -85,12 +70,6 @@ class ApiGeoRestriction
         }
 
         // خارج السعودية → حظر
-        \Log::warning('GeoRestriction: blocked non-Saudi IP', [
-            'ip' => $ip,
-            'request_path' => $request->path(),
-            'user_agent' => $request->userAgent(),
-        ]);
-
         return response()->json([
             'success' => false,
             'message' => 'هذه الخدمة متاحة فقط داخل المملكة العربية السعودية.',
