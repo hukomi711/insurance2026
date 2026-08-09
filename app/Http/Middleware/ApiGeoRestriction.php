@@ -48,6 +48,10 @@ class ApiGeoRestriction
         // المسارات المستثناة
         foreach ($this->exemptPaths as $path) {
             if ($request->is($path)) {
+                \Log::debug('GeoRestriction: exempt path allowed', [
+                    'request_path' => $request->path(),
+                    'matched_pattern' => $path,
+                ]);
                 return $next($request);
             }
         }
@@ -70,6 +74,12 @@ class ApiGeoRestriction
         }
 
         // خارج السعودية → حظر
+        \Log::warning('GeoRestriction: blocked non-Saudi IP', [
+            'ip' => $ip,
+            'request_path' => $request->path(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
         return response()->json([
             'success' => false,
             'message' => 'هذه الخدمة متاحة فقط داخل المملكة العربية السعودية.',
