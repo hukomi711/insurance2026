@@ -29,6 +29,9 @@ class ApiGeoRestriction
         'api/contact',          // نموذج التواصل
         'api/customer/*',       // تتبع الزوار وتحديد IP (يحتاجه الـ SPA لكل الزوار)
         'api/quote/*',          // تتبع جلسات التسعير دون حظر جغرافي
+        'api/pricing/*',        // ✓ NEW: pricing constants sync (public pricing engine)
+        'api/quotes/*',         // ✓ NEW: quote calculation & locking (public pricing)
+        'api/analytics/*',      // ✓ NEW: funnel analytics tracking (all visitors)
     ];
 
     public function __construct(

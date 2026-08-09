@@ -17,7 +17,7 @@
 
         <!-- Dev-only audit overlay -->
         <AuditOverlay v-if="isDev" />
-        
+
         <!-- Debug panel (visible when ?debug=1 or localStorage.dashboard_debug=true) -->
         <DashboardDebugPanel />
     </div>

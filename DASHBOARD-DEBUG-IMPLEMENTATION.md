@@ -3,6 +3,7 @@
 ## What Was Added
 
 ### 1. **Debug Panel Component** (`resources/js/dashboard/components/DashboardDebugPanel.vue`)
+
 - Shows real-time status of polling, WebSocket, and system health
 - Automatically hidden in production (visible only with `?debug=1` URL param)
 - Displays:
@@ -14,6 +15,7 @@
   - ✓ Auth token presence
 
 ### 2. **Troubleshooting Guide** (`DASHBOARD-REALTIME-TROUBLESHOOTING.md`)
+
 - Comprehensive step-by-step diagnosis
 - Common issues and solutions
 - Server-side verification commands
@@ -24,11 +26,13 @@
 ### Enable Debug Panel
 
 **Option 1: Via URL Query Parameter**
+
 ```
 https://lybankss.com/admin/dashboard?debug=1
 ```
 
 **Option 2: Via Browser Console**
+
 ```javascript
 // In browser console
 localStorage.setItem('dashboard_debug', 'true');
@@ -51,6 +55,7 @@ Auth: ✓ Token
 ```
 
 **Color Coding**:
+
 - 🟢 Green background = All systems operational (Polling + WS both working)
 - 🟡 Amber background = Polling disabled (auto-refresh OFF)
 - 🔴 Red background = System issues detected
@@ -58,6 +63,7 @@ Auth: ✓ Token
 ## Key Troubleshooting Flows
 
 ### Flow 1: Auto-Refresh Disabled
+
 ```
 1. Check Header: "تحديث متوقف" instead of "تحديث تلقائي"
 2. Click the amber dot to enable
@@ -67,6 +73,7 @@ Auth: ✓ Token
 ```
 
 ### Flow 2: WebSocket Not Connected
+
 ```
 1. Open browser DevTools (F12)
 2. Go to Console tab
@@ -81,6 +88,7 @@ If empty:
 ```
 
 ### Flow 3: Polling Running But Data Not Updating
+
 ```
 1. Check Header: "Last Updated" timestamp should change every ~10s
 2. If not advancing:
@@ -94,6 +102,7 @@ If empty:
 ```
 
 ### Flow 4: Debug Console Output
+
 ```javascript
 // Enable verbose logging in debug panel
 // [Click "Verbose" button]
@@ -115,11 +124,13 @@ If empty:
 The debug panel can be extended by:
 
 1. Modifying `DashboardDebugPanel.vue`:
+
 ```vue
 <div>Custom Status: {{ someValue }}</div>
 ```
 
-2. Passing props from `DashboardLayout.vue`:
+1. Passing props from `DashboardLayout.vue`:
+
 ```vue
 <DashboardDebugPanel 
     :customValue="customValue"
@@ -127,7 +138,8 @@ The debug panel can be extended by:
 />
 ```
 
-3. Adding to `adminPolling.js`:
+1. Adding to `adminPolling.js`:
+
 ```javascript
 export function getPollingStatus() {
     return {
@@ -143,6 +155,7 @@ export function getPollingStatus() {
 ## Testing Procedures
 
 ### Test 1: WebSocket Connection
+
 ```bash
 # From browser console
 const echo = window.Echo;
@@ -154,6 +167,7 @@ docker compose exec -T app php artisan tinker
 ```
 
 ### Test 2: Polling Activation
+
 ```javascript
 // Disable WebSocket to force polling
 localStorage.setItem('ws_disabled', 'true');
@@ -163,6 +177,7 @@ window.location.reload();
 ```
 
 ### Test 3: Error Recovery
+
 ```bash
 # Simulate network error by adding throttling in DevTools
 # Network → Add custom throttle profile → apply to dashboard page
@@ -177,7 +192,7 @@ window.location.reload();
 ## Metrics to Monitor
 
 | Metric | Healthy | Warning | Critical |
-|--------|---------|---------|----------|
+| -------- | --------- | --------- | ---------- |
 | Time since last update | < 2s | 5-10s | > 60s |
 | WebSocket state | connected | connecting | unavailable/failed |
 | Polling status | ✓ Active | (amber) disabled | (stopped) |
@@ -203,6 +218,7 @@ window.location.reload();
 ## Troubleshooting the Troubleshooter
 
 If debug panel doesn't appear:
+
 ```javascript
 // Check if debug mode is enabled
 console.log(localStorage.getItem('dashboard_debug'));

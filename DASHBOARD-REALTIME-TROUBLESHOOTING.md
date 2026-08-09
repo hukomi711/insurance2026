@@ -1,17 +1,21 @@
 # Dashboard Real-Time Updates - Troubleshooting Guide
 
 ## Problem
+
 لوحة التحكم لا تقوم باعادة التحميل لوحدها (Real-time updates not working)
 
 ## Quick Diagnosis Checklist
 
 ### 1. **Is Auto-Refresh Enabled?**
+
 ✓ Check the dashboard header for the "تحديث تلقائي" (Auto-Refresh) button
+
 - Should show a **green pulsing dot** if enabled
 - Shows **amber dot** if disabled
 - **Fix**: Click the button to enable if disabled
 
 ### 2. **Check Browser Console for Errors**
+
 ```javascript
 // Open browser DevTools (F12) → Console tab
 // Look for these patterns:
@@ -29,6 +33,7 @@
 ```
 
 ### 3. **Verify WebSocket Connection**
+
 ```javascript
 // In browser console, run:
 window.Echo && window.Echo.connector?.pusher?.connection?.state
@@ -38,12 +43,14 @@ window.Echo && window.Echo.connector?.pusher?.connection?.state
 ```
 
 ### 4. **Check Network Tab**
+
 1. Open DevTools → Network tab
 2. Filter by WebSocket (WS)
 3. Should see connection to `wss://lybankss.com/app/...`
 4. Connection should say "101 Web Socket Protocol Handshake" (not red/failed)
 
 ### 5. **Verify Polling is Running**
+
 ```javascript
 // In browser console, run:
 window.localStorage.getItem('admin_polling_enabled')
@@ -57,27 +64,33 @@ window.localStorage.getItem('admin_polling_enabled')
 ## Common Issues & Solutions
 
 ### Issue A: Auto-Refresh Toggle Shows AMBER (Disabled)
+
 **Symptom**: "تحديث متوقف" (Auto-Refresh Stopped) in header
 
 **Solution**:
+
 1. Click the amber dot/toggle button to enable
 2. Button should turn green with pulsing animation
 3. Dashboard should refresh every 10 seconds
 
-**Why it happens**: 
+**Why it happens**:
+
 - User accidentally clicked the toggle
 - Browser localStorage persists disabled state across page reloads
 
 ---
 
 ### Issue B: WebSocket Connection Shows RED/UNAVAILABLE
+
 **Symptom**: Browser console shows errors like:
+
 ```
 [Echo] Invalid production Reverb VITE_* config
 [Echo] Auth failed after 3 retries
 ```
 
 **Solution - Check Auth Token**:
+
 ```javascript
 // In console:
 localStorage.getItem('auth_token')
@@ -88,6 +101,7 @@ localStorage.getItem('auth_token')
 ```
 
 **Solution - Check VITE Variables**:
+
 ```javascript
 // In console:
 import.meta.env.VITE_REVERB_APP_KEY
@@ -108,9 +122,11 @@ import.meta.env.VITE_REVERB_SCHEME
 ---
 
 ### Issue C: Network Tab Shows RED WebSocket
+
 **Symptom**: WebSocket connection attempt fails immediately
 
 **Possible Causes**:
+
 1. **Browser Privacy Mode** - WebSocket may be blocked
    - Fix: Use normal browsing mode
 
@@ -126,6 +142,7 @@ import.meta.env.VITE_REVERB_SCHEME
 ---
 
 ### Issue D: Dashboard Updates Once Then Stops
+
 **Symptom**: Initial load shows data, but doesn't refresh when data changes
 
 **Most Likely Cause**: WebSocket connected but events aren't arriving
@@ -133,6 +150,7 @@ import.meta.env.VITE_REVERB_SCHEME
 **Solution - Verify Events are Being Broadcast**:
 
 From production server:
+
 ```bash
 # SSH to server
 ssh root@209.74.72.242
@@ -145,22 +163,27 @@ docker compose logs -f reverb 2>&1 | grep -i "publish\|broadcast"
 ```
 
 **If no events shown**:
+
 - Backend isn't triggering events
 - Check Laravel logs: `docker compose logs app --tail 50`
 
 ---
 
 ### Issue E: Polling Logs Show "tick #" But No Data Updates
+
 **Symptom**: `[AdminPolling] tick #1`, `tick #2`, etc appear but no refresh calls
 
 **Cause**: Polling timer is running but `refreshCustomers` callback not registered
 
 **Solution**:
+
 1. Check if Dashboard Home page is actually mounted
 2. Open browser console and look for:
+
    ```
    [Dashboard] refreshCustomers success: X rows
    ```
+
 3. If missing, Dashboard component may not be rendering
 
 ---
@@ -168,6 +191,7 @@ docker compose logs -f reverb 2>&1 | grep -i "publish\|broadcast"
 ## Advanced Debugging
 
 ### Enable Verbose Logging
+
 ```javascript
 // In browser console:
 import { default as logger } from '@/utils/logger';
@@ -180,12 +204,16 @@ logger.setVerbose(true);
 ```
 
 ### Check Last Update Timestamp
+
 The header shows "آخر تحديث: ..." (Last Updated)
+
 - Should update every 10 seconds if polling is working
 - Should update more frequently if events are arriving
 
 ### Force Manual Refresh
+
 Click the blue "تحديث" (Refresh) button to manually trigger an update
+
 - If this works → backend and API are fine
 - If this fails → check API/network errors in console
 
@@ -239,6 +267,7 @@ If nothing works, try:
 ## Reverb Health Check
 
 From dashboard:
+
 ```javascript
 // Check WebSocket transport
 window.Echo?.connector?.pusher?.connection?.transport?.name
@@ -254,6 +283,7 @@ window.Echo?.connector?.pusher?.channels
 ## Still Not Working?
 
 1. **Collect these logs**:
+
    ```bash
    # From your browser console (right-click → Save As)
    copy(localStorage.getItem('console_logs') || 'No logs')
@@ -280,7 +310,7 @@ window.Echo?.connector?.pusher?.channels
 ## Quick Reference: Status Indicators
 
 | Indicator | Meaning | Action |
-|-----------|---------|--------|
+| ----------- | --------- | -------- |
 | 🟢 Green pulsing dot | Auto-refresh ON, WS connected | Normal - working fine |
 | 🟡 Amber dot | Auto-refresh OFF | Click to enable |
 | 🔴 Red in console | WebSocket failed | Check auth token, hard refresh |
