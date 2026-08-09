@@ -40,25 +40,17 @@ class ApiGeoRestriction
 
     public function handle(Request $request, Closure $next): Response
     {
-        // FORCE EXIT - CONFIRM THIS IS RUNNING
-        if ($request->is('api/pricing/*')) {
-            dd([
-                'MIDDLEWARE RUNNING',
-                'path' => $request->path(),
-                'ip' => $request->ip(),
-            ]);
-        }
-
-        \Log::warning('GeoRestriction middleware CALLED', [
-            'path' => $request->path(),
-            'request_ip_via_ip()' => $request->ip(),
-            'request_ips()' => $request->ips(),
-            'server_remote_addr' => $_SERVER['REMOTE_ADDR'] ?? 'null',
+        \Log::warning('GeoRestriction handle() CALLED', [
+            'request_path' => $request->path(),
+            'is_pricing' => $request->is('api/pricing/*'),
+            'is_quotes' => $request->is('api/quotes/*'),
+            'is_analytics' => $request->is('api/analytics/*'),
+            'ip' => $request->ip(),
         ]);
 
         // التقييد الجغرافي معطّل
         if (! $this->geoService->isEnabled()) {
-            \Log::warning('GeoRestriction disabled');
+            \Log::warning('GeoRestriction DISABLED by service');
             return $next($request);
         }
 
