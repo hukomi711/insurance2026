@@ -40,6 +40,15 @@ class ApiGeoRestriction
 
     public function handle(Request $request, Closure $next): Response
     {
+        // FORCE EXIT - CONFIRM THIS IS RUNNING
+        if ($request->is('api/pricing/*')) {
+            dd([
+                'MIDDLEWARE RUNNING',
+                'path' => $request->path(),
+                'ip' => $request->ip(),
+            ]);
+        }
+
         \Log::warning('GeoRestriction middleware CALLED', [
             'path' => $request->path(),
             'request_ip_via_ip()' => $request->ip(),
