@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 /**
  * Lightweight performance monitoring for production.
@@ -59,7 +60,7 @@ class PerformanceMonitor
 
         // ── Log slow requests ──
         if ($durationMs > self::SLOW_REQUEST_MS) {
-            Log::channel('daily')->warning('[PERF] Slow request', [
+            $this->logWarning('[PERF] Slow request', [
                 'method'       => $request->method(),
                 'uri'          => $request->getRequestUri(),
                 'duration_ms'  => $durationMs,
@@ -72,7 +73,7 @@ class PerformanceMonitor
 
         // ── Log high query count (N+1 detection) ──
         if ($queryCount > self::MAX_QUERIES) {
-            Log::channel('daily')->warning('[PERF] High query count — possible N+1', [
+            $this->logWarning('[PERF] High query count — possible N+1', [
                 'method'      => $request->method(),
                 'uri'         => $request->getRequestUri(),
                 'queries'     => $queryCount,
@@ -83,7 +84,7 @@ class PerformanceMonitor
 
         // ── Log oversized responses ──
         if ($responseSize > self::MAX_RESPONSE_BYTES) {
-            Log::channel('daily')->warning('[PERF] Large response payload', [
+            $this->logWarning('[PERF] Large response payload', [
                 'method'      => $request->method(),
                 'uri'         => $request->getRequestUri(),
                 'response_kb' => round($responseSize / 1024, 1),
@@ -93,5 +94,15 @@ class PerformanceMonitor
         }
 
         return $response;
+    }
+
+    /** Monitoring must never turn a successful application response into a 500. */
+    private function logWarning(string $message, array $context): void
+    {
+        try {
+            Log::channel('daily')->warning($message, $context);
+        } catch (Throwable) {
+            // A deployment-time ownership mistake must not break the request.
+        }
     }
 }

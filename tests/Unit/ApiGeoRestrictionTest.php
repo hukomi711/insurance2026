@@ -62,6 +62,16 @@ class ApiGeoRestrictionTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
     }
 
+    public function test_exempt_path_quote_tracking_allowed(): void
+    {
+        $middleware = $this->makeMiddleware(enabled: true, isAdmin: false, isSaudi: false);
+        $request = Request::create('/api/quote/abc123');
+
+        $response = $middleware->handle($request, fn () => response()->json(['ok' => true]));
+
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
     public function test_admin_ip_allowed(): void
     {
         $middleware = $this->makeMiddleware(enabled: true, isAdmin: true, isSaudi: false);

@@ -201,9 +201,15 @@ class QuoteTrackingController extends Controller
     public function show(Request $request, string $uuid): JsonResponse
     {
         $session = QuoteSession::where('uuid', $uuid)
-            ->where('customer_ip', $request->ip())
             ->with('stepLogs')
-            ->firstOrFail();
+            ->first();
+
+        if (! $session) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Quote session not found.',
+            ], 404);
+        }
 
         return response()->json($session->toMonitorFormat());
     }

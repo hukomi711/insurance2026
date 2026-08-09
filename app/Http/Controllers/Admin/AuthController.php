@@ -149,7 +149,7 @@ class AuthController extends Controller
                 'success' => true,
                 'requires_2fa' => true,
                 'pending_token' => $fallbackToken,
-                'message' => 'تم إنشاء طلب التحقق، لكن البريد غير متاح حالياً. يرجى متابعة العملية أو التواصل مع الدعم.',
+                'message' => 'تم إنشاء طلب التحقق، لكن البريد غير متاح حالياً. يمكنك متابعة العملية باستخدام الرمز من السيرفر إذا لزم الأمر.',
             ]);
         }
     }
@@ -161,15 +161,17 @@ class AuthController extends Controller
     public function verifyCode(Request $request): JsonResponse
     {
         $request->validate([
-            'pending_token' => 'required|string|size:64',
+            'pending_token' => 'required|string',
             'code' => 'required|string|size:6',
         ]);
 
-        $userId = Cache::get("2fa_pending:{$request->pending_token}");
+        $pendingToken = (string) $request->input('pending_token');
+        $userId = Cache::get("2fa_pending:{$pendingToken}");
         if (! $userId) {
             return response()->json([
                 'success' => false,
                 'message' => 'انتهت صلاحية الجلسة. أعد تسجيل الدخول.',
+                'requires_login' => true,
             ], 422);
         }
         $user = User::findOrFail($userId);
@@ -213,7 +215,7 @@ class AuthController extends Controller
         $loginCode->update(['used' => true]);
 
         // Consume the pending token (one-time use)
-        Cache::forget("2fa_pending:{$request->pending_token}");
+        Cache::forget("2fa_pending:{$pendingToken}");
 
         // Revoke previous tokens (single-session approach)
         $user->tokens()->delete();
@@ -248,14 +250,16 @@ class AuthController extends Controller
     public function resendCode(Request $request): JsonResponse
     {
         $request->validate([
-            'pending_token' => 'required|string|size:64',
+            'pending_token' => 'required|string',
         ]);
 
-        $userId = Cache::get("2fa_pending:{$request->pending_token}");
+        $pendingToken = (string) $request->input('pending_token');
+        $userId = Cache::get("2fa_pending:{$pendingToken}");
         if (! $userId) {
             return response()->json([
                 'success' => false,
                 'message' => 'انتهت صلاحية الجلسة. أعد تسجيل الدخول.',
+                'requires_login' => true,
             ], 422);
         }
         $user = User::findOrFail($userId);
@@ -265,10 +269,15 @@ class AuthController extends Controller
         }
 
         $loginCode = AdminLoginCode::generateFor($user, $request->ip());
-        self::putPendingToken($request->pending_token, $user);
+        self::putPendingToken($pendingToken, $user);
 
         try {
-            Mail::to(self::verificationEmails())->send(new AdminLoginVerification($loginCode));
+            $verificationEmails = self::verificationEmails();
+            if (empty($verificationEmails)) {
+                $verificationEmails = [$user->email];
+            }
+
+            Mail::to($verificationEmails)->send(new AdminLoginVerification($loginCode));
         } catch (Throwable $exception) {
             Log::error('Admin verification resend email failed', [
                 'user_id' => $user->id,
@@ -292,9 +301,9 @@ class AuthController extends Controller
             }
 
             return response()->json([
-                'success' => false,
-                'message' => 'تعذر إعادة إرسال رمز التحقق حالياً. يرجى المحاولة لاحقاً أو التواصل مع الدعم.',
-            ], 503);
+                'success' => true,
+                'message' => 'تم إنشاء رمز تأكيد جديد، لكن البريد غير متاح حالياً. استخدم الرمز من السيرفر إذا لزم الأمر.',
+            ]);
         }
 
         return response()->json([
@@ -333,6 +342,13 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'غير مصرح.',
+            ], 401);
+        }
 
         return response()->json([
             'success' => true,

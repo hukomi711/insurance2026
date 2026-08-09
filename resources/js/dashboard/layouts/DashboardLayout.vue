@@ -17,6 +17,9 @@
 
         <!-- Dev-only audit overlay -->
         <AuditOverlay v-if="isDev" />
+        
+        <!-- Debug panel (visible when ?debug=1 or localStorage.dashboard_debug=true) -->
+        <DashboardDebugPanel />
     </div>
 </template>
 
@@ -34,6 +37,7 @@ import logger from '@/utils/logger';
 import Sidebar from '../components/Sidebar/index.vue';
 import Navbar from '../components/Navbar/index.vue';
 import AppMain from '../components/AppMain.vue';
+import DashboardDebugPanel from '../components/DashboardDebugPanel.vue';
 
 const isDev = import.meta.env.DEV;
 const AuditOverlay = isDev

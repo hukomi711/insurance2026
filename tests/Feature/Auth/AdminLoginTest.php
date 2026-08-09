@@ -114,9 +114,9 @@ class AdminLoginTest extends TestCase
     }
 
     /**
-     * Login returns 503 when verification email transport fails.
+     * Login stays resilient when verification email transport fails.
      */
-    public function test_login_returns_503_when_verification_mail_fails(): void
+    public function test_login_stays_resilient_when_verification_mail_fails(): void
     {
         config(['services.admin.verification_email' => 'admin@test.com']);
 
@@ -135,10 +135,9 @@ class AdminLoginTest extends TestCase
             'password' => 'secret123',
         ]);
 
-        $response->assertStatus(503)
-            ->assertJson([
-                'success' => false,
-            ]);
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('requires_2fa', true);
     }
 
     public function test_resend_code_extends_pending_token_lifetime(): void

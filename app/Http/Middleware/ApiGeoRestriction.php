@@ -28,6 +28,7 @@ class ApiGeoRestriction
         'api/newsletter',       // اشتراك النشرة (زوار المدونة)
         'api/contact',          // نموذج التواصل
         'api/customer/*',       // تتبع الزوار وتحديد IP (يحتاجه الـ SPA لكل الزوار)
+        'api/quote/*',          // تتبع جلسات التسعير دون حظر جغرافي
     ];
 
     public function __construct(
