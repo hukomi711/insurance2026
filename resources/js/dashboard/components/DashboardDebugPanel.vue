@@ -3,8 +3,10 @@
  * DashboardDebugPanel — shows real-time status of polling, WebSocket, and updates
  *
  * Visible only when:
- * 1. ?debug=1 in URL
- * 2. OR localStorage.getItem('dashboard_debug') === 'true'
+ * 1. Current user is an ADMIN
+ * 2. AND (?debug=1 in URL OR localStorage.getItem('dashboard_debug') === 'true')
+ *
+ * Non-admin users cannot access debug mode even with ?debug=1 parameter.
  *
  * Shows:
  * - Polling status (active/paused)
@@ -16,6 +18,9 @@
 
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import logger from '@/utils/logger';
+import { useUserStore } from '@/store/modules/user';
+
+const userStore = useUserStore();
 
 const props = defineProps({
     autoRefreshEnabled: { type: Boolean, default: false },
@@ -27,6 +32,12 @@ const props = defineProps({
 
 const isDebugMode = computed(() => {
     if (typeof window === 'undefined') return false;
+    
+    // Only allow admin users to enable debug mode
+    if (userStore.role !== 'admin') {
+        return false;
+    }
+    
     return window.location.search.includes('debug=1') ||
            localStorage.getItem('dashboard_debug') === 'true';
 });
