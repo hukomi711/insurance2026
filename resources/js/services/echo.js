@@ -17,9 +17,118 @@
 
 let echoInstance = null;
 let echoPromise = null;
+let echoSuspendedForPageCache = false;
+let echoLifecycleErrorGraceUntil = 0;
+let lifecycleHandlersRegistered = false;
 const PUSHER_UNAVAILABLE_TIMEOUT_MS = 30_000;
+const PAGE_CACHE_ERROR_GRACE_MS = 5_000;
 
 import logger from "@/utils/logger";
+import { reloadIfBuildChangedAfterPageCacheRestore } from "@/utils/buildFreshness";
+
+function clearPusherTransportCache ()
+{
+    try
+    {
+        localStorage.removeItem( "pusherTransportTLS" );
+        localStorage.removeItem( "pusherTransportNonTLS" );
+    } catch
+    {
+        // Storage may be unavailable in privacy-restricted browser contexts.
+    }
+}
+
+function getPusherInstance ()
+{
+    return echoInstance?.connector?.pusher ?? null;
+}
+
+function suspendEchoForPageLifecycle ( reason )
+{
+    if ( echoSuspendedForPageCache ) return;
+
+    echoSuspendedForPageCache = true;
+    echoLifecycleErrorGraceUntil = 0;
+
+    try
+    {
+        // Disconnect while the document is still active. Chromium's pageswap
+        // fires before pagehide, giving the socket time to close cleanly before
+        // the document is frozen for the back-forward cache.
+        const pusher = getPusherInstance();
+        if ( pusher?.connection?.state !== "disconnected" ) pusher?.disconnect();
+        logger.debug( `[Echo] WebSocket suspended for page lifecycle (${ reason })` );
+    } catch ( err )
+    {
+        logger.debug( "[Echo] Page lifecycle suspend skipped:", err?.message ?? err );
+    }
+}
+
+function registerPageCacheLifecycleHandlers ()
+{
+    if ( lifecycleHandlersRegistered || typeof window === "undefined" ) return;
+
+    // pageswap is the earliest cross-document navigation signal in modern
+    // Chromium. pagehide remains the interoperable fallback.
+    window.addEventListener( "pageswap", () =>
+    {
+        suspendEchoForPageLifecycle( "pageswap" );
+    } );
+
+    window.addEventListener( "pagehide", () =>
+    {
+        // Close on every pagehide. If the document is discarded there is
+        // nothing to resume; if it enters BFCache, pageshow reconnects it.
+        suspendEchoForPageLifecycle( "pagehide" );
+    } );
+
+    window.addEventListener( "pageshow", async ( event ) =>
+    {
+        if ( !event.persisted ) return;
+
+        try
+        {
+            if ( await reloadIfBuildChangedAfterPageCacheRestore( event ) ) return;
+        } catch ( err )
+        {
+            // A failed freshness check must not prevent normal WS recovery.
+            logger.debug( "[Echo] Build freshness check skipped:", err?.message ?? err );
+        }
+
+        clearPusherTransportCache();
+
+        try
+        {
+            const pusher = getPusherInstance();
+            if ( pusher && pusher.connection?.state !== "connected" )
+            {
+                pusher.connect();
+                logger.debug( "[Echo] WebSocket resumed after back-forward cache restore" );
+            }
+        } catch ( err )
+        {
+            logger.warn( "[Echo] BFCache resume failed:", err?.message ?? err );
+        } finally
+        {
+            echoSuspendedForPageCache = false;
+            // A close/error task from the pre-BFCache socket can be delivered
+            // just after pageshow. Treat it as an expected lifecycle event.
+            echoLifecycleErrorGraceUntil = Date.now() + PAGE_CACHE_ERROR_GRACE_MS;
+        }
+    } );
+
+    lifecycleHandlersRegistered = true;
+}
+
+export function isEchoSuspendedForPageCache ()
+{
+    return echoSuspendedForPageCache;
+}
+
+export function isEchoPageLifecycleErrorExpected ()
+{
+    return echoSuspendedForPageCache || Date.now() < echoLifecycleErrorGraceUntil;
+}
 
 /**
  * Return (or lazily create) the shared Echo instance configured for Reverb.
@@ -63,6 +172,8 @@ async function _createEcho ()
         return null;
     }
 
+    registerPageCacheLifecycleHandlers();
+
     const path = window.location.pathname;
     const isPublicPage =
         path === "/" ||
@@ -82,6 +193,10 @@ async function _createEcho ()
             import( "pusher-js" ),
         ] );
 
+        // Navigation may have started while the dynamic imports were pending.
+        // Do not create a fresh socket for a document that is being frozen.
+        if ( echoSuspendedForPageCache ) return null;
+
         const Echo = echoMod.default ?? echoMod.Echo ?? echoMod;
         const Pusher = pusherMod.default ?? pusherMod;
 
@@ -96,10 +211,7 @@ async function _createEcho ()
         // Clear Pusher transport cache — the cached strategy uses a tight
         // timeout (latency×2+1000ms, failFast:true) that aborts WS connections
         // prematurely on reconnect, producing "closed before established" errors.
-        try {
-            localStorage.removeItem( 'pusherTransportTLS' );
-            localStorage.removeItem( 'pusherTransportNonTLS' );
-        } catch { /* ignored */ }
+        clearPusherTransportCache();
 
         const rawScheme = import.meta.env.VITE_REVERB_SCHEME;
         const rawHost = import.meta.env.VITE_REVERB_HOST;
@@ -207,6 +319,8 @@ async function _createEcho ()
 export function destroyEcho ()
 {
     echoPromise = null;
+    echoSuspendedForPageCache = false;
+    echoLifecycleErrorGraceUntil = 0;
 
     if ( echoInstance )
     {
