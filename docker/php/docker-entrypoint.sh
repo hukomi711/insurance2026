@@ -58,4 +58,11 @@ su-exec appuser php artisan route:cache 2>/dev/null || true
 su-exec appuser php artisan view:cache 2>/dev/null || true
 su-exec appuser php artisan event:cache 2>/dev/null || true
 
+# PHP-FPM's master process must start as root so it can initialize its log
+# descriptors and then drop worker privileges according to www.conf. All
+# other application roles continue to run directly as the unprivileged user.
+if [ "${1:-}" = "php-fpm" ]; then
+    exec "$@"
+fi
+
 exec su-exec appuser "$@"
