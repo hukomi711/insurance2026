@@ -103,7 +103,7 @@ INS_BACKUP_DIR="${INS_BACKUP_DIR:-/opt/server-state-backups/database}" \
 $COMPOSE run --rm --no-deps "$APP_SERVICE" sh -lc '
     test "$APP_BUILD_SHA" = "'"$GIT_SHA"'" || exit 91
     php artisan migrate:status --no-interaction
-    php artisan migrate --pretend --no-interaction
+    php artisan migrate --pretend --force --no-interaction
 '
 $COMPOSE run --rm --no-deps "$APP_SERVICE" sh -lc '
     test "$APP_BUILD_SHA" = "'"$GIT_SHA"'" || exit 91
