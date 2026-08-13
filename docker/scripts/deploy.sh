@@ -18,6 +18,7 @@ set -euo pipefail
 # ── Config ───────────────────────────────────────────────────────
 COMPOSE="docker compose"
 APP_SERVICE="app"
+APP_IMAGE_REF="${APP_IMAGE_REF:-insurance2026-app:latest}"
 RELEASE_ROOT="${RELEASE_ROOT:-/opt/insurance-releases}"
 
 echo "══════════════════════════════════════════════════════════════"
@@ -84,7 +85,10 @@ echo "  -> Secrets validated."
 # ── 4. Build single application image ────────────────────────────
 echo "[4/7] Building application image (zero-drift: one image → all roles)..."
 $COMPOSE build --no-cache --build-arg APP_BUILD_SHA="$GIT_SHA" app
-IMAGE_SHA="$($COMPOSE images -q app)"
+# `docker compose images -q app` reports the image used by the currently
+# running container, which is intentionally still the previous release here.
+# Inspect the freshly built service tag instead.
+IMAGE_SHA="$(docker image inspect --format='{{.Id}}' "$APP_IMAGE_REF")"
 IMAGE_REVISION="$(docker image inspect --format='{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$IMAGE_SHA")"
 if [ "$IMAGE_REVISION" != "$GIT_SHA" ]; then
     echo "  !! ERROR: Image revision $IMAGE_REVISION does not match release $GIT_SHA"
