@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
  * @property int $id
  * @property string $uuid
  * @property string|null $customer_ip
+ * @property string|null $browser_token_hash
  * @property string $current_step
  * @property int $step_number
  * @property string|null $insurance_type
@@ -79,6 +80,7 @@ class QuoteSession extends Model
     protected $fillable = [
         'uuid',
         'customer_ip',
+        'browser_token_hash',
         'current_step',
         'step_number',
         'insurance_type',

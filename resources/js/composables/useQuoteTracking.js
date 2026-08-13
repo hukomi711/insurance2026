@@ -2,6 +2,7 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import request from "@/api/request";
 import logger from "@/utils/logger";
+import { getSessionToken } from "@/utils/sessionToken";
 
 /**
  * Quote Tracking Composable
@@ -60,15 +61,33 @@ export function useQuoteTracking ()
     // ─── Start a new session ────────────────────────────────
     async function startSession ( insuranceType = null )
     {
-        // Don't create duplicate sessions
-        if ( sessionUUID.value ) return sessionUUID.value;
-
         // Prevent parallel startSession calls (e.g. during timeout)
         if ( startSessionInFlight ) return null;
         startSessionInFlight = true;
 
         try
         {
+            // A persisted UUID can belong to an expired/abandoned session or
+            // predate browser-token ownership. Validate it synchronously here
+            // so a fast click cannot race the app-level boot validation.
+            if ( sessionUUID.value )
+            {
+                try
+                {
+                    await request.get( `/quote/${ sessionUUID.value }`, { silent: true } );
+                    return sessionUUID.value;
+                } catch ( err )
+                {
+                    if ( err?.response?.status === 404 || err?.response?.status === 403 )
+                    {
+                        clearSession();
+                    } else
+                    {
+                        return sessionUUID.value;
+                    }
+                }
+            }
+
             const res = await request.post( "/quote/start", {
                 insurance_type: insuranceType,
                 referrer_url: document.referrer || null,
@@ -120,6 +139,10 @@ export function useQuoteTracking ()
             } );
         } catch ( err )
         {
+            if ( err?.response?.status === 404 || err?.response?.status === 403 )
+            {
+                clearSession();
+            }
             logger.warn( "[QuoteTracking] Failed to track step:", err.message );
         }
     }
@@ -242,6 +265,7 @@ export function useQuoteTracking ()
         const payload = JSON.stringify( {
             step: currentStep.value,
             tab_visible: false,
+            session_token: getSessionToken(),
         } );
 
         navigator.sendBeacon(
@@ -320,4 +344,3 @@ export async function validateStoredSession ()
         }
     }
 }
-

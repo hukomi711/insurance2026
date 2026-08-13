@@ -6,6 +6,7 @@ use App\Models\QuoteSession;
 use App\Models\QuoteStepLog;
 use App\Models\QuoteHeartbeat;
 use App\Services\DeviceDetectionService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,6 +28,7 @@ class QuoteTrackingController extends Controller
 
         $session = QuoteSession::create([
             'customer_ip' => $request->ip(),
+            'browser_token_hash' => $this->browserTokenHash($request),
             'current_step' => 'motorapp',
             'step_number' => 1,
             'insurance_type' => $validated['insurance_type'] ?? null,
@@ -63,9 +65,7 @@ class QuoteTrackingController extends Controller
      */
     public function step(Request $request, string $uuid): JsonResponse
     {
-        $session = QuoteSession::where('uuid', $uuid)
-            ->where('customer_ip', $request->ip())
-            ->firstOrFail();
+        $session = $this->findOwnedActiveSession($request, $uuid);
 
         $validated = $request->validate([
             'step' => 'required|string|max:50',
@@ -130,10 +130,7 @@ class QuoteTrackingController extends Controller
      */
     public function heartbeat(Request $request, string $uuid): JsonResponse
     {
-        $session = QuoteSession::where('uuid', $uuid)
-            ->where('customer_ip', $request->ip())
-            ->where('status', 'active')
-            ->firstOrFail();
+        $session = $this->findOwnedActiveSession($request, $uuid);
 
         $validated = $request->validate([
             'step' => 'required|string|max:50',
@@ -174,9 +171,7 @@ class QuoteTrackingController extends Controller
      */
     public function complete(Request $request, string $uuid): JsonResponse
     {
-        $session = QuoteSession::where('uuid', $uuid)
-            ->where('customer_ip', $request->ip())
-            ->firstOrFail();
+        $session = $this->findOwnedActiveSession($request, $uuid);
 
         // Close last step log
         /** @var \App\Models\QuoteStepLog|null $currentLog */
@@ -200,16 +195,7 @@ class QuoteTrackingController extends Controller
      */
     public function show(Request $request, string $uuid): JsonResponse
     {
-        $session = QuoteSession::where('uuid', $uuid)
-            ->with('stepLogs')
-            ->first();
-
-        if (! $session) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Quote session not found.',
-            ], 404);
-        }
+        $session = $this->findOwnedActiveSession($request, $uuid, true);
 
         return response()->json($session->toMonitorFormat());
     }
@@ -225,5 +211,54 @@ class QuoteTrackingController extends Controller
             'details' => 'personal_data',
             default => null,
         };
+    }
+
+    private function findOwnedActiveSession(
+        Request $request,
+        string $uuid,
+        bool $withStepLogs = false,
+    ): QuoteSession {
+        $browserTokenHash = $this->browserTokenHash($request);
+
+        $query = QuoteSession::query()
+            ->where('uuid', $uuid)
+            ->where('status', 'active')
+            ->where(function (Builder $ownerQuery) use ($request, $browserTokenHash) {
+                if ($browserTokenHash !== null) {
+                    $ownerQuery->where('browser_token_hash', $browserTokenHash)
+                        ->orWhere(function (Builder $legacyQuery) use ($request) {
+                            $legacyQuery->whereNull('browser_token_hash')
+                                ->where('customer_ip', $request->ip());
+                        });
+
+                    return;
+                }
+
+                // Compatibility for active sessions created before browser
+                // token hashes were introduced. New sessions always receive
+                // X-Session-Token from the SPA request interceptor.
+                $ownerQuery->whereNull('browser_token_hash')
+                    ->where('customer_ip', $request->ip());
+            });
+
+        if ($withStepLogs) {
+            $query->with('stepLogs');
+        }
+
+        return $query->firstOrFail();
+    }
+
+    private function browserTokenHash(Request $request): ?string
+    {
+        $token = trim((string) (
+            $request->header('X-Session-Token')
+            ?: $request->input('session_token', '')
+        ));
+
+        if ($token === '' || strlen($token) < 16 || strlen($token) > 128) {
+            return null;
+        }
+
+        return hash('sha256', $token);
     }
 }
