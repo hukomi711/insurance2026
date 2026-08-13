@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Traits\NotifiesDashboard;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ForceStepRequest;
 use App\Models\AdminAction;
+use App\Models\CustomerBlock;
 use App\Models\CustomerProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,99 @@ use Illuminate\Support\Facades\Log;
 class AdminCustomerForceController extends Controller
 {
     use NotifiesDashboard;
+
+    /**
+     * Block a customer by both the current IP address and browser session token.
+     * POST /api/admin/customers/{id}/block
+     */
+    public function block(Request $request, int $id): JsonResponse
+    {
+        $admin = $request->user();
+
+        try {
+            $customer = DB::transaction(function () use ($id, $admin) {
+                $customer = CustomerProfile::lockForUpdate()->findOrFail($id);
+
+                if (! $customer->ip_address && ! $customer->session_id) {
+                    abort(422, 'لا تتوفر هوية شبكة أو جهاز لهذا العميل');
+                }
+
+                $block = CustomerBlock::firstOrCreate(
+                    [
+                        'ip_address' => $customer->ip_address,
+                        'session_id' => $customer->session_id,
+                    ],
+                    [
+                        'customer_profile_id' => $customer->id,
+                        'blocked_by' => $admin?->id,
+                    ],
+                );
+
+                CustomerProfile::query()
+                    ->where(function ($query) use ($customer) {
+                        if ($customer->ip_address) {
+                            $query->where('ip_address', $customer->ip_address);
+                        }
+                        if ($customer->session_id) {
+                            $customer->ip_address
+                                ? $query->orWhere('session_id', $customer->session_id)
+                                : $query->where('session_id', $customer->session_id);
+                        }
+                    })
+                    ->update(['is_active' => false]);
+
+                if ($block->wasRecentlyCreated) {
+                    AdminAction::create([
+                        'admin_id' => $admin?->id,
+                        'action' => 'block_customer',
+                        'target_type' => 'customer_profile',
+                        'target_id' => $customer->id,
+                        'meta' => [
+                            'ip_address' => $customer->ip_address,
+                            'has_session_id' => (bool) $customer->session_id,
+                        ],
+                    ]);
+                }
+
+                return $customer;
+            });
+
+            CustomerBlock::rememberBlocked($customer->ip_address, $customer->session_id);
+            $this->notifyDashboard($customer->ip_address, 'customer_blocked');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم حظر العميل بنجاح',
+                'data' => [
+                    'customer_id' => $customer->id,
+                    'is_active' => false,
+                ],
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'العميل غير موجود',
+            ], 404);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->getStatusCode());
+        } catch (\Throwable $e) {
+            Log::error('Error blocking customer', [
+                'admin_id' => $admin?->id,
+                'customer_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء حظر العميل',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
     /**
      * Force customer to specific step (admin override)
      * POST /api/admin/customers/{id}/force-step

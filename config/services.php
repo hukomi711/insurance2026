@@ -61,6 +61,8 @@ return [
     ],
 
     'admin' => [
+        'email' => env('ADMIN_EMAIL', 'admin@insurance.com'),
+        'password' => env('ADMIN_PASSWORD'),
         'verification_email' => env('ADMIN_VERIFICATION_EMAIL', ''),
         'login_email_fallback' => env('ADMIN_LOGIN_EMAIL_FALLBACK', false),
     ],

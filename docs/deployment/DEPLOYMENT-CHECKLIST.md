@@ -321,7 +321,7 @@ sudo systemctl restart nginx php-fpm mariadb redis supervisord
 # On VPS
 cd /opt/insurance2026
 
-sudo -u www-data php artisan config:clear
+sudo -u www-data php artisan config:cache
 sudo -u www-data php artisan cache:clear
 sudo -u www-data php artisan view:clear
 sudo -u www-data php artisan route:clear
@@ -345,7 +345,7 @@ sudo -u www-data npm install --production
 sudo -u www-data npm run build
 
 # Clear caches
-sudo -u www-data php artisan config:clear
+sudo -u www-data php artisan config:cache
 sudo -u www-data php artisan cache:clear
 
 # Run migrations (if applicable)

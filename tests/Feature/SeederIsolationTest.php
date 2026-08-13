@@ -26,19 +26,11 @@ class SeederIsolationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        config(['app.env' => 'testing']);
-        // Required by DatabaseSeeder's env() guard.
-        $_ENV['ADMIN_PASSWORD'] = 'hashed-or-plain-password-for-tests';
-        putenv('ADMIN_PASSWORD=hashed-or-plain-password-for-tests');
-        unset($_ENV['ADMIN_EMAIL'], $_SERVER['ADMIN_EMAIL']);
-        putenv('ADMIN_EMAIL');
-    }
-
-    protected function tearDown(): void
-    {
-        unset($_ENV['ADMIN_EMAIL'], $_SERVER['ADMIN_EMAIL']);
-        putenv('ADMIN_EMAIL');
-        parent::tearDown();
+        config([
+            'app.env' => 'testing',
+            'services.admin.email' => 'admin@insurance.com',
+            'services.admin.password' => 'hashed-or-plain-password-for-tests',
+        ]);
     }
 
     public function test_database_seeder_in_testing_env_creates_admin_and_demo_data(): void
@@ -100,8 +92,7 @@ class SeederIsolationTest extends TestCase
     public function test_database_seeder_uses_configured_admin_email_when_present(): void
     {
         app()->detectEnvironment(fn () => 'production');
-        $_ENV['ADMIN_EMAIL'] = 'admin@tamnyfordr.online';
-        putenv('ADMIN_EMAIL=admin@tamnyfordr.online');
+        config(['services.admin.email' => 'admin@tamnyfordr.online']);
 
         app(DatabaseSeeder::class)->__invoke();
 

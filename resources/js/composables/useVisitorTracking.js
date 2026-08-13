@@ -2,6 +2,7 @@ import { onMounted } from "vue";
 import request from "@/api/request";
 import { getEcho } from "@/services/echo";
 import { getSessionToken } from "@/utils/sessionToken";
+import { customerBroadcastChannel } from "@/utils/customerBroadcastChannel";
 import { isSaudiConfirmed } from "@/utils/geoCheck";
 import logger from "@/utils/logger";
 
@@ -31,7 +32,6 @@ const THROTTLE_MS = 5_000; // minimum 5s between /customer/page calls
 const MAX_ERRORS = 3; // pause heartbeat after this many consecutive errors
 const BACKOFF_429_MS = 120_000; // 2 min backoff on rate-limit
 const BACKOFF_500_MS = 120_000; // 2 min backoff on server/timeout errors
-const REDIRECT_IP_TIMEOUT_MS = 2_000;
 const REDIRECT_RETRY_MIN_MS = 10_000;
 const REDIRECT_RETRY_MAX_MS = 30_000;
 
@@ -400,7 +400,7 @@ export function initGlobalTracking ( router )
 
 /**
  * Set up WebSocket listener for admin-initiated customer redirects.
- * Subscribes to the customer's IP-based channel and navigates on redirect events.
+ * Subscribes to the customer's opaque session channel and navigates on redirects.
  *
  * @param {import('vue-router').Router} router — The Vue Router instance
  */
@@ -416,22 +416,15 @@ async function setupRedirectListener ( router )
 
         _redirectListenerSetupInFlight = true;
 
-        // Get customer IP from a lightweight endpoint (avoids duplicate /customer/page call)
-        const res = await request.get(
-            "/customer/ip",
-            { silent: true, timeout: REDIRECT_IP_TIMEOUT_MS },
-        );
-        const ip = res?.data?.customer_ip;
-        if ( !ip ) return;
-
         const echo = await getEcho();
         if ( !echo ) return;
 
         const { safeRedirect } = await import( '@/utils/safeRedirect' );
+        const channelName = await customerBroadcastChannel( 'customer', getSessionToken() );
 
-        const ch = echo.channel( `customer.${ ip }` );
+        const ch = echo.channel( channelName );
         _redirectEcho = echo;
-        _redirectChannelName = `customer.${ ip }`;
+        _redirectChannelName = channelName;
         _redirectRetryAttempts = 0;
 
         const onRedirect = ( e ) =>
@@ -446,7 +439,7 @@ async function setupRedirectListener ( router )
 
         ch.listen( ".CustomerRedirected", onRedirect );
 
-        logger.info( "[Tracking] 📡 Redirect listener active on customer." + ip );
+        logger.info( "[Tracking] Redirect listener active" );
     } catch ( err )
     {
         if ( isTransientNetworkError( err ) )

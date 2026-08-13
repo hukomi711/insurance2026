@@ -15,8 +15,8 @@
 ### الخطوة 1.1: افتح Dashboard مع Debug Panel
 
 ```
-1. اذهب إلى: https://lybankss.com/admin/dashboard?debug=1
-2. قم بـ login كمدير: admin@lybankss.com / Admin2026Passw0rd
+1. اذهب إلى: https://<your-domain>/admin/dashboard?debug=1
+2. قم بـ login كمدير: admin@<your-domain> / Admin2026Passw0rd
 3. انتظر تحميل جدول العملاء
 4. ابحث عن "Debug Panel" في الزاوية السفلى يمين الشاشة
 ```
@@ -75,7 +75,7 @@ Debug Panel يجب أن يظهر:
 
 ```
 1. افتح تبويب جديد
-2. اذهب إلى: https://lybankss.com/admin/customers
+2. اذهب إلى: https://<your-domain>/admin/customers
 3. ابحث عن customer عندها pending payment cards
 4. انسخ الـ customer ID
 ```

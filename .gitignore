@@ -43,6 +43,16 @@ _ide_helper_models.php
 
 # ── Build / lint artifacts ────────────────────────────────────────
 eslint-output.json
+output/
+
+# Local production diagnostics may contain credentials, OTPs or database data.
+check_admin.php
+check_db.php
+clear_lockout*.php
+get_2fa_code.php
+reset_admin_password.php
+test_login_simple.php
+test-ws.js
 
 # ── Python virtual environment ────────────────────────────────────
 .venv/

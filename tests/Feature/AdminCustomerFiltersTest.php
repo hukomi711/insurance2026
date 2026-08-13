@@ -10,11 +10,12 @@ class AdminCustomerFiltersTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_customers_index_dedupes_by_ip_before_pagination(): void
+    public function test_customers_index_dedupes_by_session_without_merging_shared_ip_customers(): void
     {
-        // Same IP appears twice (legacy duplicates) — latest row should win.
+        // Same session appears twice — latest row should win.
         CustomerProfile::create([
             'ip_address' => '10.10.10.1',
+            'session_id' => 'same-browser-session',
             'country' => 'SA',
             'location_country' => 'Saudi Arabia',
             'is_active' => false,
@@ -22,6 +23,7 @@ class AdminCustomerFiltersTest extends TestCase
         ]);
         CustomerProfile::create([
             'ip_address' => '10.10.10.1',
+            'session_id' => 'same-browser-session',
             'country' => 'SA',
             'location_country' => 'Saudi Arabia',
             'is_active' => true,
@@ -30,6 +32,7 @@ class AdminCustomerFiltersTest extends TestCase
 
         CustomerProfile::create([
             'ip_address' => '10.10.10.2',
+            'session_id' => 'shared-ip-browser-a',
             'country' => 'SA',
             'location_country' => 'السعودية',
             'is_active' => false,
@@ -37,6 +40,7 @@ class AdminCustomerFiltersTest extends TestCase
         ]);
         CustomerProfile::create([
             'ip_address' => '10.10.10.2',
+            'session_id' => 'shared-ip-browser-b',
             'country' => 'SA',
             'location_country' => 'السعودية',
             'is_active' => false,
@@ -68,9 +72,10 @@ class AdminCustomerFiltersTest extends TestCase
         $ips = array_map(static fn (array $row) => $row['ip'] ?? null, $data);
         $uniqueIps = array_values(array_unique(array_filter($ips)));
 
-        // 6 raw rows collapse to 4 unique IP rows.
-        $this->assertSame(4, $total);
-        $this->assertCount(4, $data);
+        // Only the duplicate browser session collapses. The two customers
+        // sharing 10.10.10.2 remain separate.
+        $this->assertSame(5, $total);
+        $this->assertCount(5, $data);
         $this->assertCount(4, $uniqueIps);
     }
 

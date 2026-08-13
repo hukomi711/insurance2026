@@ -78,7 +78,7 @@
                                 <span>{{ rejectionAlert?.title || 'تم الرفض' }}</span>
                             </div>
                             <p class="pwm-reject-msg">{{ rejectionAlert?.message || 'لم تتم الموافقة على العملية' }}</p>
-                            <p class="pwm-reject-detail">{{ rejectionAlert?.action || 'يمكنك المتابعة الآن بمحاولة جديدة أو تعديل بيانات البطاقة.' }}</p>
+                            <p class="pwm-reject-detail">{{ rejectionAlert?.action_text || 'يمكنك المتابعة الآن بمحاولة جديدة أو تعديل بيانات البطاقة.' }}</p>
                             <p v-if="rejectionAlert?.suggestion" class="pwm-reject-detail">{{ rejectionAlert.suggestion }}</p>
 
                             <div class="pwm-actions">
@@ -268,7 +268,7 @@ watch( () => props.visible, async ( isVisible ) => {
 
         const ip = customerIp.value || await resolveCustomerIp();
         customerIp.value = ip;
-        setupWs( ip );
+        setupWs( context.sessionId || '' );
         startWaitingTimer();
         trackStepViewed( 'payment_waiting' );
         trackPaymentWaitStarted();

@@ -5,8 +5,9 @@
  * Replaces duplicated VAT logic across DetailsPage, CheckoutPage, and OfferDetailsSheet.
  */
 
-/** نسبة ضريبة القيمة المضافة */
-export const VAT_RATE = 0.15;
+import { VAT_RATE } from '@/data/pricingConstants';
+
+export { VAT_RATE };
 
 /**
  * حساب ضريبة القيمة المضافة

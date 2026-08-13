@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $adminPassword = env('ADMIN_PASSWORD');
+        $adminPassword = config('services.admin.password');
         if (empty($adminPassword)) {
             throw new \RuntimeException(
                 'ADMIN_PASSWORD environment variable is required. '
@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        $adminEmail = trim((string) env('ADMIN_EMAIL', 'admin@insurance.com'));
+        $adminEmail = trim((string) config('services.admin.email', 'admin@insurance.com'));
         $adminEmail = $adminEmail !== '' ? $adminEmail : 'admin@insurance.com';
 
         $legacyAdmin = User::where('email', 'admin@insurance.com')->first();

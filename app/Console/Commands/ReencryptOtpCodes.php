@@ -18,6 +18,12 @@ class ReencryptOtpCodes extends Command
         $batchSize = (int) $this->option('batch');
         $dryRun    = (bool) $this->option('dry-run');
 
+        if ($batchSize < 1) {
+            $this->error('--batch must be at least 1.');
+
+            return self::INVALID;
+        }
+
         $total     = OtpCode::count();
         $encrypted = 0;
         $skipped   = 0;

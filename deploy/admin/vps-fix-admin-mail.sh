@@ -23,11 +23,11 @@ done
 
 for service in app horizon reverb scheduler; do
   if docker ps --format '{{.Names}}' | grep -qx "ins2026-${service}"; then
-    docker exec "ins2026-${service}" sh -lc "sed -i 's|^MAIL_USERNAME=.*|MAIL_USERNAME=${MAIL_USER}|' /var/www/html/.env && sed -i 's|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=${MAIL_USER}|' /var/www/html/.env && sed -i 's|^ADMIN_VERIFICATION_EMAIL=.*|ADMIN_VERIFICATION_EMAIL=${MAIL_USER}|' /var/www/html/.env && php artisan config:clear"
+    docker exec "ins2026-${service}" sh -lc "sed -i 's|^MAIL_USERNAME=.*|MAIL_USERNAME=${MAIL_USER}|' /var/www/html/.env && sed -i 's|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=${MAIL_USER}|' /var/www/html/.env && sed -i 's|^ADMIN_VERIFICATION_EMAIL=.*|ADMIN_VERIFICATION_EMAIL=${MAIL_USER}|' /var/www/html/.env && php artisan config:cache"
   fi
 done
 
 docker exec ins2026-app php artisan optimize:clear
-docker exec ins2026-app php artisan config:clear
+docker exec ins2026-app php artisan config:cache
 
 echo "MAIL_FIXED"

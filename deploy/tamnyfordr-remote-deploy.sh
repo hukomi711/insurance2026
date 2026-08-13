@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOMAIN="${INS_DOMAIN:-lybankss.com}"
+DOMAIN="${INS_DOMAIN:-example.com}"
 DEPLOY_DIR="${INS_DEPLOY_DIR:-/opt/insurance2026}"
 ARCHIVE_PATH="${INS_ARCHIVE_PATH:-/opt/insurance2026-upload.tar.gz}"
 ENV_SOURCE="${INS_ENV_SOURCE:-/opt/insurance2026.env.production}"
@@ -105,7 +105,7 @@ echo "== laravel migrations and caches =="
 docker exec -u root ins2026-app sh -lc 'chown appuser:appuser /var/www/html/.env && chmod 640 /var/www/html/.env'
 docker exec -u appuser ins2026-app php artisan migrate --force
 docker exec -u appuser ins2026-app php artisan db:seed --class=DatabaseSeeder --force
-docker exec -u appuser ins2026-app php artisan config:clear
+docker exec -u appuser ins2026-app php artisan config:cache
 docker exec -u appuser ins2026-app php artisan route:cache
 docker exec -u appuser ins2026-app php artisan view:cache
 docker exec -u appuser ins2026-app php artisan event:cache

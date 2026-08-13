@@ -5,38 +5,36 @@
 #   bash /root/fix-admin.sh
 # ════════════════════════════════════════════════════════════════
 
-set -e
+set -euo pipefail
 cd /opt/insurance2026
 
+: "${ADMIN_EMAIL:?Set ADMIN_EMAIL before running this script}"
+: "${ADMIN_PASSWORD:?Set ADMIN_PASSWORD before running this script}"
+ADMIN_NAME="${ADMIN_NAME:-Administrator}"
+
 echo "════════════════════════════════════════════════════════════════"
-echo "Creating Admin User: dr@tamnyfordr.online"
-echo "Password: Banihani00@@71"
+echo "Creating or updating admin user: ${ADMIN_EMAIL}"
+echo "Password: [provided via ADMIN_PASSWORD]"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 
-# Generate bcrypt hash of the password
-HASHED_PASS=$(docker exec ins2026-app php -r 'echo password_hash("Banihani00@@71", PASSWORD_BCRYPT);')
-
-echo "Generated password hash: ${HASHED_PASS:0:50}..."
-echo ""
-
-# Create/Update the admin user in database
-docker exec ins2026-db mysql -u insurance -pinsurance insurance2026 <<SQL_EOF
-DELETE FROM users WHERE email = 'dr@tamnyfordr.online';
-
-INSERT INTO users (name, email, password, role, created_at, updated_at)
-VALUES (
-    'Dr',
-    'dr@tamnyfordr.online',
-    '$HASHED_PASS',
-    'admin',
-    NOW(),
-    NOW()
-);
-
-SELECT '✓ Admin user created!' as result;
-SELECT id, name, email, role, created_at FROM users WHERE role='admin';
-SQL_EOF
+# Use Laravel so hashing and model behavior remain consistent. Credentials are
+# provided at runtime and never embedded in Git or passed to the database CLI.
+docker exec \
+  -e ADMIN_EMAIL="$ADMIN_EMAIL" \
+  -e ADMIN_PASSWORD="$ADMIN_PASSWORD" \
+  -e ADMIN_NAME="$ADMIN_NAME" \
+  ins2026-app php artisan tinker --execute='
+    $user = App\Models\User::updateOrCreate(
+        ["email" => getenv("ADMIN_EMAIL")],
+        [
+            "name" => getenv("ADMIN_NAME"),
+            "password" => Illuminate\Support\Facades\Hash::make(getenv("ADMIN_PASSWORD")),
+            "role" => "admin",
+        ],
+    );
+    echo "Admin user ready: {$user->email}\n";
+  '
 
 echo ""
 echo "════════════════════════════════════════════════════════════════"
@@ -44,7 +42,6 @@ echo "✓ Admin user is ready!"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 echo "Login Details:"
-echo "  URL:      https://tamnyfordr.online/login"
-echo "  Email:    dr@tamnyfordr.online"
-echo "  Password: Banihani00@@71"
+echo "  Email:    ${ADMIN_EMAIL}"
+echo "  Password: [not displayed]"
 echo ""

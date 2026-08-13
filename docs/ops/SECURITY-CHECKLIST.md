@@ -43,9 +43,9 @@
 - Enter temporary root password from Namecheap when prompted
 - Key-based auth installed after first login
 
-### Dangerous Commands NOT Used
+### Deployment Safety
 
-- ❌ `php artisan config:cache` → Not called (uses `config:clear` instead)
+- ✅ `php artisan config:cache` → Called only after Docker secrets are exported
 - ❌ `php artisan optimize` → Not called
 - ❌ `chmod -R 777` → Not used
 - ❌ `docker compose down -v` → Not used
@@ -71,13 +71,13 @@
 6. Issue SSL certificate
 7. Build and start containers
 8. Run migrations
-9. Cache config (config:clear, not config:cache)
+9. Cache config with `config:cache` after secrets are injected
 10. Health checks
 
 ### PHP/Docker Production Rules Followed
 
 ✅ PHP changes: `docker compose build app` then recreate services
-✅ Config changes: `config:clear` (never `config:cache`)
+✅ Config changes: rebuild with `config:cache`
 ✅ Env changes: Recreate containers with `--force-recreate`
 ✅ Permissions: Handled by Docker (appuser:appuser, not 777)
 

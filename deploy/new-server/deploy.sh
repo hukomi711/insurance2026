@@ -8,8 +8,8 @@
 #   3. Server has >= 2GB RAM (recommended 4GB)
 #
 # Usage (fresh deploy, no dump):
-#   INS_SERVER_IP=66.29.142.104 \
-#   INS_DOMAIN=lybankss.com \
+#   INS_SERVER_IP=<server-ip> \
+#   INS_DOMAIN=<your-domain> \
 #   INS_REPO_URL=git@github.com:<user>/insurance2026.git \
 #   INS_BRANCH=hardening/clean-rebuild \
 #   bash deploy/new-server/deploy.sh
@@ -311,7 +311,7 @@ $SSH "set -e
   docker exec -u root ins2026-app chmod 640 /var/www/html/.env
   docker exec -u appuser ins2026-app php artisan migrate --force
   docker exec -u appuser ins2026-app php artisan db:seed --class=DatabaseSeeder --force
-  docker exec -u appuser ins2026-app php artisan config:clear
+  docker exec -u appuser ins2026-app php artisan config:cache
   docker exec -u appuser ins2026-app php artisan route:cache
   docker exec -u appuser ins2026-app php artisan view:cache
   docker exec -u appuser ins2026-app php artisan event:cache

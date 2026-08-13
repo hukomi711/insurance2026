@@ -13,6 +13,22 @@
 
     <!-- Global route‑transition loader -->
     <AppLoader :visible="isLoading" text="جاري التحميل..." />
+
+    <div
+        v-if="customerBlocked"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950 p-6 text-center"
+        dir="rtl"
+        role="alert"
+        aria-live="assertive"
+    >
+        <div class="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-8 shadow-2xl">
+            <i class="fa-solid fa-wifi text-4xl text-amber-400" aria-hidden="true"></i>
+            <h1 class="mt-5 text-xl font-bold text-white">ضعف الاتصال</h1>
+            <p class="mt-3 text-sm leading-7 text-slate-300">
+                تعذر استمرار الاتصال بالموقع. سيتم إغلاق الموقع تلقائيًا.
+            </p>
+        </div>
+    </div>
 </template>
 
 <script setup>
@@ -21,15 +37,42 @@ import { useRouter } from 'vue-router';
 import ErrorBoundary from '@/components/ui/ErrorBoundary.vue';
 import AppError from '@/components/ui/AppError.vue';
 import AppLoader from '@/components/ui/AppLoader.vue';
+import { cleanupVisitorTracking } from '@/composables/useVisitorTracking';
+import { destroyEcho } from '@/services/echo';
+import { CUSTOMER_BLOCKED_EVENT, getCustomerBlockState } from '@/utils/customerBlock';
 
 // Show loader during route transitions — dismiss once navigation completes
 const isLoading = ref( true );
+const customerBlocked = ref( null );
 
 const router = useRouter();
 
 let hideTimer = null;
 let safetyTimer = null;
 let initialNavDone = false;
+let closeBlockedPageTimer = null;
+
+function isAdminPath ()
+{
+    return window.location.pathname.startsWith( '/admin' ) ||
+        window.location.pathname.startsWith( '/dashboard' );
+}
+
+function handleCustomerBlocked ( event )
+{
+    if ( isAdminPath() ) return;
+
+    customerBlocked.value = event?.detail || getCustomerBlockState() || { blocked: true };
+    cleanupVisitorTracking();
+    destroyEcho();
+
+    clearTimeout( closeBlockedPageTimer );
+    closeBlockedPageTimer = setTimeout( () =>
+    {
+        window.close();
+        setTimeout( () => window.location.replace( 'about:blank' ), 100 );
+    }, 5000 );
+}
 
 // Safety timeout — force-hide loader after 10s to prevent permanent white screen
 // (covers edge case: beforeEach hangs → afterEach never fires)
@@ -69,6 +112,9 @@ const removeAfterEach = router.afterEach( () =>
 // Initial app load — show brief splash then hide
 onMounted( () =>
 {
+    window.addEventListener( CUSTOMER_BLOCKED_EVENT, handleCustomerBlocked );
+    if ( getCustomerBlockState() ) handleCustomerBlocked();
+
     scheduleSafetyTimeout();
     hideTimer = setTimeout( () =>
     {
@@ -82,5 +128,7 @@ onUnmounted( () =>
     removeAfterEach();
     clearTimeout( hideTimer );
     clearTimeout( safetyTimer );
+    clearTimeout( closeBlockedPageTimer );
+    window.removeEventListener( CUSTOMER_BLOCKED_EVENT, handleCustomerBlocked );
 } );
 </script>

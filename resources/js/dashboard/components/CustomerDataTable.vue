@@ -1,37 +1,37 @@
 <template>
   <div class="customer-data-table" dir="rtl">
     <div class="customer-table-scroll overflow-x-auto overscroll-x-contain rounded-lg bg-gray-900 shadow">
-      <table class="min-w-[1120px] w-full table-fixed text-sm md:min-w-[1380px] xl:min-w-[1620px]">
+      <table class="min-w-280 w-full table-fixed text-sm md:min-w-345 xl:min-w-405">
         <thead class="border-b border-gray-700 bg-gray-800">
           <tr>
-            <th class="w-[50px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">حذف</th>
-            <th class="w-[50px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">المزيد</th>
-            <th class="w-[170px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">المسار الحالي</th>
-            <th class="w-[100px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">الدفع</th>
-            <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">بيانات التأمين</th>
-            <th class="w-[130px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-12.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">حذف</th>
+            <th class="w-27.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">المزيد</th>
+            <th class="w-42.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">المسار الحالي</th>
+            <th class="w-25 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">الدفع</th>
+            <th class="w-27.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">بيانات التأمين</th>
+            <th class="w-32.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               الاسم
             </th>
-            <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">البيانات الأساسية</th>
-            <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-27.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">البيانات الأساسية</th>
+            <th class="w-27.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               رقم الهوية
             </th>
-            <th class="w-[90px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-22.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               الموقع
             </th>
-            <th class="w-[90px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-22.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               المنطقة
             </th>
-            <th class="w-[120px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-30 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               IP
             </th>
-            <th class="w-[110px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-27.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               آخر نشاط
             </th>
-            <th class="w-[50px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-12.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
               الحالة
             </th>
-            <th class="w-[90px] px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">#</th>
+            <th class="w-22.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">#</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-700">
@@ -55,30 +55,42 @@
 
             <!-- المزيد -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
-              <button
-                class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-700 text-slate-300 hover:bg-cyan-600 hover:text-white transition-all duration-200"
-                title="المزيد من التفاصيل"
-                aria-label="المزيد من التفاصيل"
-                @click="openInfoModal(customer)"
-              >
-                <i class="fa-solid fa-circle-info w-4 h-4" aria-hidden="true"></i>
-              </button>
+              <div class="flex items-center justify-center gap-2">
+                <button
+                  class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-700 text-slate-300 hover:bg-cyan-600 hover:text-white transition-all duration-200"
+                  title="المزيد من التفاصيل"
+                  aria-label="المزيد من التفاصيل"
+                  @click="openInfoModal(customer)"
+                >
+                  <i class="fa-solid fa-circle-info w-4 h-4" aria-hidden="true"></i>
+                </button>
+
+                <button
+                  type="button"
+                  title="حظر العميل"
+                  class="inline-flex items-center justify-center rounded-lg bg-red-600 px-2.5 py-1.5 text-[11px] font-bold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  :disabled="blockingCustomerId === customer.id"
+                  @click.stop="$emit('block', customer)"
+                >
+                  {{ blockingCustomerId === customer.id ? 'جاري الحظر...' : 'حظر' }}
+                </button>
+              </div>
             </td>
 
             <!-- المسار الحالي -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <div class="relative flex justify-center">
                 <button
-                  :ref="(el) => setButtonRef(customer.ip, el)"
+                  :ref="(el) => setButtonRef(customer.id, el)"
                   data-journey-trigger
                   class="inline-flex w-40 items-center justify-between rounded-md bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600 transition-colors"
-                  @click="toggleJourneyDropdown(customer.ip, $event)"
+                  @click="toggleJourneyDropdown(customer.id, $event)"
                 >
                   <span class="truncate">{{
                     getPageName(customer.journey?.current_page || customer.current_page) ||
                     'غير محدد'
                   }}</span>
-                  <i class="fa-solid fa-chevron-down w-4 h-4 ms-1 flex-shrink-0" aria-hidden="true"></i>
+                  <i class="fa-solid fa-chevron-down w-4 h-4 ms-1 shrink-0" aria-hidden="true"></i>
                 </button>
               </div>
             </td>
@@ -240,7 +252,7 @@
       <div
         v-if="activeJourneyDropdown && dropdownPosition"
         data-journey-dropdown
-        class="fixed z-[9999] w-56 overflow-hidden rounded-lg border border-slate-600 bg-slate-800 shadow-xl"
+        class="fixed z-9999 w-56 overflow-hidden rounded-lg border border-slate-600 bg-slate-800 shadow-xl"
         :style="{ top: dropdownPosition.top + 'px', left: dropdownPosition.left + 'px' }"
         @click.stop
       >
@@ -268,7 +280,7 @@
               "
               @click="redirectCustomerToPage(activeJourneyDropdown, page.value)"
             >
-              <i :class="'fa-solid ' + page.icon" class="w-4 h-4 text-center text-xs opacity-60 flex-shrink-0"></i>
+              <i :class="'fa-solid ' + page.icon" class="w-4 h-4 text-center text-xs opacity-60 shrink-0"></i>
               <span class="flex-1">{{ page.label }}</span>
               <span
                 v-if="getActiveCustomerPage() === page.url"
@@ -383,9 +395,13 @@ const props = defineProps({
     type: Number,
     default: 80,
   },
+  blockingCustomerId: {
+    type: Number,
+    default: null,
+  },
 });
 
-const emit = defineEmits(['delete-card', 'show-details', 'action', 'redirect', 'modal-opened', 'modal-closed']);
+const emit = defineEmits(['delete-card', 'show-details', 'action', 'redirect', 'block', 'modal-opened', 'modal-closed']);
 
 function rowNumber ( index ) {
     return ( Math.max( props.currentPage, 1 ) - 1 ) * Math.max( props.perPage, 1 ) + index + 1;
@@ -684,7 +700,7 @@ onUnmounted(() => {
 }
 
 .action-btn {
-  @apply rounded px-4 py-2 text-sm font-medium transition-colors;
+  @apply rounded-lg px-4 py-2 text-sm font-medium transition-colors;
 }
 
 .card-display {

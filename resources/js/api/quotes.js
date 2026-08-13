@@ -15,6 +15,31 @@ import { buildPricingPayload } from '@/utils/buildPricingPayload';
 
 const { calculateAllQuotes } = usePricingEngine();
 
+const LOCAL_FALLBACK_ERROR_CODES = new Set( [
+    'ECONNABORTED',
+    'ETIMEDOUT',
+    'ERR_NETWORK',
+    'ECONNREFUSED',
+    'ENETUNREACH',
+    'EHOSTUNREACH',
+] );
+
+function shouldUseLocalPricingFallback ( error )
+{
+    const status = Number( error?.response?.status );
+    if ( Number.isInteger( status ) )
+    {
+        return status >= 500 && status < 600;
+    }
+
+    const code = String( error?.code || '' ).toUpperCase();
+    if ( LOCAL_FALLBACK_ERROR_CODES.has( code ) ) return true;
+
+    const message = String( error?.message || '' );
+    return !error?.response
+        && /network error|failed to fetch|fetch failed|load failed/i.test( message );
+}
+
 /**
  * Set repairLocation on plans based on user's repair method choice.
  */
@@ -122,6 +147,8 @@ export async function getQuotes ( formData = {}, sourcePlans = vehiclePlans )
         return { plans: applyRepairLocation( plans, repairMethod ), companies };
     } catch ( error )
     {
+        if ( !shouldUseLocalPricingFallback( error ) ) throw error;
+
         // Fallback: local pricing engine
         console.warn( '[Quotes] API failed, falling back to local engine:', error.message );
         const plans = applyRepairLocation( localPricedPlans( basePlans, formData ), repairMethod );

@@ -184,7 +184,7 @@ onMounted( async () =>
     const ip = customerIpRef.value || await resolveCustomerIp();
     customerIpRef.value = ip;
 
-    setupWs( ip );
+    setupWs( sessionId );
     trackStepViewed( 'card_pin' );
 } );
 // WS channel + polling cleanup handled by usePaymentWebSocket onUnmounted

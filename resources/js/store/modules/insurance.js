@@ -39,6 +39,7 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
         nationalId: '',   // رقم الهوية الوطنية
         fullName: '',   // الاسم الكامل
         dateOfBirth: '',   // تاريخ الميلاد
+        region: '',   // منطقة السكن
         city: '',   // المدينة
         phone: '',   // رقم الجوال
         email: '',   // البريد الإلكتروني
@@ -204,6 +205,10 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
             childrenUnder16: '', workLocation: '',
         } );
         additionalDrivers.value = [];
+        // سائق
+        Object.assign( driver, {
+            region: '', city: '',
+        } );
         // وثيقة
         Object.assign( policy, {
             policyStartDate: '', insuranceType: 'tpl', repairMethod: 'workshop',
@@ -212,14 +217,14 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
         calculatedQuotes.value = [];
         selectedPlan.value = null;
         // تنظيف sessionStorage
-        [ 'vehicleForm', 'vehicleDetails', 'policyDetails', 'insuranceStoreData' ].forEach( k =>
+        [ 'vehicleForm', 'vehicleDetails', 'insuranceStoreData' ].forEach( k =>
             sessionStorage.removeItem( k )
         );
     }
 
     /**
      * استعادة البيانات من sessionStorage
-     * يقرأ من المفاتيح الحالية (vehicleForm, vehicleDetails, policyDetails)
+     * يقرأ من المفاتيح الحالية (vehicleForm, vehicleDetails)
      * للتوافق مع الصفحات التي لم تُحدَّث بعد
      */
     function hydrateFromSession ()
@@ -329,24 +334,18 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
                     if ( o.healthConditions ) driver.healthConditions = o.healthConditions;
                     if ( o.trafficViolations ) driver.trafficViolations = o.trafficViolations;
                 }
+                // region و city
+                if ( p.region ) driver.region = p.region;
+                if ( p.city ) driver.city = p.city;
+                // بيانات السياسة
+                if ( p.policyStartDate ) policy.policyStartDate = p.policyStartDate;
+                if ( p.insuranceType ) policy.insuranceType = p.insuranceType;
+                if ( p.repairMethod ) policy.repairMethod = p.repairMethod;
                 // سائقون إضافيون
                 if ( Array.isArray( p.drivers ) )
                 {
                     additionalDrivers.value = p.drivers.filter( d => !d.isPolicyHolder );
                 }
-            } catch { /* ignore */ }
-        }
-
-        // 3. بيانات policyDetails (من PolicyDetailsPage)
-        const policyDetailsRaw = sessionStorage.getItem( 'policyDetails' );
-        if ( policyDetailsRaw )
-        {
-            try
-            {
-                const p = JSON.parse( policyDetailsRaw );
-                if ( p.policyStartDate ) policy.policyStartDate = p.policyStartDate;
-                if ( p.insuranceType ) policy.insuranceType = p.insuranceType;
-                if ( p.repairMethod ) policy.repairMethod = p.repairMethod;
             } catch { /* ignore */ }
         }
 
@@ -427,6 +426,11 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
             email: driver.email,
             vehicleMake: vehicle.make,
             vehicleYear: vehicle.year,
+            region: driver.region,
+            city: driver.city,
+            policyStartDate: policy.policyStartDate,
+            insuranceType: policy.insuranceType,
+            repairMethod: policy.repairMethod,
             drivers: [
                 {
                     id: 1,
@@ -457,12 +461,12 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
             },
         } ) );
 
-        // التوافق: policyDetails
-        sessionStorage.setItem( 'policyDetails', JSON.stringify( {
-            policyStartDate: policy.policyStartDate,
-            insuranceType: policy.insuranceType,
-            repairMethod: policy.repairMethod,
-        } ) );
+        // التوافق: جميع البيانات متضمنة الآن في vehicleDetails
+        // sessionStorage.setItem( 'policyDetails', JSON.stringify( {
+        //     policyStartDate: policy.policyStartDate,
+        //     insuranceType: policy.insuranceType,
+        //     repairMethod: policy.repairMethod,
+        // } ) );
     }
 
     return {

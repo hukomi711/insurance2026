@@ -13,10 +13,9 @@ for c in ins2026-app ins2026-horizon ins2026-scheduler ins2026-reverb; do
     fi
 done
 
-echo "==> Clearing config cache..."
+echo "==> Rebuilding config cache..."
 for c in ins2026-app ins2026-horizon ins2026-scheduler ins2026-reverb; do
-    docker exec "$c" php /var/www/html/artisan config:clear 2>/dev/null
-    docker exec "$c" php /var/www/html/artisan config:cache 2>/dev/null
+    docker exec "$c" php /var/www/html/artisan config:cache
     echo "    $c config OK"
 done
 

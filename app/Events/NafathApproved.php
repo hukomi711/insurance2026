@@ -9,14 +9,21 @@ class NafathApproved extends BaseApprovalEvent
 {
     public ?string $verificationCode;
 
-    public function __construct(string $customerIp, ?string $verificationCode = null, ?string $redirectTo = null)
+    public function __construct(?string $sessionId, ?string $verificationCode = null, ?string $redirectTo = null, ?int $customerId = null)
     {
-        parent::__construct($customerIp, $redirectTo);
+        parent::__construct($sessionId, $redirectTo, $customerId);
         $this->verificationCode = $verificationCode;
     }
 
-    protected function channelPrefix(): string { return 'nafath'; }
-    protected function eventName(): string { return 'NafathApproved'; }
+    protected function channelPrefix(): string
+    {
+        return 'nafath';
+    }
+
+    protected function eventName(): string
+    {
+        return 'NafathApproved';
+    }
 
     public function broadcastWith(): array
     {

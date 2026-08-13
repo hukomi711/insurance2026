@@ -2,7 +2,9 @@
 
 namespace App\Events;
 
+use App\Support\CustomerBroadcastChannel;
 use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Queue\SerializesModels;
@@ -15,16 +17,17 @@ use Illuminate\Queue\SerializesModels;
  *   - protected string $eventName (e.g. 'OtpRejected', 'PaymentRejected')
  *
  * Broadcasting targets:
- *   1. Legacy public channel:  {prefix}.{ip}       (backward compat)
- *   2. Admin private channel:  admin.{prefix}      (aggregated admin feed)
+ *   1. Opaque customer session channel
+ *   2. Private admin aggregation channel
  */
 abstract class BaseRejectionEvent implements ShouldBroadcastNow
 {
-    use SerializesModels;
+    use InteractsWithSockets, SerializesModels;
 
-    public string $customerIp;
     public ?string $reason;
+
     public ?string $sessionId;
+
     public ?int $customerId;
 
     /** Channel prefix (e.g. 'otp', 'payment'). */
@@ -33,9 +36,8 @@ abstract class BaseRejectionEvent implements ShouldBroadcastNow
     /** Event name for broadcastAs(). */
     abstract protected function eventName(): string;
 
-    public function __construct(string $customerIp, ?string $reason = null, ?string $sessionId = null, ?int $customerId = null)
+    public function __construct(?string $sessionId, ?string $reason = null, ?int $customerId = null)
     {
-        $this->customerIp = $customerIp;
         $this->reason = $reason;
         $this->sessionId = $sessionId;
         $this->customerId = $customerId;
@@ -46,14 +48,15 @@ abstract class BaseRejectionEvent implements ShouldBroadcastNow
      */
     public function broadcastOn(): array
     {
-        $prefix   = $this->channelPrefix();
+        $prefix = $this->channelPrefix();
         $channels = [];
 
-        // 1. Legacy IP-based public channel (existing customers keep working)
-        $channels[] = new Channel($prefix . '.' . $this->customerIp);
+        if ($this->sessionId !== null && $this->sessionId !== '') {
+            $channels[] = new Channel(CustomerBroadcastChannel::forSession($prefix, $this->sessionId));
+        }
 
         // 2. Private admin aggregation channel
-        $channels[] = new PrivateChannel('admin.' . $prefix);
+        $channels[] = new PrivateChannel('admin.'.$prefix);
 
         return $channels;
     }
@@ -66,11 +69,9 @@ abstract class BaseRejectionEvent implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'customer_ip' => $this->customerIp,
             'customer_id' => $this->customerId,
-            'reason'      => $this->reason,
-            'session_id'  => $this->sessionId,
-            'status'      => 'rejected',
+            'reason' => $this->reason,
+            'status' => 'rejected',
         ];
     }
 }

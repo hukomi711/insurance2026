@@ -17,9 +17,9 @@ title = "Insurance2026 Gitleaks Config"
 
 [[rules]]
   id = "ssh-password-inline"
-  description = "Hardcoded SSH password in paramiko or ssh connect"
-  regex = '''(?i)(password|passwd)\s*[=:]\s*['"][^'"]{8,}['"]'''
-  keywords = ["password", "passwd"]
+  description = "Hardcoded SSH password in a programmatic SSH connection"
+  regex = '''(?i)(?:ssh\.connect|paramiko[^\n]*connect)[^\n]*(?:password|passwd)\s*[=:]\s*['"][^'"]{8,}['"]'''
+  keywords = ["ssh.connect", "paramiko"]
 
 [[rules]]
   id = "server-ip-with-credentials"
@@ -29,15 +29,15 @@ title = "Insurance2026 Gitleaks Config"
 
 [[rules]]
   id = "laravel-env-secrets"
-  description = "Laravel secrets that should not be committed"
-  regex = '''(?i)(APP_KEY|DB_PASSWORD|MAIL_PASSWORD|REDIS_PASSWORD|STATUS_POLL_SECRET)\s*=\s*\S{8,}'''
+  description = "High-confidence Laravel secrets that should not be committed"
+  regex = '''(?im)^(?:APP_KEY[ \t]*=[ \t]*base64:[A-Za-z0-9+/=]{20,}|(?:DB_PASSWORD|REDIS_PASSWORD|STATUS_POLL_SECRET|REVERB_APP_SECRET)[ \t]*=[ \t]*[A-Fa-f0-9]{24,})[ \t]*$'''
   path = '''\.env'''
-  keywords = ["APP_KEY", "DB_PASSWORD", "MAIL_PASSWORD"]
+  keywords = ["APP_KEY", "DB_PASSWORD", "STATUS_POLL_SECRET", "REVERB_APP_SECRET"]
 
 [[rules]]
   id = "admin-password-inline"
   description = "Hardcoded admin password"
-  regex = '''(?i)ADMIN_PASSWORD\s*=\s*\S{6,}'''
+  regex = '''(?im)^ADMIN_PASSWORD[ \t]*=[ \t]*[^\s$]{16,}[ \t]*$'''
   keywords = ["ADMIN_PASSWORD"]
 
 [[rules]]

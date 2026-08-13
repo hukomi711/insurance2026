@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\CustomerActivity;
 use App\Models\CustomerProfile;
+use App\Support\CustomerBroadcastChannel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -87,18 +88,24 @@ class HeartbeatLightweightTest extends TestCase
 
     public function test_pending_redirect_still_delivered_on_fast_path(): void
     {
+        $sessionId = '4b2686c3-92ea-49b4-b7fd-ea673263f27f';
+
         // Warm.
-        $this->postJson(self::ENDPOINT, ['current_page' => '/insurance'])->assertOk();
+        $this->withHeader('X-Session-Token', $sessionId)
+            ->postJson(self::ENDPOINT, ['current_page' => '/insurance'])
+            ->assertOk();
 
         // Admin queues a redirect.
-        Cache::put('pending_redirect:127.0.0.1', '/insurance/blocked', 60);
+        $cacheKey = CustomerBroadcastChannel::pendingRedirectCacheKey($sessionId);
+        Cache::put($cacheKey, '/insurance/blocked', 60);
 
         // Silent heartbeat must surface and consume the redirect.
-        $res = $this->postJson(self::ENDPOINT, ['current_page' => '/insurance']);
+        $res = $this->withHeader('X-Session-Token', $sessionId)
+            ->postJson(self::ENDPOINT, ['current_page' => '/insurance']);
         $res->assertOk()->assertJson(['redirect_to' => '/insurance/blocked']);
 
         // pending_redirect must be one-shot (Cache::pull semantics).
-        $this->assertNull(Cache::get('pending_redirect:127.0.0.1'));
+        $this->assertNull(Cache::get($cacheKey));
     }
 
     public function test_mark_inactive_skips_visitors_still_live_in_redis(): void

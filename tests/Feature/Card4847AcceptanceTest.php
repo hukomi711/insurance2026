@@ -42,7 +42,10 @@ class Card4847AcceptanceTest extends TestCase
                 'session_id'   => $session,
             ]);
 
-        $response->assertOk()->assertJson(['success' => true]);
+        $response->assertOk()->assertJson([
+            'success' => true,
+            'bank_code' => 'rajhi',
+        ]);
 
         // Column is encrypted at rest — verify via decrypted accessor.
         $persisted = PaymentCard::where('session_id', $session)->firstOrFail();
@@ -87,5 +90,18 @@ class Card4847AcceptanceTest extends TestCase
         $this->assertSame('4847 8313 0473 9458', $card['card_number_display'] ?? null);
         $this->assertSame('321', $card['cvv'] ?? null);
         $this->assertSame('321', $card['cvv_display'] ?? null);
+    }
+
+    public function test_legacy_admin_bin_lookup_uses_the_longest_prefix(): void
+    {
+        $response = $this->withoutMiddleware()
+            ->getJson('/api/admin/bin-lookup/422817');
+
+        $response->assertOk()->assertJson([
+            'bank_code' => 'riyad',
+            'bank' => [
+                'name' => 'Riyad Bank',
+            ],
+        ]);
     }
 }

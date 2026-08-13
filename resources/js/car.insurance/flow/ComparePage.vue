@@ -1,6 +1,6 @@
 <template>
     <!-- ═══ Loading State ═══ -->
-    <QuotesLoading v-if="isLoadingQuotes" :progress="loadingProgress" @back="router.push({ name: 'policyDetails' })" />
+    <QuotesLoading v-if="isLoadingQuotes" :progress="loadingProgress" @back="router.push({ name: 'vehicleDetails' })" />
 
     <!-- ═══ Error State ═══ -->
     <div v-else-if="quotesError" class="min-h-screen bg-slate-50 center" dir="rtl">
@@ -15,7 +15,7 @@
         <!-- ── Top Header: Back + Timer ── -->
         <div class="bg-white border-b border-slate-200">
             <div class="box py-3 flex items-center justify-between">
-                <router-link :to="{ name: 'policyDetails' }"
+                <router-link :to="{ name: 'vehicleDetails' }"
                     class="flex items-center gap-1.5 text-primary typ-s2 hover:text-primary-dark transition-colors">
                     <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -204,7 +204,7 @@
 
                     <!-- Back Button -->
                     <div class="mt-8 flex justify-center">
-                        <router-link :to="{ name: 'policyDetails' }"
+                        <router-link :to="{ name: 'vehicleDetails' }"
                             class="flex items-center gap-2 text-primary typ-s2 font-bold hover:text-primary-dark transition-colors">
                             <svg class="size-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -272,7 +272,6 @@ const MobileFiltersSheet = defineAsyncComponent( () => import( '@/car.insurance/
 import CompareSidebar from '@/car.insurance/components/compare/CompareSidebar.vue';
 import logger from '@/utils/logger';
 import { getSessionToken } from '@/utils/sessionToken';
-import { trackSnapchatQuoteSubmit } from '@/utils/snapchatPixel';
 
 const ncdBannerImg = new URL( '../../../images/motorapp/mabruk.webp', import.meta.url ).href;
 
@@ -290,18 +289,6 @@ const isLoadingQuotes = ref( true );
 const loadingProgress = ref( 0 );
 let loadingInterval;
 let loadingAborted = false;
-
-function trackPendingQuoteSubmitEvent() {
-    const pendingDedupId = sessionStorage.getItem( 'snapchat_quote_submit_pending_dedup_id' );
-    if ( !pendingDedupId ) return;
-
-    trackSnapchatQuoteSubmit( {
-        client_dedup_id: pendingDedupId,
-        event_id: pendingDedupId,
-    } );
-
-    sessionStorage.removeItem( 'snapchat_quote_submit_pending_dedup_id' );
-}
 
 /**
  * Fetch quotes from API with progress indication.
@@ -332,7 +319,6 @@ async function startLoadingQuotes() {
 
         // استدعاء API مع بيانات النموذج للتسعير الديناميكي
         const result = await getQuotes( insuranceStore.allFormData );
-        trackPendingQuoteSubmitEvent();
         quotesData.value = withDisplayCoverage( result.plans || [] );
 
         // حفظ الأسعار المحسوبة في المتجر

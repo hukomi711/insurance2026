@@ -112,6 +112,10 @@ class Order extends Model
         'payment_method',
         'payment_status',
         'status',
+        'company_id',
+        'plan_sub_type',
+        'pricing_signature',
+        'pricing_timestamp',
     ];
 
     /** @var array<string, string> */

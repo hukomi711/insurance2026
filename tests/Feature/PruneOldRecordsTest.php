@@ -214,11 +214,76 @@ class PruneOldRecordsTest extends TestCase
             ->assertSuccessful();
 
         $profile = DB::table('customer_profiles')->first();
+        $this->assertNull($profile->ip_address);
         $this->assertNull($profile->full_name);
         $this->assertNull($profile->phone_number);
         $this->assertNull($profile->national_id);
         $this->assertNull($profile->email);
         $this->assertNotNull($profile->anonymized_at);
+    }
+
+    public function test_tier4_anonymizes_every_profile_across_multiple_chunks(): void
+    {
+        $now = now()->subDays(200);
+        $rows = [];
+
+        for ($i = 1; $i <= 1001; $i++) {
+            $rows[] = [
+                'ip_address' => '10.'.intdiv($i, 65_536).'.'.(intdiv($i, 256) % 256).'.'.($i % 256),
+                'session_id' => "session-{$i}",
+                'national_id_hash' => hash('sha256', "national-{$i}"),
+                'phone_number_hash' => hash('sha256', "phone-{$i}"),
+                'plate_number' => "PLATE-{$i}",
+                'vin' => str_pad((string) $i, 17, '0', STR_PAD_LEFT),
+                'last_activity_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        foreach (array_chunk($rows, 200) as $chunk) {
+            DB::table('customer_profiles')->insert($chunk);
+        }
+
+        $this->artisan('app:prune-old-records', ['--tier' => '4', '--include-anonymize' => true])
+            ->assertSuccessful();
+
+        $this->assertSame(1001, DB::table('customer_profiles')->whereNotNull('anonymized_at')->count());
+        $this->assertSame(0, DB::table('customer_profiles')->whereNotNull('ip_address')->count());
+        $this->assertSame(0, DB::table('customer_profiles')->whereNotNull('session_id')->count());
+        $this->assertSame(0, DB::table('customer_profiles')->whereNotNull('national_id_hash')->count());
+        $this->assertSame(0, DB::table('customer_profiles')->whereNotNull('phone_number_hash')->count());
+        $this->assertSame(0, DB::table('customer_profiles')->whereNotNull('plate_number')->count());
+        $this->assertSame(0, DB::table('customer_profiles')->whereNotNull('vin')->count());
+    }
+
+    public function test_tier3_scrubs_every_otp_across_multiple_chunks(): void
+    {
+        $profileId = $this->createCustomerProfile();
+        $old = now()->subDays(8);
+        $rows = [];
+
+        for ($i = 1; $i <= 1001; $i++) {
+            $rows[] = [
+                'customer_profile_id' => $profileId,
+                'type' => 'otp',
+                'code' => (string) $i,
+                'code_value' => "value-{$i}",
+                'status' => 'verified',
+                'created_at' => $old,
+                'updated_at' => $old,
+            ];
+        }
+
+        foreach (array_chunk($rows, 200) as $chunk) {
+            DB::table('otp_codes')->insert($chunk);
+        }
+
+        $this->artisan('app:prune-old-records', ['--tier' => '3', '--only' => 'otp_codes'])
+            ->assertSuccessful();
+
+        $this->assertSame(0, DB::table('otp_codes')->whereNotNull('code')->count());
+        $this->assertSame(0, DB::table('otp_codes')->whereNotNull('code_value')->count());
     }
 
     public function test_tier4_skips_profiles_with_linked_orders(): void

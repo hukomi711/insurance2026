@@ -4,6 +4,13 @@ namespace App\Events;
 
 class PinRejected extends BaseRejectionEvent
 {
-    protected function channelPrefix(): string { return 'otp'; }
-    protected function eventName(): string { return 'PinRejected'; }
+    protected function channelPrefix(): string
+    {
+        return 'otp';
+    }
+
+    protected function eventName(): string
+    {
+        return 'PinRejected';
+    }
 }

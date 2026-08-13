@@ -1,5 +1,12 @@
 <?php
 
+use App\Support\MailFailoverMailers;
+
+$failoverMailers = MailFailoverMailers::normalize(
+    env('MAIL_FAILOVER_MAILERS'),
+    strtolower((string) env('APP_ENV', 'production')) === 'production',
+);
+
 return [
 
     /*
@@ -45,6 +52,7 @@ return [
             'port' => env('MAIL_PORT', 2525),
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
+            'require_tls' => env('MAIL_REQUIRE_TLS', false),
             'timeout' => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
@@ -81,10 +89,7 @@ return [
 
         'failover' => [
             'transport' => 'failover',
-            'mailers' => [
-                'smtp',
-                'log',
-            ],
+            'mailers' => $failoverMailers,
             'retry_after' => 60,
         ],
 

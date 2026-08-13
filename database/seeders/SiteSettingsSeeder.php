@@ -23,7 +23,7 @@ class SiteSettingsSeeder extends Seeder
                 [
                     'value' => $row['value'],
                     'type'  => $row['type'] ?? 'string',
-                    'group' => $row['group'] ?? 'general',
+                    'group' => $row['group'],
                 ],
             );
         }

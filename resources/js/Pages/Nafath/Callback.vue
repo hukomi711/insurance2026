@@ -53,21 +53,25 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { getEcho } from '@/services/echo';
+import { getSessionToken } from '@/utils/sessionToken';
+import { customerBroadcastChannel } from '@/utils/customerBroadcastChannel';
 
 const router = useRouter();
 
 const verificationCode = ref(null);
 const codeUpdated = ref(false);
 let echoChannel = null;
+let echoChannelName = '';
 let customerIp = null;
 let pollTimer = null;
 
 // ─── WebSocket — listen for code updates or rejection ───────────────
 async function setupWebSocket() {
     const echo = await getEcho();
-    if (!echo || !customerIp) return;
+    if (!echo) return;
 
-    echoChannel = echo.channel(`nafath.${customerIp}`);
+    echoChannelName = await customerBroadcastChannel('nafath', getSessionToken());
+    echoChannel = echo.channel(echoChannelName);
 
     // Listen for code updates from admin
     echoChannel.listen('.NafathCodeUpdated', handleCodeUpdate);
@@ -143,8 +147,8 @@ onUnmounted(() => {
     clearTimeout(codeUpdatedTimer);
     clearTimeout(pollTimer);
     pollTimer = null;
-    if (echoChannel && customerIp) {
-        try { window.Echo?.leave(`nafath.${customerIp}`); } catch { /* */ }
+    if (echoChannel && echoChannelName) {
+        try { window.Echo?.leave(echoChannelName); } catch { /* */ }
     }
 });
 </script>

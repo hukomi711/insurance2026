@@ -79,7 +79,7 @@ done
 echo "[6/7] Run migrations and Laravel caches"
 docker exec ins2026-app php artisan migrate --force
 docker exec ins2026-app php artisan optimize:clear
-docker exec ins2026-app php artisan config:clear
+docker exec ins2026-app php artisan config:cache
 docker exec ins2026-app php artisan route:cache
 docker exec ins2026-app php artisan view:cache
 docker exec ins2026-app php artisan event:cache

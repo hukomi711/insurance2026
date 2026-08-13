@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Support\CustomerBroadcastChannel;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -16,13 +17,17 @@ class CustomerRedirected implements ShouldBroadcast
      */
     public string $broadcastQueue = 'broadcasts';
 
-    public string $customerIp;
+    public string $sessionId;
+
     public string $redirectUrl;
 
-    public function __construct(string $customerIp, string $redirectUrl)
+    public int $customerId;
+
+    public function __construct(string $sessionId, string $redirectUrl, int $customerId)
     {
-        $this->customerIp = $customerIp;
+        $this->sessionId = $sessionId;
         $this->redirectUrl = $redirectUrl;
+        $this->customerId = $customerId;
     }
 
     /**
@@ -30,7 +35,7 @@ class CustomerRedirected implements ShouldBroadcast
      */
     public function broadcastOn(): Channel
     {
-        return new Channel('customer.' . $this->customerIp);
+        return new Channel(CustomerBroadcastChannel::forSession('customer', $this->sessionId));
     }
 
     /**
@@ -47,7 +52,7 @@ class CustomerRedirected implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'customer_ip' => $this->customerIp,
+            'customer_id' => $this->customerId,
             'redirect_url' => $this->redirectUrl,
         ];
     }

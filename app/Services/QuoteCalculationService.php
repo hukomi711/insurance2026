@@ -241,7 +241,7 @@ class QuoteCalculationService
     private function getVehicleAgeFactor(mixed $year): float
     {
         if (!$year) return 1.0;
-        $currentYear = (int) date('Y');
+        $currentYear = Carbon::now()->year;
         $age = $currentYear - (int) $year;
         foreach ($this->config['vehicle_age_factors'] as $entry) {
             if ($age <= $entry['maxAge']) {

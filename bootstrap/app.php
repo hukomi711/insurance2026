@@ -70,6 +70,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Performance monitoring — logs slow requests, N+1 queries, large payloads
         $middleware->api(append: [
             \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\EnsureCustomerIsNotBlocked::class,
             \App\Http\Middleware\PerformanceMonitor::class,
         ]);
 

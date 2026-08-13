@@ -1,22 +1,33 @@
 #!/bin/bash
 # Backup MariaDB to a date-stamped gzip dump.
 # Env vars (set in /etc/environment or systemd timer):
-#   INS_DEPLOY_DIR  default /opt/insurance2026
+#   INS_BACKUP_DIR  default /opt/server-state-backups/database
 #   INS_DB_USER     default insurance
 #   INS_DB_NAME     default insurance2026
 set -euo pipefail
-APP_DIR="${INS_DEPLOY_DIR:-/opt/insurance2026}"
-BACKUP_DIR="${APP_DIR}/backups"
+BACKUP_DIR="${INS_BACKUP_DIR:-/opt/server-state-backups/database}"
 DB_USER="${INS_DB_USER:-insurance}"
 DB_NAME="${INS_DB_NAME:-insurance2026}"
 DATE=$(date +%Y%m%d_%H%M%S)
 FILENAME="${DB_NAME}_${DATE}.sql.gz"
-DB_PASS=$(cat "${APP_DIR}/docker/secrets/db_password.txt")
-
 mkdir -p "${BACKUP_DIR}"
+chmod 700 "${BACKUP_DIR}"
 
-if docker exec ins2026-db mariadb-dump -u "${DB_USER}" -p"${DB_PASS}" "${DB_NAME}" \
-    --single-transaction --routines --triggers | gzip > "${BACKUP_DIR}/${FILENAME}"; then
+if docker exec \
+    -e BACKUP_DB_USER="${DB_USER}" \
+    -e BACKUP_DB_NAME="${DB_NAME}" \
+    ins2026-db sh -eu -c '
+        defaults_file="$(mktemp)"
+        trap '\''rm -f "$defaults_file"'\'' EXIT
+        chmod 600 "$defaults_file"
+        printf "[client]\npassword=%s\n" "$(cat /run/secrets/db_password)" > "$defaults_file"
+        mariadb-dump --defaults-extra-file="$defaults_file" \
+            --user="$BACKUP_DB_USER" \
+            --single-transaction --routines --triggers \
+            "$BACKUP_DB_NAME"
+    ' | gzip > "${BACKUP_DIR}/${FILENAME}"; then
+    chmod 600 "${BACKUP_DIR}/${FILENAME}"
+    test -s "${BACKUP_DIR}/${FILENAME}"
     echo "[$(date)] Backup OK: ${FILENAME}" >> "${BACKUP_DIR}/backup.log"
 else
     echo "[$(date)] Backup FAILED" >> "${BACKUP_DIR}/backup.log"

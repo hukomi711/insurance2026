@@ -268,8 +268,9 @@ return [
     'signature_ttl' => (int) env('PRICING_SIGNATURE_TTL', 3600),  // Signature valid for 1 hour (3600 seconds)
 
     // ─── Promotional discount applied AFTER risk-factor pricing, BEFORE VAT ───
-    // 0.80 = 20% off. Set to 1.0 to disable. Override via env without code change.
-    'promotional_discount_factor' => (float) env('PRICING_PROMO_FACTOR', 0.80),
+    // Keep this synchronized with PROMOTIONAL_DISCOUNT_FACTOR in pricingConstants.js.
+    // Cross-runtime parity tests fail if either side changes independently.
+    'promotional_discount_factor' => 0.80,
 
     // ─── Pricing version (for audit trail and sync) ───
     'version' => '1.1.0',

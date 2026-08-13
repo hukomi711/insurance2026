@@ -304,9 +304,9 @@ done
 # Run migrations
 docker exec ins2026-app php artisan migrate --force
 
-# Clear and cache (but NOT config:cache, only config:clear)
+# Rebuild optimized caches from the current environment.
 docker exec ins2026-app php artisan optimize:clear
-docker exec ins2026-app php artisan config:clear
+docker exec ins2026-app php artisan config:cache
 docker exec ins2026-app php artisan route:cache
 docker exec ins2026-app php artisan view:cache
 docker exec ins2026-app php artisan event:cache

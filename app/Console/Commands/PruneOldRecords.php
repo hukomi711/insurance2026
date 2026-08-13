@@ -149,9 +149,13 @@ class PruneOldRecords extends Command
         }
 
         $piiColumns = [
+            'ip_address'                  => null,
+            'session_id'                  => null,
             'full_name'                    => null,
             'phone_number'                 => null,
+            'phone_number_hash'            => null,
             'national_id'                  => null,
+            'national_id_hash'             => null,
             'email'                        => null,
             'birth_date'                   => null,
             'birth_year'                   => null,
@@ -162,12 +166,14 @@ class PruneOldRecords extends Command
             'additional_driver_name'       => null,
             'additional_driver_national_id' => null,
             'additional_driver_birth_date' => null,
+            'plate_number'                 => null,
+            'vin'                          => null,
             'anonymized_at'               => now(),
         ];
 
         $total = 0;
 
-        (clone $query)->select('id')->orderBy('id')->chunk($this->chunkSize, function ($rows) use ($piiColumns, &$total) {
+        (clone $query)->select('id')->chunkById($this->chunkSize, function ($rows) use ($piiColumns, &$total) {
             $ids = $rows->pluck('id')->all();
             DB::table('customer_profiles')->whereIn('id', $ids)->update($piiColumns);
             $total += count($ids);
@@ -261,7 +267,7 @@ class PruneOldRecords extends Command
 
         $total = 0;
 
-        (clone $query)->select('id')->orderBy('id')->chunk($this->chunkSize, function ($rows) use ($table, $config, &$total) {
+        (clone $query)->select('id')->chunkById($this->chunkSize, function ($rows) use ($table, $config, &$total) {
             $ids = $rows->pluck('id')->all();
             DB::table($table)->whereIn('id', $ids)->update($config['columns']);
             $total += count($ids);

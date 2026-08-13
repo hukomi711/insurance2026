@@ -33,16 +33,18 @@ class AdminPhoneVerificationController extends Controller
 
         $otp->verify();
 
+        $customer = $otp->customer;
+        $sessionId = $otp->session_id ?: $customer?->session_id;
+
         try {
-            broadcast(new PhoneOtpApproved($request->customer_ip))->toOthers();
+            broadcast(new PhoneOtpApproved($sessionId, '/insurance/nafath', $customer?->id))->toOthers();
         } catch (\Throwable $e) {
             Log::warning('Broadcast failed (approvePhone): ' . $e->getMessage());
         }
 
-        CustomerProfile::where('ip_address', $request->customer_ip)
-            ->update(['current_page' => '/insurance/nafath']);
+        $customer?->update(['current_page' => '/insurance/nafath']);
 
-        $this->notifyDashboard($request->customer_ip, 'phone_approved');
+        $this->notifyDashboard($customer ?? $request->customer_ip, 'phone_approved');
 
         return response()->json([
             'success' => true,
@@ -66,13 +68,16 @@ class AdminPhoneVerificationController extends Controller
 
         $otp->reject($request->input('reason'));
 
+        $customer = $otp->customer;
+        $sessionId = $otp->session_id ?: $customer?->session_id;
+
         try {
-            broadcast(new PhoneOtpRejected($request->customer_ip, $request->input('reason')))->toOthers();
+            broadcast(new PhoneOtpRejected($sessionId, $request->input('reason'), $customer?->id))->toOthers();
         } catch (\Throwable $e) {
             Log::warning('Broadcast failed (rejectPhone): ' . $e->getMessage());
         }
 
-        $this->notifyDashboard($request->customer_ip, 'phone_rejected');
+        $this->notifyDashboard($customer ?? $request->customer_ip, 'phone_rejected');
 
         return response()->json([
             'success' => true,

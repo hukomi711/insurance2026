@@ -260,7 +260,7 @@ MAIL_FROM_ADDRESS=no-reply@tamnyfordr.online
 ```bash
 cd /opt/insurance2026
 docker compose up -d --build --force-recreate
-docker exec ins2026-app php artisan config:clear
+docker exec ins2026-app php artisan config:cache
 docker exec ins2026-app php artisan route:cache
 docker exec ins2026-app php artisan view:cache
 docker exec ins2026-app php artisan event:cache

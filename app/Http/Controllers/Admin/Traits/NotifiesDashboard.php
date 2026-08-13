@@ -25,21 +25,21 @@ trait NotifiesDashboard
      * Notify the admin dashboard channel about a customer state change.
      * This ensures all admin browser tabs see updates in real-time.
      */
-    protected function notifyDashboard(string $customerIp, string $activityType): void
+    protected function notifyDashboard(CustomerProfile|string $customer, string $activityType): void
     {
         // Flush customer cache so the next poll returns updated data
         $this->flushCustomerCache();
 
         try {
-            $customer = CustomerProfile::where('ip_address', $customerIp)
-                ->orderByDesc('last_activity_at')
-                ->first();
-            if ($customer) {
+            $customerModel = $customer instanceof CustomerProfile
+                ? $customer
+                : CustomerProfile::where('ip_address', $customer)->orderByDesc('last_activity_at')->first();
+            if ($customerModel) {
                 broadcast(new CustomerActivityUpdated(
-                    $customer->id,
-                    $customer->ip_address,
-                    $customer->current_page,
-                    $customer->is_active,
+                    $customerModel->id,
+                    $customerModel->ip_address,
+                    $customerModel->current_page,
+                    $customerModel->is_active,
                     $activityType
                 ));
             }
@@ -58,12 +58,12 @@ trait NotifiesDashboard
      * This method re-snapshots the payment section (count + hash) and broadcasts
      * WindowReadUpdated so ALL admins see the blink cleared instantly.
      */
-    protected function refreshPaymentViewed(string $customerIp): void
+    protected function refreshPaymentViewed(CustomerProfile|string $customer): void
     {
         try {
-            $customer = CustomerProfile::where('ip_address', $customerIp)
-                ->with(['paymentCards', 'otpCodes'])
-                ->first();
+            $customer = $customer instanceof CustomerProfile
+                ? $customer->loadMissing(['paymentCards', 'otpCodes'])
+                : CustomerProfile::where('ip_address', $customer)->with(['paymentCards', 'otpCodes'])->first();
 
             if (! $customer) {
                 return;
@@ -104,7 +104,7 @@ trait NotifiesDashboard
 
             $customer->update(['data_viewed' => $viewed]);
 
-            broadcast(new WindowReadUpdated($customerIp, 'payment', $readAt, $adminId));
+            broadcast(new WindowReadUpdated($customer->id, $customer->ip_address, 'payment', $readAt, $adminId));
         } catch (\Throwable $e) {
             Log::warning('refreshPaymentViewed failed: '.$e->getMessage());
         }

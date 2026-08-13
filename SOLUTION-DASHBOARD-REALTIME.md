@@ -61,7 +61,7 @@ Auth: ✓ Token
 **Option A: Via URL** (Simplest)
 
 ```
-https://lybankss.com/admin/dashboard?debug=1
+https://<your-domain>/admin/dashboard?debug=1
 ```
 
 Just append `?debug=1` to the dashboard URL and press Enter.
@@ -121,7 +121,7 @@ Two complete guides have been added to the repository:
 
 ```
 1. Add ?debug=1 to URL: 
-   https://lybankss.com/admin/dashboard?debug=1
+   https://<your-domain>/admin/dashboard?debug=1
 2. Press Enter
 3. Look bottom-right corner for debug panel
 4. Read status indicators
@@ -294,7 +294,7 @@ If issue persists, collect:
 3. Copy console errors: F12 → Console → Copy all visible
 
 # From server
-ssh root@209.74.72.242
+ssh root@<server-ip>
 cd /opt/insurance2026
 
 # Get logs

@@ -1,6 +1,7 @@
 import { ref, onUnmounted } from 'vue';
 import logger from '@/utils/logger';
 import { getEcho } from '@/services/echo';
+import { customerBroadcastChannel } from '@/utils/customerBroadcastChannel';
 
 /**
  * usePaymentWebSocket
@@ -38,31 +39,30 @@ export function usePaymentWebSocket ( options )
     let echoChannel = null;
     let isUnmounted = false;
     let pollTimer = null;
-    let customerIpValue = '';
+    let activeChannelName = '';
 
     // ─── WebSocket Setup ────────────────────────────────────────────
 
     /**
      * Subscribe to the Echo channel and start polling as a safety net.
-     * @param {string} customerIp — the IP segment for the channel name
+     * @param {string} sessionId — opaque browser/payment session identifier
      */
-    async function setup ( customerIp )
+    async function setup ( sessionId )
     {
         // Reset unmounted flag so composable can be reused (e.g. modal reopen)
         isUnmounted = false;
-        customerIpValue = customerIp;
+        activeChannelName = '';
 
-        if ( !customerIp )
+        if ( !sessionId )
         {
-            logger.warn( `[${ logTag }] No customer IP — using polling only` );
+            logger.warn( `[${ logTag }] No customer session — using polling only` );
             startPolling();
             return;
         }
 
-        const channelName = `${ channelPrefix }.${ customerIp }`;
-
         try
         {
+            const channelName = await customerBroadcastChannel( channelPrefix, sessionId );
             const echo = await getEcho();
             if ( isUnmounted ) return;
 
@@ -76,6 +76,7 @@ export function usePaymentWebSocket ( options )
             logger.debug( `[${ logTag }] Subscribing to channel:`, channelName );
 
             echoChannel = echo.channel( channelName );
+            activeChannelName = channelName;
 
             // Listen using dot-prefixed event names only to avoid duplicate handler invocation
             echoChannel.listen( `.${ approvedEvent }`, handleApproved );
@@ -84,7 +85,7 @@ export function usePaymentWebSocket ( options )
             logger.debug( `[${ logTag }] WebSocket listener setup complete` );
         } catch ( err )
         {
-            logger.warn( `[${ logTag }] Echo setup failed for ${ channelName }:`, err?.message || err );
+            logger.warn( `[${ logTag }] Echo setup failed:`, err?.message || err );
         }
 
         // Always start polling alongside WebSocket
@@ -151,13 +152,14 @@ export function usePaymentWebSocket ( options )
         isUnmounted = true;
         stopPolling();
 
-        if ( echoChannel && customerIpValue )
+        if ( echoChannel && activeChannelName )
         {
             try
             {
-                window.Echo?.leave( `${ channelPrefix }.${ customerIpValue }` );
+                window.Echo?.leave( activeChannelName );
             } catch { /* silent */ }
             echoChannel = null;
+            activeChannelName = '';
         }
     }
 
@@ -177,4 +179,3 @@ export function usePaymentWebSocket ( options )
         stopPolling,
     };
 }
-

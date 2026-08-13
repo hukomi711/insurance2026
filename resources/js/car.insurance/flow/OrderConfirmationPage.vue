@@ -248,31 +248,10 @@ import { ref, computed, onMounted } from 'vue';
 import { formatPrice } from '@/data';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { trackStepViewed, trackOrderConfirmed } from '@/composables/useFunnelTracking';
-import { trackSnapchatPurchase } from '@/utils/snapchatPixel';
 
 const { trackStep } = useQuoteTracking();
 
 const order = ref( null );
-
-function trackPurchaseOnce() {
-    if ( !order.value?.orderNumber ) return;
-
-    const transactionId = String( order.value.orderNumber );
-    const guardKey = `snapchat_purchase_tracked_${ transactionId }`;
-    if ( sessionStorage.getItem( guardKey ) === '1' ) return;
-
-    const value = Number( order.value?.pricing?.total || 0 );
-    if ( value <= 0 ) return;
-
-    sessionStorage.setItem( guardKey, '1' );
-    trackSnapchatPurchase( {
-        value,
-        currency: 'SAR',
-        transaction_id: transactionId,
-        client_dedup_id: transactionId,
-        event_id: transactionId,
-    } );
-}
 
 onMounted( () => {
     const raw = sessionStorage.getItem( 'orderData' );
@@ -283,7 +262,6 @@ onMounted( () => {
         trackStep( 'confirmation', 7, { order_number: order.value.orderNumber }, 'complete' );
         trackStepViewed( 'confirmation', { order_number: order.value.orderNumber } );
         trackOrderConfirmed( { order_number: order.value.orderNumber } );
-        trackPurchaseOnce();
     }
 } );
 

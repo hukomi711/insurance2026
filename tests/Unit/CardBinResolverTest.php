@@ -3,7 +3,9 @@
 namespace Tests\Unit;
 
 use App\Services\Bin\CardBinResolver;
+use Database\Seeders\BankBinSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -24,7 +26,7 @@ class CardBinResolverTest extends TestCase
     {
         parent::setUp();
         // Seed only the bank/BIN data needed for resolution tests.
-        $this->seed(\Database\Seeders\BankBinSeeder::class);
+        $this->seed(BankBinSeeder::class);
     }
 
     private function resolver(): CardBinResolver
@@ -123,5 +125,41 @@ class CardBinResolverTest extends TestCase
 
         $this->assertEquals('riyad', $r->bankKey);
         $this->assertContains($r->matchType, ['6_digit_bin', 'range']);
+    }
+
+    #[DataProvider('overlappingPrefixProvider')]
+    public function test_longest_matching_prefix_wins_regardless_of_config_order(
+        string $specificPrefix,
+        string $expectedBank,
+    ): void {
+        $originalConfig = config('bank_bins');
+        $orders = [$originalConfig, array_reverse($originalConfig, true)];
+
+        foreach ($orders as $configOrder) {
+            config(['bank_bins' => $configOrder]);
+
+            $this->assertSame(
+                $expectedBank,
+                $this->resolver()->resolveConfiguredBankKey($specificPrefix.'0000000000'),
+            );
+        }
+
+        config(['bank_bins' => $originalConfig]);
+
+        $resolved = $this->resolver()->resolve(str_pad($specificPrefix, 16, '0'));
+        $this->assertSame($expectedBank, $resolved->bankKey);
+    }
+
+    public static function overlappingPrefixProvider(): array
+    {
+        return [
+            'SABB 4228 vs SNB 422820' => ['422820', 'ahli'],
+            'SABB 4228 vs SNB 422821' => ['422821', 'ahli'],
+            'SABB 4228 vs Riyad 422817' => ['422817', 'riyad'],
+            'BSF 4406 vs Rajhi 440647' => ['440647', 'rajhi'],
+            'STC 4201 vs SABB 420132' => ['420132', 'sabb'],
+            'ENBD 4106 vs Rajhi 410621' => ['410621', 'rajhi'],
+            'ENBD 4106 vs SABB 410685' => ['410685', 'sabb'],
+        ];
     }
 }

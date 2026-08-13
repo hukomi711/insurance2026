@@ -1,6 +1,11 @@
 <?php
 
-$origins = env('CORS_ALLOWED_ORIGINS');
+use App\Support\CorsAllowedOrigins;
+
+$origins = CorsAllowedOrigins::normalize(
+    env('CORS_ALLOWED_ORIGINS'),
+    env('APP_URL', 'http://localhost:8000'),
+);
 
 return [
 
@@ -23,11 +28,19 @@ return [
 
     // SECURITY: When supports_credentials is true, origins MUST be explicit (not '*').
     // Set CORS_ALLOWED_ORIGINS in .env (comma-separated) for production.
-    'allowed_origins' => $origins ? explode(',', $origins) : [env('APP_URL', 'http://localhost:8000')],
+    'allowed_origins' => $origins,
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Session-Token', 'Accept'],
+    'allowed_headers' => [
+        'Content-Type',
+        'Authorization',
+        'X-Requested-With',
+        'X-Session-Token',
+        'X-Socket-ID',
+        'X-CSRF-TOKEN',
+        'Accept',
+    ],
 
     'exposed_headers' => [],
 

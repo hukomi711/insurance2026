@@ -24,7 +24,6 @@ docker/secrets/
 # ── Environment ──────────────────────────────────────────────
 .env
 .env.*
-!.env.production
 
 # ── Tests / CI ───────────────────────────────────────────────
 tests
@@ -43,6 +42,7 @@ docs
 # ── Build artefacts ──────────────────────────────────────────
 public/build
 public/hot
+output/
 storage/logs/*
 storage/framework/sessions/*
 storage/framework/views/*

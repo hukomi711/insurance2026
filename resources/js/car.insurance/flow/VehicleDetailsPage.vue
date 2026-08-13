@@ -4,7 +4,7 @@
         <StepProgressBar :steps="steps" :current-step="currentStep" />
 
         <!-- Main Content -->
-        <div class="w-full md:max-w-[80rem] px-0 md:px-4 mx-auto my-5 relative">
+        <div class="w-full md:max-w-7xl px-0 md:px-4 mx-auto my-5 relative">
             <div class="flex flex-col lg:flex-row w-full">
 
                 <!-- Left Content — 4/6 on desktop -->
@@ -59,6 +59,126 @@
                             </div>
                         </div>
 
+                        <!-- Section: اختر تاريخ بدء الوثيقة -->
+                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">اختر تاريخ بدء الوثيقة</h3>
+                        <PolicyDatePicker v-model="form.policyStartDate" :error="errors.policyStartDate" />
+
+                        <!-- Section: اختر المنطقة والمدينة -->
+                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">اختر المنطقة والمدينة</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" dir="rtl">
+                            <div class="flex flex-col gap-1">
+                                <AppSelect
+                                    id="region"
+                                    v-model="form.region"
+                                    :options="regionOptions"
+                                    label="المنطقة"
+                                    placeholder="اختر المنطقة"
+                                    variant="standard"
+                                    dir="rtl"
+                                    name="region"
+                                    autocomplete="address-level1"
+                                />
+                                <p v-if="errors.region" class="text-xs text-red-500 mt-1">
+                                    {{ errors.region }}
+                                </p>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <AppSelect
+                                    id="city"
+                                    v-model="form.city"
+                                    :options="cityOptions"
+                                    label="المدينة"
+                                    placeholder="اختر المدينة"
+                                    variant="standard"
+                                    dir="rtl"
+                                    name="city"
+                                    autocomplete="address-level2"
+                                    :disabled="!form.region"
+                                />
+                                <p v-if="errors.city" class="text-xs text-red-500 mt-1">
+                                    {{ errors.city }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Section: اختر نوع التأمين -->
+                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">اختر نوع التأمين</h3>
+                        <div class="grid grid-cols-2 gap-2 sm:gap-3 w-full" dir="rtl" role="radiogroup" aria-label="نوع التأمين">
+                            <div class="relative flex flex-col items-center text-center rounded-xl p-3 sm:p-5 gap-2 sm:gap-3 border-2 cursor-pointer transition-all"
+                                :class="form.insuranceType === 'tpl'
+                                    ? 'border-blue-600 bg-blue-50 shadow-md shadow-blue-100'
+                                    : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm'"
+                                role="radio"
+                                :aria-checked="form.insuranceType === 'tpl'"
+                                tabindex="0"
+                                @click="form.insuranceType = 'tpl'" @keydown.enter.prevent="form.insuranceType = 'tpl'" @keydown.space.prevent="form.insuranceType = 'tpl'">
+                                <div v-if="form.insuranceType === 'tpl'" class="absolute top-1.5 inset-s-1.5 sm:top-2 sm:inset-s-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                                    <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                                </div>
+                                <img :src="tplIconSrc" alt="ضد الغير" class="w-10 h-10 sm:w-14 sm:h-14" loading="lazy" width="56" height="56" />
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="text-xs sm:text-sm font-bold text-slate-900">ضد الغير</span>
+                                    <span class="text-[11px] sm:text-xs text-slate-500 leading-tight">تغطية أساسية للطرف الثالث</span>
+                                </div>
+                            </div>
+
+                            <div class="relative flex flex-col items-center text-center rounded-xl p-3 sm:p-5 gap-2 sm:gap-3 border-2 cursor-pointer transition-all"
+                                :class="form.insuranceType === 'comp'
+                                    ? 'border-blue-600 bg-blue-50 shadow-md shadow-blue-100'
+                                    : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm'"
+                                role="radio"
+                                :aria-checked="form.insuranceType === 'comp'"
+                                tabindex="0"
+                                @click="form.insuranceType = 'comp'" @keydown.enter.prevent="form.insuranceType = 'comp'" @keydown.space.prevent="form.insuranceType = 'comp'">
+                                <div v-if="form.insuranceType === 'comp'" class="absolute top-1.5 inset-s-1.5 sm:top-2 sm:inset-s-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                                    <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                                </div>
+                                <img :src="compIconSrc" alt="شامل" class="w-10 h-10 sm:w-14 sm:h-14" loading="lazy" width="56" height="56" />
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="text-xs sm:text-sm font-bold text-slate-900">شامل</span>
+                                    <span class="text-[11px] sm:text-xs text-slate-500 leading-tight">تأمينكم هيرو… يغطي سيارتك بالكامل</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p v-if="errors.insuranceType" class="text-xs text-red-500 mt-1">
+                            {{ errors.insuranceType }}
+                        </p>
+
+                        <div class="flex gap-2 items-center overflow-hidden" dir="rtl">
+                            <span class="flex items-center text-sm text-slate-500 gap-1">
+                                اختر مركز الإصلاح
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                                    class="shrink-0 w-4.5 h-4.5 text-blue-600 cursor-help">
+                                    <path fill-rule="evenodd" clip-rule="evenodd"
+                                        d="M12 3C16.971 3 21 7.029 21 12C21 16.971 16.971 21 12 21C7.029 21 3 16.971 3 12C3 7.029 7.029 3 12 3Z"
+                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                    <path d="M12 12.5V7.5" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                    <circle cx="12" cy="16.25" r="0.25" stroke="currentColor" stroke-width="1.5" />
+                                </svg>
+                                :
+                            </span>
+                            <div class="flex flex-row gap-4" role="radiogroup" aria-label="مركز الإصلاح">
+                                <div class="flex rounded-xl border gap-2 px-4 py-2 cursor-pointer transition-colors"
+                                    :class="form.repairMethod === 'workshop' ? 'bg-green-200 border-green-300' : 'border-slate-300 hover:bg-green-100'"
+                                    role="radio"
+                                    :aria-checked="form.repairMethod === 'workshop'"
+                                    tabindex="0"
+                                    @click="form.repairMethod = 'workshop'" @keydown.enter.prevent="form.repairMethod = 'workshop'" @keydown.space.prevent="form.repairMethod = 'workshop'">
+                                    <span class="text-xs text-slate-900">الورشة</span>
+                                </div>
+                                <div class="flex rounded-xl border gap-2 px-4 py-2 cursor-pointer transition-colors"
+                                    :class="form.repairMethod === 'agency' ? 'bg-green-200 border-green-300' : 'border-slate-300 hover:bg-green-100'"
+                                    role="radio"
+                                    :aria-checked="form.repairMethod === 'agency'"
+                                    tabindex="0"
+                                    @click="form.repairMethod = 'agency'" @keydown.enter.prevent="form.repairMethod = 'agency'" @keydown.space.prevent="form.repairMethod = 'agency'">
+                                    <span class="text-xs text-slate-900">الوكالة</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="flex flex-col md:flex-row gap-4 justify-between">
                             <!-- Purpose of Use -->
                             <div class="w-full md:w-1/2">
@@ -72,20 +192,20 @@
 
                             <!-- Estimated Vehicle Value — Floating label input -->
                             <div class="w-full md:w-1/2">
-                                <div class="group transition duration-300 relative flex has-[:invalid]:border-red-500 has-[:disabled]:bg-slate-100 has-[:disabled]:cursor-not-allowed has-[:focus]:border-blue-600 border-[1px] border-slate-300 rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
+                                <div class="group transition duration-300 relative flex has-invalid:border-red-500 has-disabled:bg-slate-100 has-disabled:cursor-not-allowed has-focus:border-blue-600 border border-slate-300 rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
                                     :class="errors.estimatedValue ? 'border-red-500' : ''">
                                     <input id="estimatedValue" v-model="form.estimatedValue" type="text"
                                         inputmode="numeric" name="estimatedValue" autocomplete="off" placeholder=" " maxlength="10"
                                         class="transition bg-transparent duration-300 block cursor-text resize-none caret-blue-600 pb-2.5 size-full typ-b2 text-slate-900 disabled:text-slate-400 disabled:cursor-not-allowed appearance-none focus:outline-none focus:ring-0 peer z-10 pt-6 ltr-nums"
                                         @input="formatEstimatedValue" />
                                     <label for="estimatedValue"
-                                        class="transition z-10 absolute typ-b2 peer-placeholder-shown:typ-b2 peer-focus-visible:typ-b2 text-slate-500 duration-300 transform -translate-y-4 top-5 peer-disabled:text-slate-400 peer-disabled:cursor-not-allowed peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-[0] start-4 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
+                                        class="transition z-10 absolute typ-b2 peer-placeholder-shown:typ-b2 peer-focus-visible:typ-b2 text-slate-500 duration-300 transform -translate-y-4 top-5 peer-disabled:text-slate-400 peer-disabled:cursor-not-allowed peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-left inset-s-4 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
                                         القيمة التقديرية للمركبة
                                     </label>
                                     <!-- SAR Symbol -->
                                     <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg"
                                         viewBox="0 0 1124.14 1256.39" width="1em" height="1em"
-                                        class="shrink-0 transition duration-300 size-5 peer-disabled:hidden w-auto self-center absolute end-3 top-1/2 -translate-y-1/2 text-slate-900 z-10">
+                                        class="shrink-0 transition duration-300 size-5 peer-disabled:hidden w-auto self-center absolute inset-e-3 top-1/2 -translate-y-1/2 text-slate-900 z-10">
                                         <path fill="currentColor"
                                             d="M699.62,1113.02h0c-20.06,44.48-33.32,92.75-38.4,143.37l424.51-90.24c20.06-44.47,33.31-92.75,38.4-143.37l-424.51,90.24Z">
                                         </path>
@@ -106,13 +226,13 @@
                         <div class="flex flex-col md:flex-row gap-4 justify-between">
                             <!-- Full Name — Floating label input -->
                             <div class="w-full md:w-1/2">
-                                <div class="group transition duration-300 relative flex has-[:invalid]:border-red-500 has-[:disabled]:bg-slate-100 has-[:disabled]:cursor-not-allowed has-[:focus]:border-blue-600 border-[1px] border-slate-300 rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
+                                <div class="group transition duration-300 relative flex has-invalid:border-red-500 has-disabled:bg-slate-100 has-disabled:cursor-not-allowed has-focus:border-blue-600 border border-slate-300 rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
                                     :class="errors.fullName ? 'border-red-500' : ''">
                                     <input id="fullName" v-model="form.fullName" type="text" name="fullName"
                                         autocomplete="name" placeholder=" "
                                         class="transition bg-transparent duration-300 block cursor-text resize-none caret-blue-600 pb-2.5 size-full typ-b2 text-slate-900 disabled:text-slate-400 disabled:cursor-not-allowed appearance-none focus:outline-none focus:ring-0 peer z-10 pt-6" />
                                     <label for="fullName"
-                                        class="transition z-10 absolute typ-b2 peer-placeholder-shown:typ-b2 peer-focus-visible:typ-b2 text-slate-500 duration-300 transform -translate-y-4 top-5 peer-disabled:text-slate-400 peer-disabled:cursor-not-allowed peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-[0] start-4 peer-invalid:text-red-500 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
+                                        class="transition z-10 absolute typ-b2 peer-placeholder-shown:typ-b2 peer-focus-visible:typ-b2 text-slate-500 duration-300 transform -translate-y-4 top-5 peer-disabled:text-slate-400 peer-disabled:cursor-not-allowed peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-left inset-s-4 peer-invalid:text-red-500 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
                                         الإسم الكامل
                                     </label>
                                 </div>
@@ -122,13 +242,13 @@
 
                             <!-- Phone Number — Floating label input -->
                             <div class="w-full md:w-1/2">
-                                <div class="group transition duration-300 relative flex has-[:invalid]:border-red-500 has-[:focus]:border-blue-600 border-[1px] border-slate-300 rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
+                                <div class="group transition duration-300 relative flex has-invalid:border-red-500 has-focus:border-blue-600 border border-slate-300 rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
                                     :class="errors.phone ? 'border-red-500' : ''">
                                     <input id="phone" v-model="form.phone" type="tel" name="phone" placeholder=" "
                                         autocomplete="tel" inputmode="numeric" maxlength="10"
                                         class="transition bg-transparent duration-300 block cursor-text resize-none caret-blue-600 pb-2.5 size-full typ-b2 text-slate-900 disabled:text-slate-400 disabled:cursor-not-allowed appearance-none focus:outline-none focus:ring-0 peer z-10 pt-6 ltr-nums" />
                                     <label for="phone"
-                                        class="transition z-10 absolute typ-b2 peer-placeholder-shown:typ-b2 peer-focus-visible:typ-b2 text-slate-500 duration-300 transform -translate-y-4 top-5 peer-disabled:text-slate-400 peer-disabled:cursor-not-allowed peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-[0] start-4 peer-invalid:text-red-500 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
+                                        class="transition z-10 absolute typ-b2 peer-placeholder-shown:typ-b2 peer-focus-visible:typ-b2 text-slate-500 duration-300 transform -translate-y-4 top-5 peer-disabled:text-slate-400 peer-disabled:cursor-not-allowed peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-left inset-s-4 peer-invalid:text-red-500 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
                                         رقم الهاتف (أبشر)
                                     </label>
                                 </div>
@@ -139,13 +259,13 @@
                         <!-- Email — Floating label input -->
                         <div class="flex flex-col md:flex-row gap-4 justify-between">
                             <div class="w-full md:w-1/2">
-                                <div class="group transition duration-300 relative flex has-[:invalid]:border-red-500 has-[:focus]:border-blue-600 border-[1px] border-slate-300 rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
+                                <div class="group transition duration-300 relative flex has-invalid:border-red-500 has-focus:border-blue-600 border border-slate-300 rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
                                     :class="errors.email ? 'border-red-500' : ''">
                                     <input id="email" v-model="form.email" type="email" name="email" placeholder=" "
                                         autocomplete="email"
                                         class="transition bg-transparent duration-300 block cursor-text resize-none caret-blue-600 pb-2.5 size-full typ-b2 text-slate-900 appearance-none focus:outline-none focus:ring-0 peer z-10 pt-6 ltr-nums" />
                                     <label for="email"
-                                        class="transition z-10 absolute typ-b2 peer-placeholder-shown:typ-b2 peer-focus-visible:typ-b2 text-slate-500 duration-300 transform -translate-y-4 top-5 peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-[0] start-4 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
+                                        class="transition z-10 absolute typ-b2 peer-placeholder-shown:typ-b2 peer-focus-visible:typ-b2 text-slate-500 duration-300 transform -translate-y-4 top-5 peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-left inset-s-4 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
                                         البريد الإلكتروني
                                     </label>
                                 </div>
@@ -250,12 +370,12 @@
                             <p v-if="formError" class="text-red-500 text-sm text-center mt-3 font-medium">{{ formError }}</p>
 
                             <button type="submit" :disabled="isSubmitting"
-                                class="cursor-pointer whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-center min-h-14 min-w-[10.625rem] px-6 text-base font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-slate-400 disabled:cursor-not-allowed w-full md:w-auto inline-flex items-center justify-center gap-2">
+                                class="cursor-pointer whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-center min-h-14 min-w-42.5 px-6 text-base font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-slate-400 disabled:cursor-not-allowed w-full md:w-auto inline-flex items-center justify-center gap-2">
                                 <div class="flex items-center w-full gap-2 justify-center">
                                     <div class="w-full overflow-hidden self-center">
                                         <div>{{ isSubmitting ? 'جاري المعالجة...' : 'التالي' }}</div>
                                     </div>
-                                    <span class="flex-shrink-0" aria-hidden="true">
+                                    <span class="shrink-0" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
                                             width="18" height="18" class="shrink-0 text-white">
                                             <path d="M5 12H19" stroke="currentColor" stroke-width="1.5"
@@ -308,7 +428,7 @@ import { ref, reactive, computed, watch, onMounted, defineAsyncComponent } from 
 import { useRouter } from 'vue-router';
 import { CheckboxRoot, CheckboxIndicator } from 'radix-vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
-import { vehicleMakes } from '@/data';
+import { vehicleMakes, regionsData, citiesByRegion } from '@/data';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { useInsuranceStore } from '@/store/modules/insurance';
 import logger from '@/utils/logger';
@@ -319,6 +439,7 @@ const OtherDetailsSheet = defineAsyncComponent( () => import( '../components/veh
 const router = useRouter();
 const { trackStep, resumeSession } = useQuoteTracking();
 const insuranceStore = useInsuranceStore();
+const PolicyDatePicker = defineAsyncComponent( () => import( '../components/PolicyDatePicker.vue' ) );
 
 //
 const currentStep = ref( 1 ); // 0-indexed: step 0 = completed, step 1 = active
@@ -334,6 +455,8 @@ const _animojiSrc = new URL( '../../../images/motorapp/animoji.svg', import.meta
 const infoIconSrc = new URL( '../../../images/motorapp/info-icon.svg', import.meta.url ).href;
 const noDriversSrc = new URL( '../../../images/motorapp/no-drivers.webp', import.meta.url ).href;
 const driversIconSrc = new URL( '../../../images/icons/drivers-icon.webp', import.meta.url ).href;
+const tplIconSrc = new URL( '../../../images/motorapp/tpl-icon.webp', import.meta.url ).href;
+const compIconSrc = new URL( '../../../images/motorapp/comp-icon.webp', import.meta.url ).href;
 
 //
 const purposeOptions = [
@@ -347,6 +470,11 @@ const purposeOptions = [
 
 //
 const form = reactive( {
+    policyStartDate: '',
+    insuranceType: 'tpl',
+    repairMethod: 'workshop',
+    region: '',
+    city: '',
     purposeOfUse: 'personal',
     estimatedValue: '',
     nationalId: '',
@@ -389,11 +517,18 @@ const otherDetails = reactive( {
 
 // Vehicle make/model options
 const makeOptions = vehicleMakes.map( m => ( { value: String( m.id ), label: m.nameAr } ) );
+const EMPTY_CITIES = [];
+const regionOptions = regionsData.ar;
 
 const modelOptions = computed( () => {
     if ( !form.vehicleMake ) return [];
     const make = vehicleMakes.find( m => String( m.id ) === form.vehicleMake );
     return make ? make.models.map( ( model ) => ( { value: model, label: model } ) ) : [];
+} );
+
+const cityOptions = computed( () => {
+    if ( !form.region ) return EMPTY_CITIES;
+    return citiesByRegion.ar[ form.region ] || EMPTY_CITIES;
 } );
 
 // Year options — current year down to 30 years back
@@ -409,6 +544,10 @@ const yearOptions = computed( () => {
 // Reset model when make changes
 watch( () => form.vehicleMake, () => {
     form.vehicleModel = '';
+} );
+
+watch( () => form.region, () => {
+    form.city = '';
 } );
 
 //
@@ -431,6 +570,26 @@ function clearErrors() {
 function validate() {
     clearErrors();
     let valid = true;
+
+    if ( !form.policyStartDate ) {
+        errors.policyStartDate = 'يرجى اختيار تاريخ بدء الوثيقة';
+        valid = false;
+    }
+
+    if ( !form.region ) {
+        errors.region = 'يرجى اختيار المنطقة';
+        valid = false;
+    }
+
+    if ( !form.city ) {
+        errors.city = 'يرجى اختيار المدينة';
+        valid = false;
+    }
+
+    if ( !form.insuranceType ) {
+        errors.insuranceType = 'يرجى اختيار نوع التأمين';
+        valid = false;
+    }
 
     if ( !form.vehicleYear ) {
         errors.vehicleYear = 'يرجى اختيار سنة الصنع';
@@ -551,11 +710,18 @@ async function submitForm() {
         trailerValue: otherDetails.trailEstimatedValue,
         transmissionType: otherDetails.transmissionType,
     } );
+    insuranceStore.setPolicyData( {
+        policyStartDate: form.policyStartDate,
+        insuranceType: form.insuranceType,
+        repairMethod: form.insuranceType === 'comp' ? form.repairMethod : null,
+    } );
     insuranceStore.setDriverData( {
         nationalId: form.nationalId,
         fullName: form.fullName,
         phone: form.phone,
         email: form.email,
+        region: form.region,
+        city: form.city,
         education: otherDetails.education,
         accidentCounts: otherDetails.accidentCounts,
         trafficViolations: otherDetails.trafficViolations,
@@ -579,6 +745,11 @@ async function submitForm() {
             estimated_value: form.estimatedValue ? parseInt( form.estimatedValue ) : null,
             vehicle_type: insuranceStore.vehicle.makeName || form.vehicleMake || null,
             manufacturing_year: form.vehicleYear || null,
+            policy_start_date: form.policyStartDate,
+            insurance_type: form.insuranceType === 'comp' ? 'comprehensive' : 'thirdParty',
+            repair_method: form.insuranceType === 'comp' ? form.repairMethod : null,
+            region: form.region,
+            city: form.city,
             current_page: '/motorapp/vehicleDetails',
             has_additional_driver: drivers.value && drivers.value.length > 0,
             additional_driver_name: drivers.value?.[0]?.name || null,
@@ -609,8 +780,13 @@ async function submitForm() {
     // Track step transition
     await trackStep( 'vehicle', 3, vehicleDetails, 'next' );
 
-    // Navigate to policy details page
-    router.push( { name: 'policyDetails' } );
+    // Navigate to compare page directly
+    router.push( {
+        path: '/compare',
+        query: {
+            type: form.insuranceType === 'comp' ? 'comprehensive' : 'thirdParty',
+        }
+    } );
     } finally {
         isSubmitting.value = false;
     }
@@ -652,6 +828,19 @@ function restoreFormState() {
         } catch { /* ignore */ }
     }
 
+    // Restore policy-related fields if previously saved
+    const savedPolicyFields = sessionStorage.getItem( 'vehicleDetails' );
+    if ( savedPolicyFields ) {
+        try {
+            const parsed = JSON.parse( savedPolicyFields );
+            if ( parsed.policyStartDate ) form.policyStartDate = parsed.policyStartDate;
+            if ( parsed.insuranceType ) form.insuranceType = parsed.insuranceType;
+            if ( parsed.repairMethod ) form.repairMethod = parsed.repairMethod;
+            if ( parsed.region ) form.region = parsed.region;
+            if ( parsed.city ) form.city = parsed.city;
+        } catch { /* ignore */ }
+    }
+
     // Restore insurance type info from MotorApp selection
     const insuranceType = sessionStorage.getItem( 'selectedInsuranceType' );
     if ( insuranceType ) {
@@ -668,7 +857,7 @@ onMounted( () => {
     restoreFormState();
     resumeSession( 'vehicleDetails' );
 
-    // Prefetch next step chunk (heavy: radix-vue Calendar + @internationalized/date)
-    import( '@/car.insurance/flow/PolicyDetailsPage.vue' ).catch( () => {} );
+    // Prefetch next step chunk (ComparePage)
+    import( '@/car.insurance/flow/ComparePage.vue' ).catch( () => {} );
 } );
 </script>

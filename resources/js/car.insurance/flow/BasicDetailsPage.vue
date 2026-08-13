@@ -38,7 +38,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="w-full md:max-w-[80rem] px-0 md:px-4 mx-auto my-5 relative">
+        <div class="w-full md:max-w-7xl px-0 md:px-4 mx-auto my-5 relative">
             <div class="flex flex-col lg:flex-row w-full">
 
                 <!-- Left Content — 4/6 on desktop -->
@@ -65,6 +65,29 @@
                             </label>
                             <p v-if="errors.identityNumber" class="text-red-500 text-xs mt-1">
                                 {{ errors.identityNumber }}
+                            </p>
+                        </div>
+
+                        <!-- Nationality — الجنسية (visible for residents only) -->
+                        <div v-if="isResident" class="relative transition-all duration-300">
+                            <select id="nationality" v-model="form.nationality"
+                                name="nationality"
+                                class="peer w-full border rounded-lg px-4 pt-6 pb-2 text-sm text-right outline-none transition-all duration-200"
+                                :class="errors.nationality
+                                    ? 'border-red-500 focus:ring-2 focus:ring-red-200'
+                                    : 'border-slate-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-500'
+                                    " @blur="validateNationality">
+                                <option value="">اختر الجنسية</option>
+                                <option v-for="nat in nationalitiesOptions" :key="nat.value" :value="nat.value">
+                                    {{ nat.label }}
+                                </option>
+                            </select>
+                            <label for="nationality"
+                                class="absolute top-2 right-4 text-xs text-slate-500 transition-all duration-200 pointer-events-none peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-focus:top-2 peer-focus:text-xs">
+                                الجنسية
+                            </label>
+                            <p v-if="errors.nationality" class="text-red-500 text-xs mt-1">
+                                {{ errors.nationality }}
                             </p>
                         </div>
 
@@ -170,7 +193,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import logger from '@/utils/logger';
 import { validateNationalId } from '@/utils/nationalIdValidation';
@@ -193,15 +216,105 @@ const sequenceNumberSrc = new URL( '../../../images/banners/sequence-number.webp
 const form = reactive( {
     identityNumber: '',
     sequenceNumber: '',
+    nationality: '',
 } );
 
 const errors = reactive( {
     identityNumber: '',
     sequenceNumber: '',
+    nationality: '',
 } );
+
+// Nationalities list
+const nationalitiesOptions = [
+    // دول الخليج
+    { value: 'AE', label: 'إماراتي' },
+    { value: 'KW', label: 'كويتي' },
+    { value: 'QA', label: 'قطري' },
+    { value: 'BH', label: 'بحريني' },
+    { value: 'OM', label: 'عماني' },
+
+    // دول عربية أخرى
+    { value: 'EG', label: 'مصري' },
+    { value: 'JO', label: 'أردني' },
+    { value: 'LB', label: 'لبناني' },
+    { value: 'SY', label: 'سوري' },
+    { value: 'PS', label: 'فلسطيني' },
+    { value: 'IQ', label: 'عراقي' },
+    { value: 'YE', label: 'يمني' },
+    { value: 'TN', label: 'تونسي' },
+    { value: 'DZ', label: 'جزائري' },
+    { value: 'MA', label: 'مغربي' },
+    { value: 'SD', label: 'سوداني' },
+    { value: 'LY', label: 'ليبي' },
+    { value: 'MR', label: 'موريتاني' },
+
+    // دول آسيوية
+    { value: 'IN', label: 'هندي' },
+    { value: 'PK', label: 'باكستاني' },
+    { value: 'BD', label: 'بنغلاديشي' },
+    { value: 'LK', label: 'سريلانكي' },
+    { value: 'TH', label: 'تايلاندي' },
+    { value: 'MY', label: 'ماليزي' },
+    { value: 'SG', label: 'سنغافوري' },
+    { value: 'ID', label: 'إندونيسي' },
+    { value: 'PH', label: 'فيليبيني' },
+    { value: 'VN', label: 'فيتنامي' },
+    { value: 'CN', label: 'صيني' },
+    { value: 'JP', label: 'ياباني' },
+    { value: 'KR', label: 'كوري جنوبي' },
+    { value: 'TR', label: 'تركي' },
+    { value: 'IR', label: 'إيراني' },
+    { value: 'AF', label: 'أفغاني' },
+    { value: 'NP', label: 'نيبالي' },
+    { value: 'KZ', label: 'كازاخستاني' },
+
+    // دول أوروبية
+    { value: 'GB', label: 'بريطاني' },
+    { value: 'FR', label: 'فرنسي' },
+    { value: 'DE', label: 'ألماني' },
+    { value: 'IT', label: 'إيطالي' },
+    { value: 'ES', label: 'إسباني' },
+    { value: 'NL', label: 'هولندي' },
+    { value: 'PL', label: 'بولندي' },
+    { value: 'SE', label: 'سويدي' },
+    { value: 'NO', label: 'نرويجي' },
+    { value: 'CH', label: 'سويسري' },
+    { value: 'AT', label: 'نمساوي' },
+    { value: 'RU', label: 'روسي' },
+    { value: 'UA', label: 'أوكراني' },
+    { value: 'CZ', label: 'تشيكي' },
+    { value: 'GR', label: 'يوناني' },
+    { value: 'PT', label: 'برتغالي' },
+    { value: 'BE', label: 'بلجيكي' },
+    { value: 'DK', label: 'دنماركي' },
+    { value: 'FI', label: 'فنلندي' },
+    { value: 'IE', label: 'أيرلندي' },
+
+    // دول أمريكية
+    { value: 'US', label: 'أمريكي' },
+    { value: 'CA', label: 'كندي' },
+    { value: 'MX', label: 'مكسيكي' },
+    { value: 'BR', label: 'برازيلي' },
+    { value: 'AR', label: 'أرجنتيني' },
+
+    // دول أفريقية
+    { value: 'ZA', label: 'جنوب أفريقي' },
+    { value: 'NG', label: 'نيجيري' },
+    { value: 'KE', label: 'كيني' },
+    { value: 'GH', label: 'غاني' },
+
+    // دول أخرى
+    { value: 'AU', label: 'أسترالي' },
+    { value: 'NZ', label: 'نيوزيلندي' },
+    { value: 'OTHER', label: 'أخرى' },
+];
 
 const isSubmitting = ref( false );
 const formError = ref( '' );
+
+// Computed: Check if resident (identity starts with 2)
+const isResident = computed( () => form.identityNumber.length > 0 && form.identityNumber.charAt( 0 ) === '2' );
 
 // Load saved data
 onMounted( () => {
@@ -211,6 +324,7 @@ onMounted( () => {
             const data = JSON.parse( saved );
             form.identityNumber = data.identityNumber || '';
             form.sequenceNumber = data.sequenceNumber || '';
+            form.nationality = data.nationality || '';
         } catch { /* ignore */ }
     }
 
@@ -249,12 +363,26 @@ function validateSequence() {
     return true;
 }
 
+function validateNationality() {
+    if ( !isResident.value ) {
+        errors.nationality = '';
+        return true;
+    }
+    if ( !form.nationality ) {
+        errors.nationality = 'الجنسية مطلوبة للمقيمين';
+        return false;
+    }
+    errors.nationality = '';
+    return true;
+}
+
 // Submit
 async function handleSubmit() {
     const isIdentityValid = validateIdentity();
     const isSequenceValid = validateSequence();
+    const isNationalityValid = validateNationality();
 
-    if ( !isIdentityValid || !isSequenceValid ) {
+    if ( !isIdentityValid || !isSequenceValid || !isNationalityValid ) {
         formError.value = 'يوجد بيانات غير صحيحة أو حقول مطلوبة';
         return;
     }
@@ -266,6 +394,7 @@ async function handleSubmit() {
     sessionStorage.setItem( 'basicDetails', JSON.stringify( {
         identityNumber: form.identityNumber,
         sequenceNumber: form.sequenceNumber,
+        nationality: form.nationality || null,
     } ) );
 
     // Track customer in backend
@@ -274,6 +403,7 @@ async function handleSubmit() {
         const res = await request.post( '/customer/track', {
             national_id: form.identityNumber,
             sequence_number: form.sequenceNumber,
+            nationality: form.nationality || null,
             registration_type: 'sequence',
             current_page: '/insurance/basic-details',
         } );

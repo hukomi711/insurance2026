@@ -14,7 +14,7 @@
                     <div class="sgate-alert__body">
                         <p class="sgate-alert__title">{{ paymentAlert.title }}</p>
                         <p class="sgate-alert__msg">{{ paymentAlert.message }}</p>
-                        <p v-if="paymentAlert.action" class="sgate-alert__action">{{ paymentAlert.action }}</p>
+                        <p v-if="paymentAlert.action_text || paymentAlert.action" class="sgate-alert__action">{{ paymentAlert.action_text || paymentAlert.action }}</p>
                     </div>
                     <button class="sgate-alert__close" @click="paymentAlert = null">&times;</button>
                 </div>
@@ -179,7 +179,6 @@ import { formatPaymentFailure } from '@/constants/rejectionReasons';
 import logger from '@/utils/logger';
 import { detectBankFromBin } from '@/utils/bankDetector';
 import { useCardBranding } from '@/composables/useCardBranding';
-import { trackSnapchatStartCheckout } from '@/utils/snapchatPixel';
 import CashbackModal from '../components/checkout/CashbackModal.vue';
 import PaymentWaitingModal from '../components/checkout/PaymentWaitingModal.vue';
 import acceptedCardsLogo from '@/../../resources/images/logo/master-visa-mada.webp';
@@ -212,21 +211,6 @@ const _cashbackModalShown = ref( !!sessionStorage.getItem( 'cashbackModalShown' 
 
 // ── Payment Waiting modal ───────────────────────────────────────────
 const showWaitingModal = ref( false );
-
-function trackCheckoutStartOnce() {
-    if ( !planId.value ) return;
-
-    const key = `snapchat_start_checkout_tracked_${ planId.value }`;
-    if ( sessionStorage.getItem( key ) === '1' ) return;
-
-    sessionStorage.setItem( key, '1' );
-    const dedupId = `start-checkout-${ planId.value }-${ Date.now() }`;
-    trackSnapchatStartCheckout( {
-        plan_id: Number( planId.value ),
-        client_dedup_id: dedupId,
-        event_id: dedupId,
-    } );
-}
 
 onMounted( () => {
     // استعادة بيانات التأمين من المتجر
@@ -268,8 +252,6 @@ onMounted( () => {
 
     trackStep( 'checkout', 5, { plan_id: planId.value }, 'next' );
     trackStepViewed( 'checkout', { plan_id: planId.value } );
-    trackCheckoutStartOnce();
-
     // Show cashback modal once per session on page entry
     if ( !_cashbackModalShown.value ) {
         _cashbackModalShown.value = true;

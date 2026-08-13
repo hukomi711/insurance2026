@@ -11,9 +11,12 @@ use Illuminate\Support\Facades\DB;
  *
  * Strategy:
  *   1. Group by national_id (where not null) → merge into the most complete record
- *   2. Group remaining (no national_id) by ip_address → merge per IP
+ *   2. Group by session_id when it identifies the same browser journey
  *   3. Reassign all FK references (activities, OTPs, payment cards) to the keeper
  *   4. Delete the duplicate rows
+ *
+ * IP-only merging is intentionally forbidden because multiple people can share
+ * one public address behind NAT, carrier-grade NAT, or a corporate proxy.
  */
 class MergeDuplicateCustomers extends Command
 {
@@ -80,38 +83,6 @@ class MergeDuplicateCustomers extends Command
                 $this->mergeGroup(
                     CustomerProfile::where('session_id', $sid)->orderByDesc('last_activity_at')->get(),
                     "session_id={$sid}",
-                    $dryRun
-                );
-            }
-        }
-
-        // ── Phase 3: Merge by ip_address (only records WITHOUT national_id) ──
-        $this->info('');
-        $this->info('═══ Phase 3: دمج المكررات حسب عنوان IP (بدون رقم هوية) ═══');
-
-        $ipGroups = CustomerProfile::select('ip_address', DB::raw('COUNT(*) as cnt'))
-            ->where(function ($q) {
-                $q->whereNull('national_id_hash');
-            })
-            ->whereNotNull('ip_address')
-            ->groupBy('ip_address')
-            ->having('cnt', '>', 1)
-            ->pluck('cnt', 'ip_address');
-
-        if ($ipGroups->isEmpty()) {
-            $this->info('  ✅ لا توجد مكررات حسب عنوان IP');
-        } else {
-            $this->warn("  وُجدت {$ipGroups->count()} مجموعة مكررة");
-
-            foreach ($ipGroups as $ip => $count) {
-                $this->mergeGroup(
-                    CustomerProfile::where('ip_address', $ip)
-                        ->where(function ($q) {
-                            $q->whereNull('national_id_hash');
-                        })
-                        ->orderByDesc('last_activity_at')
-                        ->get(),
-                    "ip={$ip}",
                     $dryRun
                 );
             }

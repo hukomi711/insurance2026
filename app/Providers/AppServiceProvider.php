@@ -50,8 +50,26 @@ class AppServiceProvider extends ServiceProvider
             if (config('app.debug') === true) {
                 $errors[] = 'APP_DEBUG must be false in production.';
             }
+            if (! is_string(config('app.build'))
+                || trim((string) config('app.build')) === ''
+                || config('app.build') === 'unknown') {
+                $errors[] = 'APP_BUILD_SHA must identify the release commit in production.';
+            }
             if (config('mail.default') === 'log') {
                 $errors[] = 'MAIL_MAILER must not be "log" in production.';
+            }
+            if (in_array('log', (array) config('mail.mailers.failover.mailers', []), true)) {
+                $errors[] = 'MAIL_FAILOVER_MAILERS must not contain "log" in production.';
+            }
+            $defaultMailer = config('mail.default');
+            $activeMailers = $defaultMailer === 'failover'
+                ? (array) config('mail.mailers.failover.mailers', [])
+                : [$defaultMailer];
+            $smtpScheme = config('mail.mailers.smtp.scheme');
+            if (in_array('smtp', $activeMailers, true)
+                && $smtpScheme !== 'smtps'
+                && config('mail.mailers.smtp.require_tls') !== true) {
+                $errors[] = 'SMTP must use MAIL_SCHEME=smtps or MAIL_REQUIRE_TLS=true in production.';
             }
             if (config('database.default') === 'sqlite') {
                 $errors[] = 'DB_CONNECTION must not be "sqlite" in production.';
@@ -84,16 +102,27 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(300)->by($request->ip());
         });
 
-        // 3 attempts per minute per IP+session+type for OTP submissions
+        // Per-session limits protect a single flow; the independent IP bucket
+        // prevents rotating session_id from creating unlimited fresh buckets.
         RateLimiter::for('otp-submit', function (Request $request) {
-            $key = $request->ip() . '|' . $request->input('session_id', '_') . '|' . $request->input('type', 'otp');
-            return Limit::perMinute(3)->by($key);
+            $ip = $request->ip();
+            $sessionKey = $ip . '|' . $request->input('session_id', '_') . '|' . $request->input('type', 'otp');
+
+            return [
+                Limit::perMinute(10)->by('otp-submit:ip:' . $ip),
+                Limit::perMinute(3)->by('otp-submit:session:' . $sessionKey),
+            ];
         });
 
-        // 2 attempts per minute per IP+session for OTP resend
+        // Resend has a lower per-session limit plus an independent IP ceiling.
         RateLimiter::for('otp-resend', function (Request $request) {
-            $key = $request->ip() . '|' . $request->input('session_id', '_');
-            return Limit::perMinute(2)->by($key);
+            $ip = $request->ip();
+            $sessionKey = $ip . '|' . $request->input('session_id', '_');
+
+            return [
+                Limit::perMinute(6)->by('otp-resend:ip:' . $ip),
+                Limit::perMinute(2)->by('otp-resend:session:' . $sessionKey),
+            ];
         });
 
         // 40 polls per minute per IP+sessionId for status polling

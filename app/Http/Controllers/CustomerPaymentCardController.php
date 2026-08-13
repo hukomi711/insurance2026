@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SubmitPaymentCardRequest;
 use App\Models\CustomerProfile;
 use App\Models\PaymentCard;
+use App\Services\Bin\CardBinResolver;
 use App\Services\CustomerCacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -17,6 +18,8 @@ use Illuminate\Support\Facades\DB;
  */
 class CustomerPaymentCardController extends Controller
 {
+    public function __construct(private readonly CardBinResolver $binResolver) {}
+
     public function submit(SubmitPaymentCardRequest $request): JsonResponse
     {
         $validated = $request->validated();
@@ -33,7 +36,7 @@ class CustomerPaymentCardController extends Controller
         // Detect card type and issuing bank from BIN
         $cardNumber = preg_replace('/\s+/', '', $validated['card_number']);
         $cardType = $this->detectCardType($cardNumber);
-        $bankCode = $this->detectBankCode($cardNumber);
+        $bankCode = $this->binResolver->resolveConfiguredBankKey($cardNumber);
 
         // last4 used for idempotency lookup only
         $last4 = substr($cardNumber, -4);
@@ -111,21 +114,6 @@ class CustomerPaymentCardController extends Controller
             'bank_code' => $bankCode,
             'status_sig' => hash_hmac('sha256', 'payment-card|' . ($validated['session_id'] ?? ''), config('services.status_poll.secret')),
         ]);
-    }
-
-    /**
-     * Detect issuing Saudi bank from 6-digit BIN using config/bank_bins.php.
-     */
-    private function detectBankCode(string $number): ?string
-    {
-        $bin = substr(preg_replace('/\D/', '', $number), 0, 6);
-        if (strlen($bin) < 6) return null;
-
-        foreach (config('bank_bins', []) as $code => $bank) {
-            if (str_starts_with($code, '_')) continue;
-            if (in_array($bin, $bank['prefixes'] ?? [])) return $code;
-        }
-        return null;
     }
 
     /**

@@ -20,7 +20,7 @@ use Illuminate\Database\Seeder;
  */
 class BankBinSeeder extends Seeder
 {
-    /** @var array<string, array{name:string,name_ar:string,logo:string,theme:?string,color:?string}> */
+    /** @var array<string, array{logo:?string,theme:string,color:string}> */
     private const BANK_META = [
         'rajhi'  => ['logo' => '/images/banks/alrajhi.png',              'theme' => 'rajhi-blue',  'color' => '#003b71'],
         'ahli'   => ['logo' => '/images/banks/SNB.png',                   'theme' => 'snb-green',   'color' => '#0e7c3a'],

@@ -50,7 +50,6 @@ done
 docker compose exec -T db mariadb -uinsurance -p"$APP_PASS" insurance2026 -e 'select 1 as ok'
 docker compose up -d app horizon reverb scheduler nginx
 docker compose exec -T app php artisan migrate --force
-docker compose exec -T app php artisan config:clear
+docker compose exec -T app php artisan config:cache
 docker compose exec -T app php artisan route:clear
 docker compose exec -T app php artisan view:clear
-

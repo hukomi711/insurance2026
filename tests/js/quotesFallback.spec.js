@@ -1,0 +1,113 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const mocks = vi.hoisted( () => ( {
+    post: vi.fn(),
+    calculateAllQuotes: vi.fn(),
+    buildPricingPayload: vi.fn(),
+} ) );
+
+vi.mock( '@/api/request', () => ( {
+    default: { post: mocks.post },
+} ) );
+
+vi.mock( '@/data', () => ( {
+    vehiclePlans: [],
+    companies: [ { id: 9, name: 'Test Company' } ],
+    getCompany: vi.fn( companyId => ( { id: companyId, name: 'Test Company' } ) ),
+} ) );
+
+vi.mock( '@/utils/pricingEngine', () => ( {
+    usePricingEngine: () => ( { calculateAllQuotes: mocks.calculateAllQuotes } ),
+} ) );
+
+vi.mock( '@/utils/buildPricingPayload', () => ( {
+    buildPricingPayload: mocks.buildPricingPayload,
+} ) );
+
+import { getQuotes } from '@/api/quotes';
+
+const formData = {
+    vehicle: { year: 2024, make: 1, estimatedValue: 85000 },
+    policy: { repairMethod: 'workshop' },
+};
+
+const sourcePlans = [
+    { id: 1, companyId: 9, subType: 'comprehensive', deductible: 1500 },
+];
+
+function httpError ( status )
+{
+    return {
+        message: `Request failed with status ${ status }`,
+        response: { status },
+    };
+}
+
+describe( 'quotes API fallback policy', () =>
+{
+    beforeEach( () =>
+    {
+        vi.clearAllMocks();
+        mocks.buildPricingPayload.mockReturnValue( { pricing: 'payload' } );
+        mocks.calculateAllQuotes.mockReturnValue( sourcePlans );
+    } );
+
+    it( 'does not use local pricing after a 403 geo-policy response', async () =>
+    {
+        const error = httpError( 403 );
+        mocks.post.mockRejectedValue( error );
+
+        await expect( getQuotes( formData, sourcePlans ) ).rejects.toBe( error );
+        expect( mocks.calculateAllQuotes ).not.toHaveBeenCalled();
+    } );
+
+    it( 'does not use local pricing after a 423 business-lock response', async () =>
+    {
+        const error = httpError( 423 );
+        mocks.post.mockRejectedValue( error );
+
+        await expect( getQuotes( formData, sourcePlans ) ).rejects.toBe( error );
+        expect( mocks.calculateAllQuotes ).not.toHaveBeenCalled();
+    } );
+
+    it.each( [ 401, 419, 422, 429 ] )( 'does not use local pricing after HTTP %i', async status =>
+    {
+        const error = httpError( status );
+        mocks.post.mockRejectedValue( error );
+
+        await expect( getQuotes( formData, sourcePlans ) ).rejects.toBe( error );
+        expect( mocks.calculateAllQuotes ).not.toHaveBeenCalled();
+    } );
+
+    it.each( [ 500, 502, 503, 504 ] )( 'uses local pricing after HTTP %i', async status =>
+    {
+        mocks.post.mockRejectedValue( httpError( status ) );
+
+        const result = await getQuotes( formData, sourcePlans );
+
+        expect( result.plans ).toHaveLength( 1 );
+        expect( mocks.calculateAllQuotes ).toHaveBeenCalledOnce();
+    } );
+
+    it.each( [ 'ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT' ] )(
+        'uses local pricing after transport error %s',
+        async code =>
+        {
+            mocks.post.mockRejectedValue( { code, message: code } );
+
+            const result = await getQuotes( formData, sourcePlans );
+
+            expect( result.plans ).toHaveLength( 1 );
+            expect( mocks.calculateAllQuotes ).toHaveBeenCalledOnce();
+        }
+    );
+
+    it( 'does not hide an unrelated programming error', async () =>
+    {
+        const error = new TypeError( 'Unexpected pricing merge failure' );
+        mocks.post.mockRejectedValue( error );
+
+        await expect( getQuotes( formData, sourcePlans ) ).rejects.toBe( error );
+        expect( mocks.calculateAllQuotes ).not.toHaveBeenCalled();
+    } );
+} );

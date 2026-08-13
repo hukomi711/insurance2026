@@ -2,7 +2,9 @@
 
 namespace App\Events;
 
+use App\Support\CustomerBroadcastChannel;
 use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Queue\SerializesModels;
@@ -15,16 +17,17 @@ use Illuminate\Queue\SerializesModels;
  *   - protected string $eventName (e.g. 'OtpApproved', 'PaymentApproved')
  *
  * Broadcasting targets:
- *   1. Legacy public channel:  {prefix}.{ip}       (backward compat)
- *   2. Admin private channel:  admin.{prefix}      (aggregated admin feed)
+ *   1. Opaque customer session channel
+ *   2. Private admin aggregation channel
  */
 abstract class BaseApprovalEvent implements ShouldBroadcastNow
 {
-    use SerializesModels;
+    use InteractsWithSockets, SerializesModels;
 
-    public string $customerIp;
     public ?string $redirectTo;
+
     public ?string $sessionId;
+
     public ?int $customerId;
 
     /** Channel prefix (e.g. 'otp', 'payment'). */
@@ -33,11 +36,10 @@ abstract class BaseApprovalEvent implements ShouldBroadcastNow
     /** Event name for broadcastAs(). */
     abstract protected function eventName(): string;
 
-    public function __construct(string $customerIp, ?string $redirectTo = null, ?string $sessionId = null, ?int $customerId = null)
+    public function __construct(?string $sessionId, ?string $redirectTo = null, ?int $customerId = null)
     {
-        $this->customerIp = $customerIp;
         $this->redirectTo = $redirectTo;
-        $this->sessionId  = $sessionId;
+        $this->sessionId = $sessionId;
         $this->customerId = $customerId;
     }
 
@@ -46,14 +48,15 @@ abstract class BaseApprovalEvent implements ShouldBroadcastNow
      */
     public function broadcastOn(): array
     {
-        $prefix   = $this->channelPrefix();
+        $prefix = $this->channelPrefix();
         $channels = [];
 
-        // 1. Legacy IP-based public channel (existing customers keep working)
-        $channels[] = new Channel($prefix . '.' . $this->customerIp);
+        if ($this->sessionId !== null && $this->sessionId !== '') {
+            $channels[] = new Channel(CustomerBroadcastChannel::forSession($prefix, $this->sessionId));
+        }
 
         // 2. Private admin aggregation channel
-        $channels[] = new PrivateChannel('admin.' . $prefix);
+        $channels[] = new PrivateChannel('admin.'.$prefix);
 
         return $channels;
     }
@@ -66,11 +69,9 @@ abstract class BaseApprovalEvent implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'customer_ip' => $this->customerIp,
             'customer_id' => $this->customerId,
             'redirect_to' => $this->redirectTo,
-            'session_id'  => $this->sessionId,
-            'status'      => 'approved',
+            'status' => 'approved',
         ];
     }
 }

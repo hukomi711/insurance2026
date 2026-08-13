@@ -11,7 +11,7 @@ All scripts and templates have been reviewed and verified. **No deployment has b
 | **Exposed Secrets** | ✅ 0 found (only CHANGE_ME) | 4/4 clean |
 | **Dangerous Commands** | ✅ 0 found | deploy.sh verified |
 | **SSH Key Setup** | ✅ Corrected (ssh-copy-id) | DEPLOYMENT-GUIDE.md updated |
-| **Config:cache Misuse** | ✅ Not used (config:clear instead) | deploy.sh line 311 |
+| **Config cache policy** | ✅ Built after runtime secrets are injected | deploy scripts + entrypoint |
 | **Docker Permissions** | ✅ Safe (appuser:appuser) | No chmod -R 777 |
 
 ### Files Ready for Deployment

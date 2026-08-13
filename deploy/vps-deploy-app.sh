@@ -127,7 +127,7 @@ cd $APP_DIR
 
 # Clear all caches
 echo "   🧹 Clearing caches..."
-sudo -u $APP_USER php artisan config:clear
+sudo -u $APP_USER php artisan config:cache
 sudo -u $APP_USER php artisan cache:clear
 sudo -u $APP_USER php artisan view:clear
 sudo -u $APP_USER php artisan route:clear

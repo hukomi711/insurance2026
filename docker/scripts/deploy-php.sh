@@ -6,8 +6,7 @@
 #   bash docker/scripts/deploy-php.sh app/Http/Middleware/CountryRestriction.php
 #   bash docker/scripts/deploy-php.sh app/Http/Controllers/SpaController.php app/Models/Customer.php
 #
-# Flushes: route cache + OPcache (PHP-FPM restart)
-# Does NOT run config:cache (secrets come from Docker env).
+# Rebuilds config/route caches + resets OPcache (PHP-FPM restart).
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
 
@@ -35,8 +34,9 @@ for FILE in "$@"; do
         "docker cp /tmp/${BASENAME} ${CONTAINER}:/var/www/html/${FILE} && rm /tmp/${BASENAME}"
 done
 
-echo "==> Flushing route cache + OPcache..."
+echo "==> Rebuilding Laravel caches + resetting OPcache..."
 ssh "${SERVER_USER}@${SERVER_IP}" "\
+    docker exec ${CONTAINER} php artisan config:cache && \
     docker exec ${CONTAINER} php artisan route:clear && \
     docker exec ${CONTAINER} php artisan route:cache && \
     docker exec ${CONTAINER} kill -USR2 1"

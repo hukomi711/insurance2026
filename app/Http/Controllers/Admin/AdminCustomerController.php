@@ -169,14 +169,12 @@ class AdminCustomerController extends Controller
             });
         }
 
-        // Dedupe by IP before pagination: keep latest activity per ip_address.
-        // Legacy duplicated rows can still exist; deduping at SQL level makes
-        // pagination + totals stable and removes per-page unique() side effects.
-        // Customers with no IP address should not be collapsed into a single row,
-        // so group null IPs uniquely by row id.
+        // Dedupe by browser session before pagination. IP addresses are not
+        // identities: unrelated customers can share a NAT/CGNAT egress address.
+        // Rows without a session token remain distinct by primary key.
         $partitionExpr = DB::connection()->getDriverName() === 'sqlite'
-            ? "COALESCE(ip_address, 'null-' || id)"
-            : "IFNULL(ip_address, CONCAT('null-', id))";
+            ? "COALESCE(session_id, 'row-' || id)"
+            : "IFNULL(session_id, CONCAT('row-', id))";
 
         $rankedDedupedRows = (clone $baseFiltered)
             ->select('id')
@@ -322,28 +320,23 @@ class AdminCustomerController extends Controller
      */
     public function redirectCustomer(RedirectCustomerRequest $request): JsonResponse
     {
-        $customer = CustomerProfile::where('ip_address', $request->customer_ip)->first();
-
-        if (! $customer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'العميل غير موجود',
-            ], 404);
-        }
+        $customer = CustomerProfile::findOrFail($request->integer('customer_id'));
 
         $customer->update(['current_page' => $request->redirect_url]);
 
         // Cache pending redirect so the customer's heartbeat can pick it up
         // even if WebSocket is unavailable (polling fallback — TTL 120s).
-        \Illuminate\Support\Facades\Cache::put(
-            "pending_redirect:{$request->customer_ip}",
-            $request->redirect_url,
-            120
-        );
+        if ($customer->session_id) {
+            \Illuminate\Support\Facades\Cache::put(
+                \App\Support\CustomerBroadcastChannel::pendingRedirectCacheKey($customer->session_id),
+                $request->redirect_url,
+                120
+            );
 
-        broadcast(new CustomerRedirected($request->customer_ip, $request->redirect_url))->toOthers();
+            broadcast(new CustomerRedirected($customer->session_id, $request->redirect_url, $customer->id))->toOthers();
+        }
 
-        $this->notifyDashboard($request->customer_ip, 'customer_redirected');
+        $this->notifyDashboard($customer, 'customer_redirected');
 
         return response()->json([
             'success' => true,
@@ -391,6 +384,7 @@ class AdminCustomerController extends Controller
         // ✅ Instant broadcast to ALL admins (including self) — blink disappears immediately
         try {
             broadcast(new WindowReadUpdated(
+                $customer->id,
                 $customer->ip_address,
                 $dataType,
                 $readAt,

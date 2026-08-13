@@ -188,6 +188,7 @@ const submitPhoneNumber = async () => {
       sessionStorage.setItem('stcContext', JSON.stringify({
         phoneNumber: fullPhoneNumber.value,
         customerIp: response.data?.customer_ip || '',
+        sessionId: response.data?.session_id || '',
         carrier: 'stc',
       }));
       router.push({ name: 'stcWaiting' });

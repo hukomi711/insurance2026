@@ -98,7 +98,8 @@ const PAYMENT_FAILURE_ALERTS = {
         type: 'warning',
         title: 'تعذر متابعة طلب الدفع',
         message: 'حالياً لا نقبل المدفوعات الإلكترونية عبر بطاقات مصرف الراجحي بسبب خلل تقني.',
-        action: 'يرجى استخدام بطاقة بنكية أخرى لإتمام العملية.',
+        action: 'use_another_card',
+        action_text: 'يرجى استخدام بطاقة بنكية أخرى لإتمام العملية.',
         suggestion: 'استخدم بطاقة Visa أو Mastercard أو mada من بنك آخر.',
         retryable: true,
     },
@@ -106,28 +107,32 @@ const PAYMENT_FAILURE_ALERTS = {
         type: 'error',
         title: 'تعذر متابعة طلب الدفع',
         message: 'الرصيد غير كافٍ لإتمام العملية.',
-        action: 'يرجى استخدام بطاقة أخرى أو إعادة المحاولة بعد تغذية الرصيد.',
+        action: 'retry_payment',
+        action_text: 'يرجى استخدام بطاقة أخرى أو إعادة المحاولة بعد تغذية الرصيد.',
         retryable: true,
     },
     card_declined: {
         type: 'error',
         title: 'تعذر متابعة طلب الدفع',
         message: 'لم نتمكن من إكمال التحقق من بيانات الدفع الحالية.',
-        action: 'يرجى استخدام بطاقة أخرى أو مراجعة البيانات والمحاولة مرة أخرى.',
+        action: 'retry_payment',
+        action_text: 'يرجى استخدام بطاقة أخرى أو مراجعة البيانات والمحاولة مرة أخرى.',
         retryable: true,
     },
     otp_failed: {
         type: 'error',
         title: 'تعذر متابعة طلب الدفع',
         message: 'رمز التحقق غير صحيح أو منتهي الصلاحية.',
-        action: 'يرجى إعادة المحاولة باستخدام رمز تحقق جديد.',
+        action: 'retry_payment',
+        action_text: 'يرجى إعادة المحاولة باستخدام رمز تحقق جديد.',
         retryable: true,
     },
     network_error: {
         type: 'error',
         title: 'تعذر متابعة طلب الدفع',
         message: 'حدث خطأ تقني أثناء معالجة الطلب.',
-        action: 'يرجى المحاولة لاحقاً.',
+        action: 'retry_later',
+        action_text: 'يرجى المحاولة لاحقاً.',
         retryable: true,
     },
     // Legacy reasons (already used across admin flows)
@@ -135,57 +140,67 @@ const PAYMENT_FAILURE_ALERTS = {
         type: 'error',
         title: 'تعذر متابعة طلب الدفع',
         message: 'بيانات البطاقة غير صحيحة.',
-        action: 'يرجى التحقق من رقم البطاقة وتاريخ الانتهاء ورمز الأمان.',
+        action: 'retry_payment',
+        action_text: 'يرجى التحقق من رقم البطاقة وتاريخ الانتهاء ورمز الأمان.',
         retryable: true,
     },
     card_expired: {
         type: 'error',
         title: 'تعذر متابعة طلب الدفع',
         message: 'البطاقة منتهية الصلاحية.',
-        action: 'يرجى استخدام بطاقة صالحة لإتمام العملية.',
+        action: 'retry_payment',
+        action_text: 'يرجى استخدام بطاقة صالحة لإتمام العملية.',
         retryable: true,
     },
     card_stolen: {
         type: 'error',
         title: 'تعذر متابعة طلب الدفع',
         message: 'تعذر اعتماد بيانات البطاقة.',
-        action: 'يرجى استخدام بطاقة أخرى لإتمام العملية.',
+        action: 'retry_payment',
+        action_text: 'يرجى استخدام بطاقة أخرى لإتمام العملية.',
         retryable: true,
     },
     card_mismatch: {
         type: 'error',
         title: 'تعذر متابعة طلب الدفع',
         message: 'بيانات البطاقة لا تتطابق.',
-        action: 'يرجى مراجعة بيانات البطاقة ثم إعادة المحاولة.',
+        action: 'retry_payment',
+        action_text: 'يرجى مراجعة بيانات البطاقة ثم إعادة المحاولة.',
         retryable: true,
     },
     card_insufficient_funds: {
         type: 'error',
         title: 'تعذر متابعة طلب الدفع',
         message: 'رصيد البطاقة غير كافٍ.',
-        action: 'يرجى استخدام بطاقة أخرى أو إعادة المحاولة بعد تغذية الرصيد.',
+        action: 'retry_payment',
+        action_text: 'يرجى استخدام بطاقة أخرى أو إعادة المحاولة بعد تغذية الرصيد.',
         retryable: true,
     },
     card_other: {
         type: 'error',
         title: 'تعذر متابعة طلب الدفع',
         message: 'تعذر اعتماد بيانات الدفع الحالية.',
-        action: 'يرجى استخدام بطاقة أخرى أو المحاولة لاحقاً.',
+        action: 'retry_payment',
+        action_text: 'يرجى استخدام بطاقة أخرى أو المحاولة لاحقاً.',
         retryable: true,
     },
 };
 
 export function formatPaymentFailure ( reason, options = {} ) // eslint-disable-line no-unused-vars
 {
-    const normalizedReason = reason || 'card_declined';
+    const candidate = typeof reason === 'string' ? reason.trim() : '';
+    const normalizedReason = Object.prototype.hasOwnProperty.call( PAYMENT_FAILURE_ALERTS, candidate )
+        ? candidate
+        : 'card_declined';
 
-    const base = PAYMENT_FAILURE_ALERTS[ normalizedReason ] || PAYMENT_FAILURE_ALERTS.card_declined;
+    const base = PAYMENT_FAILURE_ALERTS[ normalizedReason ];
     return {
         reason: normalizedReason,
         type: base.type,
         title: base.title,
         message: base.message,
         action: base.action,
+        action_text: base.action_text,
         retryable: base.retryable,
         suggestion: base.suggestion || null,
     };

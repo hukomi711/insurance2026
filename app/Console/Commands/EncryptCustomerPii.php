@@ -28,6 +28,12 @@ class EncryptCustomerPii extends Command
         $encrypted = 0;
         $skipped = 0;
 
+        if ($chunkSize < 1) {
+            $this->error('--chunk must be at least 1.');
+
+            return self::INVALID;
+        }
+
         if ($dryRun) {
             $this->info('🔍 الوضع التجريبي — لن يتم تعديل أي بيانات');
         }

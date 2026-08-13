@@ -1,4 +1,4 @@
-# Emergency Incident Response - Complete Summary
+# [HISTORICAL] Emergency Incident Response - Complete Summary
 
 ## Session Overview
 
@@ -19,7 +19,7 @@
 **Root Cause**: Docker compose HOST `.env` overrides image `.env` at startup time, loading stale credentials
 
 - Container had correct Gmail credentials: `bonmysabed@gmail.com` + app password
-- But server-side `/opt/insurance2026/.env` had OLD credentials: `noreply@lybankss.com` + different password
+- But server-side `/opt/insurance2026/.env` had OLD credentials: `noreply@<your-domain>` + different password
 - Result: SMTP authentication failure 535 "Username and Password not accepted"
 
 **Solution Implemented**:
@@ -44,7 +44,7 @@
 
 **Solution Implemented**:
 
-1. ✅ Generated Ed25519 key locally: `~/.ssh/lybankss_prod_20260808`
+1. ✅ Generated Ed25519 key locally: `~/.ssh/<deployment-key-name>`
 2. ✅ Deployed public key to server: `/root/.ssh/authorized_keys`
 3. ✅ Created hardening config: `/etc/ssh/sshd_config.d/99-production-hardening.conf`
 4. ✅ Settings applied:
@@ -190,7 +190,7 @@ scheduler       ✓ healthy       10h+
 ### Security Status ✅
 
 - **SSH**: Ed25519 key-based only, passwords disabled
-- **HTTPS**: SSL/TLS active on lybankss.com
+- **HTTPS**: SSL/TLS active on <your-domain>
 - **Database**: Credentials in Docker secrets
 - **API**: Rate limiting and auth validation active
 
@@ -234,7 +234,7 @@ scheduler       ✓ healthy       10h+
 ### Test 1: Email Delivery ✅
 
 ```
-Input:  Admin OTP request → admin@lybankss.com
+Input:  Admin OTP request → admin@<your-domain>
 Output: Email received with verification code ✓
 Verified: Code valid in system ✓
 Status:  PRODUCTION WORKING ✓
@@ -290,8 +290,8 @@ Status:    FRONTEND CURRENT ✓
 
 **Test**:
 
-1. Go to <https://lybankss.com/admin/login>
-2. Enter admin email: `admin@lybankss.com`
+1. Go to <https://<your-domain>/admin/login>
+2. Enter admin email: `admin@<your-domain>`
 3. Should receive email with verification code within 30 seconds
 4. Code should be 6 digits (example: 718675)
 5. Enter code and complete login
@@ -302,8 +302,8 @@ Status:    FRONTEND CURRENT ✓
 
 **Test**:
 
-1. Open dashboard: <https://lybankss.com/admin/dashboard>
-2. Add debug parameter: <https://lybankss.com/admin/dashboard?debug=1>
+1. Open dashboard: <https://<your-domain>/admin/dashboard>
+2. Add debug parameter: <https://<your-domain>/admin/dashboard?debug=1>
 3. Look bottom-right for debug panel
 4. Read status indicators:
    - Should show ✓ Polling (green)
@@ -321,7 +321,7 @@ Status:    FRONTEND CURRENT ✓
 **Test** (Admin only):
 
 ```bash
-ssh -i ~/.ssh/lybankss_prod_20260808 root@209.74.72.242
+ssh -i ~/.ssh/<deployment-key-name> root@<server-ip>
 
 # Should connect successfully
 # Should NOT prompt for password
@@ -401,7 +401,7 @@ These are NOT blockers but could improve the system:
 
 ### Production Dashboard
 
-- **URL**: <https://lybankss.com/admin>
+- **URL**: <https://<your-domain>/admin>
 - **Status**: ✅ Online and responsive
 - **Authentication**: OTP-based, working correctly
 - **Real-time Updates**: Polling every 10s active, WebSocket ready
@@ -409,14 +409,14 @@ These are NOT blockers but could improve the system:
 
 ### Admin Test Account
 
-- **Email**: <admin@lybankss.com>
+- **Email**: <admin@<your-domain>>
 - **Password**: Admin2026Passw0rd
 - **2FA**: OTP sent via email
 - **Status**: ✅ Fully operational
 
 ### Production Server
 
-- **Host**: 209.74.72.242
+- **Host**: <server-ip>
 - **OS**: Linux (Docker Compose environment)
 - **SSH**: Ed25519 key-based auth
 - **Services**: All 7/7 healthy
@@ -470,7 +470,7 @@ This incident response session successfully:
 ### Verify Email Configuration
 
 ```bash
-ssh root@209.74.72.242
+ssh root@<server-ip>
 cd /opt/insurance2026
 docker compose exec -T app php artisan tinker
 >>> echo env('MAIL_USERNAME');
@@ -480,14 +480,14 @@ docker compose exec -T app php artisan tinker
 ### Check Dashboard Debug Panel
 
 ```
-https://lybankss.com/admin/dashboard?debug=1
+https://<your-domain>/admin/dashboard?debug=1
 # Look for status indicators in bottom-right corner
 ```
 
 ### View Production Logs
 
 ```bash
-ssh root@209.74.72.242
+ssh root@<server-ip>
 cd /opt/insurance2026
 docker compose logs -f app --tail 50        # Laravel logs
 docker compose logs -f reverb --tail 50     # WebSocket logs
@@ -497,7 +497,7 @@ docker compose logs -f horizon --tail 50    # Queue logs
 ### SSH Access to Production
 
 ```bash
-ssh -i ~/.ssh/lybankss_prod_20260808 root@209.74.72.242
+ssh -i ~/.ssh/<deployment-key-name> root@<server-ip>
 ```
 
 ---

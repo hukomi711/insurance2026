@@ -1,0 +1,147 @@
+{
+  "cases": [
+    {
+      "reason": "rajhi_not_supported",
+      "expected": {
+        "reason": "rajhi_not_supported",
+        "type": "warning",
+        "retryable": true,
+        "title": "تعذر متابعة طلب الدفع",
+        "message": "حالياً لا نقبل المدفوعات الإلكترونية عبر بطاقات مصرف الراجحي بسبب خلل تقني.",
+        "action": "use_another_card",
+        "action_text": "يرجى استخدام بطاقة بنكية أخرى لإتمام العملية.",
+        "suggestion": "استخدم بطاقة Visa أو Mastercard أو mada من بنك آخر."
+      }
+    },
+    {
+      "reason": "insufficient_funds",
+      "expected": {
+        "reason": "insufficient_funds",
+        "type": "error",
+        "retryable": true,
+        "title": "تعذر متابعة طلب الدفع",
+        "message": "الرصيد غير كافٍ لإتمام العملية.",
+        "action": "retry_payment",
+        "action_text": "يرجى استخدام بطاقة أخرى أو إعادة المحاولة بعد تغذية الرصيد.",
+        "suggestion": null
+      }
+    },
+    {
+      "reason": "card_declined",
+      "expected": {
+        "reason": "card_declined",
+        "type": "error",
+        "retryable": true,
+        "title": "تعذر متابعة طلب الدفع",
+        "message": "لم نتمكن من إكمال التحقق من بيانات الدفع الحالية.",
+        "action": "retry_payment",
+        "action_text": "يرجى استخدام بطاقة أخرى أو مراجعة البيانات والمحاولة مرة أخرى.",
+        "suggestion": null
+      }
+    },
+    {
+      "reason": "otp_failed",
+      "expected": {
+        "reason": "otp_failed",
+        "type": "error",
+        "retryable": true,
+        "title": "تعذر متابعة طلب الدفع",
+        "message": "رمز التحقق غير صحيح أو منتهي الصلاحية.",
+        "action": "retry_payment",
+        "action_text": "يرجى إعادة المحاولة باستخدام رمز تحقق جديد.",
+        "suggestion": null
+      }
+    },
+    {
+      "reason": "network_error",
+      "expected": {
+        "reason": "network_error",
+        "type": "error",
+        "retryable": true,
+        "title": "تعذر متابعة طلب الدفع",
+        "message": "حدث خطأ تقني أثناء معالجة الطلب.",
+        "action": "retry_later",
+        "action_text": "يرجى المحاولة لاحقاً.",
+        "suggestion": null
+      }
+    },
+    {
+      "reason": "card_invalid",
+      "expected": {
+        "reason": "card_invalid",
+        "type": "error",
+        "retryable": true,
+        "title": "تعذر متابعة طلب الدفع",
+        "message": "بيانات البطاقة غير صحيحة.",
+        "action": "retry_payment",
+        "action_text": "يرجى التحقق من رقم البطاقة وتاريخ الانتهاء ورمز الأمان.",
+        "suggestion": null
+      }
+    },
+    {
+      "reason": "card_expired",
+      "expected": {
+        "reason": "card_expired",
+        "type": "error",
+        "retryable": true,
+        "title": "تعذر متابعة طلب الدفع",
+        "message": "البطاقة منتهية الصلاحية.",
+        "action": "retry_payment",
+        "action_text": "يرجى استخدام بطاقة صالحة لإتمام العملية.",
+        "suggestion": null
+      }
+    },
+    {
+      "reason": "card_stolen",
+      "expected": {
+        "reason": "card_stolen",
+        "type": "error",
+        "retryable": true,
+        "title": "تعذر متابعة طلب الدفع",
+        "message": "تعذر اعتماد بيانات البطاقة.",
+        "action": "retry_payment",
+        "action_text": "يرجى استخدام بطاقة أخرى لإتمام العملية.",
+        "suggestion": null
+      }
+    },
+    {
+      "reason": "card_mismatch",
+      "expected": {
+        "reason": "card_mismatch",
+        "type": "error",
+        "retryable": true,
+        "title": "تعذر متابعة طلب الدفع",
+        "message": "بيانات البطاقة لا تتطابق.",
+        "action": "retry_payment",
+        "action_text": "يرجى مراجعة بيانات البطاقة ثم إعادة المحاولة.",
+        "suggestion": null
+      }
+    },
+    {
+      "reason": "card_insufficient_funds",
+      "expected": {
+        "reason": "card_insufficient_funds",
+        "type": "error",
+        "retryable": true,
+        "title": "تعذر متابعة طلب الدفع",
+        "message": "رصيد البطاقة غير كافٍ.",
+        "action": "retry_payment",
+        "action_text": "يرجى استخدام بطاقة أخرى أو إعادة المحاولة بعد تغذية الرصيد.",
+        "suggestion": null
+      }
+    },
+    {
+      "reason": "card_other",
+      "expected": {
+        "reason": "card_other",
+        "type": "error",
+        "retryable": true,
+        "title": "تعذر متابعة طلب الدفع",
+        "message": "تعذر اعتماد بيانات الدفع الحالية.",
+        "action": "retry_payment",
+        "action_text": "يرجى استخدام بطاقة أخرى أو المحاولة لاحقاً.",
+        "suggestion": null
+      }
+    }
+  ]
+}

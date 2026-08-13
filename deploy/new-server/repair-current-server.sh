@@ -3,7 +3,7 @@ set -euo pipefail
 
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/insurance2026}"
 BACKUP_DIR="${BACKUP_DIR:-/opt/insurance2026.backup.20260520171801}"
-DOMAIN="${DOMAIN:-lybankss.com}"
+DOMAIN="${DOMAIN:-example.com}"
 ADMIN_VERIFICATION_EMAIL="${ADMIN_VERIFICATION_EMAIL:-support@lexusforbon.it.com}"
 
 cd "$DEPLOY_DIR"
@@ -91,7 +91,7 @@ docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' | grep -E 'ins202
 
 echo "== laravel =="
 docker exec ins2026-app sh -lc 'chown appuser:appuser /var/www/html/.env && chmod 640 /var/www/html/.env'
-docker exec -u appuser ins2026-app php artisan config:clear
+docker exec -u appuser ins2026-app php artisan config:cache
 docker exec -u appuser ins2026-app php artisan migrate --force
 docker exec -u appuser ins2026-app php artisan route:cache
 docker exec -u appuser ins2026-app php artisan view:cache

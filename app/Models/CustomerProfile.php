@@ -664,12 +664,6 @@ class CustomerProfile extends Model
 
         $this->last_activity_at = now();
         $this->save();
-
-        try {
-            event(new \App\Events\CustomerUpdated($this, 'vehicle'));
-        } catch (\Exception $e) {
-            report($e);
-        }
     }
 
     /**
@@ -773,12 +767,6 @@ class CustomerProfile extends Model
         $this->extra_data = $extra;
         $this->last_activity_at = now();
         $this->save();
-
-        try {
-            event(new \App\Events\CustomerUpdated($this, 'offer_selected'));
-        } catch (\Exception $e) {
-            report($e);
-        }
     }
 
     /**

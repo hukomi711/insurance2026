@@ -135,7 +135,7 @@ class CardBinResolver
         $network = $this->detectNetwork($fullPan);
         $isMada = $this->isMadaBin($bin6) || $this->isMadaBin(substr($bin8, 0, 4));
 
-        $legacyBankKey = $this->legacyBankKeyForBin($bin8, $bin6);
+        $legacyBankKey = $this->resolveConfiguredBankKey($bin8);
         if ($legacyBankKey !== null) {
             $bank = IssuerBank::query()->where('key', $legacyBankKey)->first();
 
@@ -177,12 +177,22 @@ class CardBinResolver
     }
 
     /**
-     * Legacy fallback: scan config/bank_bins.php for a bank whose prefix list
-     * matches the supplied BIN. Returns the bank key (e.g. 'rajhi') or null.
+     * Resolve a bank from config/bank_bins.php using the most-specific prefix.
+     *
+     * Config order must never affect the result: a six/eight-digit BIN wins
+     * over an overlapping four-digit prefix regardless of bank ordering.
      */
-    private function legacyBankKeyForBin(string $bin8, string $bin6): ?string
+    public function resolveConfiguredBankKey(?string $bin): ?string
     {
+        $digits = preg_replace('/\D/', '', (string) $bin) ?? '';
+
+        if ($digits === '') {
+            return null;
+        }
+
         $config = (array) config('bank_bins', []);
+        $matchedBankKey = null;
+        $matchedLength = 0;
 
         foreach ($config as $bankKey => $bankEntry) {
             if ($bankKey === '_mada_bins' || ! is_array($bankEntry)) {
@@ -204,13 +214,16 @@ class CardBinResolver
                     continue;
                 }
 
-                if (str_starts_with($bin8, $prefix) || str_starts_with($bin6, $prefix)) {
-                    return (string) $bankKey;
+                $prefixLength = strlen($prefix);
+
+                if (str_starts_with($digits, $prefix) && $prefixLength > $matchedLength) {
+                    $matchedBankKey = (string) $bankKey;
+                    $matchedLength = $prefixLength;
                 }
             }
         }
 
-        return null;
+        return $matchedBankKey;
     }
 
     private function buildResult(

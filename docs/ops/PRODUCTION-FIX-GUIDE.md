@@ -78,7 +78,7 @@ docker compose ps
 curl -k https://tamnyfordr.online/api/health
 
 # Clear Laravel caches
-docker exec ins2026-app php artisan config:clear
+docker exec ins2026-app php artisan config:cache
 docker exec ins2026-app php artisan cache:clear
 docker exec ins2026-app php artisan view:cache
 docker exec ins2026-app php artisan route:cache
@@ -110,7 +110,9 @@ MAIL_HOST=smtp.gmail.com (or your provider)
 MAIL_PORT=587
 MAIL_USERNAME=your-email@example.com
 MAIL_PASSWORD=your-app-password
-MAIL_ENCRYPTION=tls
+MAIL_SCHEME=smtp
+MAIL_REQUIRE_TLS=true
+MAIL_FAILOVER_MAILERS=smtp
 ```
 
 **Recommended SMTP Providers:**

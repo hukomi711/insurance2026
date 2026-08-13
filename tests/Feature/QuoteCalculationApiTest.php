@@ -94,6 +94,20 @@ class QuoteCalculationApiTest extends TestCase
             ->assertJsonValidationErrors(['plans']);
     }
 
+    public function test_validation_rejects_more_than_fifty_plans(): void
+    {
+        $payload = $this->validPayload();
+        $payload['plans'] = array_fill(0, 51, [
+            'companyId' => 9,
+            'subType' => 'comprehensive',
+            'deductible' => 1500,
+        ]);
+
+        $this->postJson('/api/quotes/calculate', $payload)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['plans']);
+    }
+
     public function test_validation_rejects_invalid_sub_type(): void
     {
         $payload = $this->validPayload();

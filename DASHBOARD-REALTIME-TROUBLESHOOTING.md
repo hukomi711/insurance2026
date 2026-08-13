@@ -46,7 +46,7 @@ window.Echo && window.Echo.connector?.pusher?.connection?.state
 
 1. Open DevTools → Network tab
 2. Filter by WebSocket (WS)
-3. Should see connection to `wss://lybankss.com/app/...`
+3. Should see connection to `wss://<your-domain>/app/...`
 4. Connection should say "101 Web Socket Protocol Handshake" (not red/failed)
 
 ### 5. **Verify Polling is Running**
@@ -111,7 +111,7 @@ import.meta.env.VITE_REVERB_SCHEME
 
 // Expected:
 // VITE_REVERB_APP_KEY: "YGjMWUkuM8ruG6QPqGudw2J1Gx7XYDsrL5sfgCxU"
-// VITE_REVERB_HOST: "lybankss.com"
+// VITE_REVERB_HOST: "<your-domain>"
 // VITE_REVERB_PORT: "443" or 443
 // VITE_REVERB_SCHEME: "https"
 
@@ -131,7 +131,7 @@ import.meta.env.VITE_REVERB_SCHEME
    - Fix: Use normal browsing mode
 
 2. **VPN/Proxy blocking WebSocket**
-   - Fix: Disable VPN temporarily or whitelist lybankss.com
+   - Fix: Disable VPN temporarily or whitelist <your-domain>
 
 3. **Corporate Firewall blocking port 443 WebSocket**
    - Fix: Contact IT / use fallback polling (still works)
@@ -153,7 +153,7 @@ From production server:
 
 ```bash
 # SSH to server
-ssh root@209.74.72.242
+ssh root@<server-ip>
 
 # Check if events are being published
 docker compose logs -f reverb 2>&1 | grep -i "publish\|broadcast"
@@ -224,7 +224,7 @@ Click the blue "تحديث" (Refresh) button to manually trigger an update
 If client-side looks correct but still no updates:
 
 ```bash
-ssh root@209.74.72.242
+ssh root@<server-ip>
 
 # 1. Check Reverb service
 docker compose ps reverb
@@ -289,13 +289,13 @@ window.Echo?.connector?.pusher?.channels
    copy(localStorage.getItem('console_logs') || 'No logs')
    
    # From server
-   ssh root@209.74.72.242
+   ssh root@<server-ip>
    docker compose logs --tail 100 reverb > /tmp/reverb.log
    docker compose logs --tail 100 app > /tmp/app.log
    docker compose logs --tail 100 horizon > /tmp/horizon.log
    
    # Download logs
-   scp root@209.74.72.242:/tmp/*.log ~/
+   scp root@<server-ip>:/tmp/*.log ~/
    ```
 
 2. **Report with**:

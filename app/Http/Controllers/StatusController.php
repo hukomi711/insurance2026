@@ -70,7 +70,9 @@ class StatusController extends Controller
             'retryable' => $meta['retryable'] ?? null,
             'title' => $meta['title'] ?? null,
             'action' => $meta['action'] ?? null,
+            'action_text' => $meta['action_text'] ?? null,
             'message' => $meta['message'] ?? null,
+            'suggestion' => $meta['suggestion'] ?? null,
         ]);
     }
 

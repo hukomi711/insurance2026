@@ -9,6 +9,7 @@ import
     PURPOSE_FACTORS,
     MODIFICATION_FACTOR,
     TRAILER_FACTOR,
+    TRANSMISSION_FACTORS,
     DRIVER_AGE_FACTORS,
     ACCIDENT_FACTORS,
     VIOLATION_FACTORS,
@@ -16,6 +17,7 @@ import
     FOREIGN_LICENSE_FACTOR,
     HEALTH_CONDITION_FACTOR,
     ADDITIONAL_DRIVER_FACTOR,
+    EXPERIENCE_FACTORS,
     CITY_FACTORS,
     PARKING_FACTORS,
     MILEAGE_FACTORS,
@@ -25,6 +27,7 @@ import
     COMPANY_PRICING_FACTORS,
     SUBTYPE_COMPANY_PRICING_FACTORS,
     NCD_FACTORS,
+    PROMOTIONAL_DISCOUNT_FACTOR,
 } from '@/data/pricingConstants';
 
 /**
@@ -105,9 +108,10 @@ export function usePricingEngine ()
     /**
      * معامل ناقل الحركة
      */
-    function getTransmissionFactor ( _type )
+    function getTransmissionFactor ( type )
     {
-        return 1.0;
+        if ( type === undefined || type === null || type === '' ) return 1.0;
+        return TRANSMISSION_FACTORS[ String( type ) ] ?? 1.0;
     }
 
     /**
@@ -148,9 +152,10 @@ export function usePricingEngine ()
     /**
      * معامل خبرة القيادة
      */
-    function getExperienceFactor ( _experience )
+    function getExperienceFactor ( experience )
     {
-        return 1.0;
+        if ( experience === undefined || experience === null || experience === '' ) return 1.0;
+        return EXPERIENCE_FACTORS[ String( experience ) ] ?? 1.0;
     }
 
     /**
@@ -321,7 +326,7 @@ export function usePricingEngine ()
             const { vehicle: v, driver: d, policy: p } = formData;
 
             // السعر الأساسي من خريطة الفئات
-            const basePrice = BASE_PREMIUMS[ plan.subType ] || plan.basePrice || plan.annualPrice || 800;
+            const basePrice = BASE_PREMIUMS[ plan.subType ] ?? 800;
 
             // حساب المعاملات
             const vehicleFactor = getVehicleRiskFactor( v || {} );
@@ -333,7 +338,10 @@ export function usePricingEngine ()
                 ...( p || {} ),
                 ...overrides,
             };
-            const policyFactor = getPolicyFactor( effectivePolicy, overrides.deductible ?? plan.deductible );
+            const effectiveDeductible = overrides.deductible
+                ?? effectivePolicy.deductible
+                ?? plan.deductible;
+            const policyFactor = getPolicyFactor( effectivePolicy, effectiveDeductible );
 
             // معامل الشركة
             const companyFactor = SUBTYPE_COMPANY_PRICING_FACTORS[ plan.subType ]?.[ plan.companyId ]
@@ -356,8 +364,8 @@ export function usePricingEngine ()
             // تقريب لأقرب 10
             const annualBeforeDiscount = Math.round( clampedPrice / 10 ) * 10;
 
-            // خصم 20% ترويجي
-            const annualPrice = Math.round( ( annualBeforeDiscount * 0.80 ) / 10 ) * 10;
+            // الخصم الترويجي — مطابق لـ config/pricing.php
+            const annualPrice = Math.round( ( annualBeforeDiscount * PROMOTIONAL_DISCOUNT_FACTOR ) / 10 ) * 10;
             const originalPrice = annualBeforeDiscount;
 
             const monthlyPrice = calculateMonthlyPrice( annualPrice );
@@ -379,6 +387,7 @@ export function usePricingEngine ()
                     company: companyFactor,
                     ncd: ncdFactor,
                     coverage: Math.round( coverageFactor * 1000 ) / 1000,
+                    promo: PROMOTIONAL_DISCOUNT_FACTOR,
                     total: Math.round( ( vehicleFactor * driverFactor * lifestyleFactor * policyFactor * companyFactor * ncdFactor * coverageFactor ) * 1000 ) / 1000,
                 },
             };
@@ -394,7 +403,7 @@ export function usePricingEngine ()
                 vatAmount: calculateVAT( fallbackPrice ),
                 totalWithVAT: fallbackPrice + calculateVAT( fallbackPrice ),
                 basePrice: fallbackPrice,
-                factors: { vehicle: 1, driver: 1, lifestyle: 1, policy: 1, company: 1, ncd: 1, coverage: 1, total: 1 },
+                factors: { vehicle: 1, driver: 1, lifestyle: 1, policy: 1, company: 1, ncd: 1, coverage: 1, promo: PROMOTIONAL_DISCOUNT_FACTOR, total: 1 },
             };
         }
     }

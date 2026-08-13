@@ -3,9 +3,7 @@
 /**
  * Saudi Bank BIN Definitions — single source of truth.
  *
- * Used by:
- *  - AdminPaymentCardController::binLookup()
- *  - Any future BIN-related logic
+ * Used by CardBinResolver, which always selects the longest matching prefix.
  *
  * Keys are bank codes used for logo resolution on the frontend.
  * Each entry contains: name, name_ar, and 6-digit BIN prefixes.

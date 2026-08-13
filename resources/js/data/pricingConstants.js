@@ -66,6 +66,13 @@ export const MODIFICATION_FACTOR = 1.15;
 /** مقطورة مرفقة */
 export const TRAILER_FACTOR = 1.10;
 
+/** نوع ناقل الحركة */
+export const TRANSMISSION_FACTORS = {
+    '1': 1.00,   // يدوي
+    '2': 1.00,   // أوتوماتيك
+    '3': 1.02,   // CVT
+};
+
 
 // ─── معاملات خطر السائق ───
 
@@ -114,6 +121,15 @@ export const HEALTH_CONDITION_FACTOR = 1.10;
 
 /** معامل السائق الإضافي (لكل سائق إضافي) */
 export const ADDITIONAL_DRIVER_FACTOR = 1.05;
+
+/** سنوات خبرة القيادة */
+export const EXPERIENCE_FACTORS = {
+    '1': 1.10,
+    '2': 1.05,
+    '3': 1.03,
+    '4': 1.01,
+    '5': 1.00,
+};
 
 // ─── معاملات الموقع والأسلوب ───
 
@@ -247,3 +263,9 @@ export const NCD_FACTORS = {
     '6': 0.72,   // 6 سنوات — 28% خصم
     '7': 0.70,   // 7+ سنوات — 30% خصم (الحد الأقصى)
 };
+
+/** ضريبة القيمة المضافة */
+export const VAT_RATE = 0.15;
+
+/** الخصم الترويجي المطبق بعد حدود السعر وقبل الضريبة */
+export const PROMOTIONAL_DISCOUNT_FACTOR = 0.80;

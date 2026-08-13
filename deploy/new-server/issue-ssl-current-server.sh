@@ -2,8 +2,9 @@
 set -euo pipefail
 
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/insurance2026}"
-DOMAIN="${DOMAIN:-lybankss.com}"
-EMAIL="${EMAIL:-admin@lybankss.com}"
+DOMAIN="${DOMAIN:-example.com}"
+LEGACY_DOMAIN="${LEGACY_DOMAIN:-}"
+EMAIL="${EMAIL:-admin@example.com}"
 
 cd "$DEPLOY_DIR"
 
@@ -13,13 +14,20 @@ WEBROOT="docker/certbot/www"
 echo "== temporary certificate =="
 mkdir -p "$CERT_DIR" "$WEBROOT"
 TEMP_CERT_CREATED=false
+CERT_DOMAINS=(-d "$DOMAIN" -d "www.$DOMAIN")
+TEMP_SAN="DNS:$DOMAIN,DNS:www.$DOMAIN"
+
+if [[ -n "$LEGACY_DOMAIN" && "$LEGACY_DOMAIN" != "legacy.invalid" && "$LEGACY_DOMAIN" != "$DOMAIN" ]]; then
+  CERT_DOMAINS+=(-d "$LEGACY_DOMAIN" -d "www.$LEGACY_DOMAIN")
+  TEMP_SAN+=",DNS:$LEGACY_DOMAIN,DNS:www.$LEGACY_DOMAIN"
+fi
 
 if [[ ! -s "$CERT_DIR/fullchain.pem" || ! -s "$CERT_DIR/privkey.pem" || ! -s "$CERT_DIR/chain.pem" ]]; then
   openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
     -keyout "$CERT_DIR/privkey.pem" \
     -out "$CERT_DIR/fullchain.pem" \
     -subj "/CN=$DOMAIN" \
-    -addext "subjectAltName=DNS:$DOMAIN,DNS:www.$DOMAIN"
+    -addext "subjectAltName=$TEMP_SAN"
   cp "$CERT_DIR/fullchain.pem" "$CERT_DIR/chain.pem"
   TEMP_CERT_CREATED=true
 fi
@@ -47,8 +55,7 @@ docker run --rm \
     --no-eff-email \
     --non-interactive \
     --force-renewal \
-    -d "$DOMAIN" \
-    -d "www.$DOMAIN"
+    "${CERT_DOMAINS[@]}"
 
 echo "== reload nginx with letsencrypt certificate =="
 docker compose up -d --force-recreate nginx

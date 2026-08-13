@@ -17,7 +17,8 @@ class NafathRejectRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_ip' => 'required|string',
+            'customer_id' => 'required|integer|exists:customer_profiles,id',
+            'customer_ip' => 'nullable|string',
             'reason'      => 'nullable|string|max:500',
         ];
     }

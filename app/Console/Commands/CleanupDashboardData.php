@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Models\CustomerProfile;
 use App\Models\PaymentCard;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class CleanupDashboardData extends Command
 {
@@ -50,22 +49,34 @@ class CleanupDashboardData extends Command
             $this->info('  ✓ Sanitized.');
         }
 
-        // 3. Remove duplicate payment cards (keep latest per profile + last4 combo)
-        $duplicates = DB::select("
-            SELECT pc.id
-            FROM payment_cards pc
-            INNER JOIN (
-                SELECT customer_profile_id, last4, MAX(id) as keep_id
-                FROM payment_cards
-                WHERE last4 IS NOT NULL AND last4 != ''
-                GROUP BY customer_profile_id, last4
-                HAVING COUNT(*) > 1
-            ) dups ON pc.customer_profile_id = dups.customer_profile_id
-                  AND pc.last4 = dups.last4
-                  AND pc.id != dups.keep_id
-        ");
+        // 3. Remove only exact duplicate PANs. last4 alone is not an identity:
+        // two different cards can legitimately end in the same four digits.
+        $duplicateGroups = PaymentCard::query()
+            ->select(['customer_profile_id', 'last4'])
+            ->whereNotNull('last4')
+            ->where('last4', '!=', '')
+            ->groupBy('customer_profile_id', 'last4')
+            ->havingRaw('COUNT(*) > 1');
 
-        $duplicateIds = collect($duplicates)->pluck('id');
+        $duplicateCandidates = PaymentCard::query()
+            ->joinSub($duplicateGroups, 'duplicate_groups', function ($join) {
+                $join->on('payment_cards.customer_profile_id', '=', 'duplicate_groups.customer_profile_id')
+                    ->on('payment_cards.last4', '=', 'duplicate_groups.last4');
+            })
+            ->select('payment_cards.*')
+            ->orderByDesc('payment_cards.id')
+            ->get();
+
+        $duplicateIds = $duplicateCandidates
+            ->groupBy(function (PaymentCard $card): string {
+                $pan = preg_replace('/\D+/', '', (string) $card->card_number);
+
+                return $pan !== ''
+                    ? $card->customer_profile_id.'|'.hash('sha256', $pan)
+                    : 'missing-pan|'.$card->id;
+            })
+            ->flatMap(fn ($cards) => $cards->skip(1)->pluck('id'))
+            ->values();
         $this->info("Duplicate payment cards to remove: {$duplicateIds->count()}");
         if (! $dryRun && $duplicateIds->isNotEmpty()) {
             PaymentCard::whereIn('id', $duplicateIds)->delete();

@@ -24,6 +24,7 @@
         "home": "Home",
         "loading": "Loading...",
         "error": "An error occurred",
+        "back": "Back",
         "retry": "Retry",
         "paymentBy": "Payment via",
         "contactUsIfProblem": "Having trouble? Call us",
@@ -168,6 +169,16 @@
                 "newCodeSent": "New code sent",
                 "resendError": "An error occurred while resending"
             }
+        }
+    },
+    "stc": {
+        "deviceNotRegistered": {
+            "title": "Device Not Registered",
+            "description": "To verify your identity and register your device, you can receive a call from us",
+            "requestCall": "Receive Call",
+            "skip": "Skip",
+            "callRequested": "Call request sent successfully",
+            "error": "An error occurred while requesting the call. Please try again."
         }
     },
     "rejection": {

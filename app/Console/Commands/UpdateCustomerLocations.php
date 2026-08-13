@@ -56,6 +56,13 @@ class UpdateCustomerLocations extends Command
 
         $this->info("📊 عدد العملاء: {$customers->count()} | عناوين IP فريدة: {$uniqueIps->count()}");
 
+        if ($this->option('dry-run')) {
+            $publicIps = $uniqueIps->reject(fn ($ip) => $this->isNonPublicIp((string) $ip));
+            $this->info("[DRY RUN] Would look up {$publicIps->count()} public IP address(es); no API calls or cache writes were made.");
+
+            return self::SUCCESS;
+        }
+
         $updated = 0;
         $failed = 0;
         $skipped = 0;
@@ -67,8 +74,8 @@ class UpdateCustomerLocations extends Command
         foreach ($uniqueIps as $ip) {
             $profiles = $grouped[$ip];
 
-            // Skip local IPs
-            if (in_array($ip, ['127.0.0.1', '::1', 'localhost']) || str_starts_with($ip, '192.168.') || str_starts_with($ip, '10.') || str_starts_with($ip, '172.')) {
+            // Skip invalid, private, loopback, link-local, and reserved addresses.
+            if ($this->isNonPublicIp((string) $ip)) {
                 $skipped += $profiles->count();
                 $bar->advance();
 
@@ -97,13 +104,6 @@ class UpdateCustomerLocations extends Command
                 $city = $geoService->getArabicCityName($location['city'] ?? '');
 
                 foreach ($profiles as $profile) {
-                    if ($this->option('dry-run')) {
-                        $this->newLine();
-                        $this->line("  IP: {$ip} => {$location['country']} / {$city} ({$location['region']})");
-
-                        break; // Only show once per IP group in dry-run
-                    }
-
                     $profile->location_city = $city;
                     $profile->location_country = $geoService->getArabicCountryName($location['country_code'] ?? '') ?: ($location['country'] ?? null);
                     $profile->country = $location['country_code'] ?? null; // ISO 2-letter code
@@ -129,10 +129,15 @@ class UpdateCustomerLocations extends Command
             $this->warn("❌ فشل: {$failed}");
         }
 
-        if ($this->option('dry-run')) {
-            $this->warn('⚠️ هذا كان تشغيل تجريبي — لم يتم حفظ أي تغييرات.');
-        }
-
         return self::SUCCESS;
+    }
+
+    private function isNonPublicIp(string $ip): bool
+    {
+        return filter_var(
+            $ip,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE,
+        ) === false;
     }
 }

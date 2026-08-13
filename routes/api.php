@@ -64,7 +64,8 @@ Route::prefix('health')->middleware('throttle:60,1')->group(function () {
 // ─── Legal / Policy (public — cacheable, light throttle) ────────────
 Route::prefix('legal')->middleware('throttle:30,1')->group(function () {
     Route::get('/', function () {
-        $emailDomain = env('SUPPORT_EMAIL_DOMAIN', parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost');
+        $emailDomain = config('services.public_meta.support_email_domain')
+            ?: (parse_url(config('app.url'), PHP_URL_HOST) ?: 'localhost');
 
         return response()->json([
             'policies' => [
@@ -239,6 +240,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'throttle:120,1'])-
     Route::get('/customers/{id}', [AdminCustomerController::class, 'show']);
     Route::post('/customers/{id}/mark-viewed', [AdminCustomerController::class, 'markViewed']);
     Route::post('/customers/{id}/reveal-pii', [AdminCustomerController::class, 'revealPii']);
+    Route::post('/customers/{id}/block', [AdminCustomerForceController::class, 'block']);
 
     // Notifications
     Route::get('/notifications', [AdminNotificationController::class, 'index']);
@@ -294,7 +296,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'throttle:120,1'])-
     // Delete customer card
     Route::delete('/customers/{id}', [AdminCustomerController::class, 'destroy']);
 
-    // BIN lookup (legacy single-prefix lookup — kept for backward compat)
+    // BIN lookup (backward-compatible endpoint delegated to CardBinResolver)
     Route::get('/bin-lookup/{bin}', [AdminPaymentCardController::class, 'binLookup']);
 
     // ─── BIN database management ────────────────────────────

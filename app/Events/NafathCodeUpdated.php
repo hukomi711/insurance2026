@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Support\CustomerBroadcastChannel;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -15,18 +16,22 @@ class NafathCodeUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets;
 
-    public string $customerIp;
+    public string $sessionId;
+
     public string $verificationCode;
 
-    public function __construct(string $customerIp, string $verificationCode)
+    public int $customerId;
+
+    public function __construct(string $sessionId, string $verificationCode, int $customerId)
     {
-        $this->customerIp = $customerIp;
+        $this->sessionId = $sessionId;
         $this->verificationCode = $verificationCode;
+        $this->customerId = $customerId;
     }
 
     public function broadcastOn(): Channel
     {
-        return new Channel('nafath.' . $this->customerIp);
+        return new Channel(CustomerBroadcastChannel::forSession('nafath', $this->sessionId));
     }
 
     public function broadcastAs(): string
@@ -37,9 +42,9 @@ class NafathCodeUpdated implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'customer_ip'       => $this->customerIp,
+            'customer_id' => $this->customerId,
             'verification_code' => $this->verificationCode,
-            'status'            => 'code_updated',
+            'status' => 'code_updated',
         ];
     }
 }

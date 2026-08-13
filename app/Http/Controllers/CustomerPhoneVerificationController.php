@@ -90,6 +90,7 @@ class CustomerPhoneVerificationController extends Controller
             'message'     => 'تم إرسال رمز التحقق بنجاح',
             'otp_id'      => $otp->id,
             'customer_ip' => $ip,
+            'session_id'  => $otp->session_id,
         ]);
     }
 

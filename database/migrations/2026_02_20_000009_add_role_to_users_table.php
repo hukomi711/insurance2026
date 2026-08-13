@@ -13,7 +13,7 @@ return new class extends Migration
         });
 
         // Set the admin role on the configured admin account (fallback to the legacy email).
-        $adminEmail = trim((string) env('ADMIN_EMAIL', 'admin@insurance.com'));
+        $adminEmail = trim((string) config('services.admin.email', 'admin@insurance.com'));
         $adminEmail = $adminEmail !== '' ? $adminEmail : 'admin@insurance.com';
 
         \App\Models\User::where('email', $adminEmail)->update(['role' => 'admin']);

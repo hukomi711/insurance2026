@@ -172,8 +172,8 @@ docker exec ins2026-app sh -lc '
   chmod 640 /var/www/html/.env
 '
 
-echo "Clearing Laravel config cache only..."
-docker exec ins2026-app php artisan config:clear
+echo "Rebuilding Laravel config cache..."
+docker exec ins2026-app php artisan config:cache
 
 echo "Running migrations..."
 docker exec ins2026-app php artisan migrate --force

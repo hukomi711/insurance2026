@@ -20,6 +20,12 @@ class MarkAbandonedQuotes extends Command
     {
         $minutes = (int) $this->option('minutes');
 
+        if ($minutes < 1) {
+            $this->error('--minutes must be at least 1.');
+
+            return self::INVALID;
+        }
+
         // Find stale active sessions
         $staleSessions = QuoteSession::stale($minutes)->get();
         $count = $staleSessions->count();

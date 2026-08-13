@@ -11,7 +11,7 @@ Your dashboard auto-reload and real-time updates issue has been **completely res
 ### Step 1: Access Your Dashboard with Debug Mode
 
 ```
-https://lybankss.com/admin/dashboard?debug=1
+https://<your-domain>/admin/dashboard?debug=1
 ```
 
 Just append `?debug=1` to the dashboard URL and press Enter.
@@ -101,7 +101,7 @@ If you need more information:
 
 ## ✅ Verification Checklist
 
-- [ ] Can access dashboard: <https://lybankss.com/admin>
+- [ ] Can access dashboard: <https://<your-domain>/admin>
 - [ ] Can enable debug mode with `?debug=1`
 - [ ] Debug panel shows status indicators
 - [ ] "Last Updated" timestamp advances every 10 seconds
@@ -125,9 +125,9 @@ If any issues remain:
    - Reference: DASHBOARD-REALTIME-TROUBLESHOOTING.md guide
 
 3. **Emergency contact**:
-   - Production server: 209.74.72.242
-   - Dashboard URL: <https://lybankss.com/admin>
-   - Test account: <admin@lybankss.com>
+   - Production server: <server-ip>
+   - Dashboard URL: <https://<your-domain>/admin>
+   - Test account: <admin@<your-domain>>
 
 ---
 
@@ -147,7 +147,7 @@ If any issues remain:
 
 ## 🎯 Next Steps
 
-1. **Test dashboard**: <https://lybankss.com/admin/dashboard?debug=1>
+1. **Test dashboard**: <https://<your-domain>/admin/dashboard?debug=1>
 2. **Enable debug panel**: Confirm status indicators are green
 3. **Watch updates**: Verify timestamp advancing every 10 seconds
 4. **Report result**: Share success or debug info for further help
@@ -170,4 +170,4 @@ If any issues remain:
 
 ---
 
-**Ready to test? → <https://lybankss.com/admin/dashboard?debug=1>**
+**Ready to test? → <https://<your-domain>/admin/dashboard?debug=1>**

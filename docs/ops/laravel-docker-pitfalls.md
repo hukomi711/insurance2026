@@ -53,42 +53,36 @@ reverb
 
 ---
 
-## 2. Never run `config:cache` on this stack
+## 2. Build config cache after injecting runtime secrets
 
-Do **not** run:
+Production uses:
 
 ```bash
 php artisan config:cache
 ```
 
-This stack intentionally relies on runtime `.env` access and Docker/runtime secrets.
+The Docker entrypoint exports file-based secrets such as `DB_PASSWORD` first,
+then builds the cache. Runtime PHP reads environment-backed values exclusively
+through `config()`; direct `env()` calls belong only in `config/*.php`.
 
-`config:cache` can freeze null or stale values into Laravel config, including:
-
-```text
-DB_PASSWORD
-ADMIN_PASSWORD
-REVERB / PUSHER keys
-VITE-related runtime assumptions
-```
-
-### Required behavior
-
-The entrypoint should run:
+### Required order
 
 ```bash
-php artisan config:clear
+# 1. Export Docker secrets into the process environment.
+# 2. Validate that .env/runtime environment is readable.
+php artisan config:cache
 ```
 
-and should explicitly avoid config caching.
+`config:cache` is fail-fast. Missing or invalid production configuration must
+stop the container instead of silently starting with stale values.
 
-### If config was cached accidentally
+### After changing environment values
 
 ```bash
-php artisan config:clear
+docker compose up -d --force-recreate app horizon reverb scheduler
 ```
 
-Then restart the affected containers.
+The recreated containers rebuild their own config cache from the new values.
 
 ---
 
@@ -155,18 +149,10 @@ For a specific route:
 curl -Ik --resolve tamnyfordr.online:443:127.0.0.1 https://tamnyfordr.online/api/health
 ```
 
-### 8. Never add config cache to deploy steps
-
-Do not add:
+### 8. Rebuild config cache in deploy steps
 
 ```bash
 php artisan config:cache
-```
-
-Use:
-
-```bash
-php artisan config:clear
 ```
 
 ---

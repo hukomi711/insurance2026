@@ -2,34 +2,53 @@
 # ═══════════════════════════════════════════════════════════════════
 # Insurance 2026 — Docker Deploy Script
 # ═══════════════════════════════════════════════════════════════════
-# Usage (from the project root on the VPS):
+# Usage (from a clean detached release worktree on the VPS):
+#   cd /opt/insurance-releases/<full-commit-sha>
 #   bash docker/scripts/deploy.sh
 #
 # What it does:
-#   1. Pulls latest code (if git repo)
-#   2. Copies .env.production → .env (if .env missing)
-#   3. Builds Docker images
-#   4. Runs migrations
-#   5. Caches Laravel config/routes/views
-#   6. Restarts all containers with zero-downtime rolling restart
+#   1. Proves the release source is clean, detached and SHA-addressed
+#   2. Validates runtime environment and Docker secrets
+#   3. Builds one traceable application image
+#   4. Runs migrations from that new image
+#   5. Recreates all application roles from the same image
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
 
 # ── Config ───────────────────────────────────────────────────────
 COMPOSE="docker compose"
 APP_SERVICE="app"
+RELEASE_ROOT="${RELEASE_ROOT:-/opt/insurance-releases}"
 
 echo "══════════════════════════════════════════════════════════════"
 echo "  Insurance 2026 — Deploy"
 echo "══════════════════════════════════════════════════════════════"
 
-# ── 1. Pull latest code ──────────────────────────────────────────
-if [ -d .git ]; then
-    echo "[1/7] Pulling latest code..."
-    git pull --ff-only
-else
-    echo "[1/7] No git repo — skipping pull."
+# ── 1. Prove this is an immutable release source ─────────────────
+echo "[1/7] Verifying clean detached release source..."
+GIT_SHA="$(git rev-parse HEAD)"
+RELEASE_DIR="$(pwd -P)"
+
+case "$RELEASE_DIR" in
+    "$RELEASE_ROOT"/"$GIT_SHA") ;;
+    *)
+        echo "  !! ERROR: Build directory must be $RELEASE_ROOT/$GIT_SHA"
+        exit 1
+        ;;
+esac
+
+if git symbolic-ref -q HEAD >/dev/null; then
+    echo "  !! ERROR: Release worktree must use detached HEAD."
+    exit 1
 fi
+
+if [ -n "$(git status --porcelain --untracked-files=all)" ]; then
+    echo "  !! ERROR: Release source is not clean."
+    git status --short
+    exit 1
+fi
+
+echo "  -> Release source verified: $GIT_SHA"
 
 # ── 2. Ensure .env exists ────────────────────────────────────────
 echo "[2/7] Checking .env..."
@@ -64,16 +83,35 @@ echo "  -> Secrets validated."
 
 # ── 4. Build single application image ────────────────────────────
 echo "[4/7] Building application image (zero-drift: one image → all roles)..."
-GIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || cat .build-sha 2>/dev/null || echo "unknown")
 $COMPOSE build --no-cache --build-arg APP_BUILD_SHA="$GIT_SHA" app
-echo "  -> Built insurance2026-app image (commit: $GIT_SHA)"
+IMAGE_SHA="$($COMPOSE images -q app)"
+IMAGE_REVISION="$(docker image inspect --format='{{ index .Config.Labels "org.opencontainers.image.revision" }}' "$IMAGE_SHA")"
+if [ "$IMAGE_REVISION" != "$GIT_SHA" ]; then
+    echo "  !! ERROR: Image revision $IMAGE_REVISION does not match release $GIT_SHA"
+    exit 1
+fi
+echo "  -> Built $IMAGE_SHA from commit $GIT_SHA"
 
-# ── 5. Start/restart ALL services from the same image ────────────
-echo "[5/7] Starting services (force-recreate to pick up new image)..."
-$COMPOSE up -d --force-recreate --remove-orphans
+# ── 5. Run migrations from the new image before switching roles ─
+echo "[5/7] Checking and applying migrations from the new image..."
+INS_BACKUP_DIR="${INS_BACKUP_DIR:-/opt/server-state-backups/database}" \
+    bash docker/scripts/backup-db.sh
+$COMPOSE run --rm --no-deps "$APP_SERVICE" sh -lc '
+    test "$APP_BUILD_SHA" = "'"$GIT_SHA"'" || exit 91
+    php artisan migrate:status --no-interaction
+    php artisan migrate --pretend --no-interaction
+'
+$COMPOSE run --rm --no-deps "$APP_SERVICE" sh -lc '
+    test "$APP_BUILD_SHA" = "'"$GIT_SHA"'" || exit 91
+    php artisan migrate --force --no-interaction
+'
 
-# ── 5b. Assert image-ID consistency (drift guard) ────────────────
-echo "[5b] Verifying all PHP services use the same image..."
+# ── 6. Start/restart ALL services from the same image ────────────
+echo "[6/7] Starting services (force-recreate to pick up new image)..."
+$COMPOSE up -d --no-build --force-recreate --remove-orphans
+
+# ── 6b. Assert image-ID consistency (drift guard) ────────────────
+echo "[6b] Verifying all PHP services use the same image..."
 sleep 5
 APP_IMAGE_ID=$(docker inspect --format='{{.Image}}' ins2026-app 2>/dev/null || echo "MISSING")
 DRIFT_FOUND=0
@@ -82,7 +120,7 @@ for svc in ins2026-horizon ins2026-reverb ins2026-scheduler; do
     if [ "$SVC_IMAGE_ID" != "$APP_IMAGE_ID" ]; then
         echo "  !! DRIFT: $svc image ($SVC_IMAGE_ID) ≠ app ($APP_IMAGE_ID)"
         echo "  -> Forcing recreate of ${svc#ins2026-}..."
-        $COMPOSE up -d --force-recreate "${svc#ins2026-}"
+        $COMPOSE up -d --no-build --force-recreate "${svc#ins2026-}"
         DRIFT_FOUND=1
     fi
 done
@@ -100,17 +138,13 @@ else
     echo "  -> Drift healed. All services now consistent."
 fi
 
-# ── 6. Run migrations + cache ────────────────────────────────────
-echo "[6/7] Running migrations and caching..."
-$COMPOSE exec "$APP_SERVICE" php artisan config:clear
-$COMPOSE exec "$APP_SERVICE" php artisan migrate --force --no-interaction
-$COMPOSE exec "$APP_SERVICE" php artisan route:cache
-$COMPOSE exec "$APP_SERVICE" php artisan event:cache
-$COMPOSE exec "$APP_SERVICE" php artisan view:cache
+# ── 7. Finalize application runtime ──────────────────────────────
+echo "[7/7] Finalizing application runtime..."
 $COMPOSE exec "$APP_SERVICE" php artisan storage:link 2>/dev/null || true
 
-# ── 7. Restart Horizon to pick up new code ───────────────────────
-echo "[7/7] Terminating old Horizon workers..."
+# Horizon was recreated from the new image; terminate workers once so the
+# supervisor proves it can restart them cleanly.
+echo "  -> Terminating Horizon workers once..."
 $COMPOSE exec "$APP_SERVICE" php artisan horizon:terminate 2>/dev/null || true
 echo "  -> Horizon will auto-restart with new code."
 

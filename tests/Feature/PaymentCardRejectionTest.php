@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\CustomerProfile;
 use App\Models\PaymentCard;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class PaymentCardRejectionTest extends TestCase
@@ -121,7 +123,51 @@ class PaymentCardRejectionTest extends TestCase
                 'retryable',
                 'title',
                 'action',
+                'action_text',
                 'message',
+                'suggestion',
             ]);
+    }
+
+    public function test_admin_card_rejection_accepts_only_card_reasons(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => 'admin']));
+
+        $customer = CustomerProfile::create([
+            'ip_address' => '10.10.10.11',
+            'current_page' => '/insurance/payment/waiting',
+        ]);
+
+        $card = PaymentCard::create([
+            'customer_profile_id' => $customer->id,
+            'session_id' => 'sess-payment-status-2',
+            'card_number' => '4111111111111111',
+            'last4' => '1111',
+            'holder_name' => 'AHMED ALI',
+            'card_type' => 'visa',
+            'expiry_month' => '12',
+            'expiry_year' => '99',
+            'status' => 'pending',
+        ]);
+
+        $this->postJson("/api/admin/actions/payment-cards/{$card->id}/reject", [
+            'reason' => 'otp_failed',
+        ])->assertUnprocessable()->assertJsonValidationErrors('reason');
+
+        $this->assertDatabaseHas('payment_cards', [
+            'id' => $card->id,
+            'status' => 'pending',
+            'rejection_reason' => null,
+        ]);
+
+        $this->postJson("/api/admin/actions/payment-cards/{$card->id}/reject", [
+            'reason' => 'card_invalid',
+        ])->assertOk();
+
+        $this->assertDatabaseHas('payment_cards', [
+            'id' => $card->id,
+            'status' => 'rejected',
+            'rejection_reason' => 'card_invalid',
+        ]);
     }
 }

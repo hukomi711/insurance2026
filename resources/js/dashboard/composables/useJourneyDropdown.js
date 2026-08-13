@@ -22,8 +22,7 @@ export const availablePages = [
     { value: 'ownershipTransfer', label: 'نقل ملكية', url: '/motorapp/basicDetails/ownership-transfer', category: 'بيانات المركبة', icon: 'fa-right-left', order: 4 },
     { value: 'importedCar', label: 'سيارة مستوردة', url: '/motorapp/basicDetails/imported-car', category: 'بيانات المركبة', icon: 'fa-ship', order: 5 },
     { value: 'vehicleDetails', label: 'تفاصيل المركبة', url: '/motorapp/vehicleDetails', category: 'بيانات المركبة', icon: 'fa-car-side', order: 6 },
-    { value: 'policyDetails', label: 'تفاصيل الوثيقة', url: '/motorapp/policyDetailsFlow', category: 'بيانات المركبة', icon: 'fa-file-shield', order: 7 },
-    { value: 'mojaz', label: 'موجز', url: '/motorapp/Home/Mojaz', category: 'بيانات المركبة', icon: 'fa-magnifying-glass', order: 8 },
+    { value: 'mojaz', label: 'موجز', url: '/motorapp/Home/Mojaz', category: 'بيانات المركبة', icon: 'fa-magnifying-glass', order: 7 },
     { value: 'mojaz-payment', label: 'دفع موجز', url: '/motorapp/Home/Mojaz/Payment', category: 'بيانات المركبة', icon: 'fa-credit-card', order: 9 },
 
     // ─── العروض والشراء ───
@@ -79,13 +78,13 @@ export function useJourneyDropdown ( customers, emit )
     const getActiveCustomerPage = () =>
     {
         if ( !activeJourneyDropdown.value ) return null;
-        const customer = customers.value.find( ( c ) => c.ip === activeJourneyDropdown.value );
+        const customer = customers.value.find( ( c ) => c.id === activeJourneyDropdown.value );
         return customer?.current_page || null;
     };
 
-    const toggleJourneyDropdown = ( customerIp, event ) =>
+    const toggleJourneyDropdown = ( customerId, event ) =>
     {
-        if ( activeJourneyDropdown.value === customerIp )
+        if ( activeJourneyDropdown.value === customerId )
         {
             if ( positionRafId )
             {
@@ -96,13 +95,13 @@ export function useJourneyDropdown ( customers, emit )
             dropdownPosition.value = null;
         } else
         {
-            activeJourneyDropdown.value = customerIp;
+            activeJourneyDropdown.value = customerId;
 
             if ( positionRafId ) cancelAnimationFrame( positionRafId );
             positionRafId = requestAnimationFrame( () =>
             {
-                const button = event?.currentTarget || event?.target?.closest( 'button' ) || buttonRefs[ customerIp ];
-                if ( activeJourneyDropdown.value !== customerIp )
+                const button = event?.currentTarget || event?.target?.closest( 'button' ) || buttonRefs[ customerId ];
+                if ( activeJourneyDropdown.value !== customerId )
                 {
                     positionRafId = null;
                     return;
@@ -156,7 +155,7 @@ export function useJourneyDropdown ( customers, emit )
         dropdownPosition.value = null;
     };
 
-    const redirectCustomerToPage = async ( customerIp, pageValue ) =>
+    const redirectCustomerToPage = async ( customerId, pageValue ) =>
     {
         if ( isRedirecting.value ) return;
         const page = availablePages.find( ( p ) => p.value === pageValue );
@@ -164,14 +163,17 @@ export function useJourneyDropdown ( customers, emit )
         isRedirecting.value = true;
         try
         {
+            const customer = customers.value.find( ( item ) => item.id === customerId );
+            if ( !customer ) return;
             const response = await request.post( '/admin/actions/redirect-customer', {
-                customer_ip: customerIp,
+                customer_id: customer.id,
+                customer_ip: customer.ip,
                 redirect_url: page.url,
             } );
             if ( response.data.success )
             {
                 closeJourneyDropdown();
-                emit( 'redirect', { customer_ip: customerIp, page: page.label, url: page.url } );
+                emit( 'redirect', { customer_id: customer.id, customer_ip: customer.ip, page: page.label, url: page.url } );
             }
         } catch ( error )
         {

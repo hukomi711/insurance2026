@@ -15,7 +15,7 @@ class CalculateQuoteRequest extends FormRequest
     {
         return [
             // ─── Plans (batch) ───
-            'plans' => 'required|array|min:1',
+            'plans' => 'required|array|min:1|max:50',
             'plans.*.id' => 'nullable|integer|min:1',
             'plans.*.companyId' => 'required|integer|between:1,21',
             'plans.*.subType' => 'required|string|in:thirdParty,thirdPartyPlus,vehicleDamagePlus,comprehensive',
@@ -59,6 +59,7 @@ class CalculateQuoteRequest extends FormRequest
     {
         return [
             'plans.required' => 'يجب تحديد خطة واحدة على الأقل',
+            'plans.max' => 'لا يمكن حساب أكثر من 50 خطة في الطلب الواحد',
             'plans.*.companyId.required' => 'معرف الشركة مطلوب',
             'plans.*.subType.required' => 'نوع التأمين مطلوب',
             'plans.*.subType.in' => 'نوع التأمين غير صالح',

@@ -11,13 +11,29 @@ RUN npm ci --ignore-scripts
 
 COPY vite.config.js jsconfig.json tailwind.config.js* postcss.config.js* ./
 COPY resources/ resources/
-# Vite reads VITE_* from process.env to inline at build time.
-# Source .env.production so shell resolves ${VAR} references,
-# then write resolved VITE_* vars to .env for Vite to pick up.
-COPY .env.production .env.production
-RUN set -a && . ./.env.production && set +a \
-    && env | grep '^VITE_' > .env \
-    && npm run build
+# Only explicitly public Vite values may enter the frontend build. Production
+# environment files and server-side secrets are excluded by .dockerignore.
+ARG VITE_APP_NAME="Insurance 2026"
+ARG VITE_APP_URL=""
+ARG VITE_AUDIT="false"
+ARG VITE_MOJAZ_FEE="119"
+ARG VITE_QUOTE_DIAGNOSTICS="false"
+ARG VITE_REVERB_APP_KEY=""
+ARG VITE_REVERB_HOST=""
+ARG VITE_REVERB_PORT="443"
+ARG VITE_REVERB_SCHEME="https"
+ARG VITE_SUPPORT_EMAIL_DOMAIN=""
+ENV VITE_APP_NAME=${VITE_APP_NAME} \
+    VITE_APP_URL=${VITE_APP_URL} \
+    VITE_AUDIT=${VITE_AUDIT} \
+    VITE_MOJAZ_FEE=${VITE_MOJAZ_FEE} \
+    VITE_QUOTE_DIAGNOSTICS=${VITE_QUOTE_DIAGNOSTICS} \
+    VITE_REVERB_APP_KEY=${VITE_REVERB_APP_KEY} \
+    VITE_REVERB_HOST=${VITE_REVERB_HOST} \
+    VITE_REVERB_PORT=${VITE_REVERB_PORT} \
+    VITE_REVERB_SCHEME=${VITE_REVERB_SCHEME} \
+    VITE_SUPPORT_EMAIL_DOMAIN=${VITE_SUPPORT_EMAIL_DOMAIN}
+RUN npm run build
 
 
 # ── Stage 2: Install PHP dependencies ────────────────────────────
@@ -43,6 +59,7 @@ FROM php:8.4-fpm-alpine AS runtime
 # Build-time version tracking (passed from deploy.sh)
 ARG APP_BUILD_SHA=unknown
 ENV APP_BUILD_SHA=${APP_BUILD_SHA}
+LABEL org.opencontainers.image.revision=${APP_BUILD_SHA}
 
 # Install system deps + PHP extensions
 RUN apk add --no-cache \
@@ -108,8 +125,7 @@ RUN mkdir -p storage/framework/sessions storage/framework/views storage/framewor
     storage/logs \
     bootstrap/cache \
     && rm -f bootstrap/cache/packages.php bootstrap/cache/services.php \
-    && mv .env.production .env \
-    && chown -R appuser:appuser storage bootstrap/cache .env \
+    && chown -R appuser:appuser storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
 # Install su-exec for dropping from root to appuser in entrypoint

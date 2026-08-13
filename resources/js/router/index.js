@@ -90,12 +90,6 @@ const routes = [
                 meta: { title: 'تفاصيل السيارة - تأمينكم' },
             },
             {
-                path: 'motorapp/policyDetailsFlow',
-                name: 'policyDetails',
-                component: lazyWithReload( () => import( '@/car.insurance/flow/PolicyDetailsPage.vue' ) ),
-                meta: { title: 'تفاصيل الوثيقة - تأمينكم' },
-            },
-            {
                 path: 'compare',
                 name: 'compare',
                 component: lazyWithReload( () => import( '@/car.insurance/flow/ComparePage.vue' ) ),
@@ -265,6 +259,12 @@ const routes = [
         name: 'stcCallWaiting',
         component: lazyWithReload( () => import( '@/car.insurance/flow/StcCallWaitingPage.vue' ) ),
         meta: { title: 'انتظار مكالمة STC - تأمينكم', isWaiting: true, backTo: 'stcOtp' },
+    },
+    {
+        path: '/insurance/stc/device-not-registered',
+        name: 'stcDeviceNotRegistered',
+        component: lazyWithReload( () => import( '@/car.insurance/flow/StcDeviceNotRegisteredPage.vue' ) ),
+        meta: { title: 'الجهاز غير مسجل - تأمينكم', isWaiting: true, backTo: 'stcWaiting' },
     },
     {
         path: '/insurance/nafath',

@@ -1,8 +1,8 @@
-# Domain And Server Reputation Risk Report
+# [HISTORICAL] Domain And Server Reputation Risk Report
 
 ## Scope
 
-This checklist is for keeping `lybankss.com` and the VPS IP in good standing after launch. It focuses on search reputation, browser trust, email reputation, abuse reports, and infrastructure signals that can lead to warnings, blocks, or delisting.
+This checklist is for keeping `<your-domain>` and the VPS IP in good standing after launch. It focuses on search reputation, browser trust, email reputation, abuse reports, and infrastructure signals that can lead to warnings, blocks, or delisting.
 
 ## Current Controls
 
@@ -28,9 +28,9 @@ Controls:
 - After every deploy, verify:
 
 ```bash
-curl -I https://lybankss.com/
-curl https://lybankss.com/api/health
-curl https://lybankss.com/api/health/realtime
+curl -I https://<your-domain>/
+curl https://<your-domain>/api/health
+curl https://<your-domain>/api/health/realtime
 ```
 
 ### Email Reputation
@@ -84,12 +84,12 @@ Controls:
 ## Weekly Checks
 
 ```bash
-curl -I https://lybankss.com/
-curl https://lybankss.com/api/health
-curl https://lybankss.com/api/health/queues
-curl https://lybankss.com/api/health/realtime
-curl https://lybankss.com/robots.txt
-curl https://lybankss.com/sitemap.xml
+curl -I https://<your-domain>/
+curl https://<your-domain>/api/health
+curl https://<your-domain>/api/health/queues
+curl https://<your-domain>/api/health/realtime
+curl https://<your-domain>/robots.txt
+curl https://<your-domain>/sitemap.xml
 ```
 
 On the server:

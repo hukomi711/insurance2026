@@ -88,16 +88,16 @@ scp config/<file> root@<SERVER_IP>:/tmp/<file>
 ssh root@<SERVER_IP> "\
   docker cp /tmp/<file> ins2026-app:/var/www/html/config/<file> && \
   rm /tmp/<file> && \
-  docker exec ins2026-app php artisan config:clear && \
+  docker exec ins2026-app php artisan config:cache && \
   docker exec ins2026-app kill -USR2 1"
 ```
 
-## Forbidden Commands
+## Deployment Commands
 
 | Command | Why |
 | ------- | --- |
-| `config:cache` | Breaks Docker secrets (`/run/secrets/db_password`) — cached config reads env at compile time |
-| `optimize:clear` | Runs `config:cache` internally |
+| `config:cache` | Required after Docker secrets are exported and after any config/env change |
+| `config:clear` | Diagnostic only; do not leave production running without rebuilding config cache |
 | `docker restart` | Does NOT reload `env_file` — use `docker compose up -d --force-recreate` instead |
 
 ## Golden Rule

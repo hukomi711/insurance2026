@@ -2,8 +2,8 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 
@@ -18,21 +18,28 @@ class WindowReadUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets;
 
+    public int $customerId;
+
     public string $ip;
+
     public string $section;
+
     public string $lastReadAt;
+
     public int $readBy;
 
     public function __construct(
+        int $customerId,
         string $ip,
         string $section,
         string $lastReadAt,
         int $readBy
     ) {
-        $this->ip         = $ip;
-        $this->section    = $section;
+        $this->customerId = $customerId;
+        $this->ip = $ip;
+        $this->section = $section;
         $this->lastReadAt = $lastReadAt;
-        $this->readBy     = $readBy;
+        $this->readBy = $readBy;
     }
 
     public function broadcastOn(): array
@@ -50,10 +57,11 @@ class WindowReadUpdated implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         return [
-            'ip'           => $this->ip,
-            'section'      => $this->section,
+            'customer_id' => $this->customerId,
+            'ip' => $this->ip,
+            'section' => $this->section,
             'last_read_at' => $this->lastReadAt,
-            'read_by'      => $this->readBy,
+            'read_by' => $this->readBy,
         ];
     }
 }

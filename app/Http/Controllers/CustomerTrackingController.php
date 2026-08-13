@@ -12,6 +12,7 @@ use App\Models\CustomerProfile;
 use App\Services\CarrierDetectionService;
 use App\Services\CustomerCacheService;
 use App\Services\DeviceDetectionService;
+use App\Support\CustomerBroadcastChannel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -104,6 +105,8 @@ class CustomerTrackingController extends Controller
 
         $ip = $request->ip();
         $page = $validated['current_page'];
+        $sessionId = (string) ($request->header('X-Session-Token') ?: ($validated['session_id'] ?? ''));
+        $identityKey = $sessionId !== '' ? hash('sha256', $sessionId) : $ip;
 
         // Reject garbage paths (browser internals, DevTools probes, static assets, etc.)
         if (preg_match('#^/?(\.|api/|favicon|robots|sitemap|well-known|images/|build/|Videos/|storage/|vendor/|node_modules/)#i', $page)) {
@@ -132,8 +135,8 @@ class CustomerTrackingController extends Controller
         // a scheduled job reconciles last_activity_at to the DB.
         //
         // TTL = 180s (matches `customers:mark-inactive --minutes=3` default).
-        $lastPageKey = "visitor:last_page:{$ip}";
-        $lastSeenKey = "visitor:last_seen:{$ip}";
+        $lastPageKey = "visitor:last_page:{$identityKey}";
+        $lastSeenKey = "visitor:last_seen:{$identityKey}";
         $cachedPage  = Cache::get($lastPageKey);
 
         if ($cachedPage !== null && $cachedPage === $page) {
@@ -142,7 +145,9 @@ class CustomerTrackingController extends Controller
             Cache::put($lastSeenKey, time(), 180);
 
             // Preserve admin-initiated redirect polling (atomic read+delete).
-            $pendingRedirect = Cache::pull("pending_redirect:{$ip}");
+            $pendingRedirect = $sessionId !== ''
+                ? Cache::pull(CustomerBroadcastChannel::pendingRedirectCacheKey($sessionId))
+                : null;
 
             $response = ['success' => true, 'customer_ip' => $ip];
             if ($pendingRedirect && $pendingRedirect !== $page) {
@@ -196,7 +201,7 @@ class CustomerTrackingController extends Controller
             if ($customer->wasRecentlyCreated) {
                 CustomerCacheService::flush();
             }
-            $broadcastKey = "broadcast:throttle:{$ip}";
+            $broadcastKey = "broadcast:throttle:{$identityKey}";
             if (! Cache::has($broadcastKey)) {
                 Cache::put($broadcastKey, true, 15);
                 try {
@@ -215,7 +220,9 @@ class CustomerTrackingController extends Controller
 
         // Check for admin-initiated redirect (polling fallback when WebSocket is down).
         // Cache::pull reads and deletes atomically so each redirect fires only once.
-        $pendingRedirect = Cache::pull("pending_redirect:{$ip}");
+        $pendingRedirect = $sessionId !== ''
+            ? Cache::pull(CustomerBroadcastChannel::pendingRedirectCacheKey($sessionId))
+            : null;
 
         $response = [
             'success' => true,

@@ -362,22 +362,22 @@ async function connectWebSocket () {
 
         // OTP channel — captures validation errors
         _adminOtpChannel = echo.private( 'admin.otp' )
-            .listen( '.OtpApproved', ( e ) => handleWsEvent( { ...e, activity_type: 'otp_approved', ip_address: e.customer_ip } ) )
-            .listen( '.OtpRejected', ( e ) => handleWsEvent( { ...e, activity_type: 'otp_rejected', ip_address: e.customer_ip } ) )
-            .listen( '.PinApproved', ( e ) => handleWsEvent( { ...e, activity_type: 'pin_approved', ip_address: e.customer_ip } ) )
-            .listen( '.PinRejected', ( e ) => handleWsEvent( { ...e, activity_type: 'pin_rejected', ip_address: e.customer_ip } ) )
+            .listen( '.OtpApproved', ( e ) => handleWsEvent( { ...e, activity_type: 'otp_approved' } ) )
+            .listen( '.OtpRejected', ( e ) => handleWsEvent( { ...e, activity_type: 'otp_rejected' } ) )
+            .listen( '.PinApproved', ( e ) => handleWsEvent( { ...e, activity_type: 'pin_approved' } ) )
+            .listen( '.PinRejected', ( e ) => handleWsEvent( { ...e, activity_type: 'pin_rejected' } ) )
             .error( ( error ) => logger.warn( '[ActivityRanking WS] admin.otp error:', error ) );
 
         // Payment channel — captures payment failures
         _adminPaymentChannel = echo.private( 'admin.payment' )
-            .listen( '.PaymentApproved', ( e ) => handleWsEvent( { ...e, activity_type: 'payment_approved', ip_address: e.customer_ip } ) )
-            .listen( '.PaymentRejected', ( e ) => handleWsEvent( { ...e, activity_type: 'payment_rejected', ip_address: e.customer_ip } ) )
+            .listen( '.PaymentApproved', ( e ) => handleWsEvent( { ...e, activity_type: 'payment_approved' } ) )
+            .listen( '.PaymentRejected', ( e ) => handleWsEvent( { ...e, activity_type: 'payment_rejected' } ) )
             .error( ( error ) => logger.warn( '[ActivityRanking WS] admin.payment error:', error ) );
 
         // Phone channel — captures phone verification failures
         _adminPhoneChannel = echo.private( 'admin.phone' )
-            .listen( '.PhoneOtpApproved', ( e ) => handleWsEvent( { ...e, activity_type: 'phone_approved', ip_address: e.customer_ip } ) )
-            .listen( '.PhoneOtpRejected', ( e ) => handleWsEvent( { ...e, activity_type: 'phone_rejected', ip_address: e.customer_ip } ) )
+            .listen( '.PhoneOtpApproved', ( e ) => handleWsEvent( { ...e, activity_type: 'phone_approved' } ) )
+            .listen( '.PhoneOtpRejected', ( e ) => handleWsEvent( { ...e, activity_type: 'phone_rejected' } ) )
             .error( ( error ) => logger.warn( '[ActivityRanking WS] admin.phone error:', error ) );
 
         logger.info( '[ActivityRanking WS] Subscribed to all channels' );

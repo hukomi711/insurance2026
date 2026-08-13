@@ -23,7 +23,7 @@ class RejectPaymentCardRequest extends FormRequest
             'reason' => [
                 'required',
                 'string',
-                Rule::in(PaymentFailureReason::allPaymentReasonsForValidation()),
+                Rule::in(PaymentFailureReason::cardRejectionValues()),
             ],
         ];
     }

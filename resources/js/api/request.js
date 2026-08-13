@@ -2,6 +2,7 @@ import axios from "axios";
 import { useNotificationsStore } from "@/store";
 import logger from "@/utils/logger";
 import { getSessionToken } from "@/utils/sessionToken";
+import { markCustomerBlocked } from "@/utils/customerBlock";
 
 /** Maximum number of automatic retries on 429 before giving up */
 const MAX_429_RETRIES = 2;
@@ -155,6 +156,12 @@ request.interceptors.response.use(
                     } );
                 }
             }
+            return Promise.reject( error );
+        }
+
+        if ( status === 423 && error.response?.data?.blocked === true )
+        {
+            markCustomerBlocked( error.response.data );
             return Promise.reject( error );
         }
 

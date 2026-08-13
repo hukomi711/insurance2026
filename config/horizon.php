@@ -139,16 +139,18 @@ return [
     | Queue Worker Configuration
     |--------------------------------------------------------------------------
     |
-    | Three supervisor groups:
+    | Four supervisor groups:
     |
-    | supervisor-default — Standard jobs (tracking, emails, reports, etc.).
+    | supervisor-default — Standard jobs (tracking, reports, etc.).
     |   Moderate memory/timeout. Scales 1→4 workers.
     |
     | supervisor-broadcasts — Queued broadcast events (CustomerActivityUpdated,
     |   CustomerUpdated, etc.). Fast timeout. Scales 2→6 workers.
     |
-    | supervisor-low — Heavy/slow jobs: CSV exports, batch reports, data
-    |   cleanup. High memory, long timeout. Scales 1→2 workers.
+    | supervisor-low — Low-priority background jobs. It intentionally shares
+    |   the bounded default timeout until a measured long-running job exists.
+    |
+    | supervisor-emails — Email delivery jobs. Scales 1→2 workers.
     |
     */
 
@@ -209,7 +211,7 @@ return [
                 'maxJobs' => 500,
                 'memory' => 256,
                 'tries' => 3,
-                'timeout' => 300,
+                'timeout' => 120,
             ],
 
             'supervisor-emails' => [

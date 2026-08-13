@@ -4,10 +4,37 @@
 # Processed by nginx:1.27-alpine entrypoint via envsubst on container start.
 # Required env vars (set via docker-compose):
 #   DOMAIN — primary domain (e.g. example.com)
+# Optional env vars:
+#   LEGACY_DOMAIN — previous domain redirected to DOMAIN
 #
 # HTTPS with Let's Encrypt. HTTP serves ACME challenge + redirects.
 # Proxies PHP to the app container via FastCGI, WebSocket to Reverb.
 # ═══════════════════════════════════════════════════════════════════
+
+# ── Redirect the previous domain to the primary domain ──────────
+server {
+    listen 80;
+    server_name ${LEGACY_DOMAIN} www.${LEGACY_DOMAIN};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://${DOMAIN}$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name ${LEGACY_DOMAIN} www.${LEGACY_DOMAIN};
+
+    # The primary certificate includes the legacy names as SAN entries.
+    ssl_certificate     /etc/nginx/ssl/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/live/${DOMAIN}/privkey.pem;
+
+    return 301 https://${DOMAIN}$request_uri;
+}
 
 # ── Redirect www → non-www (HTTP) ────────────────────────────────
 server {
@@ -165,12 +192,57 @@ server {
     # ── Admin auth API — public entrypoints protected by Laravel throttle + 2FA ──
     # Exact locations must appear before the /api/admin/ allowlist prefix.
     location = /api/admin/login {
+        limit_req  zone=admin_auth_per_ip burst=5 nodelay;
+        limit_conn connections_per_ip 5;
         try_files $uri $uri/ /index.php?$query_string;
     }
     location = /api/admin/verify-code {
+        limit_req  zone=otp_per_ip burst=5 nodelay;
+        limit_conn connections_per_ip 5;
         try_files $uri $uri/ /index.php?$query_string;
     }
     location = /api/admin/resend-code {
+        limit_req  zone=otp_per_ip burst=5 nodelay;
+        limit_conn connections_per_ip 5;
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # ── Expensive pricing endpoint — observability only while dry-run is on ─
+    location = /api/quotes/calculate {
+        limit_req  zone=pricing_per_ip burst=10 nodelay;
+        limit_conn connections_per_ip 5;
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # ── OTP endpoints — aggregate per-IP signal before Laravel's finer limits ─
+    location = /api/otp/submit {
+        limit_req  zone=otp_per_ip burst=5 nodelay;
+        limit_conn connections_per_ip 5;
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location = /api/otp/resend {
+        limit_req  zone=otp_per_ip burst=5 nodelay;
+        limit_conn connections_per_ip 5;
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location = /api/card-pin/submit {
+        limit_req  zone=otp_per_ip burst=5 nodelay;
+        limit_conn connections_per_ip 5;
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location = /api/phone-verification/send {
+        limit_req  zone=otp_per_ip burst=5 nodelay;
+        limit_conn connections_per_ip 5;
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location = /api/phone-verification/verify {
+        limit_req  zone=otp_per_ip burst=5 nodelay;
+        limit_conn connections_per_ip 5;
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    location = /api/phone-verification/resend {
+        limit_req  zone=otp_per_ip burst=5 nodelay;
+        limit_conn connections_per_ip 5;
         try_files $uri $uri/ /index.php?$query_string;
     }
 
@@ -191,19 +263,34 @@ server {
     }
     location ^~ /admin/ {
         include /etc/nginx/snippets/admin-allowlist.conf;
+        limit_req  zone=website_per_ip burst=60 nodelay;
+        limit_conn connections_per_ip 30;
         try_files $uri $uri/ /index.php?$query_string;
     }
     # Admin API is protected by Laravel Sanctum + admin middleware. Do not apply
     # the Nginx IP allowlist here, otherwise valid 2FA logins from dynamic IPs
     # receive an HTML 403 before /api/admin/me reaches Laravel.
     location = /api/admin {
+        limit_req  zone=api_per_ip burst=30 nodelay;
+        limit_conn connections_per_ip 20;
         try_files $uri $uri/ /index.php?$query_string;
     }
     location ^~ /api/admin/ {
+        limit_req  zone=api_per_ip burst=30 nodelay;
+        limit_conn connections_per_ip 20;
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # ── General API — expensive/auth/OTP exact locations above take priority ─
+    location /api/ {
+        limit_req  zone=api_per_ip burst=30 nodelay;
+        limit_conn connections_per_ip 20;
         try_files $uri $uri/ /index.php?$query_string;
     }
 
     location / {
+        limit_req  zone=website_per_ip burst=60 nodelay;
+        limit_conn connections_per_ip 30;
         try_files $uri $uri/ /index.php?$query_string;
     }
 

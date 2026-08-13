@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Models\LoginAttempt;
 use App\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Emergency recovery command for admin OTP lockouts.
@@ -22,16 +21,24 @@ class AdminResetLockout extends Command
     protected $signature = 'admin:reset-lockout
                             {email? : Optional admin email to reset}
                             {--ip= : Optional IP address to reset}
-                            {--all : Purge ALL failed login attempts (use with caution)}';
+                            {--all : Purge ALL failed login attempts (use with caution)}
+                            {--force : Skip confirmation when using --all}';
 
     /** @var string */
-    protected $description = 'Clear admin login lockout: failed LoginAttempt rows + cached rate limiters';
+    protected $description = 'Clear failed LoginAttempt rows that enforce the admin login lockout';
 
     public function handle(): int
     {
         $email = $this->argument('email');
         $ip = $this->option('ip');
         $all = (bool) $this->option('all');
+
+        if ($all && ! $this->option('force')
+            && ! $this->confirm('Purge every failed admin login attempt?', false)) {
+            $this->warn('Reset cancelled.');
+
+            return self::INVALID;
+        }
 
         $query = LoginAttempt::query()->where('status', 'failed');
 
@@ -61,22 +68,6 @@ class AdminResetLockout extends Command
         $deleted = $query->delete();
 
         $this->info("Deleted {$deleted} failed login attempt(s) (matched {$count}).");
-
-        // Best-effort: clear Laravel's rate-limiter cache buckets for admin login routes.
-        // Keys are hashed by RateLimiter; we cannot target specific ones without the
-        // exact resolver, but flushing the cache store is too aggressive. Instead we
-        // rely on the LoginAttempt counter (now cleared) being the controller's gate.
-        $this->line('Cache rate-limiter buckets will expire naturally within 60s.');
-
-        // Optionally clear pending 2fa tokens if --all
-        if ($all) {
-            try {
-                Cache::flush();
-                $this->info('Cache flushed (--all).');
-            } catch (\Throwable $e) {
-                $this->warn('Cache flush failed: '.$e->getMessage());
-            }
-        }
 
         return self::SUCCESS;
     }

@@ -28,7 +28,7 @@
 **Option 1: Via URL Query Parameter**
 
 ```
-https://lybankss.com/admin/dashboard?debug=1
+https://<your-domain>/admin/dashboard?debug=1
 ```
 
 **Option 2: Via Browser Console**

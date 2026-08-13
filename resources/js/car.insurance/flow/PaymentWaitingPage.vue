@@ -100,7 +100,7 @@
                     <p class="text-sm text-slate-700 font-medium mt-3">
                         {{ rejectionAlert?.message || 'لم تتم الموافقة على العملية' }}
                     </p>
-                    <p class="text-xs text-slate-500 mt-1">{{ rejectionAlert?.action || 'يمكنك المتابعة الآن بمحاولة جديدة أو تعديل بيانات البطاقة.' }}</p>
+                    <p class="text-xs text-slate-500 mt-1">{{ rejectionAlert?.action_text || 'يمكنك المتابعة الآن بمحاولة جديدة أو تعديل بيانات البطاقة.' }}</p>
                     <p v-if="rejectionAlert?.suggestion" class="text-xs text-slate-500 mt-1">{{ rejectionAlert.suggestion }}</p>
 
                     <div class="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
@@ -290,7 +290,7 @@ onMounted( async () =>
 
     const ip = customerIp.value || await resolveCustomerIp();
     customerIp.value = ip;
-    setupWs( ip );
+    setupWs( context.sessionId || '' );
     trackStepViewed( 'payment_waiting' );
     trackPaymentWaitStarted();
 

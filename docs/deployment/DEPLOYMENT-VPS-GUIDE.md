@@ -292,7 +292,7 @@ sudo -u www-data npm run build
 cd /opt/insurance2026
 
 # Clear caches
-sudo -u www-data php artisan config:clear
+sudo -u www-data php artisan config:cache
 sudo -u www-data php artisan cache:clear
 sudo -u www-data php artisan view:clear
 sudo -u www-data php artisan route:clear
@@ -577,7 +577,7 @@ dig tamnyfordr.online
 cd /opt/insurance2026
 
 # Clear all caches
-sudo -u www-data php artisan config:clear
+sudo -u www-data php artisan config:cache
 sudo -u www-data php artisan cache:clear
 sudo -u www-data php artisan view:clear
 sudo -u www-data php artisan route:clear
@@ -757,7 +757,7 @@ sudo supervisorctl tail insurance2026-horizon
 # Clear Laravel caches
 cd /opt/insurance2026
 sudo -u www-data php artisan cache:clear
-sudo -u www-data php artisan config:clear
+sudo -u www-data php artisan config:cache
 
 # Update dependencies
 sudo -u www-data composer update

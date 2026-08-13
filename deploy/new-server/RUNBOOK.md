@@ -187,14 +187,15 @@ docker exec ins2026-app php artisan migrate --force
 ## J) Cache config / routes / views / events
 
 ```bash
-docker exec ins2026-app php artisan config:clear
+docker exec ins2026-app php artisan config:cache
 docker exec ins2026-app php artisan route:cache
 docker exec ins2026-app php artisan view:cache
 docker exec ins2026-app php artisan event:cache
 ```
 
-> Never use `config:cache` or `optimize` on this codebase — runtime services
-> read env at boot. Use `config:clear` only.
+> Runtime PHP reads environment-backed values through `config()`. The entrypoint
+> injects Docker secrets before building the config cache. After any env change,
+> recreate the affected containers so every process rebuilds its own cache.
 
 ---
 

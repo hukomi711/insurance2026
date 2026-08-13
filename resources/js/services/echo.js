@@ -21,7 +21,10 @@ let echoSuspendedForPageCache = false;
 let echoLifecycleErrorGraceUntil = 0;
 let lifecycleHandlersRegistered = false;
 const PUSHER_UNAVAILABLE_TIMEOUT_MS = 30_000;
-const PAGE_CACHE_ERROR_GRACE_MS = 5_000;
+// Pusher may deliver the transport error only after its unavailable timeout.
+// Keep the BFCache grace window longer than that timeout so the delayed error
+// from the frozen socket is not misclassified as a live connection failure.
+const PAGE_CACHE_ERROR_GRACE_MS = PUSHER_UNAVAILABLE_TIMEOUT_MS + 5_000;
 
 import logger from "@/utils/logger";
 import { reloadIfBuildChangedAfterPageCacheRestore } from "@/utils/buildFreshness";
@@ -82,6 +85,14 @@ function registerPageCacheLifecycleHandlers ()
         suspendEchoForPageLifecycle( "pagehide" );
     } );
 
+    // Chromium fires freeze when a document is about to enter BFCache.
+    // This is a useful fallback on versions where pageswap is unavailable or
+    // arrives too late to close a connecting WebSocket cleanly.
+    document.addEventListener( "freeze", () =>
+    {
+        suspendEchoForPageLifecycle( "freeze" );
+    } );
+
     window.addEventListener( "pageshow", async ( event ) =>
     {
         if ( !event.persisted ) return;
@@ -96,6 +107,7 @@ function registerPageCacheLifecycleHandlers ()
         }
 
         clearPusherTransportCache();
+        echoLifecycleErrorGraceUntil = Date.now() + PAGE_CACHE_ERROR_GRACE_MS;
 
         try
         {
@@ -111,9 +123,6 @@ function registerPageCacheLifecycleHandlers ()
         } finally
         {
             echoSuspendedForPageCache = false;
-            // A close/error task from the pre-BFCache socket can be delivered
-            // just after pageshow. Treat it as an expected lifecycle event.
-            echoLifecycleErrorGraceUntil = Date.now() + PAGE_CACHE_ERROR_GRACE_MS;
         }
     } );
 
@@ -125,9 +134,32 @@ export function isEchoSuspendedForPageCache ()
     return echoSuspendedForPageCache;
 }
 
-export function isEchoPageLifecycleErrorExpected ()
+export function isEchoPageLifecycleErrorExpected ( error = null )
 {
-    return echoSuspendedForPageCache || Date.now() < echoLifecycleErrorGraceUntil;
+    if ( echoSuspendedForPageCache || Date.now() < echoLifecycleErrorGraceUntil )
+    {
+        return true;
+    }
+
+    // Chromium's BFCache transport error has no Pusher code; it contains only
+    // a trusted browser Event. Restrict this fallback to hidden/back-forward
+    // documents so genuine live transport failures still remain visible.
+    const isTrustedBrowserWebSocketError =
+        error?.type === "WebSocketError" &&
+        error?.error?.isTrusted === true &&
+        !error?.data?.code &&
+        !error?.error?.data?.code;
+
+    if ( !isTrustedBrowserWebSocketError || typeof document === "undefined" )
+    {
+        return false;
+    }
+
+    const navigationType = typeof globalThis.performance !== "undefined"
+        ? globalThis.performance.getEntriesByType?.( "navigation" )?.[ 0 ]?.type
+        : null;
+
+    return document.visibilityState === "hidden" || navigationType === "back_forward";
 }
 
 /**

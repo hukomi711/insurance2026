@@ -2,9 +2,8 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
@@ -23,10 +22,16 @@ class CustomerActivityUpdated implements ShouldBroadcast
      * serialized into the queue, keeping memory usage minimal.
      */
     public int $customerId;
+
     public string $ipAddress;
+
     public ?string $currentPage;
+
     public bool $isActive;
+
     public string $activityType;
+
+    public string $occurredAt;
 
     public function __construct(
         int $customerId,
@@ -35,11 +40,12 @@ class CustomerActivityUpdated implements ShouldBroadcast
         bool $isActive,
         string $activityType = 'page_view'
     ) {
-        $this->customerId   = $customerId;
-        $this->ipAddress    = $ipAddress;
-        $this->currentPage  = $currentPage;
-        $this->isActive     = $isActive;
+        $this->customerId = $customerId;
+        $this->ipAddress = $ipAddress;
+        $this->currentPage = $currentPage;
+        $this->isActive = $isActive;
         $this->activityType = $activityType;
+        $this->occurredAt = now()->toISOString();
     }
 
     public function broadcastOn(): array
@@ -57,12 +63,12 @@ class CustomerActivityUpdated implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'customer_id'   => $this->customerId,
-            'ip_address'    => $this->ipAddress,
-            'current_page'  => $this->currentPage,
-            'is_active'     => $this->isActive,
+            'customer_id' => $this->customerId,
+            'ip_address' => $this->ipAddress,
+            'current_page' => $this->currentPage,
+            'is_active' => $this->isActive,
             'activity_type' => $this->activityType,
-            'timestamp'     => now()->toISOString(),
+            'timestamp' => $this->occurredAt,
         ];
     }
 }

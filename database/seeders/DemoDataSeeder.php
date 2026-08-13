@@ -33,7 +33,7 @@ class DemoDataSeeder extends Seeder
             );
         }
 
-        $adminEmail = trim((string) env('ADMIN_EMAIL', 'admin@insurance.com'));
+        $adminEmail = trim((string) config('services.admin.email', 'admin@insurance.com'));
         $adminEmail = $adminEmail !== '' ? $adminEmail : 'admin@insurance.com';
 
         $admin = User::where('email', $adminEmail)->first();

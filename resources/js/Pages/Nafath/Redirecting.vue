@@ -188,6 +188,8 @@ import { ref, reactive, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import request from '@/api/request';
 import { getEcho } from '@/services/echo';
+import { getSessionToken } from '@/utils/sessionToken';
+import { customerBroadcastChannel } from '@/utils/customerBroadcastChannel';
 import logger from '@/utils/logger';
 import { safeRedirect } from '@/utils/safeRedirect';
 import { validateNationalId } from '@/utils/nationalIdValidation';
@@ -209,6 +211,7 @@ const canCancel = ref(false);
 let countdownInterval = null;
 
 let echoChannel = null;
+let echoChannelName = '';
 let pollTimer = null;
 let customerIp = null;
 
@@ -289,9 +292,10 @@ const handleLogin = async () => {
 // ─── WebSocket ──────────────────────────────────────────────────────
 async function setupWebSocket() {
     const echo = await getEcho();
-    if (!echo || !customerIp) return;
+    if (!echo) return;
 
-    echoChannel = echo.channel(`nafath.${customerIp}`);
+    echoChannelName = await customerBroadcastChannel('nafath', getSessionToken());
+    echoChannel = echo.channel(echoChannelName);
 
     echoChannel.listen('.NafathApproved', handleApproved);
     echoChannel.listen('.NafathRejected', handleRejected);
@@ -404,8 +408,8 @@ onMounted(() => {
 
 onUnmounted(() => {
     clearTimers();
-    if (echoChannel && customerIp) {
-        try { window.Echo?.leave(`nafath.${customerIp}`); } catch { /* */ }
+    if (echoChannel && echoChannelName) {
+        try { window.Echo?.leave(echoChannelName); } catch { /* */ }
     }
 });
 </script>

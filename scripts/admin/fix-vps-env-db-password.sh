@@ -31,8 +31,7 @@ set_db_password .env
 set_db_password .env.production
 
 docker compose up -d --force-recreate app horizon reverb scheduler nginx
-docker compose exec -T app php artisan config:clear
+docker compose exec -T app php artisan config:cache
 docker compose exec -T app php artisan migrate --force
 docker compose exec -T app php artisan route:clear
 docker compose exec -T app php artisan view:clear
-

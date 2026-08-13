@@ -452,7 +452,7 @@ onMounted( async () =>
     otpInputRef.value?.focusFirstEmpty();
     startResendTimer();
     startExpiryTimer();
-    setupWs( ip );
+    setupWs( sessionId.value );
     initWebOTP();
     trackStepViewed( 'otp' );
     trackOtpRequested();

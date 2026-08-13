@@ -17,7 +17,8 @@ class NafathApproveRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_ip'       => 'required|string',
+            'customer_id'       => 'required|integer|exists:customer_profiles,id',
+            'customer_ip'       => 'nullable|string',
             'verification_code' => 'nullable|string|max:10',
         ];
     }

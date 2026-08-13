@@ -22,6 +22,12 @@ class MarkInactiveCustomers extends Command
         $seconds = (int) $this->option('seconds');
         $minutes = (int) $this->option('minutes');
 
+        if ($seconds < 0 || ($seconds === 0 && $minutes < 1)) {
+            $this->error('--seconds must be 0 or greater, and --minutes must be at least 1 when seconds is 0.');
+
+            return self::INVALID;
+        }
+
         $cutoff = $seconds > 0
             ? now()->subSeconds($seconds)
             : now()->subMinutes($minutes);

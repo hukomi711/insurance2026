@@ -6,6 +6,29 @@
 #   docker compose up -d --build
 # ═══════════════════════════════════════════════════════════════════
 
+x-app-build: &app-build
+  context: .
+  dockerfile: Dockerfile
+  target: runtime
+  args:
+    APP_BUILD_SHA: "${APP_BUILD_SHA:-unknown}"
+    VITE_APP_NAME: "${VITE_APP_NAME:-Insurance 2026}"
+    VITE_APP_URL: "${VITE_APP_URL:-}"
+    VITE_AUDIT: "${VITE_AUDIT:-false}"
+    VITE_MOJAZ_FEE: "${VITE_MOJAZ_FEE:-119}"
+    VITE_QUOTE_DIAGNOSTICS: "${VITE_QUOTE_DIAGNOSTICS:-false}"
+    VITE_REVERB_APP_KEY: "${VITE_REVERB_APP_KEY:-}"
+    VITE_REVERB_HOST: "${VITE_REVERB_HOST:-}"
+    VITE_REVERB_PORT: "${VITE_REVERB_PORT:-443}"
+    VITE_REVERB_SCHEME: "${VITE_REVERB_SCHEME:-https}"
+    VITE_SUPPORT_EMAIL_DOMAIN: "${VITE_SUPPORT_EMAIL_DOMAIN:-}"
+
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   # ── Nginx reverse-proxy ──────────────────────────────────────
   nginx:
@@ -15,6 +38,10 @@ services:
     image: ins2026-nginx:brotli
     container_name: ins2026-nginx
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.50"
+    pids_limit: 100
+    logging: *default-logging
     ulimits:
       nofile:
         soft: 65535
@@ -31,7 +58,8 @@ services:
       - ./docker/certbot/www:/var/www/certbot:ro
     environment:
       DOMAIN: "${DOMAIN:?set DOMAIN env var (primary public domain)}"
-      NGINX_ENVSUBST_FILTER: "^DOMAIN$"
+      LEGACY_DOMAIN: "${LEGACY_DOMAIN:-legacy.invalid}"
+      NGINX_ENVSUBST_FILTER: "^(DOMAIN|LEGACY_DOMAIN)$"
     depends_on:
       app:
         condition: service_healthy
@@ -49,13 +77,14 @@ services:
 
   # ── PHP-FPM application ──────────────────────────────────────
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runtime
+    build: *app-build
     image: insurance2026-app
     container_name: ins2026-app
     restart: unless-stopped
+    mem_limit: 768m
+    cpus: "1.00"
+    pids_limit: 256
+    logging: *default-logging
     env_file:
       - .env
     environment:
@@ -82,13 +111,14 @@ services:
 
   # ── Laravel Horizon (queue workers) ──────────────────────────
   horizon:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runtime
+    build: *app-build
     image: insurance2026-app
     container_name: ins2026-horizon
     restart: unless-stopped
+    mem_limit: 1024m
+    cpus: "1.25"
+    pids_limit: 256
+    logging: *default-logging
     env_file:
       - .env
     environment:
@@ -113,18 +143,18 @@ services:
 
   # ── Laravel Reverb (WebSocket server) ────────────────────────
   reverb:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runtime
+    build: *app-build
     image: insurance2026-app
     container_name: ins2026-reverb
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: "0.75"
+    pids_limit: 256
+    logging: *default-logging
     env_file:
       - .env
     environment:
       DB_PASSWORD_FILE: /run/secrets/db_password
-      REVERB_ALLOWED_ORIGINS: "*"
     secrets:
       - db_password
     volumes:
@@ -145,13 +175,14 @@ services:
 
   # ── Laravel Scheduler (cron replacement) ─────────────────────
   scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runtime
+    build: *app-build
     image: insurance2026-app
     container_name: ins2026-scheduler
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.25"
+    pids_limit: 128
+    logging: *default-logging
     env_file:
       - .env
     environment:
@@ -179,6 +210,10 @@ services:
     image: redis:7-alpine
     container_name: ins2026-redis
     restart: unless-stopped
+    mem_limit: 768m
+    cpus: "0.50"
+    pids_limit: 128
+    logging: *default-logging
     command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --appendonly yes --tcp-backlog 511
     volumes:
       - redis-data:/data
@@ -196,6 +231,10 @@ services:
     image: mariadb:11-jammy
     container_name: ins2026-db
     restart: unless-stopped
+    mem_limit: 1536m
+    cpus: "1.25"
+    pids_limit: 256
+    logging: *default-logging
     environment:
       MARIADB_DATABASE: insurance2026
       MARIADB_USER: insurance
