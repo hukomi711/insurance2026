@@ -22,7 +22,7 @@
                         </p>
                     </div>
                     <div class="p-6">
-                        <router-link to="/motorapp"
+                        <router-link :to="{ name: 'motorapp' }"
                             class="block w-full text-center py-3 rounded-xl typ-s1 transition-all duration-200 mb-5"
                             :class="plan.featured
                                 ? 'bg-primary text-white hover:bg-primary-dark'
@@ -46,7 +46,6 @@
     </section>
 </template>
 
-<script setup>
 const insurancePlans = [
     {
         title: 'ضد الغير (الطرف الثالث)',
@@ -87,4 +86,3 @@ const insurancePlans = [
         ],
     },
 ];
-</script>

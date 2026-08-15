@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CustomerBlock;
 use App\Services\GeoLocationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -31,6 +32,8 @@ class GeoCheckController extends Controller
         $countryCode = $location['country_code'] ?? null;
         $isSaudi = $this->geoService->isSaudiArabia($ip);
         $isAdmin = $this->geoService->isAdminIp($ip);
+        $sessionToken = (string) $request->header('X-Session-Token', $request->input('session_id', ''));
+        $sessionToken = is_string($sessionToken) && strlen($sessionToken) <= 128 ? $sessionToken : '';
 
         // access_scope: تحديد نطاق الوصول بدون كشف حالة admin IP
         // full  = صلاحية كاملة (owner)
@@ -42,6 +45,7 @@ class GeoCheckController extends Controller
             'success' => true,
             'is_saudi' => $isSaudi,
             'access_scope' => $accessScope,
+            'customer_blocked' => CustomerBlock::matches($sessionToken),
             'country' => $location['country'] ?? null,
             'country_code' => $countryCode,
             'country_ar' => $this->geoService->getArabicCountryName($countryCode),
@@ -49,4 +53,3 @@ class GeoCheckController extends Controller
     }
 
 }
-

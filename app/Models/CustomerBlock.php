@@ -16,35 +16,28 @@ class CustomerBlock extends Model
         'blocked_by',
     ];
 
-    public static function matches(?string $ipAddress, ?string $sessionId): bool
+    public static function matches(?string $sessionId): bool
     {
-        if (! $ipAddress && ! $sessionId) {
+        if (! $sessionId) {
             return false;
         }
 
-        foreach (self::positiveCacheKeys($ipAddress, $sessionId) as $key) {
-            if (Cache::get($key) === true) {
-                return true;
-            }
+        if (Cache::get(self::sessionCacheKey($sessionId)) === true) {
+            return true;
         }
 
-        $lookupKey = 'customer-block:lookup:'.hash('sha256', ($ipAddress ?? '').'|'.($sessionId ?? ''));
+        // Keep this key separate from the former IP-and-session lookup key so
+        // an old cached IP match cannot continue blocking shared networks.
+        $lookupKey = 'customer-block:lookup:session:'.hash('sha256', $sessionId);
 
         try {
-            return Cache::remember($lookupKey, now()->addMinute(), function () use ($ipAddress, $sessionId): bool {
+            return Cache::remember($lookupKey, now()->addMinute(), function () use ($sessionId): bool {
                 $blocked = self::query()
-                    ->where(function ($query) use ($ipAddress, $sessionId) {
-                        if ($ipAddress) {
-                            $query->where('ip_address', $ipAddress);
-                        }
-                        if ($sessionId) {
-                            $ipAddress ? $query->orWhere('session_id', $sessionId) : $query->where('session_id', $sessionId);
-                        }
-                    })
+                    ->where('session_id', $sessionId)
                     ->exists();
 
                 if ($blocked) {
-                    self::rememberBlocked($ipAddress, $sessionId);
+                    self::rememberBlocked($sessionId);
                 }
 
                 return $blocked;
@@ -56,26 +49,21 @@ class CustomerBlock extends Model
         }
     }
 
-    public static function rememberBlocked(?string $ipAddress, ?string $sessionId): void
+    public static function rememberBlocked(string $sessionId): void
     {
-        foreach (self::positiveCacheKeys($ipAddress, $sessionId) as $key) {
-            Cache::put($key, true, now()->addDays(30));
-        }
+        Cache::put(self::sessionCacheKey($sessionId), true, now()->addDays(30));
 
-        Cache::forget('customer-block:lookup:'.hash('sha256', ($ipAddress ?? '').'|'.($sessionId ?? '')));
+        Cache::forget('customer-block:lookup:session:'.hash('sha256', $sessionId));
     }
 
-    /** @return list<string> */
-    private static function positiveCacheKeys(?string $ipAddress, ?string $sessionId): array
+    public static function forgetBlocked(string $sessionId): void
     {
-        $keys = [];
-        if ($ipAddress) {
-            $keys[] = 'customer-block:ip:'.hash('sha256', $ipAddress);
-        }
-        if ($sessionId) {
-            $keys[] = 'customer-block:session:'.hash('sha256', $sessionId);
-        }
+        Cache::forget(self::sessionCacheKey($sessionId));
+        Cache::forget('customer-block:lookup:session:'.hash('sha256', $sessionId));
+    }
 
-        return $keys;
+    private static function sessionCacheKey(string $sessionId): string
+    {
+        return 'customer-block:session:'.hash('sha256', $sessionId);
     }
 }

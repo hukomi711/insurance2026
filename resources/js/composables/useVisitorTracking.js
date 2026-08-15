@@ -4,6 +4,7 @@ import { getEcho } from "@/services/echo";
 import { getSessionToken } from "@/utils/sessionToken";
 import { customerBroadcastChannel } from "@/utils/customerBroadcastChannel";
 import { isSaudiConfirmed } from "@/utils/geoCheck";
+import { isCustomerBlocked, isCustomerBlockedError } from "@/utils/customerBlock";
 import logger from "@/utils/logger";
 
 /**
@@ -165,6 +166,8 @@ const BLOG_PATH_RE = /^\/(ar\/|en\/)?blog(\/|$)/;
 
 async function sendPageUpdate ( page, force = false )
 {
+    if ( isCustomerBlocked() ) return;
+
     // Don't track restricted (non-blog) pages when the visitor's Saudi status
     // is unconfirmed. Prevents foreign visitors who passed through Fail-Open
     // geo check from showing as "الصفحة الرئيسية" on the admin dashboard.
@@ -228,6 +231,7 @@ async function sendPageUpdate ( page, force = false )
     {
         // Ignore aborted requests (we aborted them intentionally)
         if ( error?.code === 'ERR_CANCELED' ) return;
+        if ( isCustomerBlockedError( error ) ) return;
         handleApiError( error );
     } finally
     {
@@ -299,6 +303,7 @@ function handleVisibilityChange ()
 function handlePageUnload ()
 {
     if ( !currentPage ) return;
+    if ( isCustomerBlocked() ) return;
     if ( !BLOG_PATH_RE.test( currentPage ) && !isSaudiConfirmed() ) return;
 
     const csrfToken = document
@@ -524,6 +529,7 @@ export function useVisitorTracking ( pageName, _stepNumber = 1 )
 {
     // If global tracking is active, the router afterEach already handles this
     if ( globalActive ) return;
+    if ( isCustomerBlocked() ) return;
 
     onMounted( async () =>
     {
@@ -534,6 +540,7 @@ export function useVisitorTracking ( pageName, _stepNumber = 1 )
             }, { silent: true } );
         } catch ( err )
         {
+            if ( isCustomerBlockedError( err ) ) return;
             logger.warn( "[Tracking] ❌ Per-page tracking failed:", err.message );
         }
     } );

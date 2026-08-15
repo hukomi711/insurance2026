@@ -110,4 +110,35 @@ describe( 'quotes API fallback policy', () =>
         await expect( getQuotes( formData, sourcePlans ) ).rejects.toBe( error );
         expect( mocks.calculateAllQuotes ).not.toHaveBeenCalled();
     } );
+
+    it( 'prices more than fifty plans in API-safe batches', async () =>
+    {
+        const plans = Array.from( { length: 51 }, ( _, index ) => ( {
+            id: index + 1,
+            companyId: 9,
+            subType: 'comprehensive',
+            deductible: 1500,
+        } ) );
+
+        mocks.buildPricingPayload.mockImplementation( ( _formData, planBatch ) => ( {
+            plans: planBatch,
+        } ) );
+        mocks.post.mockImplementation( async ( _url, payload ) => ( {
+            data: {
+                quotes: payload.plans.map( plan => ( {
+                    ...plan,
+                    annualPrice: 1000 + plan.id,
+                } ) ),
+            },
+        } ) );
+
+        const result = await getQuotes( formData, plans );
+
+        expect( mocks.post ).toHaveBeenCalledTimes( 2 );
+        expect( mocks.post.mock.calls[ 0 ][ 1 ].plans ).toHaveLength( 50 );
+        expect( mocks.post.mock.calls[ 1 ][ 1 ].plans ).toHaveLength( 1 );
+        expect( result.plans ).toHaveLength( 51 );
+        expect( result.plans[ 50 ].annualPrice ).toBe( 1051 );
+        expect( mocks.calculateAllQuotes ).not.toHaveBeenCalled();
+    } );
 } );

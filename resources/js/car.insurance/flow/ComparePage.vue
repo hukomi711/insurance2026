@@ -260,6 +260,7 @@ import { usePricingConstants } from '@/composables/usePricingConstants';
 import { useInsuranceStore } from '@/store/modules/insurance';
 import { formatNumber } from '@/utils/formatters';
 import { getCompanyLogo } from '@/utils/companyLogos';
+import { isCustomerBlocked } from '@/utils/customerBlock';
 import SarIcon from '@/components/SarIcon.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
 import QuotesLoading from '@/components/ui/QuotesLoading.vue';
@@ -296,6 +297,12 @@ let loadingAborted = false;
  * Now uses dynamic pricing via the insurance store.
  */
 async function startLoadingQuotes() {
+    if ( isCustomerBlocked() ) {
+        loadingAborted = true;
+        isLoadingQuotes.value = false;
+        return;
+    }
+
     loadingProgress.value = 0;
     isLoadingQuotes.value = true;
     quotesError.value = null;
@@ -364,6 +371,11 @@ onMounted( async () => {
         await loadConstants();
     } catch ( err ) {
         logger.warn( '[ComparePage] Failed to load pricing constants:', err );
+    }
+
+    if ( isCustomerBlocked() ) {
+        isLoadingQuotes.value = false;
+        return;
     }
 
     resumeSession( 'compare' );

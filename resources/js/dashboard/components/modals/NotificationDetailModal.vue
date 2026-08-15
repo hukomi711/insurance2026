@@ -2,7 +2,7 @@
   <ModalShell
     :open="open"
     :title="modalTitle"
-    :subtitle="customer?.ip || notification?.meta?.customer_ip || ''"
+    :subtitle="modalSubtitle"
     size="md"
     :accent="accentColor"
     :icon="modalIcon"
@@ -23,31 +23,118 @@
 
     <!-- Content -->
     <div v-else-if="customer" class="space-y-5">
+      <!-- Summary -->
+      <section class="admin-glass flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex min-w-0 items-center gap-4">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-500/15 ring-1 ring-inset ring-blue-400/20 sm:h-14 sm:w-14">
+            <i class="fa-solid fa-user text-lg text-blue-400 sm:text-xl"></i>
+          </div>
 
-      <!-- Customer Info Header -->
-      <div class="admin-glass flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-          <i class="fa-solid fa-user text-blue-400 text-lg"></i>
-        </div>
-        <div class="flex-1 min-w-0">
-          <h4 class="text-white font-semibold text-base truncate">
-            {{ customer.fullName || customer.full_name || customer.ip || 'عميل' }}
-          </h4>
-          <div class="flex flex-wrap items-center gap-3 mt-1 text-xs text-gray-400">
-            <span v-if="customer.ip" dir="ltr"><i class="fa-solid fa-globe ml-1"></i>{{ customer.ip }}</span>
-            <span v-if="customer.phoneNumber || customer.phone_number" dir="ltr">
-              <i class="fa-solid fa-phone ml-1"></i>{{ customer.phoneNumber || customer.phone_number }}
-            </span>
-            <span v-if="customer.nationalId || customer.national_id">
-              <i class="fa-solid fa-id-card ml-1"></i>{{ customer.nationalId || customer.national_id }}
-            </span>
+          <div class="min-w-0">
+            <h4 class="truncate text-base font-semibold text-white sm:text-lg">
+              {{ customerDisplayName }}
+            </h4>
+            <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-400">
+              <span
+                v-if="customer.phoneNumber || customer.phone_number"
+                class="inline-flex items-center gap-1 rounded-md bg-white/5 px-2 py-1"
+                dir="ltr"
+              >
+                <i class="fa-solid fa-phone text-[10px] text-gray-500"></i>
+                {{ customer.phoneNumber || customer.phone_number }}
+              </span>
+              <span
+                v-if="customer.nationalId || customer.national_id"
+                class="inline-flex items-center gap-1 rounded-md bg-white/5 px-2 py-1"
+                dir="ltr"
+              >
+                <i class="fa-solid fa-id-card text-[10px] text-gray-500"></i>
+                {{ customer.nationalId || customer.national_id }}
+              </span>
+            </div>
           </div>
         </div>
-        <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold"
-          :class="customer.is_active ? 'bg-green-500/20 text-green-400' : 'bg-gray-600/30 text-gray-500'">
+
+        <span
+          class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ring-inset"
+          :class="customer.is_active ? 'bg-emerald-500/15 text-emerald-300 ring-emerald-400/20' : 'bg-gray-600/30 text-gray-300 ring-gray-500/20'"
+        >
+          <span class="h-1.5 w-1.5 rounded-full" :class="customer.is_active ? 'bg-emerald-400' : 'bg-gray-400'"></span>
           {{ customer.is_active ? 'متصل' : 'غير متصل' }}
         </span>
-      </div>
+      </section>
+
+      <!-- Basic Information -->
+      <section class="space-y-3">
+        <h5 class="flex items-center gap-2 text-sm font-semibold text-gray-300">
+          <i class="fa-solid fa-id-card text-blue-400"></i>
+          البيانات الأساسية
+        </h5>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div class="admin-data-cell">
+            <p class="mb-1 text-[11px] text-gray-500">الاسم</p>
+            <p class="text-sm font-medium text-gray-200">
+              {{ customer.fullName || customer.full_name || '—' }}
+            </p>
+          </div>
+          <div class="admin-data-cell">
+            <p class="mb-1 text-[11px] text-gray-500">الهوية</p>
+            <p class="text-sm font-medium text-gray-200">
+              {{ customer.nationalId || customer.national_id || '—' }}
+            </p>
+          </div>
+          <div class="admin-data-cell">
+            <p class="mb-1 text-[11px] text-gray-500">الهاتف</p>
+            <p class="text-sm font-medium text-gray-200" dir="ltr">
+              {{ customer.phoneNumber || customer.phone_number || '—' }}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Session Information -->
+      <section class="space-y-3">
+        <h5 class="flex items-center gap-2 text-sm font-semibold text-gray-300">
+          <i class="fa-solid fa-globe text-cyan-400"></i>
+          معلومات الجلسة
+        </h5>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div class="admin-data-cell">
+            <p class="mb-1 text-[11px] text-gray-500">IP</p>
+            <p class="font-mono text-sm text-gray-200" dir="ltr">{{ customerIp }}</p>
+          </div>
+          <div class="admin-data-cell">
+            <p class="mb-1 text-[11px] text-gray-500">الصفحة الحالية</p>
+            <p class="font-mono text-sm text-gray-200" dir="ltr">{{ currentPageLabel || '—' }}</p>
+          </div>
+          <div class="admin-data-cell">
+            <p class="mb-1 text-[11px] text-gray-500">الجهاز</p>
+            <p class="text-sm text-gray-200">
+              {{ customer.device_info?.type || '—' }}
+            </p>
+          </div>
+          <div class="admin-data-cell">
+            <p class="mb-1 text-[11px] text-gray-500">المتصفح</p>
+            <p class="text-sm text-gray-200">
+              {{ customer.device_info?.browser || '—' }}
+            </p>
+          </div>
+          <div class="admin-data-cell">
+            <p class="mb-1 text-[11px] text-gray-500">الدولة</p>
+            <p class="text-sm text-gray-200">
+              {{ customer.location?.country || customer.country || '—' }}
+            </p>
+          </div>
+          <div class="admin-data-cell">
+            <p class="mb-1 text-[11px] text-gray-500">آخر نشاط</p>
+            <p class="text-sm text-gray-200">
+              {{ formatDateTimeAR(customer.last_activity) || '—' }}
+            </p>
+          </div>
+        </div>
+      </section>
 
       <!-- OTP Section -->
       <div v-if="notification?.type === 'otp' && customer.latest_otp" class="space-y-3">
@@ -225,17 +312,19 @@
     </div>
 
     <!-- Footer Actions -->
-    <template #footer>
-      <div class="flex items-center justify-between gap-3">
+      <template #footer>
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <button
-          class="px-4 py-2 text-sm rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          type="button"
+          class="min-h-11 w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
           :disabled="!customer?.id"
           @click="goToDashboard">
-          <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i>
+          <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i>
           فتح في لوحة التحكم
         </button>
         <button
-          class="px-4 py-2 text-sm rounded-lg bg-gray-700/50 text-gray-400 hover:bg-gray-600 transition-colors"
+          type="button"
+          class="min-h-11 w-full rounded-lg px-4 py-2 text-sm font-medium text-gray-400 transition-colors hover:bg-white/5 hover:text-white sm:w-auto"
           @click="$emit('close')">
           إغلاق
         </button>
@@ -304,6 +393,25 @@ const typeIcons = {
 const modalTitle = computed(() => typeLabels[props.notification?.type] || 'تفاصيل الإشعار');
 const accentColor = computed(() => typeAccents[props.notification?.type] || '#6b7280');
 const modalIcon = computed(() => typeIcons[props.notification?.type] || 'fa-solid fa-bell');
+const customerDisplayName = computed(() => customer.value?.fullName || customer.value?.full_name || 'زائر غير معروف');
+const customerIp = computed(() => customer.value?.ip || props.notification?.meta?.customer_ip || '—');
+const currentPageLabel = computed(() => formatCurrentPage(
+  customer.value?.journey?.current_page
+  || customer.value?.current_page
+  || props.notification?.meta?.current_page
+  || ''
+));
+const modalSubtitle = computed(() => {
+  if (currentPageLabel.value) return currentPageLabel.value;
+  return props.notification?.message || '';
+});
+
+function formatCurrentPage(page) {
+  if (!page) return '';
+  const normalized = String(page).trim();
+  if (!normalized) return '';
+  return normalized.startsWith('/') ? normalized : `/${normalized.replace(/^\/+/, '')}`;
+}
 
 // Fetch customer data when modal opens
 watch(() => props.open, async (isOpen) => {

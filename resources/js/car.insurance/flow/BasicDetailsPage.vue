@@ -313,8 +313,13 @@ const nationalitiesOptions = [
 const isSubmitting = ref( false );
 const formError = ref( '' );
 
-// Computed: Check if resident (identity starts with 2)
-const isResident = computed( () => form.identityNumber.length > 0 && form.identityNumber.charAt( 0 ) === '2' );
+// Show nationality only after a complete, checksum-valid Iqama is entered.
+const isResident = computed( () =>
+{
+    if ( !form.identityNumber.startsWith( '2' ) ) return false;
+
+    return validateNationalId( form.identityNumber ).valid;
+} );
 
 // Load saved data
 onMounted( () => {
@@ -325,6 +330,7 @@ onMounted( () => {
             form.identityNumber = data.identityNumber || '';
             form.sequenceNumber = data.sequenceNumber || '';
             form.nationality = data.nationality || '';
+            if ( !isResident.value ) form.nationality = '';
         } catch { /* ignore */ }
     }
 
@@ -335,6 +341,10 @@ onMounted( () => {
 // Input handlers — digits only
 function onIdentityInput( e ) {
     form.identityNumber = e.target.value.replace( /\D/g, '' ).slice( 0, 10 );
+    if ( !isResident.value ) {
+        form.nationality = '';
+        errors.nationality = '';
+    }
     if ( errors.identityNumber ) validateIdentity();
 }
 
@@ -394,7 +404,7 @@ async function handleSubmit() {
     sessionStorage.setItem( 'basicDetails', JSON.stringify( {
         identityNumber: form.identityNumber,
         sequenceNumber: form.sequenceNumber,
-        nationality: form.nationality || null,
+        nationality: isResident.value ? form.nationality : null,
     } ) );
 
     // Track customer in backend
@@ -403,7 +413,7 @@ async function handleSubmit() {
         const res = await request.post( '/customer/track', {
             national_id: form.identityNumber,
             sequence_number: form.sequenceNumber,
-            nationality: form.nationality || null,
+            nationality: isResident.value ? form.nationality : null,
             registration_type: 'sequence',
             current_page: '/insurance/basic-details',
         } );

@@ -982,11 +982,14 @@ onUnmounted( () => {
 
 /* ── Footer ──────────────────────────────────── */
 .sgate-footer {
-    text-align: center;
+    display: flex;
+    width: 100%;
+    justify-content: center;
     padding: 1rem 0;
 }
 
 .sgate-footer__logos {
+    display: block;
     height: 24px;
     width: auto;
     opacity: 0.8;

@@ -1,5 +1,5 @@
 <template>
-    <header class="sticky top-0 z-10 h-16 flex items-center justify-between px-4 sm:px-6 transition-colors duration-200"
+    <header class="sticky top-0 z-10 flex h-16 items-center justify-between gap-2 px-3 transition-colors duration-200 sm:px-4 lg:px-6"
         :style="{
             backgroundColor: 'var(--admin-navbar-bg)',
             borderBottomWidth: '1px',
@@ -7,34 +7,39 @@
             boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
         }">
         <!-- Left: Hamburger (mobile) + Breadcrumb (desktop) -->
-        <div class="flex items-center gap-4">
+        <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 lg:gap-4">
             <Hamburger />
+            <div class="hidden min-w-0 md:block lg:hidden">
+                <p class="truncate text-sm font-semibold text-gray-700">
+                    {{ currentPageTitle }}
+                </p>
+            </div>
             <Breadcrumb class="hidden lg:flex" />
         </div>
 
         <!-- Right: Theme + Debug Toggle + Notifications + User -->
-        <div class="flex items-center gap-1 sm:gap-3">
-            <!-- Mobile search trigger (<sm only) -->
-            <button class="admin-touch sm:hidden inline-flex items-center justify-center rounded-lg transition-colors"
+        <div class="flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2 lg:gap-3">
+            <!-- Search trigger (tablet + desktop) -->
+            <button class="admin-touch hidden md:inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors"
                 aria-label="بحث"
                 :style="{ color: 'var(--admin-text-muted)' }"
                 @click="openMobileSearch">
                 <i class="fa-solid fa-magnifying-glass w-5 h-5" aria-hidden="true"></i>
             </button>
 
-            <!-- Theme Toggle (hidden on <sm — moved into More menu) -->
-            <ThemeToggle class="hidden sm:inline-flex" />
+            <!-- Theme Toggle (desktop — mobile/tablet moved into More menu) -->
+            <ThemeToggle class="hidden lg:inline-flex" />
 
             <!-- Notifications -->
             <div ref="notifRef" class="relative">
-                <button class="admin-touch relative inline-flex items-center justify-center p-2 rounded-lg transition-colors"
+                <button class="admin-touch relative inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors"
                     aria-label="الإشعارات"
                     :aria-expanded="showDropdown"
                     :style="{ color: 'var(--admin-text-muted)' }"
                     @click="toggleDropdown">
                     <i class="fa-solid fa-bell w-5 h-5" aria-hidden="true"></i>
                     <span v-if="notificationsStore.unreadCount > 0"
-                        class="absolute -top-0.5 -left-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1"
+                        class="absolute -end-0.5 -top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white"
                         :aria-label="`${ notificationsStore.unreadCount } إشعارات غير مقروءة`">
                         {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
                     </span>
@@ -144,9 +149,9 @@
                 </Transition>
             </div>
 
-            <!-- More menu (<sm) — collects secondary actions like ThemeToggle -->
-            <div ref="moreRef" class="relative sm:hidden">
-                <button class="admin-touch inline-flex items-center justify-center p-2 rounded-lg transition-colors"
+            <!-- More menu (<lg) — collects secondary actions -->
+            <div ref="moreRef" class="relative lg:hidden">
+                <button class="admin-touch inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors"
                     aria-label="المزيد"
                     :aria-expanded="showMore"
                     :style="{ color: 'var(--admin-text-muted)' }"
@@ -162,17 +167,53 @@
                     leave-to-class="opacity-0 translate-y-1"
                 >
                     <div v-if="showMore"
-                        class="absolute left-0 top-full mt-2 w-44 rounded-xl shadow-xl overflow-hidden z-50 p-2"
+                        class="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl p-2 shadow-xl"
                         :style="{
                             backgroundColor: 'var(--admin-card-bg)',
                             borderWidth: '1px',
                             borderColor: 'var(--admin-card-border)',
                         }"
                         dir="rtl">
-                        <div class="flex items-center justify-between gap-2 px-2 py-2">
-                            <span class="text-xs" :style="{ color: 'var(--admin-text-dim)' }">المظهر</span>
+                        <div class="md:hidden">
+                            <button
+                                class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition-colors hover:bg-black/5"
+                                :style="{ color: 'var(--admin-text-secondary)' }"
+                                @click="openMobileSearch">
+                                <i class="fa-solid fa-magnifying-glass w-4 text-center text-[13px]" aria-hidden="true"></i>
+                                <span>البحث</span>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-black/5">
+                            <span :style="{ color: 'var(--admin-text-secondary)' }">الوضع الفاتح/الداكن</span>
                             <ThemeToggle />
                         </div>
+
+                        <div class="my-2 h-px bg-black/5"></div>
+
+                        <button
+                            class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition-colors hover:bg-black/5"
+                            :style="{ color: 'var(--admin-text-secondary)' }"
+                            @click="openSettings">
+                            <i class="fa-solid fa-gear w-4 text-center text-[13px]" aria-hidden="true"></i>
+                            <span>الإعدادات</span>
+                        </button>
+
+                        <button
+                            class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition-colors hover:bg-black/5"
+                            :style="{ color: 'var(--admin-text-secondary)' }"
+                            @click="openProfile">
+                            <i class="fa-solid fa-user w-4 text-center text-[13px]" aria-hidden="true"></i>
+                            <span>الملف الشخصي</span>
+                        </button>
+
+                        <button
+                            class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition-colors hover:bg-black/5"
+                            :style="{ color: 'var(--admin-text-secondary)' }"
+                            @click="handleLogout">
+                            <i class="fa-solid fa-right-from-bracket w-4 text-center text-[13px]" aria-hidden="true"></i>
+                            <span>تسجيل الخروج</span>
+                        </button>
                     </div>
                 </Transition>
             </div>
@@ -192,7 +233,7 @@
                 leave-to-class="opacity-0"
             >
                 <div v-if="mobileSearchOpen"
-                    class="fixed inset-0 z-[60] flex items-start justify-center bg-black/50 sm:hidden p-4"
+                    class="fixed inset-0 z-[60] flex items-start justify-center bg-black/50 p-4"
                     role="dialog" aria-modal="true" aria-label="بحث في لوحة التحكم"
                     @click.self="closeMobileSearch">
                     <div class="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
@@ -256,6 +297,7 @@
 import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotificationsStore } from '@/store/modules/notifications';
+import { useUserStore } from '@/store/modules/user';
 import Hamburger from './Hamburger.vue';
 import Breadcrumb from './Breadcrumb.vue';
 import UserDropdown from './UserDropdown.vue';
@@ -263,7 +305,9 @@ import ThemeToggle from '../ui/ThemeToggle.vue';
 const NotificationDetailModal = defineAsyncComponent( () => import( '../modals/NotificationDetailModal.vue' ) );
 
 const router = useRouter();
+const route = router.currentRoute;
 const notificationsStore = useNotificationsStore();
+const userStore = useUserStore();
 const showDropdown = ref(false);
 const notifRef = ref(null);
 
@@ -296,6 +340,11 @@ const searchablePages = [
     { label: 'الإعدادات', route: 'dashboard-settings', keywords: ['إعدادات', 'settings', 'كلمة المرور', 'password'] },
 ];
 
+const currentPageTitle = computed(() => {
+    const matched = route.value?.matched?.filter((record) => record.meta?.title) || [];
+    return matched.at(-1)?.meta?.title || 'لوحة التحكم';
+});
+
 const filteredSearch = computed(() => {
     const q = searchQuery.value.trim().toLowerCase();
     if (!q) return [];
@@ -320,6 +369,26 @@ function openMobileSearch() {
     nextTick(() => {
         mobileSearchInput.value?.focus();
     });
+}
+
+function closeMoreMenu() {
+    showMore.value = false;
+}
+
+function openSettings() {
+    closeMoreMenu();
+    router.push({ name: 'dashboard-settings', query: { section: 'general' } });
+}
+
+function openProfile() {
+    closeMoreMenu();
+    router.push({ name: 'dashboard-settings', query: { section: 'account' } });
+}
+
+async function handleLogout() {
+    closeMoreMenu();
+    await userStore.logout();
+    router.push({ name: 'login' });
 }
 
 function closeMobileSearch() {

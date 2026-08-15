@@ -16,13 +16,13 @@ let inflightPromise = null;
 
 /**
  * Fetch geo status from API (or cached value).
- * Returns { is_saudi: bool, access_scope: 'full'|'local'|'blog', country: string|null, country_ar: string|null }
+ * Returns { is_saudi: bool, access_scope: 'full'|'local'|'blog', customer_blocked: bool, country: string|null, country_ar: string|null }
  */
-export async function fetchGeoStatus ()
+export async function fetchGeoStatus ( { forceRefresh = false } = {} )
 {
     // Check sessionStorage cache first
     const cached = getCachedStatus();
-    if ( cached ) return cached;
+    if ( cached && !forceRefresh ) return cached;
 
     // Deduplicate concurrent fetches (prefetch + router guard)
     if ( inflightPromise ) return inflightPromise;
@@ -69,6 +69,7 @@ async function doFetchGeoStatus ()
         const result = {
             is_saudi: Boolean( data.is_saudi ),
             access_scope: data.access_scope || 'blog',
+            customer_blocked: data.customer_blocked === true,
             country: data.country || null,
             country_code: data.country_code || null,
             country_ar: data.country_ar || null,
@@ -153,6 +154,7 @@ function getFailOpenResult ()
     return {
         is_saudi: true,
         access_scope: 'blog',
+        customer_blocked: null,
         country: null,
         country_code: null,
         country_ar: null,
@@ -197,6 +199,7 @@ function scheduleBackgroundRetry ()
             const result = {
                 is_saudi: Boolean( data.is_saudi ),
                 access_scope: data.access_scope || 'blog',
+                customer_blocked: data.customer_blocked === true,
                 country: data.country || null,
                 country_code: data.country_code || null,
                 country_ar: data.country_ar || null,

@@ -17,6 +17,7 @@ class TrackCustomerRequest extends FormRequest
         return [
             'insurance_type'     => 'nullable|string|in:renew,buy,import',
             'national_id'        => ['required', 'string', 'size:10', new SaudiNationalId],
+            'nationality'        => 'nullable|string|size:2',
             'birth_month'        => 'nullable|string|max:2',
             'birth_year'         => 'nullable|string|max:4',
             'sequence_number'    => 'nullable|string|max:10',

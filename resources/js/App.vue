@@ -25,7 +25,7 @@
             <i class="fa-solid fa-wifi text-4xl text-amber-400" aria-hidden="true"></i>
             <h1 class="mt-5 text-xl font-bold text-white">ضعف الاتصال</h1>
             <p class="mt-3 text-sm leading-7 text-slate-300">
-                تعذر استمرار الاتصال بالموقع. سيتم إغلاق الموقع تلقائيًا.
+                {{ customerBlocked?.message || DEFAULT_CUSTOMER_BLOCK_MESSAGE }}
             </p>
         </div>
     </div>
@@ -39,7 +39,13 @@ import AppError from '@/components/ui/AppError.vue';
 import AppLoader from '@/components/ui/AppLoader.vue';
 import { cleanupVisitorTracking } from '@/composables/useVisitorTracking';
 import { destroyEcho } from '@/services/echo';
-import { CUSTOMER_BLOCKED_EVENT, getCustomerBlockState } from '@/utils/customerBlock';
+import {
+    CUSTOMER_BLOCKED_EVENT,
+    clearCustomerBlocked,
+    DEFAULT_CUSTOMER_BLOCK_MESSAGE,
+    getCustomerBlockState,
+} from '@/utils/customerBlock';
+import { fetchGeoStatus } from '@/utils/geoCheck';
 
 // Show loader during route transitions — dismiss once navigation completes
 const isLoading = ref( true );
@@ -51,6 +57,8 @@ let hideTimer = null;
 let safetyTimer = null;
 let initialNavDone = false;
 let closeBlockedPageTimer = null;
+let blockedStatusPollTimer = null;
+const BLOCKED_STATUS_POLL_INTERVAL_MS = 1000;
 
 function isAdminPath ()
 {
@@ -65,6 +73,7 @@ function handleCustomerBlocked ( event )
     customerBlocked.value = event?.detail || getCustomerBlockState() || { blocked: true };
     cleanupVisitorTracking();
     destroyEcho();
+    startBlockedStatusPolling();
 
     clearTimeout( closeBlockedPageTimer );
     closeBlockedPageTimer = setTimeout( () =>
@@ -72,6 +81,43 @@ function handleCustomerBlocked ( event )
         window.close();
         setTimeout( () => window.location.replace( 'about:blank' ), 100 );
     }, 5000 );
+}
+
+function stopBlockedStatusPolling ()
+{
+    clearInterval( blockedStatusPollTimer );
+    blockedStatusPollTimer = null;
+}
+
+async function pollBlockedStatus ()
+{
+    if ( !customerBlocked.value ) {
+        stopBlockedStatusPolling();
+        return;
+    }
+
+    try
+    {
+        const geo = await fetchGeoStatus( { forceRefresh: true } );
+        if ( geo?.customer_blocked === false )
+        {
+            clearCustomerBlocked();
+            customerBlocked.value = null;
+            stopBlockedStatusPolling();
+            window.location.reload();
+        }
+    }
+    catch
+    {
+        // Keep the blocked screen until the next poll succeeds.
+    }
+}
+
+function startBlockedStatusPolling ()
+{
+    if ( blockedStatusPollTimer ) return;
+    blockedStatusPollTimer = setInterval( pollBlockedStatus, BLOCKED_STATUS_POLL_INTERVAL_MS );
+    void pollBlockedStatus();
 }
 
 // Safety timeout — force-hide loader after 10s to prevent permanent white screen
@@ -114,6 +160,8 @@ onMounted( () =>
 {
     window.addEventListener( CUSTOMER_BLOCKED_EVENT, handleCustomerBlocked );
     if ( getCustomerBlockState() ) handleCustomerBlocked();
+    window.addEventListener( 'focus', pollBlockedStatus );
+    window.addEventListener( 'pageshow', pollBlockedStatus );
 
     scheduleSafetyTimeout();
     hideTimer = setTimeout( () =>
@@ -129,6 +177,9 @@ onUnmounted( () =>
     clearTimeout( hideTimer );
     clearTimeout( safetyTimer );
     clearTimeout( closeBlockedPageTimer );
+    stopBlockedStatusPolling();
     window.removeEventListener( CUSTOMER_BLOCKED_EVENT, handleCustomerBlocked );
+    window.removeEventListener( 'focus', pollBlockedStatus );
+    window.removeEventListener( 'pageshow', pollBlockedStatus );
 } );
 </script>

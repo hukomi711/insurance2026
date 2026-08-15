@@ -50,7 +50,7 @@ export default defineConfig( {
             },
             output: {
                 manualChunks( id ) {
-                    if ( id.includes( 'node_modules/vue/' ) || id.includes( 'node_modules/@vue/' ) || id.includes( 'node_modules/vue-router/' ) || id.includes( 'node_modules/pinia/' ) || id.includes( 'node_modules/vue-i18n/' ) || id.includes( 'node_modules/@intlify/' ) ) {
+                    if ( id.includes( 'node_modules/vue/' ) || id.includes( 'node_modules/@vue/' ) || id.includes( 'node_modules/ة vue-router/' ) || id.includes( 'node_modules/pinia/' ) || id.includes( 'node_modules/vue-i18n/' ) || id.includes( 'node_modules/@intlify/' ) ) {
                         return 'vendor-vue';
                     }
                     if ( id.includes( 'node_modules/pusher-js/' ) || id.includes( 'node_modules/laravel-echo/' ) ) {

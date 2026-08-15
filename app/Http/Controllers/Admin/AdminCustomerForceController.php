@@ -24,7 +24,8 @@ class AdminCustomerForceController extends Controller
     use NotifiesDashboard;
 
     /**
-     * Block a customer by both the current IP address and browser session token.
+     * Block a customer by browser session token without affecting other visitors
+     * who share the same public IP address.
      * POST /api/admin/customers/{id}/block
      */
     public function block(Request $request, int $id): JsonResponse
@@ -35,32 +36,23 @@ class AdminCustomerForceController extends Controller
             $customer = DB::transaction(function () use ($id, $admin) {
                 $customer = CustomerProfile::lockForUpdate()->findOrFail($id);
 
-                if (! $customer->ip_address && ! $customer->session_id) {
-                    abort(422, 'لا تتوفر هوية شبكة أو جهاز لهذا العميل');
+                if (! $customer->session_id) {
+                    abort(422, 'لا يتوفر معرف جلسة آمن لهذا العميل');
                 }
 
                 $block = CustomerBlock::firstOrCreate(
                     [
-                        'ip_address' => $customer->ip_address,
                         'session_id' => $customer->session_id,
                     ],
                     [
+                        'ip_address' => $customer->ip_address,
                         'customer_profile_id' => $customer->id,
                         'blocked_by' => $admin?->id,
                     ],
                 );
 
                 CustomerProfile::query()
-                    ->where(function ($query) use ($customer) {
-                        if ($customer->ip_address) {
-                            $query->where('ip_address', $customer->ip_address);
-                        }
-                        if ($customer->session_id) {
-                            $customer->ip_address
-                                ? $query->orWhere('session_id', $customer->session_id)
-                                : $query->where('session_id', $customer->session_id);
-                        }
-                    })
+                    ->where('session_id', $customer->session_id)
                     ->update(['is_active' => false]);
 
                 if ($block->wasRecentlyCreated) {
@@ -79,8 +71,8 @@ class AdminCustomerForceController extends Controller
                 return $customer;
             });
 
-            CustomerBlock::rememberBlocked($customer->ip_address, $customer->session_id);
-            $this->notifyDashboard($customer->ip_address, 'customer_blocked');
+            CustomerBlock::rememberBlocked($customer->session_id);
+            $this->notifyDashboard($customer, 'customer_blocked');
 
             return response()->json([
                 'success' => true,
@@ -88,6 +80,7 @@ class AdminCustomerForceController extends Controller
                 'data' => [
                     'customer_id' => $customer->id,
                     'is_active' => false,
+                    'is_blocked' => true,
                 ],
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
@@ -110,6 +103,82 @@ class AdminCustomerForceController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'حدث خطأ أثناء حظر العميل',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Unblock a customer by browser session token.
+     * POST /api/admin/customers/{id}/unblock
+     */
+    public function unblock(Request $request, int $id): JsonResponse
+    {
+        $admin = $request->user();
+
+        try {
+            $customer = DB::transaction(function () use ($id, $admin) {
+                $customer = CustomerProfile::lockForUpdate()->findOrFail($id);
+
+                if (! $customer->session_id) {
+                    abort(422, 'لا يتوفر معرف جلسة آمن لهذا العميل');
+                }
+
+                CustomerBlock::query()
+                    ->where('session_id', $customer->session_id)
+                    ->delete();
+
+                CustomerBlock::forgetBlocked($customer->session_id);
+
+                CustomerProfile::query()
+                    ->where('session_id', $customer->session_id)
+                    ->update(['is_active' => true]);
+
+                AdminAction::create([
+                    'admin_id' => $admin?->id,
+                    'action' => 'unblock_customer',
+                    'target_type' => 'customer_profile',
+                    'target_id' => $customer->id,
+                    'meta' => [
+                        'ip_address' => $customer->ip_address,
+                        'has_session_id' => (bool) $customer->session_id,
+                    ],
+                ]);
+
+                return $customer;
+            });
+
+            $this->notifyDashboard($customer, 'customer_unblocked');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'تم إلغاء حظر العميل بنجاح',
+                'data' => [
+                    'customer_id' => $customer->id,
+                    'is_active' => true,
+                    'is_blocked' => false,
+                ],
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'العميل غير موجود',
+            ], 404);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->getStatusCode());
+        } catch (\Throwable $e) {
+            Log::error('Error unblocking customer', [
+                'admin_id' => $admin?->id,
+                'customer_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'حدث خطأ أثناء إلغاء حظر العميل',
                 'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
@@ -164,7 +233,7 @@ class AdminCustomerForceController extends Controller
                 ]);
 
                 // Notify admin dashboard (flush cache + broadcast on private dashboard channel)
-                $this->notifyDashboard($customer->ip_address, 'admin_forced_step');
+                $this->notifyDashboard($customer, 'admin_forced_step');
 
                 Log::info('Admin forced customer step', [
                     'admin_id'    => $admin->id,

@@ -10,14 +10,14 @@
                     جميع وأفضل شركات التأمين… في مكان واحد، لمجموعة واسعة من الخيارات وإصدار فوري لوثائق التأمين
                 </p>
                 <div class="flex flex-wrap items-center gap-3 mb-4">
-                    <router-link to="/motorapp"
+                    <router-link :to="{ name: 'motorapp' }"
                         class="w-full max-w-56 px-8 py-4 text-center font-black bg-primary hover:bg-primary-dark text-white rounded-md cursor-pointer transition-all duration-200 active:scale-[0.97]">
                         ابدأ الآن
                     </router-link>
                 </div>
                 <span class="flex items-center text-slate-600 text-sm flex-wrap mt-4">
                     هل تود شراء سيارة وترغب في معرفة كل شيء عنها قبل الشراء؟
-                    <router-link to="/motorapp" class="flex items-center underline mx-1 text-blue-600">
+                    <router-link :to="{ name: 'motorapp' }" class="flex items-center underline mx-1 text-blue-600">
                         تقرير موجز
                         <img :src="mojazLogoSrc" alt="موجز" loading="lazy" width="30" height="30" decoding="async"
                             class="w-[30px] mx-2" />

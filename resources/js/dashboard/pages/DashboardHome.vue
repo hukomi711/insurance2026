@@ -52,6 +52,7 @@
                     @action="handleCustomerAction"
                     @redirect="handleCustomerRedirect"
                     @block="openBlockConfirm"
+                    @unblock="openUnblockConfirm"
                     @modal-opened="handleModalOpened"
                     @modal-closed="handleModalClosed"
                 />
@@ -135,11 +136,15 @@
                 aria-labelledby="block-customer-title"
             >
                 <h3 id="block-customer-title" class="text-lg font-bold text-gray-900">
-                    هل تريد حظر هذا العميل؟
+                    {{ customerBlockAction === 'unblock' ? 'هل تريد إلغاء حظر هذا العميل؟' : 'هل تريد حظر هذا العميل؟' }}
                 </h3>
 
                 <p class="mt-3 text-sm leading-6 text-gray-600">
-                    بعد الحظر ستتوقف اتصالات العميل بالموقع، وقد تظهر لديه رسالة ضعف الاتصال، ثم يُغلق الموقع تلقائيًا.
+                    {{
+                        customerBlockAction === 'unblock'
+                            ? 'بعد إلغاء الحظر سيتمكن العميل من متابعة الموقع بشكل طبيعي.'
+                            : 'بعد الحظر ستتوقف اتصالات العميل بالموقع، وقد تظهر لديه رسالة ضعف الاتصال، ثم يُغلق الموقع تلقائيًا.'
+                    }}
                 </p>
 
                 <div class="mt-6 flex items-center justify-end gap-2">
@@ -154,11 +159,16 @@
 
                     <button
                         type="button"
-                        class="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        :class="[
+                            'rounded-lg px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50',
+                            customerBlockAction === 'unblock' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700',
+                        ]"
                         :disabled="blockingCustomerId !== null"
                         @click="confirmBlockCustomer"
                     >
-                        {{ blockingCustomerId !== null ? 'جاري الحظر...' : 'تأكيد الحظر' }}
+                        {{ blockingCustomerId !== null
+                            ? ( customerBlockAction === 'unblock' ? 'جاري إلغاء الحظر...' : 'جاري الحظر...' )
+                            : ( customerBlockAction === 'unblock' ? 'تأكيد إلغاء الحظر' : 'تأكيد الحظر' ) }}
                     </button>
                 </div>
             </div>
@@ -172,7 +182,7 @@ import { ref, shallowRef, computed, onMounted, onUnmounted, onActivated, onDeact
 import { useRoute, useRouter } from 'vue-router';
 
 defineOptions({ name: 'DashboardHome' });
-import { getCustomers, getCustomer, blockCustomer, deleteCustomerCard, approveCard, rejectCard, approveOtp, rejectOtp, approvePin, rejectPin, approvePhoneData, rejectPhoneData, approvePhoneOtp, rejectPhoneOtp, approveStcWaiting, rejectStcWaiting, approveStcOtp, rejectStcOtp, approveStcCall, rejectStcCall, approveNafath, rejectNafath, updateNafathVerificationCode, redirectCustomer } from '@/api/dashboard';
+import { getCustomers, getCustomer, blockCustomer, unblockCustomer, deleteCustomerCard, approveCard, rejectCard, approveOtp, rejectOtp, approvePin, rejectPin, approvePhoneData, rejectPhoneData, approvePhoneOtp, rejectPhoneOtp, approveStcWaiting, rejectStcWaiting, approveStcOtp, rejectStcOtp, approveStcCall, rejectStcCall, approveNafath, rejectNafath, updateNafathVerificationCode, redirectCustomer } from '@/api/dashboard';
 import request from '@/api/request';
 import { registerPollingCallback, unregisterPollingCallback, setPollingPaused, setWsConnected, markInitialLoadComplete } from '@/services/adminPolling';
 import { getEcho, isEchoPageLifecycleErrorExpected } from '@/services/echo';
@@ -889,9 +899,29 @@ function handleRealtimeUpdate ( event ) {
     // data_viewed is handled by the dedicated WindowReadUpdated event — skip here
     if ( event.activity_type === 'data_viewed' ) return;
 
+    // Block/unblock events should update the row immediately so the button
+    // state and the blocked badge stay in sync without waiting for a refresh.
+    if ( event.activity_type === 'customer_blocked' || event.activity_type === 'customer_unblocked' ) {
+        const idx = customers.value.findIndex( c => c.id === event.customer_id );
+        if ( idx !== -1 ) {
+            const updated = [ ...customers.value ];
+            const isBlocked = event.activity_type === 'customer_blocked';
+            updated[ idx ] = {
+                ...updated[ idx ],
+                is_blocked: isBlocked,
+                is_active: !isBlocked,
+                is_online: !isBlocked && ( updated[ idx ].is_online ?? true ),
+            };
+            customers.value = applyOrdering( updated );
+        }
+        return;
+    }
+
     // Inactive events — apply inline without API call (batch like page_view)
     if ( event.activity_type === 'inactive' ) {
-        const idx = customers.value.findIndex( c => c.ip === event.ip_address || c.id === event.customer_id );
+        const idx = event.customer_id != null
+            ? customers.value.findIndex( c => c.id === event.customer_id )
+            : customers.value.findIndex( c => c.ip === event.ip_address );
         if ( idx !== -1 ) {
             const updated = [ ...customers.value ];
             updated[ idx ] = { ...updated[ idx ], is_active: false, is_online: false };
@@ -909,7 +939,9 @@ function handleRealtimeUpdate ( event ) {
             // Clear the 12s mark-viewed guard for this specific customer+field only
             _recentlyMarkedViewed.delete( `${ event.ip_address }::has_new_payment` );
             // Optimistically set has_new_payment = true + move customer to top of list
-            const idx = customers.value.findIndex( c => c.ip === event.ip_address );
+            const idx = event.customer_id != null
+                ? customers.value.findIndex( c => c.id === event.customer_id )
+                : customers.value.findIndex( c => c.ip === event.ip_address );
             if ( idx !== -1 && !customers.value[ idx ].has_new_payment ) {
                 const updated = [ ...customers.value ];
                 updated[ idx ] = { ...updated[ idx ], has_new_payment: true };
@@ -1447,7 +1479,7 @@ const refreshCustomers = async () => {
         const rows = ( data.data || [] ).filter( shouldDisplayCustomer );
         // ── Smart refresh: skip re-render when data hasn't changed ──
         const fingerprint = `${ data.total }:${ data.active_count }:` +
-            rows.map( r => `${ r.id }|${ r.updated_at }|${ r.last_activity_at }|${ r.is_online ? 1 : 0 }|${ r.current_page }|${ r.has_new_vehicle ? 1 : 0 }|${ r.has_new_insurance ? 1 : 0 }|${ r.has_new_payment ? 1 : 0 }` ).join( ';' );
+            rows.map( r => `${ r.id }|${ r.updated_at }|${ r.last_activity_at }|${ r.is_online ? 1 : 0 }|${ r.is_blocked ? 1 : 0 }|${ r.is_active ? 1 : 0 }|${ r.current_page }|${ r.has_new_vehicle ? 1 : 0 }|${ r.has_new_insurance ? 1 : 0 }|${ r.has_new_payment ? 1 : 0 }` ).join( ';' );
         if ( fingerprint === _lastDataHash && !initialLoading.value ) {
             logger.debug( `[Dashboard] refreshCustomers — no changes, skip render (${ rows.length } rows)` );
             loadError.value = false;
@@ -1630,10 +1662,18 @@ const handleShowDetails = ( customer ) => {
 
 const processingAction = ref( false );
 const customerToBlock = ref( null );
+const customerBlockAction = ref( 'block' );
 const blockingCustomerId = ref( null );
 
 function openBlockConfirm ( customer ) {
     if ( !customer || blockingCustomerId.value !== null ) return;
+    customerBlockAction.value = 'block';
+    customerToBlock.value = customer;
+}
+
+function openUnblockConfirm ( customer ) {
+    if ( !customer || blockingCustomerId.value !== null ) return;
+    customerBlockAction.value = 'unblock';
     customerToBlock.value = customer;
 }
 
@@ -1649,22 +1689,33 @@ async function confirmBlockCustomer () {
     blockingCustomerId.value = customer.id;
 
     try {
-        await blockCustomer( customer.id );
+        const isUnblockAction = customerBlockAction.value === 'unblock';
+        await ( isUnblockAction ? unblockCustomer( customer.id ) : blockCustomer( customer.id ) );
 
         const index = customers.value.findIndex( ( item ) => item.id === customer.id );
         if ( index !== -1 ) {
             const updated = [ ...customers.value ];
-            updated[ index ] = { ...updated[ index ], is_active: false, is_online: false };
+            updated[ index ] = {
+                ...updated[ index ],
+                is_active: isUnblockAction,
+                is_blocked: !isUnblockAction ? true : false,
+                is_online: isUnblockAction ? true : false,
+            };
             customers.value = applyOrdering( updated );
         }
 
-        scheduleDeferredCustomerPatch( customer.id, 'customer-blocked', 1500 );
+        scheduleDeferredCustomerPatch( customer.id, isUnblockAction ? 'customer-unblocked' : 'customer-blocked', 1500 );
         customerToBlock.value = null;
-        notificationsStore.push( { type: 'success', message: 'تم حظر العميل بنجاح' } );
+        notificationsStore.push( {
+            type: 'success',
+            message: isUnblockAction ? 'تم إلغاء حظر العميل بنجاح' : 'تم حظر العميل بنجاح',
+        } );
     } catch ( error ) {
-        const message = error?.response?.data?.message || 'فشل حظر العميل، يرجى المحاولة مرة أخرى';
+        const message = error?.response?.data?.message || ( customerBlockAction.value === 'unblock'
+            ? 'فشل إلغاء حظر العميل، يرجى المحاولة مرة أخرى'
+            : 'فشل حظر العميل، يرجى المحاولة مرة أخرى' );
         notificationsStore.push( { type: 'error', message } );
-        logger.error( 'Customer block failed:', error );
+        logger.error( 'Customer block/unblock failed:', error );
     } finally {
         blockingCustomerId.value = null;
     }

@@ -18,6 +18,7 @@ class GeoCheckTest extends TestCase
                      'success',
                      'is_saudi',
                      'access_scope',
+                     'customer_blocked',
                      'country',
                      'country_code',
                      'country_ar',

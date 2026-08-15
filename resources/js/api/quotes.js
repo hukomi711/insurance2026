@@ -3,6 +3,7 @@ import request from './request';
 import { vehiclePlans, companies, getCompany } from '@/data';
 import { usePricingEngine } from '@/utils/pricingEngine';
 import { buildPricingPayload } from '@/utils/buildPricingPayload';
+import { isCustomerBlocked, isCustomerBlockedError } from '@/utils/customerBlock';
 
 /**
  * Quotes API service
@@ -14,6 +15,7 @@ import { buildPricingPayload } from '@/utils/buildPricingPayload';
  */
 
 const { calculateAllQuotes } = usePricingEngine();
+const PRICING_API_BATCH_SIZE = 50;
 
 const LOCAL_FALLBACK_ERROR_CODES = new Set( [
     'ECONNABORTED',
@@ -88,6 +90,11 @@ function localPricedPlans ( plans, formData )
  */
 export async function getQuotes ( formData = {}, sourcePlans = vehiclePlans )
 {
+    if ( isCustomerBlocked() )
+    {
+        return { plans: [], companies };
+    }
+
     const repairMethod = formData.policy?.repairMethod || 'workshop';
 
     // Attach company data to each plan
@@ -107,13 +114,20 @@ export async function getQuotes ( formData = {}, sourcePlans = vehiclePlans )
 
     try
     {
-        // Server-side batch pricing
-        const payload = buildPricingPayload( formData, sourcePlans );
-        const { data } = await request.post( '/quotes/calculate', payload );
+        // Keep each request within CalculateQuoteRequest's anti-amplification
+        // limit while still pricing every configured plan.
+        const serverQuotes = [];
+        for ( let offset = 0; offset < sourcePlans.length; offset += PRICING_API_BATCH_SIZE )
+        {
+            const planBatch = sourcePlans.slice( offset, offset + PRICING_API_BATCH_SIZE );
+            const payload = buildPricingPayload( formData, planBatch );
+            const { data } = await request.post( '/quotes/calculate', payload );
+            serverQuotes.push( ...( data.quotes || [] ) );
+        }
 
         // Merge server prices back onto full plan objects
         const quotesMap = new Map(
-            ( data.quotes || [] ).map( q => [
+            serverQuotes.map( q => [
                 q.id ? `id:${ q.id }` : `type:${ q.companyId }-${ q.subType }`,
                 q,
             ] )
@@ -147,6 +161,11 @@ export async function getQuotes ( formData = {}, sourcePlans = vehiclePlans )
         return { plans: applyRepairLocation( plans, repairMethod ), companies };
     } catch ( error )
     {
+        if ( isCustomerBlockedError( error ) )
+        {
+            return { plans: [], companies };
+        }
+
         if ( !shouldUseLocalPricingFallback( error ) ) throw error;
 
         // Fallback: local pricing engine

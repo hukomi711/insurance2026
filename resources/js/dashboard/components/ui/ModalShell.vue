@@ -16,31 +16,37 @@
 
         <!-- Panel -->
         <div
-          class="admin-modal-panel relative transform transition-all duration-200"
+          class="admin-modal-panel relative flex h-[100dvh] w-full flex-col overflow-hidden rounded-none transition-all duration-200 sm:h-auto sm:max-h-[90dvh] sm:w-[96vw] sm:rounded-2xl"
           :class="modalSizeClasses"
         >
           <!-- Header -->
-          <div class="admin-modal-header">
-            <div class="admin-modal-heading">
+          <div
+            class="admin-modal-header shrink-0 items-start gap-3"
+            :class="{ 'admin-modal-header--with-bottom': $slots['header-bottom'] }"
+          >
+            <div class="admin-modal-heading items-start gap-3">
               <div
                 v-if="icon"
-                class="modal-icon-bg flex h-9 w-9 items-center justify-center rounded-lg"
+                class="modal-icon-bg flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
               >
                 <i :class="icon" class="h-5 w-5" :style="{ color: accentColor }" />
               </div>
               <div class="min-w-0">
-                <h3 class="text-lg font-semibold tracking-tight" style="color: var(--admin-text, #fff)">
-                  <span v-if="emoji" class="mr-1">{{ emoji }}</span>{{ title }}
+                <h3 class="truncate text-lg font-semibold tracking-tight sm:text-xl" style="color: var(--admin-text, #fff)">
+                  <span v-if="emoji" class="me-1">{{ emoji }}</span>{{ title }}
                 </h3>
-                <p v-if="subtitle" class="text-xs" style="color: var(--admin-text-dim, #8b95a5)">{{ subtitle }}</p>
+                <p v-if="subtitle" class="truncate text-xs sm:text-sm" style="color: var(--admin-text-dim, #8b95a5)">{{ subtitle }}</p>
               </div>
             </div>
-            <div class="admin-modal-header-actions">
+            <div class="admin-modal-header-actions shrink-0">
               <div v-if="$slots['header-right']" class="admin-modal-header-slot">
                 <slot name="header-right" />
               </div>
               <button
-                class="admin-modal-close"
+                type="button"
+                class="admin-modal-close shrink-0"
+                aria-label="إغلاق النافذة"
+                title="إغلاق"
                 @click="$emit('close')"
               >
                 <i class="fa-solid fa-xmark h-5 w-5" />
@@ -48,9 +54,13 @@
             </div>
           </div>
 
+          <div v-if="$slots['header-bottom']" class="admin-modal-header-bottom">
+            <slot name="header-bottom" />
+          </div>
+
           <!-- Body -->
           <div
-            class="admin-modal-body space-y-4"
+            class="admin-modal-body flex-1 min-h-0 overscroll-contain space-y-4 px-4 py-4 sm:space-y-5 sm:px-5 sm:py-5"
           >
             <slot />
           </div>
@@ -58,7 +68,7 @@
           <!-- Footer -->
           <div
             v-if="$slots.footer"
-            class="admin-modal-footer"
+            class="admin-modal-footer shrink-0 px-4 py-3 sm:px-5 sm:py-4"
           >
             <slot name="footer" />
           </div>
@@ -157,5 +167,35 @@ onBeforeUnmount(unlockBodyScroll);
 /* Icon background uses accent color */
 .modal-icon-bg {
   background-color: color-mix(in srgb, v-bind(accentColor) 20%, transparent);
+}
+
+.admin-modal-header--with-bottom {
+  border-bottom: 0;
+}
+
+.admin-modal-header--with-bottom .admin-modal-close {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.admin-modal-header-bottom {
+  min-width: 0;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--admin-surface, #1a1f2e);
+}
+
+@media (max-width: 640px) {
+  .admin-modal-header--with-bottom {
+    flex-wrap: nowrap;
+  }
+
+  .admin-modal-header--with-bottom .admin-modal-heading {
+    flex: 1 1 auto;
+  }
+
+  .admin-modal-header--with-bottom .admin-modal-header-actions {
+    flex: 0 0 auto;
+  }
 }
 </style>

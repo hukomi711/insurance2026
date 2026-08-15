@@ -62,7 +62,13 @@ class HealthController extends Controller
     {
         $redis = $this->checkRedis();
 
-        $queueDriver = filled(config('queue.default'))
+        $queueConnection = (string) config('queue.default');
+        $queueDriverName = (string) config(
+            "queue.connections.{$queueConnection}.driver",
+            $queueConnection,
+        );
+
+        $queueDriver = filled($queueConnection)
             ? 'ok'
             : 'unhealthy';
 
@@ -73,12 +79,16 @@ class HealthController extends Controller
             $failedJobs = 'unhealthy';
         }
 
-        $horizonStatus = 'unhealthy';
-        try {
-            $exitCode = \Illuminate\Support\Facades\Artisan::call('horizon:status');
-            $horizonStatus = $exitCode === 0 ? 'ok' : 'unhealthy';
-        } catch (\Throwable) {
-            // already unhealthy
+        $horizonStatus = 'not_configured';
+        if ($queueDriverName === 'redis') {
+            $horizonStatus = 'unhealthy';
+
+            try {
+                $exitCode = \Illuminate\Support\Facades\Artisan::call('horizon:status');
+                $horizonStatus = $exitCode === 0 ? 'ok' : 'unhealthy';
+            } catch (\Throwable) {
+                // already unhealthy
+            }
         }
 
         $checks = [

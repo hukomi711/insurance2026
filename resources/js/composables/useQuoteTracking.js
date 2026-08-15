@@ -3,6 +3,7 @@ import { useRoute } from "vue-router";
 import request from "@/api/request";
 import logger from "@/utils/logger";
 import { getSessionToken } from "@/utils/sessionToken";
+import { isCustomerBlocked, isCustomerBlockedError } from "@/utils/customerBlock";
 
 /**
  * Quote Tracking Composable
@@ -61,6 +62,8 @@ export function useQuoteTracking ()
     // ─── Start a new session ────────────────────────────────
     async function startSession ( insuranceType = null )
     {
+        if ( isCustomerBlocked() ) return null;
+
         // Prevent parallel startSession calls (e.g. during timeout)
         if ( startSessionInFlight ) return null;
         startSessionInFlight = true;
@@ -78,6 +81,12 @@ export function useQuoteTracking ()
                     return sessionUUID.value;
                 } catch ( err )
                 {
+                    if ( isCustomerBlockedError( err ) )
+                    {
+                        clearSession();
+                        return null;
+                    }
+
                     if ( err?.response?.status === 404 || err?.response?.status === 403 )
                     {
                         clearSession();
@@ -126,6 +135,7 @@ export function useQuoteTracking ()
     )
     {
         if ( !sessionUUID.value ) return;
+        if ( isCustomerBlocked() ) return;
 
         currentStep.value = stepName;
 
@@ -139,6 +149,13 @@ export function useQuoteTracking ()
             } );
         } catch ( err )
         {
+            if ( isCustomerBlockedError( err ) )
+            {
+                clearSession();
+                stopHeartbeat();
+                return;
+            }
+
             if ( err?.response?.status === 404 || err?.response?.status === 403 )
             {
                 clearSession();
@@ -155,6 +172,7 @@ export function useQuoteTracking ()
         heartbeatTimer = setInterval( async () =>
         {
             if ( !sessionUUID.value || !currentStep.value ) return;
+            if ( isCustomerBlocked() ) return;
 
             try
             {
@@ -166,6 +184,13 @@ export function useQuoteTracking ()
             {
                 // Session may be stale/inaccessible (not found or forbidden)
                 // -> stop noisy retries and clear local session state.
+                if ( isCustomerBlockedError( err ) )
+                {
+                    stopHeartbeat();
+                    clearSession();
+                    return;
+                }
+
                 if ( err.response?.status === 404 || err.response?.status === 403 )
                 {
                     if ( err.response?.status === 403 ) {
@@ -192,6 +217,7 @@ export function useQuoteTracking ()
     async function completeSession ( formData = null )
     {
         if ( !sessionUUID.value ) return;
+        if ( isCustomerBlocked() ) return;
 
         try
         {
@@ -200,6 +226,11 @@ export function useQuoteTracking ()
             } );
         } catch ( err )
         {
+            if ( isCustomerBlockedError( err ) )
+            {
+                return;
+            }
+
             logger.warn(
                 "[QuoteTracking] Failed to complete session:",
                 err.message,
@@ -223,6 +254,8 @@ export function useQuoteTracking ()
     // ─── Resume existing session on mount ───────────────────
     async function resumeSession ( stepName )
     {
+        if ( isCustomerBlocked() ) return;
+
         if ( sessionUUID.value )
         {
             // Validate the session still exists on the server before starting heartbeat
@@ -233,6 +266,12 @@ export function useQuoteTracking ()
                 startHeartbeat();
             } catch ( _err )
             {
+                if ( isCustomerBlockedError( _err ) )
+                {
+                    clearSession();
+                    return;
+                }
+
                 if ( _err?.response?.status === 403 ) {
                     logClearOnForbiddenOnce( sessionUUID.value, "resumeSession" );
                 }
@@ -260,6 +299,7 @@ export function useQuoteTracking ()
     function handleBeforeUnload ()
     {
         if ( !sessionUUID.value || !currentStep.value ) return;
+        if ( isCustomerBlocked() ) return;
 
         // Use sendBeacon for reliability on page close
         const payload = JSON.stringify( {
@@ -312,6 +352,8 @@ export function useQuoteTracking ()
  */
 export async function validateStoredSession ()
 {
+    if ( isCustomerBlocked() ) return;
+
     if ( typeof window !== 'undefined' ) {
         const path = window.location.pathname;
         const isPublicPage =

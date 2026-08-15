@@ -10,12 +10,13 @@
     theme="dark"
     @close="$emit('close')"
   >
-    <template #header-right>
+    <template #header-bottom>
       <AdminTabs
         v-model="activeTab"
         :tabs="tabs"
         dir="rtl"
         theme="dark"
+        aria-label="أنواع البيانات الأساسية"
       />
     </template>
 
@@ -31,6 +32,7 @@
         <InfoGrid :cols="2">
           <DataField label="رقم الهوية / الإقامة" :value="customer?.nationalId" mono :bold="true" color="text-yellow-400" />
           <DataField label="الرقم التسلسلي" :value="customer?.sequenceNumber" mono />
+          <DataField label="الجنسية" :value="getNationality(customer)" />
         </InfoGrid>
       </SectionCard>
     </template>
@@ -123,6 +125,19 @@ import { ModalShell, DataField, AdminButton, SectionCard, InfoGrid, AdminTabs } 
 import { useCustomerFormatters } from '../../utils/customerFormatters';
 
 const { getInsurancePurpose, getRegistrationType } = useCustomerFormatters();
+
+const getNationality = ( customer ) =>
+{
+  const code = customer?.nationality || customer?.custom_data?.nationality;
+
+  if ( !code ) return null;
+
+  try {
+    return new Intl.DisplayNames( [ 'ar' ], { type: 'region' } ).of( code ) || code;
+  } catch {
+    return code;
+  }
+};
 
 const tabs = [
   { id: 'insurance', label: 'تأمين / تجديد', icon: '🛡️' },

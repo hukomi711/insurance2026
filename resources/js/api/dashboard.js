@@ -67,6 +67,15 @@ export function blockCustomer ( id )
 }
 
 /**
+ * Remove a customer block by the identity stored on their profile.
+ * @param {number} id
+ */
+export function unblockCustomer ( id )
+{
+    return request.post( `/admin/customers/${ id }/unblock` );
+}
+
+/**
  * Reveal sensitive PII for a specific admin customer row.
  * This is intentionally separate from the list endpoint to defer decryption.
  * @param {number} id

@@ -1,5 +1,6 @@
 import { reactive, readonly, computed } from 'vue';
 import request from '@/api/request';
+import { isCustomerBlocked, isCustomerBlockedError } from '@/utils/customerBlock';
 
 /**
  * Composable for managing pricing constants/factors
@@ -36,6 +37,10 @@ export function usePricingConstants() {
       return;
     }
 
+    if (isCustomerBlocked()) {
+      return;
+    }
+
     state.isLoading = true;
     state.error = null;
 
@@ -52,6 +57,10 @@ export function usePricingConstants() {
       state.lastUpdated = response.lastUpdated;
       isInitialized = true;
     } catch (err) {
+      if (isCustomerBlockedError(err)) {
+        return;
+      }
+
       state.error = err.message || 'Failed to load pricing constants';
       console.error('[usePricingConstants] Error loading constants:', err);
     } finally {
@@ -80,6 +89,10 @@ export function usePricingConstants() {
         message: response.message,
       };
     } catch (err) {
+      if (isCustomerBlockedError(err)) {
+        return { match: false, message: 'Blocked customer' };
+      }
+
       console.error('[usePricingConstants] Error verifying constants:', err);
       return { match: false, message: 'Verification failed' };
     }

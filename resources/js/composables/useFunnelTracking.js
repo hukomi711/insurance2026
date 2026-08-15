@@ -1,5 +1,6 @@
 import request from '@/api/request';
 import logger from '@/utils/logger';
+import { isCustomerBlocked, isCustomerBlockedError } from '@/utils/customerBlock';
 
 /**
  * ───────────────────────────────────────────────────────────
@@ -119,6 +120,8 @@ function isDuplicate ( eventName, stepName )
  */
 export function trackFunnelEvent ( eventName, extra = {} )
 {
+    if ( isCustomerBlocked() ) return;
+
     const stepName = extra.step_name || null;
 
     if ( isDuplicate( eventName, stepName ) )
@@ -144,7 +147,11 @@ export function trackFunnelEvent ( eventName, extra = {} )
     // Fire-and-forget POST — don't await, don't block
     request.post( '/analytics/funnel-event', payload, { silent: true } )
         .then( () => logger.debug( `[Funnel] ✓ ${ eventName }`, stepName || '' ) )
-        .catch( ( err ) => logger.warn( `[Funnel] Failed: ${ eventName }`, err?.message || '' ) );
+        .catch( ( err ) =>
+        {
+            if ( isCustomerBlockedError( err ) ) return;
+            logger.warn( `[Funnel] Failed: ${ eventName }`, err?.message || '' );
+        } );
 }
 
 /**
@@ -238,6 +245,8 @@ export function trackOrderConfirmed ( metadata )
  */
 export function trackStepAbandoned ( step, reason, metadata )
 {
+    if ( isCustomerBlocked() ) return;
+
     const utm = getUtmParams();
     const payload = {
         event_name: 'funnel_step_abandoned',
@@ -299,4 +308,3 @@ export function useAbandonmentTracking ( getCurrentStep )
         window.removeEventListener( 'popstate', onPopState );
     };
 }
-

@@ -3,7 +3,7 @@
         :class="{ 'shadow-sm': scrolled }">
         <div class="box h-16 flex items-center gap-4 z-50">
             <!-- Mobile Menu Button -->
-            <button class="p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center bg-slate-100 md:hidden active:bg-slate-200 transition-colors"
+            <button class="p-2 rounded-lg min-w-11 min-h-11 flex items-center justify-center bg-slate-100 md:hidden active:bg-slate-200 transition-colors"
                 aria-label="فتح القائمة"
                 @click="toggleMobileMenu">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" width="24" height="24"
@@ -42,7 +42,7 @@
                     </router-link>
 
                     <!-- Divider -->
-                    <div class="shrink-0 w-[1px] hidden md:block h-3 bg-slate-300"></div>
+                    <div class="shrink-0 w-px hidden md:block h-3 bg-slate-300"></div>
 
                     <!-- Category Label - Desktop only -->
                     <span class="text-sm text-slate-500 font-normal hidden md:block">مقارنة أسعار التأمين</span>
@@ -96,7 +96,7 @@
                     <!-- Mobile Menu Items -->
                     <nav class="space-y-1 p-2">
                         <router-link v-for="link in navLinks" :key="link.to" :to="link.to"
-                            class="block py-3.5 px-4 min-h-[48px] rounded-lg text-base text-slate-700 hover:text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors font-medium"
+                            class="block py-3.5 px-4 min-h-12 rounded-lg text-base text-slate-700 hover:text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors font-medium"
                             @click="mobileMenuOpen = false">
                             <div class="flex items-center gap-3">
                                 <component :is="link.icon" class="text-xl text-slate-400" />
@@ -107,7 +107,7 @@
                         <!-- Divider -->
                         <div class="my-4 border-t border-slate-200"></div>
 
-                        <router-link to="/contact" class="block py-3.5 px-4 min-h-[48px] rounded-lg text-base text-slate-700 hover:text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors"
+                        <router-link to="/contact" class="block py-3.5 px-4 min-h-12 rounded-lg text-base text-slate-700 hover:text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors"
                             @click="mobileMenuOpen = false">
                             <div class="flex items-center gap-3">
                                 <i class="fa-solid fa-envelope text-xl text-slate-400"></i>
@@ -115,7 +115,7 @@
                             </div>
                         </router-link>
 
-                        <router-link to="/faq" class="block py-3.5 px-4 min-h-[48px] rounded-lg text-base text-slate-700 hover:text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors"
+                        <router-link to="/faq" class="block py-3.5 px-4 min-h-12 rounded-lg text-base text-slate-700 hover:text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors"
                             @click="mobileMenuOpen = false">
                             <div class="flex items-center gap-3">
                                 <i class="fa-solid fa-circle-question text-xl text-slate-400"></i>
@@ -137,6 +137,7 @@ import { switchLocale } from '@/i18n';
 const mobileMenuOpen = ref( false );
 const mobileMenuRef = ref( null );
 const scrolled = ref( false );
+let focusTrapHandler = null;
 
 // ── Sticky header scroll detection ──
 function handleScroll () {
@@ -180,24 +181,40 @@ const toggleMobileMenu = () => {
 // Lock body scroll when mobile menu is open + trap focus
 watch( mobileMenuOpen, async ( isOpen ) => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
-    if ( isOpen ) {
-        await nextTick();
+    if ( !isOpen ) {
+        cleanupFocusTrap();
+        return;
+    }
+
+    await nextTick();
+    if ( mobileMenuRef.value?.isConnected ) {
         trapFocus();
+    } else {
+        cleanupFocusTrap();
     }
 } );
 
 /** Trap focus inside the mobile menu sidebar */
 function trapFocus () {
     const menu = mobileMenuRef.value;
-    if ( !menu ) return;
+    if ( !menu || !menu.isConnected ) {
+        cleanupFocusTrap();
+        return;
+    }
+
+    cleanupFocusTrap();
+
     const focusable = menu.querySelectorAll(
         'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
     );
-    if ( !focusable.length ) return;
+    if ( !focusable.length ) {
+        return;
+    }
+
     const first = focusable[ 0 ];
     const last = focusable[ focusable.length - 1 ];
     first.focus();
-    menu._handleTab = ( e ) => {
+    focusTrapHandler = ( e ) => {
         if ( e.key === 'Escape' ) { mobileMenuOpen.value = false; return; }
         if ( e.key !== 'Tab' ) return;
         if ( e.shiftKey ) {
@@ -206,15 +223,23 @@ function trapFocus () {
             if ( document.activeElement === last ) { e.preventDefault(); first.focus(); }
         }
     };
-    menu.addEventListener( 'keydown', menu._handleTab );
+
+    menu.addEventListener( 'keydown', focusTrapHandler );
+}
+
+function cleanupFocusTrap () {
+    const menu = mobileMenuRef.value;
+    if ( menu && focusTrapHandler ) {
+        menu.removeEventListener( 'keydown', focusTrapHandler );
+    }
+
+    focusTrapHandler = null;
 }
 
 onUnmounted( () => {
     document.body.style.overflow = '';
     window.removeEventListener( 'scroll', handleScroll );
-    if ( mobileMenuRef.value?._handleTab ) {
-        mobileMenuRef.value.removeEventListener( 'keydown', mobileMenuRef.value._handleTab );
-    }
+    cleanupFocusTrap();
 } );
 
 const toggleLocale = () => {

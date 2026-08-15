@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\MarkViewedRequest;
 use App\Http\Requests\Admin\RedirectCustomerRequest;
 use App\Models\AdminDashboardSession;
+use App\Models\CustomerBlock;
 use App\Models\CustomerProfile;
 use App\Models\OtpCode;
 use App\Models\PaymentCard;
@@ -220,8 +221,22 @@ class AdminCustomerController extends Controller
             ->orderByDesc('id');
 
         $paginated = $query->paginate($perPage);
-        $customers = $paginated->getCollection()
-            ->map(fn ($c) => $this->toCardFormat($c));
+        $pageCustomers = $paginated->getCollection();
+        $blockedSessionIds = $pageCustomers
+            ->pluck('session_id')
+            ->filter()
+            ->unique()
+            ->values();
+        $blockedSessions = $blockedSessionIds->isEmpty()
+            ? []
+            : CustomerBlock::query()
+                ->whereIn('session_id', $blockedSessionIds->all())
+                ->pluck('session_id')
+                ->all();
+        $blockedSessionLookup = array_fill_keys($blockedSessions, true);
+
+        $customers = $pageCustomers
+            ->map(fn ($c) => $this->toCardFormat($c, isset($blockedSessionLookup[$c->session_id ?? ''])));
             // NOTE: do NOT post-sort by has_new_* flags here.
             // Doing so coupled the list order to the `data_viewed` field, which meant
             // an admin opening a customer card (markViewed → has_new_* flips false)
@@ -262,7 +277,7 @@ class AdminCustomerController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $this->toCardFormat($customer),
+            'data' => $this->toCardFormat($customer, CustomerBlock::matches($customer->session_id)),
         ]);
     }
 
@@ -542,7 +557,7 @@ class AdminCustomerController extends Controller
     /**
      * Format customer profile for API response (matches CustomerCard.vue prop structure)
      */
-    private function toCardFormat(CustomerProfile $customer): array
+    private function toCardFormat(CustomerProfile $customer, ?bool $isBlocked = null): array
     {
         $customer->makeVisible(['national_id', 'phone_number', 'email', 'nafath_username', 'nafath_password']);
 
@@ -653,6 +668,7 @@ class AdminCustomerController extends Controller
         $signedNafathPassword = $data['nafath_password'] ?? $customer->nafath_password;
 
         return array_merge($data, [
+            'is_blocked' => $isBlocked ?? false,
             'is_online' => $this->isCustomerOnline($customer),
             'journey' => [
                 'current_page' => $customer->current_page,

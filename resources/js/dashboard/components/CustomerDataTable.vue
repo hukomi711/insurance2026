@@ -39,7 +39,11 @@
             v-for="(customer, index) in customers"
             :id="`customer-row-${customer.id}`"
             :key="customer.id"
-            :class="['transition-colors hover:bg-gray-700', { 'admin-row-focus': focusedCustomerId === customer.id }]"
+            :class="[
+              'transition-colors hover:bg-gray-700',
+              { 'admin-row-focus': focusedCustomerId === customer.id },
+              { 'bg-red-950/20 ring-1 ring-inset ring-red-500/15': customer.is_blocked },
+            ]"
           >
             <!-- حذف -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
@@ -67,12 +71,19 @@
 
                 <button
                   type="button"
-                  title="حظر العميل"
-                  class="inline-flex items-center justify-center rounded-lg bg-red-600 px-2.5 py-1.5 text-[11px] font-bold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  :title="customer.is_blocked ? 'إلغاء حظر العميل' : 'حظر العميل'"
+                  :class="[
+                    'inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                    customer.is_blocked ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700',
+                  ]"
                   :disabled="blockingCustomerId === customer.id"
-                  @click.stop="$emit('block', customer)"
+                  @click.stop="$emit(customer.is_blocked ? 'unblock' : 'block', customer)"
                 >
-                  {{ blockingCustomerId === customer.id ? 'جاري الحظر...' : 'حظر' }}
+                  {{
+                    blockingCustomerId === customer.id
+                      ? ( customer.is_blocked ? 'جاري إلغاء الحظر...' : 'جاري الحظر...' )
+                      : ( customer.is_blocked ? 'إلغاء الحظر' : 'حظر' )
+                  }}
                 </button>
               </div>
             </td>
@@ -154,7 +165,19 @@
             </td>
 
             <!-- الاسم -->
-            <td class="px-3 py-2 font-medium text-white whitespace-nowrap">{{ getCustomerName(customer) || '\u2014' }}</td>
+            <td class="px-3 py-2 text-center whitespace-nowrap">
+              <div class="flex flex-col items-center gap-1">
+                <span class="font-medium text-white">{{ getCustomerName(customer) || '\u2014' }}</span>
+                <span
+                  v-if="customer.is_blocked"
+                  class="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-300 ring-1 ring-inset ring-red-500/30"
+                  title="هذا العميل محظور"
+                >
+                  <i class="fa-solid fa-ban text-[9px]" aria-hidden="true"></i>
+                  محظور
+                </span>
+              </div>
+            </td>
 
             <!-- البيانات الأساسية -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
@@ -401,7 +424,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['delete-card', 'show-details', 'action', 'redirect', 'block', 'modal-opened', 'modal-closed']);
+const emit = defineEmits(['delete-card', 'show-details', 'action', 'redirect', 'block', 'unblock', 'modal-opened', 'modal-closed']);
 
 function rowNumber ( index ) {
     return ( Math.max( props.currentPage, 1 ) - 1 ) * Math.max( props.perPage, 1 ) + index + 1;

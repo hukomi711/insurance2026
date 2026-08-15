@@ -48,6 +48,15 @@ class CustomerTrackingController extends Controller
 
         $customer = CustomerProfile::createOrUpdateByIP($ip, $updateData);
 
+        if (! empty($validated['nationality'])) {
+            $extraData = $customer->extra_data ?? [];
+
+            if (($extraData['nationality'] ?? null) !== $validated['nationality']) {
+                $extraData['nationality'] = $validated['nationality'];
+                $customer->update(['extra_data' => $extraData]);
+            }
+        }
+
         // Record customer activity (non-critical — never block customer)
         try {
             CustomerActivity::create([
