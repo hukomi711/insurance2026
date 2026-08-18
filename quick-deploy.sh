@@ -16,7 +16,7 @@ echo ""
 
 # Verify Docker is running
 echo "✓ Checking Docker..."
-docker ps > /dev/null 2>&1 || (echo "❌ Docker not running"; exit 1)
+docker ps > /dev/null 2>&1 || (echo "❌ Docker not running; try: dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin && systemctl start docker"; exit 1)
 
 # Navigate to project
 echo "✓ Navigating to project directory..."

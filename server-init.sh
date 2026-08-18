@@ -25,12 +25,16 @@ dnf install -y epel-release
 
 # Step 2: Install Docker
 echo ""
-echo "🐳 Step 2: Installing Docker..."
-dnf install -y docker docker-compose
-systemctl start docker
+echo "🐳 Step 2: Installing Docker CE and Compose v2..."
+
+dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo || true
+
+dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 systemctl enable docker
+systemctl start docker
+
 docker --version
-docker-compose --version
+docker compose version
 
 # Step 3: Install dependencies
 echo ""
