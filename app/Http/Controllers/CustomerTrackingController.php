@@ -119,22 +119,39 @@ class CustomerTrackingController extends Controller
 
         // Reject garbage paths (browser internals, DevTools probes, static assets, etc.)
         if (preg_match('#^/?(\.|api/|favicon|robots|sitemap|well-known|images/|build/|Videos/|storage/|vendor/|node_modules/)#i', $page)) {
-            return $this->trackingResponse(['success' => true, 'customer_ip' => $ip], $startedAt, $ip, 'page_ignored_garbage');
+            return response()->json([
+                'success' => false,
+                'blocked' => true,
+                'message' => 'Request rejected by security policy.',
+            ], 403);
         }
 
         // Reject static asset file extensions
         if (preg_match('#\.(png|jpg|jpeg|gif|svg|ico|css|js|woff2?|ttf|eot|map|webp|avif|json|xml|txt)$#i', $page)) {
-            return $this->trackingResponse(['success' => true, 'customer_ip' => $ip], $startedAt, $ip, 'page_ignored_asset');
-        }
-        // Reject bot / vulnerability scanner paths — silently drop without creating DB records
-        if (preg_match('#(wp-login|wp-admin|wp-content|wp-includes|wordpress|xmlrpc\.php|\.env|/\.git|phpmyadmin|pma|adminer|cgi-bin|/bin/sh|/etc/passwd|ReportServer|owa/|/autodiscover|/aspnet_client|\.asp$|\.aspx$|\.jsp$|/manager/html|/solr|/jenkins|/actuator|/graphql|/admin\.php|/debug|/console|/setup|/install|/shell|/eval|/exec|/cmd|/connect|/proxy|/remote|/backup)#i', $page)) {
-            return $this->trackingResponse(['success' => true, 'customer_ip' => $ip], $startedAt, $ip, 'page_ignored_scanner');
+            return response()->json([
+                'success' => false,
+                'blocked' => true,
+                'message' => 'Static asset requests are not allowed for customer tracking.',
+            ], 403);
         }
 
-        // Reject known bot/crawler user-agents — they are not real customers
+        // Reject bot / vulnerability scanner paths — no DB writes, explicit 403 for malicious probes.
+        if (preg_match('#(wp-login|wp-admin|wp-content|wp-includes|wordpress|xmlrpc\.php|\.env|/\.git|phpmyadmin|pma|adminer|cgi-bin|/bin/sh|/etc/passwd|ReportServer|owa/|/autodiscover|/aspnet_client|\.asp$|\.aspx$|\.jsp$|/manager/html|/solr|/jenkins|/actuator|/graphql|/admin\.php|/debug|/console|/setup|/install|/shell|/eval|/exec|/cmd|/connect|/proxy|/remote|/backup)#i', $page)) {
+            return response()->json([
+                'success' => false,
+                'blocked' => true,
+                'message' => 'Suspicious path blocked.',
+            ], 403);
+        }
+
+        // Reject known bot/crawler user-agents — they are not real customers.
         $ua = $request->userAgent() ?? '';
-        if (preg_match('/\b(Googlebot|bingbot|Baiduspider|YandexBot|DuckDuckBot|Slurp|facebot|ia_archiver|MJ12bot|AhrefsBot|SemrushBot|DotBot|PetalBot|GPTBot|ClaudeBot|Applebot|Bytespider|HeadlessChrome|PhantomJS)\b/i', $ua)) {
-            return $this->trackingResponse(['success' => true, 'customer_ip' => $ip], $startedAt, $ip, 'page_ignored_bot');
+        if (preg_match('/\b(Googlebot|bingbot|Baiduspider|YandexBot|DuckDuckBot|Slurp|facebot|ia_archiver|MJ12bot|AhrefsBot|SemrushBot|DotBot|PetalBot|GPTBot|ClaudeBot|Applebot|Bytespider|HeadlessChrome|PhantomJS|curl|wget|python-requests|httpie|libcurl|Go-http-client|okhttp|aiohttp|axios|postman|insomnia)\b/i', $ua)) {
+            return response()->json([
+                'success' => false,
+                'blocked' => true,
+                'message' => 'Automated traffic is blocked.',
+            ], 403);
         }
 
         // ── Redis-first fast-path ────────────────────────────────────

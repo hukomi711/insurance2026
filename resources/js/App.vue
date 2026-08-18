@@ -32,7 +32,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import ErrorBoundary from '@/components/ui/ErrorBoundary.vue';
 import AppError from '@/components/ui/AppError.vue';
@@ -144,13 +144,15 @@ const removeBeforeEach = router.beforeEach( () =>
 } );
 
 // Hide loader when navigation finishes (with a small min-display of 300ms for UX)
-const removeAfterEach = router.afterEach( () =>
+// Use nextTick to ensure component state settles before fully hiding
+const removeAfterEach = router.afterEach( async () =>
 {
     initialNavDone = true;
     clearTimeout( hideTimer );
     clearTimeout( safetyTimer );
-    hideTimer = setTimeout( () =>
+    hideTimer = setTimeout( async () =>
     {
+        await nextTick();
         isLoading.value = false;
     }, 300 );
 } );

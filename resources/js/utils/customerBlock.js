@@ -35,6 +35,14 @@ export function clearCustomerBlocked ()
         // Storage may be unavailable in privacy-restricted browser contexts.
     }
 
+    try
+    {
+        sessionStorage.removeItem( 'geo_status' );
+    } catch
+    {
+        // Storage may be unavailable in privacy-restricted browser contexts.
+    }
+
     window.dispatchEvent( new CustomEvent( `${ CUSTOMER_BLOCKED_EVENT }:cleared` ) );
 }
 

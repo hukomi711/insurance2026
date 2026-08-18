@@ -9,18 +9,21 @@
 ## 📋 Prerequisites
 
 ✅ **GitHub Repository**
+
 - Owner: mobanihani99
 - Repo: tameni2026
 - Branch: hardening/clean-rebuild
 - Latest Commit: 7ede2f2
 
 ✅ **Server Credentials (NEW)**
+
 - IP: 209.74.64.215
 - Hostname: server1.ttamikomzz.com
 - Root Username: root
 - Root Password: `TY4gW9m4hp97AEcb4P`
 
 ✅ **Required Software (assumes fresh AlmaLinux 9)**
+
 - Docker & Docker Compose
 - Git
 - curl
@@ -38,6 +41,7 @@ ssh root@209.74.64.215
 ```
 
 **Install Docker & Dependencies:**
+
 ```bash
 #!/bin/bash
 set -e
@@ -84,6 +88,7 @@ git checkout hardening/clean-rebuild
 ### Step 3: Configure Environment
 
 **Create production .env file:**
+
 ```bash
 cat > /opt/insurance2026/.env << 'EOF'
 APP_NAME=Insurance2026
@@ -167,6 +172,7 @@ echo "✅ DEPLOYMENT COMPLETE"
 ## 🧪 Verification Commands
 
 ### Check Service Status
+
 ```bash
 docker compose ps
 
@@ -182,6 +188,7 @@ docker compose ps
 ```
 
 ### Test API Health
+
 ```bash
 curl -sk https://localhost/api/health -H "Host: ttamikomzz.com"
 
@@ -190,22 +197,26 @@ curl -sk https://localhost/api/health -H "Host: ttamikomzz.com"
 ```
 
 ### View Application Logs
+
 ```bash
 docker logs ins2026-app -f --tail=50
 ```
 
 ### Check Database Migrations
+
 ```bash
 docker compose exec -T app php artisan migrate:status
 ```
 
 ### Check Redis Connection
+
 ```bash
 docker compose exec -T redis redis-cli ping
 # Expected: PONG
 ```
 
 ### Test SSL Certificate
+
 ```bash
 openssl s_client -connect localhost:443 -servername ttamikomzz.com </dev/null 2>/dev/null | grep -A 2 "subject="
 ```
@@ -215,6 +226,7 @@ openssl s_client -connect localhost:443 -servername ttamikomzz.com </dev/null 2>
 ## 🔧 Troubleshooting
 
 ### Application returns 500 error
+
 ```bash
 # Check logs
 docker logs ins2026-app | tail -50 | grep -i error
@@ -226,6 +238,7 @@ docker compose exec -T app ls -la /var/www/html/.env
 ```
 
 ### Services not starting
+
 ```bash
 # Rebuild without cache
 docker compose build app --no-cache
@@ -236,6 +249,7 @@ docker compose up -d
 ```
 
 ### Database not initialized
+
 ```bash
 # Run migrations
 docker compose exec -T app php artisan migrate
@@ -245,6 +259,7 @@ docker compose exec -T app php artisan db:seed
 ```
 
 ### WebSocket not connecting (Reverb)
+
 ```bash
 # Check Reverb logs
 docker logs ins2026-reverb
@@ -258,16 +273,19 @@ curl -I http://localhost:8080/
 ## 📊 Production Monitoring
 
 ### Continuous Log Monitor
+
 ```bash
 watch -n 5 'docker compose ps && echo "---" && docker logs ins2026-app | tail -10'
 ```
 
 ### Resource Usage
+
 ```bash
 docker stats --no-stream
 ```
 
 ### Database Backups
+
 ```bash
 # Create backup
 docker compose exec -T db mysqldump -uinsurance -pinsurance2026 insurance2026 > backup.sql
@@ -294,6 +312,7 @@ docker compose exec -T db mysql -uinsurance -pinsurance2026 insurance2026 < back
 ## 📞 Support Commands
 
 **Restart specific service:**
+
 ```bash
 docker compose restart app  # Just the PHP application
 docker compose restart nginx  # Just web server
@@ -301,12 +320,14 @@ docker compose restart horizon  # Just queue workers
 ```
 
 **Full reset (DANGEROUS - clears data):**
+
 ```bash
 docker compose down -v  # -v removes volumes
 docker compose up -d
 ```
 
 **Access application shell:**
+
 ```bash
 docker compose exec -T app php artisan tinker
 ```
@@ -318,7 +339,7 @@ docker compose exec -T app php artisan tinker
 - [ ] All 7 containers showing "Up" status
 - [ ] Health endpoint returns `{"ok":true}`
 - [ ] SSL certificate valid
-- [ ] Application loads on https://ttamikomzz.com
+- [ ] Application loads on <https://ttamikomzz.com>
 - [ ] No errors in application logs
 - [ ] Database migrations completed
 - [ ] Redis cache working

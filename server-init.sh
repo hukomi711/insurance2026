@@ -52,6 +52,9 @@ dnf install -y \
 # Step 4: Configure firewall
 echo ""
 echo "🔥 Step 4: Configuring firewall..."
+if ! systemctl is-active --quiet firewalld; then
+  systemctl enable --now firewalld
+fi
 firewall-cmd --permanent --add-service=http
 firewall-cmd --permanent --add-service=https
 firewall-cmd --permanent --add-port=8080/tcp  # Reverb WebSocket

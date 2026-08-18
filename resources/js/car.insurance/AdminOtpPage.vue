@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
 import InsLoading from '@/components/ui/InsLoading.vue';
@@ -112,15 +112,23 @@ async function handleVerify() {
     try {
         await userStore.verifyCode(pendingToken, code.value);
         await userStore.getInfo({ force: true });
+
+        // ── Ensure loading state is cleared before navigation ──
+        // nextTick guarantees DOM update completes before router starts navigation
+        loading.value = false;
+        await nextTick();
+
         const redirect = route.query.redirect;
         router.push(redirect && typeof redirect === 'string' ? redirect : '/dashboard');
     } catch (e) {
+        loading.value = false;
         const status = e?.response?.status;
         const serverMessage = e?.response?.data?.message;
 
         // Session expired (pending_token gone from cache) — redirect to login
         if (status === 422 && serverMessage && serverMessage.includes('انتهت صلاحية الجلسة')) {
             error.value = serverMessage;
+            await nextTick();
             setTimeout(() => router.replace('/login'), 1500);
             return;
         }
@@ -132,8 +140,6 @@ async function handleVerify() {
         }
 
         error.value = serverMessage || e.message || 'رمز التأكيد غير صحيح أو منتهي الصلاحية';
-    } finally {
-        loading.value = false;
     }
 }
 
@@ -149,19 +155,23 @@ async function handleResend() {
             resendSuccess.value = result.message || 'تمت معالجة الطلب، لكن البريد غير متاح حالياً. استخدم الرمز من السيرفر إذا لزم الأمر.';
             code.value = '';
             startCountdown();
+            resending.value = false;
             return;
         }
 
         resendSuccess.value = result?.message || 'تم إعادة إرسال الرمز بنجاح';
         code.value = '';
         startCountdown();
+        resending.value = false;
     } catch (e) {
+        resending.value = false;
         const status = e?.response?.status;
         const serverMessage = e?.response?.data?.message;
         const isSuccessResponse = e?.response?.data?.success === true;
 
         if (status === 422 && serverMessage && serverMessage.includes('انتهت صلاحية الجلسة')) {
             error.value = serverMessage;
+            await nextTick();
             setTimeout(() => router.replace('/login'), 1500);
             return;
         }
@@ -180,13 +190,12 @@ async function handleResend() {
 
         if (status === 422) {
             error.value = serverMessage || 'انتهت صلاحية الجلسة أو تعذر إرسال الرمز. يرجى تسجيل الدخول مرة أخرى.';
+            await nextTick();
             setTimeout(() => router.replace('/login'), 1500);
             return;
         }
 
         error.value = serverMessage || 'فشل إعادة إرسال الرمز. حاول مرة أخرى.';
-    } finally {
-        resending.value = false;
     }
 }
 

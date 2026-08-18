@@ -44,7 +44,7 @@
 
 الخطوة 1️⃣: انتظر اكتمال استعادة الخادم
    ⏱️ المدة: ~10-15 دقيقة (قد تكون أكملت بالفعل)
-   
+
    إذا انتظرت كثيراً، جرب الاتصال:
    $ ssh root@209.74.64.215
    Password: TY4gW9m4hp97AEcb4P
@@ -54,29 +54,29 @@
 الخطوة 2️⃣: بمجرد الاتصال بالخادم، اختر واحد من:
 
 ✨ الخيار A: التثبيت الكامل من الصفر (الأفضل للخادم النظيف)
-   
+
    $ cd /tmp
    $ git clone https://github.com/mobanihani99/tameni2026.git
    $ bash tameni2026/server-init.sh
-   
+
    ⏱️ المدة: ~20-30 دقيقة (يتضمن تثبيت Docker)
 
 ─────────────────────────────────────────────────────────────────────────
 
 ✨ الخيار B: الرفع السريع (إذا كان Docker موجوداً)
-   
+
    $ cd /opt/insurance2026 || mkdir -p /opt && cd /opt && \
      git clone https://github.com/mobanihani99/tameni2026.git
-   
+
    $ cd /opt/insurance2026
    $ bash quick-deploy.sh
-   
+
    ⏱️ المدة: ~15-20 دقيقة (أسرع)
 
 ─────────────────────────────────────────────────────────────────────────
 
 ✨ الخيار C: يدويًا خطوة بخطوة
-   
+
    $ cd /opt/insurance2026
    $ git pull origin hardening/clean-rebuild
    $ docker compose build app --no-cache

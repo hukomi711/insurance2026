@@ -15,7 +15,7 @@ check() {
   local name=$1
   local cmd=$2
   echo -n "🔍 $name... "
-  
+
   if output=$(eval "$cmd" 2>&1); then
     echo "✅ PASS"
     ((PASSED++))

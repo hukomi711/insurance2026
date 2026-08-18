@@ -189,6 +189,12 @@ server {
         proxy_set_header       X-Forwarded-Proto $scheme;
     }
 
+    # ── Block scanner / backdoor probe paths before Laravel is reached ─────
+    # This is the last defense at the edge for common bot probes and hidden admin paths.
+    location ~* ^/(?:\.git(?:/.*)?|\.env(?:/.*)?|\.svn(?:/.*)?|\.hg(?:/.*)?|wp-admin(?:/.*)?|wp-login(?:/.*)?|wp-content(?:/.*)?|wp-includes(?:/.*)?|wordpress(?:/.*)?|xmlrpc\.php|phpmyadmin(?:/.*)?|pma(?:/.*)?|adminer(?:/.*)?|cgi-bin(?:/.*)?|server-status|server-info|actuator(?:/.*)?|graphql(?:/.*)?|debug(?:/.*)?|setup(?:/.*)?|install(?:/.*)?|console(?:/.*)?|shell(?:/.*)?|cmd(?:/.*)?|remote(?:/.*)?|backup(?:/.*)?|autodiscover(?:/.*)?|aspnet_client(?:/.*)?|owa(?:/.*)?|\.well-known(?:/.*)?)$ {
+        return 403;
+    }
+
     # ── Admin auth API — public entrypoints protected by Laravel throttle + 2FA ──
     # Exact locations must appear before the /api/admin/ allowlist prefix.
     location = /api/admin/login {

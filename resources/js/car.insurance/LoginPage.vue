@@ -128,7 +128,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onUnmounted } from 'vue';
+import { ref, reactive, computed, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useUserStore } from '@/store/modules/user';
 import InsLoading from '@/components/ui/InsLoading.vue';
@@ -353,6 +353,11 @@ async function handleLogin ()
     try
     {
         const result = await userStore.login( form );
+
+        // ─── Clear loading before navigation to prevent spinner artifact ───
+        loading.value = false;
+        await nextTick();
+
         if ( result.requires_2fa )
         {
             const redirect = router.currentRoute.value.query.redirect;
@@ -366,11 +371,9 @@ async function handleLogin ()
         }
     } catch ( err )
     {
+        loading.value = false;
         handleServerError( err );
         triggerShake();
-    } finally
-    {
-        loading.value = false;
     }
 }
 </script>

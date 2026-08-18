@@ -72,6 +72,16 @@ class ApiGeoRestrictionTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
     }
 
+    public function test_public_quote_calculation_exempted(): void
+    {
+        $middleware = $this->makeMiddleware(enabled: true, isAdmin: false, isSaudi: false);
+        $request = Request::create('/api/quotes/calculate');
+
+        $response = $middleware->handle($request, fn () => response()->json(['ok' => true]));
+
+        $this->assertEquals(200, $response->getStatusCode());
+    }
+
     public function test_admin_ip_allowed(): void
     {
         $middleware = $this->makeMiddleware(enabled: true, isAdmin: true, isSaudi: false);
@@ -95,7 +105,7 @@ class ApiGeoRestrictionTest extends TestCase
     public function test_foreign_ip_blocked_on_protected_api(): void
     {
         $middleware = $this->makeMiddleware(enabled: true, isAdmin: false, isSaudi: false);
-        $request = Request::create('/api/quotes/calculate');
+        $request = Request::create('/api/orders');
 
         $response = $middleware->handle($request, fn () => response()->json(['ok' => true]));
 

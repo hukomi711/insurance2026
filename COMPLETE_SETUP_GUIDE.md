@@ -9,6 +9,7 @@
 ## 📦 ما تم إعداده
 
 ### 1. ✅ الكود على GitHub
+
 ```
 Repository:  mobanihani99/tameni2026
 Branch:      hardening/clean-rebuild
@@ -17,6 +18,7 @@ URL:         https://github.com/mobanihani99/tameni2026
 ```
 
 ### 2. ✅ الخادم الجديد
+
 ```
 Server:      server1.ttamikomzz.com
 IP:          209.74.64.215
@@ -27,6 +29,7 @@ Password:    TY4gW9m4hp97AEcb4P
 ```
 
 ### 3. ✅ ملفات التثبيت الجاهزة
+
 ```
 server-init.sh          - التثبيت الكامل من الصفر
 quick-deploy.sh         - رفع سريع (إذا كان Docker موجوداً)
@@ -39,6 +42,7 @@ DEPLOYMENT_GUIDE.md     - دليل تفصيلي مع أوامر
 ## 🎯 الخطوات التالية (تسلسل كامل)
 
 ### **الخطوة 1: انتظر استعادة الخادم**
+
 ⏱️ **الوقت المتوقع**: 10-15 دقيقة من بداية التثبيت
 
 الخادم يعيد تثبيت نظام التشغيل. سيكون جاهزاً في غضون دقائق.
@@ -79,6 +83,7 @@ bash /opt/insurance2026/quick-deploy.sh
 ```
 
 **⏱️ المدة المتوقعة**:
+
 - Docker build: ~10-15 دقيقة
 - Database migrations: ~2 دقائق
 - **المجموع**: ~15-20 دقيقة
@@ -101,7 +106,7 @@ curl https://ttamikomzz.com/api/health -k
 ## 🔧 الملفات المضمنة
 
 | الملف | الغرض | متى تستخدمه |
-|------|-------|-----------|
+| ------ | ------- | ----------- |
 | `server-init.sh` | تثبيت كامل من الصفر | الخادم جديد تماماً |
 | `quick-deploy.sh` | رفع سريع | Docker موجود بالفعل |
 | `health-check.sh` | فحص شامل | للتحقق من الصحة |
@@ -113,7 +118,7 @@ curl https://ttamikomzz.com/api/health -k
 ## 📋 الخدمات التي سيتم تثبيتها
 
 | الخدمة | الوظيفة | المنفذ |
-|--------|---------|--------|
+| -------- | --------- | -------- |
 | 🐳 Docker | حاوية المتطلبات | - |
 | 🔵 MySQL | قاعدة البيانات | 3306 (داخلي) |
 | 🔴 Redis | Cache/Session/Queue | 6379 (داخلي) |
@@ -142,6 +147,7 @@ curl https://ttamikomzz.com/api/health -k
 ## 🆘 استكشاف الأخطاء
 
 ### إذا لم يتصل الخادم بـ SSH
+
 ```bash
 # جرب من جهاز آخر أو الانتظر 5-10 دقائق أخرى
 # قد يكون التثبيت لا يزال جاريًا
@@ -150,6 +156,7 @@ curl https://ttamikomzz.com/api/health -k
 ```
 
 ### إذا فشل التثبيت
+
 ```bash
 # عرض السجل
 docker logs ins2026-app -f
@@ -160,6 +167,7 @@ docker compose up -d app
 ```
 
 ### إذا كان التطبيق بطيئاً
+
 ```bash
 # تحقق من الموارد
 docker stats
@@ -173,6 +181,7 @@ docker compose restart app horizon redis
 ## 🔐 الأمان المهم
 
 **⚠️ تغيير كلمة المرور الفوري**:
+
 ```bash
 # بعد الاتصال الأول بـ SSH
 passwd root
@@ -180,6 +189,7 @@ passwd root
 ```
 
 **✅ قائمة الأمان**:
+
 - [ ] غير كلمة المرور الجذرية
 - [ ] تفعيل جدار الحماية (Firewall)
 - [ ] إعداد المراقبة والتنبيهات
