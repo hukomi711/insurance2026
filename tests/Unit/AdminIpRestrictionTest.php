@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Tests\TestCase;
 
 /**
- * Tests for AdminIpRestriction middleware — Fail-Closed IP whitelist.
+ * Tests for AdminIpRestriction middleware — pass-through behavior.
  */
 class AdminIpRestrictionTest extends TestCase
 {
@@ -26,7 +26,7 @@ class AdminIpRestrictionTest extends TestCase
         $this->assertEquals(200, $response->getStatusCode());
     }
 
-    public function test_blocked_ip_returns_403_for_api(): void
+    public function test_blocked_ip_still_passes_for_api(): void
     {
         $geo = $this->createMock(GeoLocationService::class);
         $geo->method('isAdminIp')->willReturn(false);
@@ -37,12 +37,10 @@ class AdminIpRestrictionTest extends TestCase
 
         $response = $middleware->handle($request, fn () => response()->json(['ok' => true]));
 
-        $this->assertEquals(403, $response->getStatusCode());
-        $json = json_decode($response->getContent(), true);
-        $this->assertFalse($json['success']);
+        $this->assertEquals(200, $response->getStatusCode());
     }
 
-    public function test_blocked_ip_returns_404_for_web(): void
+    public function test_blocked_ip_still_passes_for_web(): void
     {
         $geo = $this->createMock(GeoLocationService::class);
         $geo->method('isAdminIp')->willReturn(false);
@@ -50,7 +48,8 @@ class AdminIpRestrictionTest extends TestCase
         $middleware = new AdminIpRestriction($geo);
         $request = Request::create('/login');
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
-        $middleware->handle($request, fn () => response('ok'));
+        $response = $middleware->handle($request, fn () => response('ok'));
+
+        $this->assertEquals(200, $response->getStatusCode());
     }
 }
