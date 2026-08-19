@@ -20,6 +20,9 @@ let echoPromise = null;
 let echoSuspendedForPageCache = false;
 let echoLifecycleErrorGraceUntil = 0;
 let lifecycleHandlersRegistered = false;
+let authSuspendedUntil = 0;
+let authSuspendReason = "";
+let lastAuthToken = null;
 const PUSHER_UNAVAILABLE_TIMEOUT_MS = 30_000;
 // Pusher may deliver the transport error only after its unavailable timeout.
 // Keep the BFCache grace window longer than that timeout so the delayed error
@@ -44,6 +47,21 @@ function clearPusherTransportCache ()
 function getPusherInstance ()
 {
     return echoInstance?.connector?.pusher ?? null;
+}
+
+function suspendChannelAuth ( ms, reason )
+{
+    authSuspendedUntil = Date.now() + ms;
+    authSuspendReason = reason;
+
+    try
+    {
+        const pusher = getPusherInstance();
+        if ( pusher?.connection?.state !== "disconnected" ) pusher?.disconnect();
+    } catch
+    {
+        // no-op
+    }
 }
 
 function suspendEchoForPageLifecycle ( reason )
@@ -278,7 +296,8 @@ async function _createEcho ()
             authEndpoint: "/api/broadcasting/auth",
             // Custom authorizer — bypasses Pusher.js internal XHR auth
             // to guarantee the Bearer token is always sent correctly.
-            // Retries up to 3 times with exponential backoff on network errors.
+            // Retries only for transient/network failures. Hard auth failures
+            // are not retried to avoid infinite /api/broadcasting/auth storms.
             channelAuthorization: {
                 customHandler: ( { socketId, channelName }, callback ) =>
                 {
@@ -287,12 +306,34 @@ async function _createEcho ()
                     function attempt ( retry )
                     {
                         const token = localStorage.getItem( "auth_token" );
+
+                        if ( lastAuthToken && token !== lastAuthToken )
+                        {
+                            authSuspendedUntil = 0;
+                            authSuspendReason = "";
+                        }
+                        lastAuthToken = token;
+
+                        if ( Date.now() < authSuspendedUntil )
+                        {
+                            logger.warn( `[Echo] Auth suspended — skip ${ channelName } (${ authSuspendReason })` );
+                            callback( new Error( "Echo auth temporarily suspended" ), null );
+                            return;
+                        }
+
+                        if ( !token )
+                        {
+                            suspendChannelAuth( 15_000, "missing-auth-token" );
+                            callback( new Error( "Missing auth token" ), null );
+                            return;
+                        }
+
                         fetch( "/api/broadcasting/auth", {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/x-www-form-urlencoded",
                                 Accept: "application/json",
-                                ...( token ? { Authorization: `Bearer ${ token }` } : {} ),
+                                Authorization: `Bearer ${ token }`,
                             },
                             body: new URLSearchParams( {
                                 socket_id: socketId,
@@ -303,14 +344,32 @@ async function _createEcho ()
                             {
                                 if ( !r.ok )
                                 {
+                                    const authError = new Error( `Auth ${ r.status }` );
+                                    authError.status = r.status;
+
+                                    if ( r.status === 401 || r.status === 403 || r.status === 419 )
+                                    {
+                                        suspendChannelAuth( 60_000, `auth-${ r.status }` );
+                                        authError.noRetry = true;
+                                    } else if ( r.status >= 400 && r.status < 500 && r.status !== 429 )
+                                    {
+                                        authError.noRetry = true;
+                                    }
+
                                     logger.error( `[Echo] Auth failed: ${ r.status } for ${ channelName }` );
-                                    throw new Error( `Auth ${ r.status }` );
+                                    throw authError;
                                 }
                                 return r.json();
                             } )
                             .then( ( data ) => callback( null, data ) )
                             .catch( ( err ) =>
                             {
+                                if ( err?.noRetry )
+                                {
+                                    callback( err, null );
+                                    return;
+                                }
+
                                 if ( retry < MAX_RETRIES )
                                 {
                                     const delay = 1000 * Math.pow( 2, retry ); // 1s, 2s, 4s
@@ -353,6 +412,9 @@ export function destroyEcho ()
     echoPromise = null;
     echoSuspendedForPageCache = false;
     echoLifecycleErrorGraceUntil = 0;
+    authSuspendedUntil = 0;
+    authSuspendReason = "";
+    lastAuthToken = null;
 
     if ( echoInstance )
     {
