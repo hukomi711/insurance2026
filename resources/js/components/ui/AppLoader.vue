@@ -5,7 +5,7 @@
             leave-active-class="transition-opacity duration-500 ease-in"
             leave-from-class="opacity-100" leave-to-class="opacity-0">
             <div v-if="visible"
-                class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm"
+                class="fixed inset-0 z-9999 flex flex-col items-center justify-center bg-white/95 backdrop-blur-sm"
                 role="status" aria-busy="true" :aria-label="label">
 
                 <!-- Animated Logo SVG -->

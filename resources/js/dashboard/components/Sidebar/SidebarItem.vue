@@ -1,7 +1,7 @@
 <template>
     <router-link :to="item.path"
         class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
-        :class="isActive ? 'bg-[var(--color-primary)] text-white' : ''"
+        :class="isActive ? 'bg-(--color-primary) text-white' : ''"
         :style="isActive ? {} : { color: 'var(--admin-sidebar-text)' }"
         @click="onNavigate"
         @mouseenter="!isActive && ($event.currentTarget.style.backgroundColor = 'var(--admin-sidebar-hover)')"

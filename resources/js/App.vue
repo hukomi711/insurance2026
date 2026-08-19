@@ -16,7 +16,7 @@
 
     <div
         v-if="customerBlocked"
-        class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950 p-6 text-center"
+        class="fixed inset-0 z-9999 flex items-center justify-center bg-slate-950 p-6 text-center"
         dir="rtl"
         role="alert"
         aria-live="assertive"

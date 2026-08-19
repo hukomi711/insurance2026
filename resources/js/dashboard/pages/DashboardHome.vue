@@ -75,7 +75,7 @@
                         <button
                             aria-label="الصفحة السابقة"
                             class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-all"
-                            :class="currentPage <= 1 ? 'border-white/[0.04] text-white/20 cursor-not-allowed' : 'border-white/[0.08] hover:bg-white/[0.06]'"
+                            :class="currentPage <= 1 ? 'border-white/4 text-white/20 cursor-not-allowed' : 'border-white/8 hover:bg-white/6'"
                             :style="currentPage > 1 ? { color: 'var(--admin-text-muted)' } : {}"
                             :disabled="currentPage <= 1"
                             @click="goToPage(currentPage - 1)"
@@ -87,8 +87,8 @@
                             <button v-else
                                 :aria-label="`صفحة ${p}`"
                                 :aria-current="p === currentPage ? 'page' : undefined"
-                                class="min-w-[32px] px-2 py-1.5 text-xs font-medium rounded-lg border transition-all"
-                                :class="p === currentPage ? 'bg-blue-600 text-white border-blue-600' : 'border-white/[0.08] hover:bg-white/[0.06]'"
+                                class="min-w-8 px-2 py-1.5 text-xs font-medium rounded-lg border transition-all"
+                                :class="p === currentPage ? 'bg-blue-600 text-white border-blue-600' : 'border-white/8 hover:bg-white/6'"
                                 :style="p !== currentPage ? { color: 'var(--admin-text-muted)' } : {}"
                                 @click="goToPage(p)"
                             >{{ p }}</button>
@@ -96,7 +96,7 @@
                         <button
                             aria-label="الصفحة التالية"
                             class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-all"
-                            :class="currentPage >= lastPage ? 'border-white/[0.04] text-white/20 cursor-not-allowed' : 'border-white/[0.08] hover:bg-white/[0.06]'"
+                            :class="currentPage >= lastPage ? 'border-white/4 text-white/20 cursor-not-allowed' : 'border-white/8 hover:bg-white/6'"
                             :style="currentPage < lastPage ? { color: 'var(--admin-text-muted)' } : {}"
                             :disabled="currentPage >= lastPage"
                             @click="goToPage(currentPage + 1)"
@@ -126,7 +126,7 @@
 
         <div
             v-if="customerToBlock"
-            class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+            class="fixed inset-0 z-100 flex items-center justify-center bg-black/40 p-4"
             @click.self="cancelBlockConfirm"
         >
             <div
@@ -1877,19 +1877,24 @@ const handleCustomerAction = async ( payload ) => {
 
         // ── STC Call Actions (Stage 3) ──
         else if ( action === 'stc-call-approve' || action === 'stc-call-reject' ) {
-            // Prefer stc_otp/stc_verification in all_otps
             let otpId = null;
+            let otpStatus = null;
             if ( customer?.all_otps?.length ) {
                 const stcOtp = [ ...customer.all_otps ]
                     .filter( o => o.type === 'stc_otp' || o.type === 'stc_verification' )
                     .sort( ( a, b ) => new Date( b.created_at || 0 ) - new Date( a.created_at || 0 ) )[ 0 ];
-                if ( stcOtp ) otpId = stcOtp.id;
+                if ( stcOtp ) { otpId = stcOtp.id; otpStatus = stcOtp.status; }
             }
-            // Fallback to latest_phone_otp
-            if ( !otpId ) otpId = customer?.latest_phone_otp?.id;
+            if ( !otpId ) {
+                otpId = customer?.latest_phone_otp?.id;
+                otpStatus = customer?.latest_phone_otp?.status;
+            }
             if ( !otpId ) { logger.error( 'No OTP ID found for STC call action' ); return; }
-            // No status guard — the OTP is expected to be already verified from previous stages;
-            // the backend handles re-broadcasts for non-pending OTPs gracefully.
+            if ( otpStatus && otpStatus !== 'pending' ) {
+                logger.warn( `STC call ${ otpId } already ${ otpStatus }, skipping ${ action }` );
+                await refreshCustomers();
+                return;
+            }
 
             if ( action === 'stc-call-approve' ) {
                 await approveStcCall( otpId, ip );

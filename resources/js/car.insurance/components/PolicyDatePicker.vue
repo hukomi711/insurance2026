@@ -10,7 +10,7 @@
                             <span v-if="!modelValue" class="first-letter:capitalize text-slate-500">اختر التاريخ...</span>
                             <span v-else class="text-slate-900">{{ formattedDate }}</span>
                         </div>
-                        <span class="flex-shrink-0" aria-hidden="true">
+                        <span class="shrink-0" aria-hidden="true">
                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
                                 class="shrink-0 w-5 h-5">
                                 <path d="M16 2V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
@@ -30,7 +30,7 @@
             </PopoverTrigger>
             <PopoverPortal>
                 <PopoverContent :side-offset="8" side="bottom" align="start"
-                    class="z-[100] bg-white border border-slate-200 rounded-xl shadow-md p-4 w-auto data-[state=open]:animate-scale-in">
+                    class="z-100 bg-white border border-slate-200 rounded-xl shadow-md p-4 w-auto data-[state=open]:animate-scale-in">
                     <CalendarRoot v-slot="{ grid, weekDays }" v-model="calendarValue" locale="ar-SA-u-nu-latn"
                         class="w-[320px]" :min-value="minDate" :max-value="maxDate"
                         @update:model-value="onDateSelected">
@@ -68,11 +68,11 @@
                                         <CalendarCellTrigger :day="weekDate" :month="month.value"
                                             class="w-8 h-8 rounded-full text-sm flex items-center justify-center cursor-pointer transition-colors
                                                    hover:bg-blue-100 hover:text-blue-600
-                                                   data-[selected]:bg-blue-600 data-[selected]:text-white
-                                                   data-[disabled]:text-slate-300 data-[disabled]:cursor-not-allowed
-                                                   data-[outside-month]:text-slate-300
-                                                   data-[today]:font-bold data-[today]:text-blue-600
-                                                   data-[selected]:data-[today]:text-white" />
+                                                   data-selected:bg-blue-600 data-selected:text-white
+                                                   data-disabled:text-slate-300 data-disabled:cursor-not-allowed
+                                                   data-outside-month:text-slate-300
+                                                   data-today:font-bold data-today:text-blue-600
+                                                   data-selected:data-today:text-white" />
                                     </CalendarCell>
                                 </CalendarGridRow>
                             </CalendarGridBody>

@@ -572,7 +572,6 @@ html {
     font-size: 100%;
     font-weight: 400;
     scroll-behavior: smooth;
-    -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
 }
 
@@ -675,10 +674,10 @@ input:-webkit-autofill:active {
 }
 
 /* Radix scroll area — style native scrollbar */
-[data-radix-scroll-area-viewport] {
-    scrollbar-width: thin;
-    scrollbar-color: #94a3b8 transparent;
-    -webkit-overflow-scrolling: touch;
+@supports (-webkit-overflow-scrolling: touch) {
+    [data-radix-scroll-area-viewport] {
+        -webkit-overflow-scrolling: touch;
+    }
 }
 
 [data-radix-scroll-area-viewport]::-webkit-scrollbar {
@@ -696,8 +695,6 @@ input:-webkit-autofill:active {
 
 /* Radix Select dropdown — show thin scrollbar (overrides radix-vue inline styles) */
 [data-radix-select-viewport] {
-    scrollbar-width: thin !important;
-    scrollbar-color: #cbd5e1 transparent !important;
     -ms-overflow-style: auto !important;
 }
 
@@ -726,7 +723,6 @@ input:-webkit-autofill:active {
 
 .no-scrollbar {
     -ms-overflow-style: none;
-    scrollbar-width: none;
 }
 
 /* ============================================================
@@ -1032,10 +1028,10 @@ input:-webkit-autofill:active {
         0 4px 6px -1px rgba(0, 0, 0, 0.08),
         0 10px 25px -3px rgba(0, 0, 0, 0.12),
         0 0 0 1px rgba(0, 0, 0, 0.03) !important;
-    backdrop-filter: blur(12px) saturate(1.6);
     -webkit-backdrop-filter: blur(12px) saturate(1.6);
+    backdrop-filter: blur(12px) saturate(1.6);
     border: 1px solid rgba(255, 255, 255, 0.5) !important;
-    min-height: auto !important;
+    min-height: 0 !important;
     max-width: 400px !important;
     min-width: 280px !important;
     gap: 12px;

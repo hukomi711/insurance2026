@@ -39,7 +39,7 @@
                     @click="toggleDropdown">
                     <i class="fa-solid fa-bell w-5 h-5" aria-hidden="true"></i>
                     <span v-if="notificationsStore.unreadCount > 0"
-                        class="absolute -end-0.5 -top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white"
+                        class="absolute -inset-e-0.5 -top-0.5 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white"
                         :aria-label="`${ notificationsStore.unreadCount } إشعارات غير مقروءة`">
                         {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
                     </span>
@@ -55,7 +55,7 @@
                     leave-to-class="opacity-0 translate-y-1"
                 >
                     <div v-if="showDropdown"
-                        class="absolute left-0 top-full mt-2 w-[min(92vw,360px)] max-h-[480px] bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 flex flex-col"
+                        class="absolute left-0 top-full mt-2 w-[min(92vw,360px)] max-h-120 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 flex flex-col"
                         dir="rtl">
                         <!-- Header -->
                         <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
@@ -88,7 +88,7 @@
                         </div>
 
                         <!-- Notification List -->
-                        <div class="overflow-y-auto flex-1 max-h-[380px]">
+                        <div class="overflow-y-auto flex-1 max-h-95">
                             <!-- Loading -->
                             <div v-if="notificationsStore.loading && notificationsStore.items.length === 0"
                                 class="p-8 text-center">
@@ -110,7 +110,7 @@
                                     :class="{ 'bg-blue-50/40': !item.read }"
                                     @click="handleNotificationClick(item)">
                                     <!-- Icon -->
-                                    <div class="flex-shrink-0 mt-0.5 w-8 h-8 rounded-full flex items-center justify-center"
+                                    <div class="shrink-0 mt-0.5 w-8 h-8 rounded-full flex items-center justify-center"
                                         :class="iconBg(item.type)">
                                         <i class="fa-solid text-xs" :class="[iconClass(item), iconColor(item.type)]"></i>
                                     </div>
@@ -131,7 +131,7 @@
                                         </div>
                                     </div>
                                     <!-- Unread dot -->
-                                    <div v-if="!item.read" class="flex-shrink-0 mt-2 w-2 h-2 bg-blue-500 rounded-full"></div>
+                                    <div v-if="!item.read" class="shrink-0 mt-2 w-2 h-2 bg-blue-500 rounded-full"></div>
                                 </button>
                             </template>
                         </div>
@@ -233,7 +233,7 @@
                 leave-to-class="opacity-0"
             >
                 <div v-if="mobileSearchOpen"
-                    class="fixed inset-0 z-[60] flex items-start justify-center bg-black/50 p-4"
+                    class="fixed inset-0 z-60 flex items-start justify-center bg-black/50 p-4"
                     role="dialog" aria-modal="true" aria-label="بحث في لوحة التحكم"
                     @click.self="closeMobileSearch">
                     <div class="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"

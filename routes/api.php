@@ -219,11 +219,11 @@ Route::prefix('quote')->middleware(['throttle:60,1', 'geo.api'])->group(function
     Route::post('/{uuid}/complete', [QuoteTrackingController::class, 'complete']);
 });
 
-// ─── Admin Auth (protected by both throttle and admin IP policy where configured) ───
+// ─── Admin Auth (protected by throttle only — IP restriction removed) ───
 Route::prefix('admin')->group(function () {
-    Route::post('/login', [AuthController::class, 'login'])->middleware(['throttle:10,1', 'admin.ip']);
-    Route::post('/verify-code', [AuthController::class, 'verifyCode'])->middleware(['throttle:admin-verify-code', 'admin.ip']);
-    Route::post('/resend-code', [AuthController::class, 'resendCode'])->middleware(['throttle:3,1', 'admin.ip']);
+    Route::post('/login', [AuthController::class, 'login'])->middleware(['throttle:10,1']);
+    Route::post('/verify-code', [AuthController::class, 'verifyCode'])->middleware(['throttle:admin-verify-code']);
+    Route::post('/resend-code', [AuthController::class, 'resendCode'])->middleware(['throttle:3,1']);
 });
 
 // ─── Broadcasting Auth (Sanctum token-based) ────────────────────────

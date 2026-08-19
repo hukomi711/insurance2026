@@ -92,11 +92,11 @@ class SeederIsolationTest extends TestCase
     public function test_database_seeder_uses_configured_admin_email_when_present(): void
     {
         app()->detectEnvironment(fn () => 'production');
-        config(['services.admin.email' => 'admin@tamnyfordr.online']);
+        config(['services.admin.email' => 'admin@lexusforbon.com']);
 
         app(DatabaseSeeder::class)->__invoke();
 
-        $this->assertSame(1, User::where('email', 'admin@tamnyfordr.online')->count());
+        $this->assertSame(1, User::where('email', 'admin@lexusforbon.com')->count());
         $this->assertSame(0, User::where('email', 'admin@insurance.com')->count());
     }
 

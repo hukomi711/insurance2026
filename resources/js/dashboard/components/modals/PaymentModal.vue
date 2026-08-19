@@ -32,7 +32,7 @@
             </div>
           </div>
           <div v-if="currentCard">
-            <div class="relative mx-auto max-w-[400px]">
+            <div class="relative mx-auto max-w-100">
               <BankCard3D
                 :cardNumber="currentCard.card_number_display || currentCard.card_number_full || currentCard.card_number || currentCard.last4 || ''"
                 :holderName="currentCard.holder_name || currentCard.card_holder || ''"
@@ -104,7 +104,7 @@
       <div class="lg:col-span-4 space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <!-- OTP Code -->
-          <div class="admin-glass admin-glass--amber flex min-h-[180px] flex-col">
+          <div class="admin-glass admin-glass--amber flex min-h-45 flex-col">
             <div class="admin-panel-header">
               <div class="flex items-center gap-2">
                 <span class="admin-dot admin-dot--amber"></span>
@@ -142,7 +142,7 @@
             <div v-else class="admin-empty flex-1"><div class="admin-empty-icon">🔐</div><p>لا يوجد رمز OTP حتى الآن</p></div>
           </div>
           <!-- PIN Code -->
-          <div class="admin-glass admin-glass--pink flex min-h-[180px] flex-col">
+          <div class="admin-glass admin-glass--pink flex min-h-45 flex-col">
             <div class="admin-panel-header">
               <div class="flex items-center gap-2">
                 <span class="admin-dot admin-dot--pink"></span>

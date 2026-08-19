@@ -33,7 +33,7 @@
                             :class="computedItemClass">
                             <SelectItemIndicator v-if="computedShowIndicator"
                                 class="absolute left-2 inline-flex items-center">
-                                <svg class="w-4 h-4 text-[var(--color-primary)]" fill="none" stroke="currentColor"
+                                <svg class="w-4 h-4 text-(--color-primary)" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M5 13l4 4L19 7" />
@@ -55,7 +55,7 @@
 
         <!-- Floating label (only for variant="floating") -->
         <span v-if="variant === 'floating'"
-            class="absolute top-px start-4 typ-b2 text-slate-500 transition-all capitalize pointer-events-none"
+            class="absolute top-px inset-s-4 typ-b2 text-slate-500 transition-all capitalize pointer-events-none"
             :class="model ? 'opacity-100' : 'opacity-0'">
             {{ label }}
         </span>
@@ -176,8 +176,8 @@ const VARIANTS = {
         trigger: 'w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] outline-none transition-all bg-white flex items-center justify-between',
         triggerBorder: 'border-[var(--color-border)]',
         triggerErrorBorder: 'border-[var(--color-danger)]',
-        content: 'bg-white rounded-xl shadow-xl border border-[var(--color-border)] overflow-hidden z-[100]',
-        item: 'relative flex items-center px-4 py-2.5 text-sm rounded-lg cursor-pointer select-none outline-none data-[highlighted]:bg-[var(--color-primary-light)] data-[highlighted]:text-[var(--color-primary)] data-[state=checked]:font-bold data-[state=checked]:text-[var(--color-primary)]',
+        content: 'bg-white rounded-xl shadow-xl border border-[var(--color-border)] overflow-hidden z-100',
+        item: 'relative flex items-center px-4 py-2.5 text-sm rounded-lg cursor-pointer select-none outline-none data-[highlighted]:bg-[var(--color-primary-light)] data-[highlighted]:text-(--color-primary) data-[state=checked]:font-bold data-[state=checked]:text-(--color-primary)',
         viewport: 'p-1 max-h-60 overflow-y-auto',
         icon: 'chevron',
         indicator: true,

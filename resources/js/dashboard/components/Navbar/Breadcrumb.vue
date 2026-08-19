@@ -3,7 +3,7 @@
         <template v-for="(item, index) in breadcrumbs" :key="item.path">
             <span v-if="index > 0" class="mx-2 text-gray-300" aria-hidden="true">/</span>
             <router-link v-if="index < breadcrumbs.length - 1" :to="item.path"
-                class="hover:text-[var(--color-primary)] transition-colors">
+                class="hover:text-(--color-primary) transition-colors">
                 {{ item.title }}
             </router-link>
             <span v-else class="text-gray-700 font-medium">{{ item.title }}</span>

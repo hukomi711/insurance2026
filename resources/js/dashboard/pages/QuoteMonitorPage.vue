@@ -40,7 +40,7 @@
         <!-- Tabs: Live / All / Analytics -->
         <div class="flex gap-1 rounded-xl p-1 w-fit" :style="{ backgroundColor: 'var(--admin-surface-2)' }">
             <button v-for="tab in tabs" :key="tab.id" class="px-4 py-2 text-sm rounded-lg transition-colors"
-                :class="activeTab === tab.id ? 'bg-[var(--color-primary)] text-white' : ''"
+                :class="activeTab === tab.id ? 'bg-(--color-primary) text-white' : ''"
                 :style="activeTab !== tab.id ? { color: 'var(--admin-text-muted)' } : {}"
                 @click="activeTab = tab.id">
                 {{ tab.label }}
@@ -73,7 +73,7 @@
                                     <i :class="getStepIcon(session.current_step)"></i>
                                 </div>
                                 <span
-                                    class="absolute -top-1 -end-1 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-800 animate-pulse"></span>
+                                    class="absolute -top-1 -inset-e-1 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-800 animate-pulse"></span>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2">
