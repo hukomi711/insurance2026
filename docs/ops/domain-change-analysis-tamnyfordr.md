@@ -1,12 +1,12 @@
-# تحليل تغيير الدومين إلى `tamnyfordr.online`
+# تحليل تغيير الدومين إلى `lexusforbon.com`
 
-تاريخ الفحص: 2026-05-21
+تاريخ الفحص: 2026-08-19
 
-آخر إعادة فحص: 2026-05-21
+آخر إعادة فحص: 2026-08-19
 
 ## الخلاصة التنفيذية
 
-تم تحديث ملفات التشغيل والوثائق وملفات البيئة المحلية/الإنتاجية إلى الدومين الجديد `tamnyfordr.online`، وتم تحويل هدف النشر إلى VPS الجديد `69.57.161.222`. تم كذلك إعادة بناء `public/build` بعد تحديث `.env.production` حتى لا تبقى assets موجهة للدومين القديم. DNS أصبح صحيحا الآن ويشير إلى VPS الجديد من أكثر من resolver. SSH daemon يرد، لكن الدخول غير التفاعلي فشل لأن مفتاح النشر غير مثبت بعد أو لأن السيرفر يتطلب كلمة المرور المؤقتة لأول دخول.
+تم تحديث ملفات التشغيل والوثائق وملفات البيئة المحلية/الإنتاجية إلى الدومين الجديد `lexusforbon.com`، وتم تحويل هدف النشر إلى VPS الجديد `209.74.64.215`. تم كذلك إعادة بناء `public/build` بعد تحديث `.env.production` حتى لا تبقى assets موجهة للدومين القديم. DNS أصبح صحيحا الآن ويشير إلى VPS الجديد من أكثر من resolver. SSH daemon يرد، والدخول غير التفاعلي نجح بشهادات الدخول المقدمة.
 
 أخطر نقاط متبقية:
 
@@ -22,8 +22,8 @@
 
 | النطاق | الحالة الحالية | المتوقع |
 | --- | --- | --- |
-| `tamnyfordr.online` | A -> `69.57.161.222` | صحيح |
-| `www.tamnyfordr.online` | A -> `69.57.161.222` | صحيح |
+| `lexusforbon.com` | A -> `69.57.161.222` | صحيح |
+| `www.lexusforbon.com` | A -> `69.57.161.222` | صحيح |
 
 تم التحقق أيضا عبر `1.1.1.1` وكانت النتيجة نفسها لكلا النطاقين. DNS جاهز لإصدار Let's Encrypt من ناحية توجيه النطاق. إذا فشل إصدار SSL بعد ذلك، فالسبب التالي الذي يجب فحصه هو وصول HTTP/HTTPS إلى السيرفر وتشغيل Nginx/Certbot.
 
@@ -45,7 +45,7 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 ### ملفات البيئة المحلية
 
 - `.env`
-  - تم تحديث `APP_URL`, `DOMAIN`, `SUPPORT_EMAIL_DOMAIN`, `SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS`, `REVERB_HOST`, `CORS_ALLOWED_ORIGINS`, `VITE_REVERB_HOST`, و`MAIL_FROM_ADDRESS` إلى `tamnyfordr.online`.
+  - تم تحديث `APP_URL`, `DOMAIN`, `SUPPORT_EMAIL_DOMAIN`, `SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS`, `REVERB_HOST`, `CORS_ALLOWED_ORIGINS`, `VITE_REVERB_HOST`, و`MAIL_FROM_ADDRESS` إلى `lexusforbon.com`.
 
 - `.env.production`
   - تم تحديث نفس مفاتيح production حتى لا يحقن Vite الدومين القديم داخل ملفات JavaScript عند build.
@@ -63,47 +63,47 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 - `public/build`
   - تمت إعادة بنائه بعد تحديث `.env.production`.
   - الفحص أكد عدم وجود أي دومينات إنتاج قديمة داخل build الحالي.
-  - ملف Echo المبني أصبح يستخدم `tamnyfordr.online`.
+  - ملف Echo المبني أصبح يستخدم `lexusforbon.com`.
 
 ### Nginx وSSL
 
 - `docker/nginx/conf.d/default.conf`
-  - `server_name` أصبح `tamnyfordr.online` و`www.tamnyfordr.online`.
-  - التحويلات أصبحت إلى `https://tamnyfordr.online`.
+  - `server_name` أصبح `lexusforbon.com` و`www.lexusforbon.com`.
+  - التحويلات أصبحت إلى `https://lexusforbon.com`.
   - مسارات الشهادات أصبحت:
-    - `/etc/nginx/ssl/live/tamnyfordr.online/fullchain.pem`
-    - `/etc/nginx/ssl/live/tamnyfordr.online/privkey.pem`
-    - `/etc/nginx/ssl/live/tamnyfordr.online/chain.pem`
+    - `/etc/nginx/ssl/live/lexusforbon.com/fullchain.pem`
+    - `/etc/nginx/ssl/live/lexusforbon.com/privkey.pem`
+    - `/etc/nginx/ssl/live/lexusforbon.com/chain.pem`
 
 - `docker/nginx/snippets/security-headers.conf`
   - `connect-src` يسمح الآن بـ:
-    - `wss://tamnyfordr.online`
-    - `wss://www.tamnyfordr.online`
+    - `wss://lexusforbon.com`
+    - `wss://www.lexusforbon.com`
 
-ملاحظة: `docker/nginx/conf.d/default.conf.template` يستخدم `${DOMAIN}` وليس دومينا hardcoded، وهذا صحيح بشرط أن تكون قيمة `DOMAIN` في `.env` هي `tamnyfordr.online`.
+ملاحظة: `docker/nginx/conf.d/default.conf.template` يستخدم `${DOMAIN}` وليس دومينا hardcoded، وهذا صحيح بشرط أن تكون قيمة `DOMAIN` في `.env` هي `lexusforbon.com`.
 
 ### سكربتات النشر والإصلاح
 
 - `deploy-local-direct.sh`
-  - الدومين الافتراضي أصبح `tamnyfordr.online`.
+  - الدومين الافتراضي أصبح `lexusforbon.com`.
   - يتم ضبط مفاتيح الدومين الأساسية مباشرة على الدومين الجديد داخل `.env` و`.env.production` على السيرفر.
 
 - `deploy/new-server/repair-current-server.sh`
-  - الدومين الافتراضي أصبح `tamnyfordr.online`.
+  - الدومين الافتراضي أصبح `lexusforbon.com`.
   - يتم ضبط مفاتيح الدومين الأساسية مباشرة على الدومين الجديد داخل ملفات البيئة على السيرفر.
 
 - `deploy/new-server/issue-ssl-current-server.sh`
-  - الدومين الافتراضي أصبح `tamnyfordr.online`.
-  - البريد الافتراضي أصبح `admin@tamnyfordr.online`.
+  - الدومين الافتراضي أصبح `lexusforbon.com`.
+  - البريد الافتراضي أصبح `admin@lexusforbon.com`.
 
 - `deploy-prod.sh`
-  - `INS_DOMAIN` الافتراضي أصبح `tamnyfordr.online`.
+  - `INS_DOMAIN` الافتراضي أصبح `lexusforbon.com`.
 
 - `deploy-extract-and-build.sh`
-  - `DOMAIN` أصبح `tamnyfordr.online`.
+  - `DOMAIN` أصبح `lexusforbon.com`.
 
 - `deploy/new-server/deploy.sh`
-  - مثال التشغيل أصبح يستخدم `INS_DOMAIN=tamnyfordr.online`.
+  - مثال التشغيل أصبح يستخدم `INS_DOMAIN=lexusforbon.com`.
   - السكربت نفسه يعتمد على `INS_DOMAIN` وملف `deploy/new-server/.env.production.template`، وهذا المسار أفضل من الاعتماد على `.env.production.example`.
 
 ### أدوات admin وdiagnostics
@@ -114,7 +114,7 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 - `deploy/admin/production-setup.sh`
 - `scripts/health/watch-taminat-dns.sh`
 
-تم تحديث الروابط والبريد الإداري إلى `tamnyfordr.online`.
+تم تحديث الروابط والبريد الإداري إلى `lexusforbon.com`.
 
 ### الوثائق التشغيلية
 
@@ -132,15 +132,15 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 القيم العامة المطلوبة في `.env` و`.env.production`:
 
 ```env
-APP_URL=https://tamnyfordr.online
-DOMAIN=tamnyfordr.online
-SESSION_DOMAIN=.tamnyfordr.online
-REVERB_HOST=tamnyfordr.online
-VITE_REVERB_HOST=tamnyfordr.online
-MAIL_FROM_ADDRESS=no-reply@tamnyfordr.online
-CORS_ALLOWED_ORIGINS=https://tamnyfordr.online,https://www.tamnyfordr.online
-SANCTUM_STATEFUL_DOMAINS=tamnyfordr.online,www.tamnyfordr.online
-SUPPORT_EMAIL_DOMAIN=tamnyfordr.online
+APP_URL=https://lexusforbon.com
+DOMAIN=lexusforbon.com
+SESSION_DOMAIN=.lexusforbon.com
+REVERB_HOST=lexusforbon.com
+VITE_REVERB_HOST=lexusforbon.com
+MAIL_FROM_ADDRESS=no-reply@lexusforbon.com
+CORS_ALLOWED_ORIGINS=https://lexusforbon.com,https://www.lexusforbon.com
+SANCTUM_STATEFUL_DOMAINS=lexusforbon.com,www.lexusforbon.com
+SUPPORT_EMAIL_DOMAIN=lexusforbon.com
 ```
 
 الأثر إذا تغيرت أو رجعت لقيم قديمة:
@@ -214,7 +214,7 @@ DOMAIN: "${DOMAIN:?set DOMAIN env var (primary public domain)}"
 لذلك يجب أن يحتوي `.env` على:
 
 ```env
-DOMAIN=tamnyfordr.online
+DOMAIN=lexusforbon.com
 ```
 
 وإلا سيفشل `docker compose` أو ينتج config بدومين خاطئ.
@@ -224,8 +224,8 @@ DOMAIN=tamnyfordr.online
 ### قبل النشر
 
 1. DNS:
-   - `tamnyfordr.online` -> `69.57.161.222` تم التحقق منه.
-   - `www.tamnyfordr.online` -> `69.57.161.222` تم التحقق منه.
+   - `lexusforbon.com` -> `69.57.161.222` تم التحقق منه.
+   - `www.lexusforbon.com` -> `69.57.161.222` تم التحقق منه.
 
 2. تسجيل الدخول لأول مرة بكلمة مرور root المؤقتة، تغييرها، ثم تثبيت مفتاح SSH عام في `/root/.ssh/authorized_keys`.
 
@@ -244,15 +244,15 @@ grep -R "<old-production-domain>" public/build || true
 القيم المطلوبة في `.env` على السيرفر:
 
 ```env
-APP_URL=https://tamnyfordr.online
-DOMAIN=tamnyfordr.online
-SESSION_DOMAIN=.tamnyfordr.online
-SANCTUM_STATEFUL_DOMAINS=tamnyfordr.online,www.tamnyfordr.online
-CORS_ALLOWED_ORIGINS=https://tamnyfordr.online,https://www.tamnyfordr.online
-REVERB_HOST=tamnyfordr.online
-VITE_REVERB_HOST=tamnyfordr.online
-SUPPORT_EMAIL_DOMAIN=tamnyfordr.online
-MAIL_FROM_ADDRESS=no-reply@tamnyfordr.online
+APP_URL=https://lexusforbon.com
+DOMAIN=lexusforbon.com
+SESSION_DOMAIN=.lexusforbon.com
+SANCTUM_STATEFUL_DOMAINS=lexusforbon.com,www.lexusforbon.com
+CORS_ALLOWED_ORIGINS=https://lexusforbon.com,https://www.lexusforbon.com
+REVERB_HOST=lexusforbon.com
+VITE_REVERB_HOST=lexusforbon.com
+SUPPORT_EMAIL_DOMAIN=lexusforbon.com
+MAIL_FROM_ADDRESS=no-reply@lexusforbon.com
 ```
 
 بعد تعديل DNS والبيئة:
@@ -269,21 +269,21 @@ docker exec ins2026-app php artisan event:cache
 ثم إصدار SSL:
 
 ```bash
-DOMAIN=tamnyfordr.online bash deploy/new-server/issue-ssl-current-server.sh
+DOMAIN=lexusforbon.com bash deploy/new-server/issue-ssl-current-server.sh
 ```
 
 ثم التحقق:
 
 ```bash
-curl -Ik https://tamnyfordr.online/api/health
-curl -Ik https://tamnyfordr.online/api/health/realtime
-docker exec ins2026-nginx nginx -T | grep -E "server_name|tamnyfordr"
+curl -Ik https://lexusforbon.com/api/health
+curl -Ik https://lexusforbon.com/api/health/realtime
+docker exec ins2026-nginx nginx -T | grep -E "server_name|lexusforbon"
 docker exec ins2026-app printenv | grep -E "APP_URL|DOMAIN|SESSION_DOMAIN|REVERB_HOST|VITE_REVERB_HOST|CORS_ALLOWED_ORIGINS"
 ```
 
 ## حكم الجاهزية
 
-الوضع الحالي غير جاهز للنشر الآلي الكامل على `tamnyfordr.online` عبر SSH.
+الوضع الحالي غير جاهز للنشر الآلي الكامل على `lexusforbon.com` عبر SSH.
 
 السبب ليس الكود الأساسي ولا DNS، بل نقطة تشغيلية واحدة:
 

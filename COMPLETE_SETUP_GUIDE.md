@@ -20,7 +20,7 @@ URL:         https://github.com/mobanihani99/tameni2026
 ### 2. ✅ الخادم الجديد
 
 ```
-Server:      server1.ttamikomzz.com
+Server:      server1.lexusforbon.com
 IP:          209.74.64.215
 OS:          AlmaLinux 9 (Fresh Reinstall)
 Status:      Completing initial setup
@@ -98,7 +98,7 @@ bash /opt/insurance2026/health-check.sh
 
 # أو تحقق يدويًا:
 docker compose ps
-curl https://ttamikomzz.com/api/health -k
+curl https://lexusforbon.com/api/health -k
 ```
 
 ---
@@ -136,8 +136,8 @@ curl https://ttamikomzz.com/api/health -k
 
 - [ ] جميع الحاويات في حالة "Up"
 - [ ] `docker compose ps` تظهر جميع الخدمات
-- [ ] API Health: `curl https://ttamikomzz.com/api/health -k` ترجع `{"ok":true}`
-- [ ] الصفحة الرئيسية تحمل: `https://ttamikomzz.com/`
+- [ ] API Health: `curl https://lexusforbon.com/api/health -k` ترجع `{"ok":true}`
+- [ ] الصفحة الرئيسية تحمل: `https://lexusforbon.com/`
 - [ ] الشهادة صالحة (Let's Encrypt)
 - [ ] لا توجد أخطاء في السجلات: `docker logs ins2026-app`
 - [ ] قاعدة البيانات محدثة: `php artisan migrate:status`

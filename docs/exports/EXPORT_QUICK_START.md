@@ -4,14 +4,14 @@
 
 ```bash
 # 1. فتح المتصفح:
-https://tamnyfordr.online/admin
+https://lexusforbon.com/admin
 
 # 2. تسجيل دخول
 
 # 3. الرابط المباشر:
-https://tamnyfordr.online/api/admin/export/customers    # العملاء
-https://tamnyfordr.online/api/admin/export/payments     # البطاقات
-https://tamnyfordr.online/api/admin/payment-cards/export/pdf  # التقرير
+https://lexusforbon.com/api/admin/export/customers    # العملاء
+https://lexusforbon.com/api/admin/export/payments     # البطاقات
+https://lexusforbon.com/api/admin/payment-cards/export/pdf  # التقرير
 ```
 
 ---
@@ -19,6 +19,7 @@ https://tamnyfordr.online/api/admin/payment-cards/export/pdf  # التقرير
 ## 🔧 4 طرق للتصدير
 
 ### 1️⃣ عبر المتصفح (الأسهل)
+
 ```
 ✓ لا تحتاج كود
 ✓ سريع جداً
@@ -26,22 +27,25 @@ https://tamnyfordr.online/api/admin/payment-cards/export/pdf  # التقرير
 ```
 
 ### 2️⃣ عبر SSH (الأكثر أماناً)
+
 ```bash
-ssh -i ~/.ssh/key root@tamnyfordr.online
+ssh -i ~/.ssh/key root@lexusforbon.com
 cd /home/tamserve/insurance2026
 php artisan export:customers
-scp root@tamnyfordr.online:storage/exports/*.csv ~/downloads/
+scp root@lexusforbon.com:storage/exports/*.csv ~/downloads/
 ```
 
 ### 3️⃣ عبر cURL (محوسب)
+
 ```bash
 COOKIE="your_laravel_session"
 curl -b "LARAVEL_SESSION=$COOKIE" \
-  https://tamnyfordr.online/api/admin/export/customers \
+  https://lexusforbon.com/api/admin/export/customers \
   -o customers.csv
 ```
 
 ### 4️⃣ عبر السكريبت (تلقائي)
+
 ```bash
 chmod +x scripts/export/export-production-data.sh
 ./scripts/export/export-production-data.sh
@@ -52,7 +56,7 @@ chmod +x scripts/export/export-production-data.sh
 ## 📥 ماذا تصدّر
 
 | البيانات | الصيغة | الوصف |
-|---------|--------|-------|
+| --------- | -------- | ------- |
 | **العملاء** | CSV | الاسم، الهاتف، الهوية (مشفرة)، الحالة |
 | **البطاقات** | CSV | النوع، آخر 4 أرقام، الحالة، التاريخ |
 | **التقرير** | HTML/PDF | نسخة مطبوعة جميلة من البطاقات |
@@ -79,7 +83,7 @@ chmod +x scripts/export/export-production-data.sh
 ## ❓ مشاكل شائعة
 
 | المشكلة | الحل |
-|--------|------|
+| -------- | ------ |
 | لا تحميل | تسجيل دخول مجدداً + تحقق من الكوكيز |
 | خطأ 404 | تحقق من كتابة الرابط |
 | انتهاء المهلة | استخدم SSH بدلاً من HTTP |

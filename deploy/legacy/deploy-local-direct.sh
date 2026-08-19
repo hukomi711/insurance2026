@@ -2,7 +2,7 @@
 set -euo pipefail
 
 INS_SERVER_IP="${INS_SERVER_IP:-66.29.142.104}"
-INS_DOMAIN="${INS_DOMAIN:-tamnyfordr.online}"
+INS_DOMAIN="${INS_DOMAIN:-lexusforbon.com}"
 INS_BRANCH_EXPECTED="${INS_BRANCH_EXPECTED:-hardening/clean-rebuild}"
 EXPECTED_HEAD="${EXPECTED_HEAD:-2cd5f80}"
 

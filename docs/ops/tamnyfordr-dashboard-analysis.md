@@ -1,8 +1,8 @@
-# تحليل لوحة التحكم - tamnyfordr.online
+# تحليل لوحة التحكم - lexusforbon.com
 
 ## الهدف
 
-تحليل واجهة إدارة `https://tamnyfordr.online/dashboard` لتحديد سبب الأخطاء التي تظهر في سجل المتصفح، خاصة `403 Forbidden` على طلبات `/api/admin/*`.
+تحليل واجهة إدارة `https://lexusforbon.com/dashboard` لتحديد سبب الأخطاء التي تظهر في سجل المتصفح، خاصة `403 Forbidden` على طلبات `/api/admin/*`.
 
 ## النتائج الرئيسية
 

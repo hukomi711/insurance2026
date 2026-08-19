@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Insurance2026 Production Deployment Script
-# Run this on server1.ttamikomzz.com (209.74.64.215)
+# Run this on server1.lexusforbon.com (209.74.64.215)
 
 set -e  # Exit on any error
 
@@ -55,15 +55,15 @@ echo ""
 
 # Step 8: Health check
 echo "🏥 Step 8: Application health check..."
-HEALTH=$(curl -sk https://localhost/api/health -H "Host: ttamikomzz.com" 2>&1)
+HEALTH=$(curl -sk https://localhost/api/health -H "Host: lexusforbon.com" 2>&1)
 echo "Response:"
 echo "$HEALTH" | python3 -m json.tool 2>/dev/null || echo "$HEALTH"
 echo ""
 
 # Step 9: Verify assets
 echo "🎨 Step 9: Verifying assets are from correct domain..."
-ASSETS=$(curl -sk https://localhost/ -H "Host: ttamikomzz.com" 2>&1 | grep -o "ttamikomzz.com/build/assets" | wc -l)
-echo "✅ Found $ASSETS asset references from ttamikomzz.com"
+ASSETS=$(curl -sk https://localhost/ -H "Host: lexusforbon.com" 2>&1 | grep -o "lexusforbon.com/build/assets" | wc -l)
+echo "✅ Found $ASSETS asset references from lexusforbon.com"
 echo ""
 
 # Step 10: Check logs for errors
@@ -78,9 +78,9 @@ echo "╚═══════════════════════�
 echo ""
 echo "📊 Service Status: All should show 'Up' with 'Healthy'"
 echo "🌐 Production URLs:"
-echo "   - https://ttamikomzz.com/"
-echo "   - https://www.ttamikomzz.com/"
-echo "🔍 API Health: https://ttamikomzz.com/api/health"
+echo "   - https://lexusforbon.com/"
+echo "   - https://www.lexusforbon.com/"
+echo "🔍 API Health: https://lexusforbon.com/api/health"
 echo ""
 echo "⚠️  If any errors appear above, check logs with:"
 echo "   docker logs ins2026-app"

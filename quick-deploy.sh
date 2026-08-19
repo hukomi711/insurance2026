@@ -65,7 +65,7 @@ echo ""
 
 # Health check
 echo "🏥 Application Health Check:"
-HEALTH=$(curl -sk https://localhost/api/health -H "Host: ttamikomzz.com" 2>&1)
+HEALTH=$(curl -sk https://localhost/api/health -H "Host: lexusforbon.com" 2>&1)
 if echo "$HEALTH" | grep -q "ok.*true"; then
   echo "✅ $HEALTH"
 else
@@ -81,7 +81,7 @@ echo "║  ✅ DEPLOYMENT COMPLETE                        ║"
 echo "╚════════════════════════════════════════════════╝"
 echo ""
 echo "🌐 Check production:"
-echo "   https://ttamikomzz.com/"
+echo "   https://lexusforbon.com/"
 echo ""
 echo "📋 View logs:"
 echo "   docker logs ins2026-app -f --tail=50"

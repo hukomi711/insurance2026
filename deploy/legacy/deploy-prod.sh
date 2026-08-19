@@ -5,7 +5,7 @@
 # Usage:
 #   INS_SERVER_IP=<server-ip> INS_DOMAIN=<domain> INS_BRANCH=<branch> bash deploy/legacy/deploy-prod.sh <github-url>
 # Example:
-#   INS_SERVER_IP=69.57.161.222 INS_DOMAIN=tamnyfordr.online INS_BRANCH=hardening/clean-rebuild bash deploy/legacy/deploy-prod.sh git@github.com:tegarahowner-ui/insurance2026.git
+#   INS_SERVER_IP=69.57.161.222 INS_DOMAIN=lexusforbon.com INS_BRANCH=hardening/clean-rebuild bash deploy/legacy/deploy-prod.sh git@github.com:tegarahowner-ui/insurance2026.git
 #
 # Prerequisites:
 #   1. SSH key must exist: ~/.ssh/insurance2026_deploy
@@ -19,7 +19,7 @@ GITHUB_URL="${1:?Usage: INS_SERVER_IP=<server-ip> INS_DOMAIN=<domain> INS_BRANCH
 
 # Configuration
 INS_SERVER_IP="${INS_SERVER_IP:-66.29.149.94}"
-INS_DOMAIN="${INS_DOMAIN:-tamnyfordr.online}"
+INS_DOMAIN="${INS_DOMAIN:-lexusforbon.com}"
 INS_REPO_URL="$GITHUB_URL"
 INS_BRANCH="${INS_BRANCH:-hardening/clean-rebuild}"
 SSH_KEY="${SSH_KEY:-${HOME}/.ssh/insurance2026_deploy}"

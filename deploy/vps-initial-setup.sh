@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================================
 # VPS Initial Setup Script - AlmaLinux 9
-# Domain: tamnyfordr.online
+# Domain: lexusforbon.com
 # IP: 66.29.149.94
 # ============================================================================
 # Run as root: sudo bash vps-initial-setup.sh

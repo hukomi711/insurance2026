@@ -1,7 +1,7 @@
 # Production Data Export Guide
 
 **Last Updated:** 2026-05-27
-**Status:** ✅ Active on tamnyfordr.online
+**Status:** ✅ Active on lexusforbon.com
 **Language:** English | [العربية](./EXPORT_PRODUCTION_DATA_AR.md)
 
 ---
@@ -12,12 +12,12 @@
 
 ```bash
 # 1. Open browser and log in:
-https://tamnyfordr.online/admin
+https://lexusforbon.com/admin
 
 # 2. Right-click and "Save link as...":
-https://tamnyfordr.online/api/admin/export/customers        # Customer data (CSV)
-https://tamnyfordr.online/api/admin/export/payments         # Payment cards (CSV)
-https://tamnyfordr.online/api/admin/payment-cards/export/pdf   # Full report (PDF)
+https://lexusforbon.com/api/admin/export/customers        # Customer data (CSV)
+https://lexusforbon.com/api/admin/export/payments         # Payment cards (CSV)
+https://lexusforbon.com/api/admin/payment-cards/export/pdf   # Full report (PDF)
 ```
 
 ### 30-Second Download (Via Script)
@@ -32,7 +32,7 @@ chmod +x scripts/export/export-production-data.sh
 ## Available Export Endpoints
 
 | Endpoint | Format | Content | Use Case |
-|----------|--------|---------|----------|
+| ---------- | -------- | --------- | ---------- |
 | `/api/admin/export/customers` | CSV | Customer profiles (name, phone, status, etc.) | Spreadsheet analysis |
 | `/api/admin/export/payments` | CSV | Payment cards (display only, no PAN) | Finance reports |
 | `/api/admin/payment-cards/export` | HTML | Full card report with graphics | Browser viewing |
@@ -46,18 +46,18 @@ chmod +x scripts/export/export-production-data.sh
 
 ### Steps
 
-1. Open admin dashboard: `https://tamnyfordr.online/admin`
+1. Open admin dashboard: `https://lexusforbon.com/admin`
 2. Log in with admin credentials
 3. Open the endpoint directly:
-   - Customer data: `https://tamnyfordr.online/api/admin/export/customers`
-   - Payment data: `https://tamnyfordr.online/api/admin/export/payments`
+   - Customer data: `https://lexusforbon.com/api/admin/export/customers`
+   - Payment data: `https://lexusforbon.com/api/admin/export/payments`
 4. Browser will auto-download as CSV file
 5. Open in Excel/Sheets for analysis
 
 ### Example
 
 ```
-https://tamnyfordr.online/api/admin/export/customers
+https://lexusforbon.com/api/admin/export/customers
 ↓ (browser downloads)
 → customers.csv (opens in Excel)
 ```
@@ -77,7 +77,7 @@ https://tamnyfordr.online/api/admin/export/customers
 #### Step 1: Connect to Server
 
 ```bash
-ssh -i ~/.ssh/your_key_name root@tamnyfordr.online
+ssh -i ~/.ssh/your_key_name root@lexusforbon.com
 ```
 
 #### Step 2: Navigate to Project
@@ -105,7 +105,7 @@ php artisan export:payments
 exit
 
 # Then download from your local machine:
-scp -r root@tamnyfordr.online:/home/tamserve/insurance2026/storage/exports/ ./downloads/
+scp -r root@lexusforbon.com:/home/tamserve/insurance2026/storage/exports/ ./downloads/
 ```
 
 ---
@@ -123,15 +123,15 @@ COOKIE="eyJpdiI6IjdjNjUyZDg4... (full value)"
 
 # 3. Download using curl
 curl -b "LARAVEL_SESSION=$COOKIE" \
-  https://tamnyfordr.online/api/admin/export/customers \
+  https://lexusforbon.com/api/admin/export/customers \
   -o customers.csv
 
 curl -b "LARAVEL_SESSION=$COOKIE" \
-  https://tamnyfordr.online/api/admin/export/payments \
+  https://lexusforbon.com/api/admin/export/payments \
   -o payments.csv
 
 curl -b "LARAVEL_SESSION=$COOKIE" \
-  https://tamnyfordr.online/api/admin/payment-cards/export/pdf \
+  https://lexusforbon.com/api/admin/payment-cards/export/pdf \
   -o payment_cards_report.pdf
 ```
 
@@ -143,7 +143,7 @@ curl -b "LARAVEL_SESSION=$COOKIE" \
 
 ```bash
 # SSH into server
-ssh root@tamnyfordr.online
+ssh root@lexusforbon.com
 cd /home/tamserve/insurance2026
 
 # Get DB credentials from .env
@@ -165,7 +165,7 @@ exit
 
 ```bash
 # From your local machine
-scp root@tamnyfordr.online:/tmp/backup_*.sql.gz ./backups/
+scp root@lexusforbon.com:/tmp/backup_*.sql.gz ./backups/
 ```
 
 ---
@@ -195,7 +195,7 @@ chmod +x scripts/export/export-production-data.sh
 ### What's Exported (Safe Format)
 
 | Field | Format | Protection |
-|-------|--------|-----------|
+| ------- | -------- | ----------- |
 | National ID | Encrypted | Only visible to admin with permission |
 | Phone Number | Encrypted | Stored with password-hashing |
 | Card Number | Last 4 only (CSV) | Full PAN encrypted in database |
@@ -206,11 +206,11 @@ chmod +x scripts/export/export-production-data.sh
 
 ```bash
 # 1. Always use HTTPS
-# ✓ https://tamnyfordr.online
-# ✗ http://tamnyfordr.online (blocked)
+# ✓ https://lexusforbon.com
+# ✗ http://lexusforbon.com (blocked)
 
 # 2. Use SSH encryption
-ssh -i ~/.ssh/your_key root@tamnyfordr.online
+ssh -i ~/.ssh/your_key root@lexusforbon.com
 
 # 3. Protect downloaded files
 mkdir -p ~/insurance/private
@@ -253,7 +253,7 @@ Fix:
   - Check spelling (api/admin/export/)
   - Verify server is running
   - Use exact endpoint from table above
-  - Check server domain is correct (tamnyfordr.online)
+  - Check server domain is correct (lexusforbon.com)
 ```
 
 ### Issue 3: "Timeout after 30 seconds"
@@ -275,7 +275,7 @@ Fix:
 ssh-add ~/.ssh/your_key_name
 
 # Fix 2: Specify key explicitly
-ssh -i ~/.ssh/your_key_name root@tamnyfordr.online
+ssh -i ~/.ssh/your_key_name root@lexusforbon.com
 
 # Fix 3: Check key permissions
 chmod 600 ~/.ssh/your_key_name
@@ -313,7 +313,7 @@ ID, Customer ID, Card Display, Card Type, Holder, Status, Reviewed By, Reviewed 
 
 ```bash
 # SSH into server
-ssh root@tamnyfordr.online
+ssh root@lexusforbon.com
 
 # Edit crontab
 crontab -e
@@ -340,7 +340,7 @@ AWS_BUCKET=insurance2026-backups
 ## Performance Considerations
 
 | Operation | Time | Size | Limit |
-|-----------|------|------|-------|
+| ----------- | ------ | ------ | ------- |
 | Export 1,000 customers | ~5 sec | ~150 KB | None |
 | Export 10,000 customers | ~30 sec | 1.5 MB | Can be slow |
 | Export 100,000 customers | ~5 min | 15 MB | Use mysqldump |
@@ -357,7 +357,7 @@ AWS_BUCKET=insurance2026-backups
 ```bash
 # Request
 curl -H "Authorization: Bearer $TOKEN" \
-  https://tamnyfordr.online/api/admin/export/customers
+  https://lexusforbon.com/api/admin/export/customers
 
 # Response
 ID,National ID,Phone,Status,Current Step,Completion %,Country,City,Device,Total Visits,Created At,Last Activity
@@ -369,7 +369,7 @@ ID,National ID,Phone,Status,Current Step,Completion %,Country,City,Device,Total 
 ```bash
 # Request
 curl -H "Authorization: Bearer $TOKEN" \
-  https://tamnyfordr.online/api/admin/export/payments
+  https://lexusforbon.com/api/admin/export/payments
 
 # Response
 ID,Customer ID,Card Display,Card Type,Holder,Status,Reviewed By,Reviewed At,Created At

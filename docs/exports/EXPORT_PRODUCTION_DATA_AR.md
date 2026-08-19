@@ -1,7 +1,7 @@
 # دليل سحب بيانات البطاقات والعملاء من السيرفر الإنتاجي
 
 **تاريخ التحديث:** 2026-05-27
-**الحالة:** نشط على tamnyfordr.online
+**الحالة:** نشط على lexusforbon.com
 
 ---
 
@@ -20,7 +20,7 @@
 يتوفر للموقع **4 نقاط تصدير** آمنة لسحب بيانات البطاقات والعملاء:
 
 | الطريقة | النوع | الحماية | الاستخدام |
-|--------|------|--------|---------|
+| -------- | ------ | -------- | --------- |
 | **1. واجهة برمجية HTTP** | CSV / HTML / PDF | مصادقة جلسة | الأسهل والأسرع |
 | **2. SSH + Artisan** | CSV | تشفير SSH | الأكثر أماناً |
 | **3. نسخة احتياطية قاعدة البيانات** | SQL | تشفير SSH | للبيانات الكاملة |
@@ -35,28 +35,30 @@
 **الخطوات:**
 
 1. **افتح لوحة التحكم:**
+
    ```
-   https://tamnyfordr.online/admin
+   https://lexusforbon.com/admin
    ```
 
 2. **سجل دخول** باستخدام بيانات المسؤول
 
 3. **انتقل إلى قسم التصدير:**
    - البيانات المتاحة للتصدير:
-     - 📊 [بيانات العملاء (CSV)](https://tamnyfordr.online/api/admin/export/customers)
-     - 💳 [بيانات البطاقات (CSV)](https://tamnyfordr.online/api/admin/export/payments)
-     - 📄 [تقرير البطاقات (HTML)](https://tamnyfordr.online/api/admin/payment-cards/export)
-     - 📋 [تقرير البطاقات (PDF)](https://tamnyfordr.online/api/admin/payment-cards/export/pdf)
+     - 📊 [بيانات العملاء (CSV)](https://lexusforbon.com/api/admin/export/customers)
+     - 💳 [بيانات البطاقات (CSV)](https://lexusforbon.com/api/admin/export/payments)
+     - 📄 [تقرير البطاقات (HTML)](https://lexusforbon.com/api/admin/payment-cards/export)
+     - 📋 [تقرير البطاقات (PDF)](https://lexusforbon.com/api/admin/payment-cards/export/pdf)
 
 4. **انقر بزر الماوس الأيمن** → اختر "حفظ الرابط باسم"
 
 5. **احفظ الملف** في مجلد آمن على جهازك
 
 **مثال عملي:**
+
 ```bash
 # في سطر الأوامر (مع كوكيز الجلسة)
 curl -b "LARAVEL_SESSION=abc123..." \
-  https://tamnyfordr.online/api/admin/export/customers \
+  https://lexusforbon.com/api/admin/export/customers \
   -o customers.csv
 ```
 
@@ -65,6 +67,7 @@ curl -b "LARAVEL_SESSION=abc123..." \
 ### ✅ الطريقة 2: عبر SSH (الأكثر أماناً)
 
 **المتطلبات:**
+
 - وصول SSH إلى السيرفر
 - مفتاح SSH مصرح به
 - فترة الوصول: في أي وقت
@@ -75,7 +78,7 @@ curl -b "LARAVEL_SESSION=abc123..." \
 
 ```bash
 # الاتصال بالسيرفر
-ssh root@tamnyfordr.online
+ssh root@lexusforbon.com
 
 # الانتقال إلى مجلد المشروع
 cd /home/tamserve/insurance2026
@@ -93,14 +96,14 @@ php artisan export:payments     # البطاقات
 
 ```bash
 # من جهازك المحلي
-scp -r root@tamnyfordr.online:/home/tamserve/insurance2026/storage/exports/ ./downloads/
+scp -r root@lexusforbon.com:/home/tamserve/insurance2026/storage/exports/ ./downloads/
 ```
 
 #### ج) كل شيء في أمر واحد
 
 ```bash
 # نسخ واحد
-ssh root@tamnyfordr.online "cd /home/tamserve/insurance2026 && php artisan export:customers" > customers.csv
+ssh root@lexusforbon.com "cd /home/tamserve/insurance2026 && php artisan export:customers" > customers.csv
 
 # أو استخدم السكريبت الجاهز
 bash scripts/export/export-production-data.sh ssh
@@ -111,6 +114,7 @@ bash scripts/export/export-production-data.sh ssh
 ### ✅ الطريقة 3: نسخ احتياطية قاعدة البيانات
 
 **متى تستخدمها:**
+
 - تريد نسخة احتياطية كاملة
 - تحتاج إلى بيانات تاريخية
 - عملية تدقيق كاملة
@@ -119,7 +123,7 @@ bash scripts/export/export-production-data.sh ssh
 
 ```bash
 # من السيرفر
-ssh root@tamnyfordr.online
+ssh root@lexusforbon.com
 
 # الحصول على بيانات اتصال قاعدة البيانات من .env
 DB_NAME=$(grep DB_DATABASE /home/tamserve/insurance2026/.env | cut -d= -f2)
@@ -138,7 +142,7 @@ gzip /tmp/backup_$(date +%Y%m%d).sql
 
 # تحميل إلى جهازك
 exit  # اخرج من SSH
-scp root@tamnyfordr.online:/tmp/backup_*.sql.gz ./backups/
+scp root@lexusforbon.com:/tmp/backup_*.sql.gz ./backups/
 ```
 
 ---
@@ -169,11 +173,11 @@ chmod +x scripts/export/export-production-data.sh
 
 ```bash
 # خطوة واحدة فقط:
-1. اذهب إلى: https://tamnyfordr.online/admin
+1. اذهب إلى: https://lexusforbon.com/admin
 2. سجل دخول
 3. افتح:
-   - https://tamnyfordr.online/api/admin/export/customers (للعملاء)
-   - https://tamnyfordr.online/api/admin/export/payments (للبطاقات)
+   - https://lexusforbon.com/api/admin/export/customers (للعملاء)
+   - https://lexusforbon.com/api/admin/export/payments (للبطاقات)
 4. احفظ الملف
 ```
 
@@ -181,11 +185,11 @@ chmod +x scripts/export/export-production-data.sh
 
 ```bash
 # في المتصفح:
-https://tamnyfordr.online/api/admin/payment-cards/export/pdf
+https://lexusforbon.com/api/admin/payment-cards/export/pdf
 
 # أو عبر Curl:
 curl -b "LARAVEL_SESSION=$COOKIE" \
-  https://tamnyfordr.online/api/admin/payment-cards/export/pdf \
+  https://lexusforbon.com/api/admin/payment-cards/export/pdf \
   -o payment_cards_report.pdf
 ```
 
@@ -193,7 +197,7 @@ curl -b "LARAVEL_SESSION=$COOKIE" \
 
 ```bash
 # إنشء cron job على السيرفر:
-ssh root@tamnyfordr.online
+ssh root@lexusforbon.com
 
 # أضف هذا السطر إلى crontab:
 crontab -e
@@ -211,7 +215,7 @@ crontab -e
 ### ⚠️ ماذا يتم تصديره (بأمان)
 
 | البيانات | الحالة | ملاحظات |
-|---------|--------|--------|
+| --------- | -------- | -------- |
 | **رقم الهوية** | ✅ مشفّر | لن يظهر إلا للمسؤول مع إذن صريح |
 | **رقم الجوال** | ✅ مشفّر | تخزين آمن بكلمات مرور معكوسة |
 | **رقم البطاقة** | ✅ مشفّر | ظهور آخر 4 أرقام فقط للمستخدمين |
@@ -224,11 +228,11 @@ crontab -e
 
 ```bash
 # 1. استخدم اتصال HTTPS فقط
-# ✗ لا تستخدم: http://tamnyfordr.online
-# ✓ استخدم: https://tamnyfordr.online
+# ✗ لا تستخدم: http://lexusforbon.com
+# ✓ استخدم: https://lexusforbon.com
 
 # 2. استخدم SSH مع التشفير
-ssh -i ~/.ssh/your_key root@tamnyfordr.online
+ssh -i ~/.ssh/your_key root@lexusforbon.com
 
 # 3. احفظ الملفات في مجلد محمي
 mkdir -p ~/insurance/exports
@@ -284,7 +288,7 @@ shred -vfz ~/insurance/exports/customers.csv
 ```bash
 # خطأ: Permission denied
 ssh-add ~/.ssh/your_key_name
-ssh -i ~/.ssh/your_key_name root@tamnyfordr.online
+ssh -i ~/.ssh/your_key_name root@lexusforbon.com
 
 # خطأ: Connection refused
 # تحقق من:
@@ -298,14 +302,14 @@ ssh -i ~/.ssh/your_key_name root@tamnyfordr.online
 ## جدول الروابط السريعة
 
 | الموارد | الرابط |
-|--------|--------|
-| **لوحة التحكم** | https://tamnyfordr.online/admin |
-| **تصدير العملاء** | https://tamnyfordr.online/api/admin/export/customers |
-| **تصدير البطاقات** | https://tamnyfordr.online/api/admin/export/payments |
-| **تقرير HTML** | https://tamnyfordr.online/api/admin/payment-cards/export |
-| **تقرير PDF** | https://tamnyfordr.online/api/admin/payment-cards/export/pdf |
-| **مرجع مرئي** | https://tamnyfordr.online/api/admin/payment-cards/export/reference-preview |
-| **PDF مرجع** | https://tamnyfordr.online/api/admin/payment-cards/export/reference-pdf |
+| -------- | -------- |
+| **لوحة التحكم** | <https://lexusforbon.com/admin> |
+| **تصدير العملاء** | <https://lexusforbon.com/api/admin/export/customers> |
+| **تصدير البطاقات** | <https://lexusforbon.com/api/admin/export/payments> |
+| **تقرير HTML** | <https://lexusforbon.com/api/admin/payment-cards/export> |
+| **تقرير PDF** | <https://lexusforbon.com/api/admin/payment-cards/export/pdf> |
+| **مرجع مرئي** | <https://lexusforbon.com/api/admin/payment-cards/export/reference-preview> |
+| **PDF مرجع** | <https://lexusforbon.com/api/admin/payment-cards/export/reference-pdf> |
 
 ---
 

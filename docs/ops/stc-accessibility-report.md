@@ -41,7 +41,8 @@
   type="text"
   inputmode="numeric"              <!-- ✓ Correct for numeric input -->
   autocomplete="one-time-code"     <!-- ✓ Modern password manager support -->
-  :aria-label="الأدخل رمز التحقق المكون من ${maxLen} أرقام"  <!-- ✓ Screen reader label -->
+  :aria-label="الأدخل رمز التحقق المكون من ${maxLen} أرقام"
+  <!-- ✓ Screen reader label -->
   dir="ltr"                        <!-- ✓ RTL-aware -->
   :disabled="disabled"
   @input="handleInput"
@@ -54,24 +55,29 @@
 | --------- | ------- | --------------- | -------- |
 | inputmode="numeric" | ✓ | ✓ | Tie |
 | autocomplete="one-time-code" | ✓ | ✓ | Tie |
-| Mobile keyboard UX | 6-field (slower) | Single field (faster) | **insurance2026** |
+| Mobile keyboard UX | 6-field | Single field | **insurance2026** |
 | aria-label | ✗ | ✓ | **insurance2026** |
-| Error messaging | ✗ role="alert" | ✓ implicit | **insurance2026** |
-| Max length enforcement | Per-field | Global | **insurance2026** |
+| Error messages | ✗ role alert | ✓ implicit | **insurance2026** |
+| Max length | Per-field | Global | **insurance2026** |
 
-#### ⚠️ Minor Gaps
+### Minor Gaps
 
-**Issue 1: Error message not wrapped in role="alert"**
+### Issue 1: Error message not wrapped in role="alert"
 
 ```vue
 <!-- Current -->
 <p v-if="error" class="otp__error">{{ error }}</p>
 
 <!-- Recommended -->
-<p v-if="error" class="otp__error" role="alert" aria-live="assertive">{{ error }}</p>
+<p v-if="error"
+  class="otp__error"
+  role="alert"
+  aria-live="assertive">
+  {{ error }}
+</p>
 ```
 
-**Issue 2: Field wrapper missing aria-invalid**
+### Issue 2: Field wrapper missing aria-invalid
 
 ```vue
 <!-- Current -->
@@ -198,32 +204,37 @@
 | -------- | --- | --- | --- |
 | **Primary Red** | `#d32f2f` | `#FF375E` | Warmer, slightly brighter |
 | **Hover Red** | Darken 20% | `#E02E50` | Custom defined |
-| **Padding** | 6-16px (compact) | 10-24px (generous) | insurance2026 more spacious |
-| **Border Radius** | 4px (sharp) | 6px (softer) | insurance2026 more rounded |
-| **Elevation (Shadow)** | Material (3px offset) | Custom (blurred) | Different visual feel |
-| **Transition** | 225ms (Material std) | 200ms ease | Nearly identical |
-| **Focus Ring** | Material outline | Tailwind ring (optional) | Not explicitly defined in stc-btn |
-| **Disabled State** | Opacity 0.5 | `.stc-btn-disabled` gray bg | Different approach |
+| **Padding** | 6-16px | 10-24px | more spacious |
+| **Radius** | 4px | 6px | softer |
+| **Shadow** | Material | Custom | different feel |
+| **Transition** | 225ms | 200ms | nearly same |
+| **Focus** | Material | Tailwind | optional |
+| **Disabled** | 0.5 opacity | gray bg | different |
+| **Transition** | 225ms | 200ms | similar |
+| **Focus Ring** | Material | Tailwind | not explicit |
+| **Disabled State** | 0.5 opacity | `.stc-btn-disabled` | different approach |
 
 ### Typography Differences
 
 #### Letter Spacing (OTP Input)
 
-```
+```text
 MySTC:        letter-spacing: 0.02857em (Material standard)
 insurance2026: letter-spacing: 0.35em to 0.5em (wider, clearer)
 ```
 
-✓ **insurance2026 is BETTER** — larger letter spacing makes OTP digits more readable
+✓ **insurance2026 is BETTER** — larger letter spacing makes OTP digits
+more readable
 
 #### Font Families
 
-```
+```text
 MySTC:        Roboto, sans-serif (Material)
 insurance2026: System fonts (segoe UI, -apple-system, sans-serif)
 ```
 
-**Impact**: Negligible on modern browsers. insurance2026 respects user OS preferences.
+**Impact**: Negligible on modern browsers.
+System fonts respect user OS preferences.
 
 ### Loader Animation
 
@@ -263,7 +274,10 @@ Three dots with staggered animations (0s, 0.2s, 0.4s).
 
 ```vue
 <!-- Back Button with explicit aria-label -->
-<button type="button" class="stc-back-btn" @click="goBack" :aria-label="t('common.back')">
+<button type="button"
+  class="stc-back-btn"
+  @click="goBack"
+  :aria-label="t('common.back')">
   <!-- SVG with aria-hidden for decorative icon -->
   <svg aria-hidden="true" class="h-4 w-4 rtl:rotate-180">
     <!-- ... -->
@@ -333,8 +347,10 @@ sessionStorage.setItem('stcContext', JSON.stringify({
 
 ```javascript
 catch (err) {
-  error.value = err.response?.data?.message || t('stc.deviceNotRegistered.error');
-  console.error('[STC Device Not Registered]', err);  // Safe logging
+  error.value = err.response?.data?.message ||
+    t('stc.deviceNotRegistered.error');
+  console.error('[STC Device Not Registered]', err);
+  // Safe logging
   // No stack traces exposed to users
 }
 ```
@@ -353,10 +369,10 @@ catch (err) {
 | **2.4.3 Focus Order** | ✅ PASS | Logical tab order in place |
 | **2.4.7 Focus Visible** | ✅ PASS | Focus indicators are visible |
 | **3.2.1 On Focus** | ✅ PASS | No unexpected page changes |
-| **3.3.1 Error Identification** | ✅ PASS | Errors identified in text, not color alone |
-| **3.3.4 Error Prevention** | ✅ PASS | Confirmation before critical actions |
-| **4.1.2 Name, Role, Value** | ✅ PASS | ARIA labels and roles present |
-| **4.1.3 Status Messages** | ✅ PASS | role="alert" and role="status" used |
+| **3.3.1 Error Identification** | ✅ PASS | text-only error cue |
+| **3.3.4 Error Prevention** | ✅ PASS | confirmation before action |
+| **4.1.2 Name, Role, Value** | ✅ PASS | ARIA labels present |
+| **4.1.3 Status Messages** | ✅ PASS | alert + status roles |
 
 ---
 
@@ -429,14 +445,14 @@ catch (err) {
 
 ### WCAG 2.1 Reference
 
-- [Web Content Accessibility Guidelines 2.1](https://www.w3.org/WAI/WCAG21/quickref/)
-- [ARIA Authoring Practices Guide (APG)](https://www.w3.org/WAI/ARIA/apg/)
-- [WebAIM: Web Accessibility Evaluation Tool](https://webaim.org/)
+- [WCAG 2.1 quick ref](https://www.w3.org/WAI/WCAG21/quickref/)
+- [ARIA APG](https://www.w3.org/WAI/ARIA/apg/)
+- [WebAIM guide](https://webaim.org/)
 
 ### Material Design
 
-- [Material Design 3 — Accessibility](https://m3.material.io/foundations/accessible-design/overview)
-- [Material UI — Button Component](https://material-ui.com/components/buttons/)
+- [Material 3](https://m3.material.io/foundations/accessible-design/overview)
+- [Material UI buttons](https://material-ui.com/components/buttons/)
 
 ---
 

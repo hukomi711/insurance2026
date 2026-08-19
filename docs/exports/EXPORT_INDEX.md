@@ -9,6 +9,7 @@
 ## 📋 ملفات التوثيق الموجودة
 
 ### 🚀 البدء السريع
+
 - **[EXPORT_SUMMARY.md](./EXPORT_SUMMARY.md)** ⭐ *ابدأ من هنا*
   - ملخص شامل لجميع الطرق
   - 4 طرق للتصدير مع أمثلة
@@ -16,12 +17,14 @@
   - الأسئلة الشائعة
 
 ### ⚡ دليل سريع (30 ثانية)
+
 - **[EXPORT_QUICK_START.md](./EXPORT_QUICK_START.md)**
   - الطرق الـ 4 في صفحة واحدة
   - الروابط المباشرة
   - مشاكل شائعة
 
 ### 📚 دليل كامل بالعربية
+
 - **[EXPORT_PRODUCTION_DATA_AR.md](./EXPORT_PRODUCTION_DATA_AR.md)**
   - شرح مفصل لكل طريقة (350 سطر)
   - خطوات عملية كاملة
@@ -31,6 +34,7 @@
   - أوامر مع شرح كامل
 
 ### 📚 دليل كامل بالإنجليزية
+
 - **[EXPORT_PRODUCTION_DATA_EN.md](./EXPORT_PRODUCTION_DATA_EN.md)**
   - نفس المحتوى العربي بالإنجليزية
   - Quick Start
@@ -38,6 +42,7 @@
   - Security & Best practices
 
 ### 🔐 قائمة البيانات الحساسة
+
 - **[SENSITIVE_DATA_INVENTORY.md](./SENSITIVE_DATA_INVENTORY.md)**
   - تصنيف جميع البيانات
   - ما هو مشفر وكيف
@@ -49,9 +54,11 @@
 ## 🛠️ السكريبت الرئيسي
 
 ### 📄 scripts/export/export-production-data.sh (12 KB)
+
 **سكريبت Bash آلي لسحب البيانات**
 
 **الاستخدام:**
+
 ```bash
 # جعل السكريبت قابل للتنفيذ
 chmod +x scripts/export/export-production-data.sh
@@ -68,6 +75,7 @@ chmod +x scripts/export/export-production-data.sh
 ```
 
 **ما يفعله:**
+
 - ✅ تنزيل البيانات عبر SSH
 - ✅ تنزيل البيانات عبر HTTP
 - ✅ نسخ احتياطية من قاعدة البيانات
@@ -79,24 +87,25 @@ chmod +x scripts/export/export-production-data.sh
 ## 🌐 الروابط المباشرة للتصدير
 
 ### في المتصفح (مع تسجيل دخول)
+
 ```
 1. بيانات العملاء (CSV):
-   https://tamnyfordr.online/api/admin/export/customers
+   https://lexusforbon.com/api/admin/export/customers
 
 2. بيانات البطاقات (CSV):
-   https://tamnyfordr.online/api/admin/export/payments
+   https://lexusforbon.com/api/admin/export/payments
 
 3. تقرير البطاقات (HTML):
-   https://tamnyfordr.online/api/admin/payment-cards/export
+   https://lexusforbon.com/api/admin/payment-cards/export
 
 4. تقرير البطاقات (PDF):
-   https://tamnyfordr.online/api/admin/payment-cards/export/pdf
+   https://lexusforbon.com/api/admin/payment-cards/export/pdf
 
 5. مرجع مرئي (HTML):
-   https://tamnyfordr.online/api/admin/payment-cards/export/reference-preview
+   https://lexusforbon.com/api/admin/payment-cards/export/reference-preview
 
 6. مرجع مرئي (PDF):
-   https://tamnyfordr.online/api/admin/payment-cards/export/reference-pdf
+   https://lexusforbon.com/api/admin/payment-cards/export/reference-pdf
 ```
 
 ---
@@ -104,6 +113,7 @@ chmod +x scripts/export/export-production-data.sh
 ## 🚀 5 طرق للتصدير
 
 ### ✅ الطريقة 1: المتصفح (الأسهل)
+
 ```
 ⏱️ الوقت: 30 ثانية
 🔐 الأمان: متوسط
@@ -111,6 +121,7 @@ chmod +x scripts/export/export-production-data.sh
 ```
 
 ### ✅ الطريقة 2: SSH (الأكثر أماناً)
+
 ```
 ⏱️ الوقت: 2 دقيقة
 🔐 الأمان: عالي
@@ -118,6 +129,7 @@ chmod +x scripts/export/export-production-data.sh
 ```
 
 ### ✅ الطريقة 3: cURL (محوسبة)
+
 ```
 ⏱️ الوقت: 1 دقيقة
 🔐 الأمان: عالي
@@ -125,6 +137,7 @@ chmod +x scripts/export/export-production-data.sh
 ```
 
 ### ✅ الطريقة 4: قاعدة البيانات (النسخة الكاملة)
+
 ```
 ⏱️ الوقت: 5 دقائق
 🔐 الأمان: عالي جداً
@@ -132,6 +145,7 @@ chmod +x scripts/export/export-production-data.sh
 ```
 
 ### ✅ الطريقة 5: السكريبت الآلي
+
 ```
 ⏱️ الوقت: 3 دقائق
 🔐 الأمان: عالي
@@ -165,7 +179,7 @@ chmod +x scripts/export/export-production-data.sh
 ## 📊 جدول البيانات المصدرة
 
 | البيانات | النوع | الوصف | الأمان |
-|---------|------|-------|--------|
+| --------- | ------ | ------- | -------- |
 | **العملاء** | CSV | الاسم، الجوال، الهوية، الحالة | مشفرة ✅ |
 | **البطاقات** | CSV | النوع، آخر 4، الحالة | معرّف بأمان |
 | **التقرير** | HTML/PDF | نسخة مرئية جميلة | مختصة |
@@ -176,6 +190,7 @@ chmod +x scripts/export/export-production-data.sh
 ## 🔒 ملاحظات الأمان المهمة
 
 ### البيانات المشفرة (✅ آمنة)
+
 - رقم الهوية: مشفر + معكوس
 - الجوال: مشفر + معكوس
 - البريد: مشفر
@@ -183,11 +198,13 @@ chmod +x scripts/export/export-production-data.sh
 - كلمات المرور: bcrypt
 
 ### اتصالات آمنة فقط
+
 - ✅ HTTPS (بدون HTTP)
 - ✅ SSH مع مفاتيح
 - ✅ كوكيز محمية
 
 ### بعد التصدير
+
 - 🗑️ احفظ الملفات برقم مرور
 - 🗑️ شفّر الملفات الحساسة
 - 🗑️ احذف بعد المعالجة
@@ -197,7 +214,7 @@ chmod +x scripts/export/export-production-data.sh
 ## ❓ الأسئلة الأكثر شيوعاً
 
 | السؤال | الإجابة | الملف |
-|-------|--------|------|
+| ------- | -------- | ------ |
 | كيف أبدأ؟ | اقرأ EXPORT_SUMMARY.md | 👈 |
 | أسرع طريقة؟ | المتصفح (30 ثانية) | QUICK_START |
 | الطريقة الآمنة؟ | SSH مع مفاتيح | AR/EN |
@@ -227,6 +244,7 @@ insurance2026/
 ## 🎬 ابدأ الآن في 3 خطوات
 
 ### خطوة 1: اختر طريقة
+
 ```
 المتصفح → الأسرع
 SSH     → الأكثر أماناً
@@ -234,6 +252,7 @@ Script  → الأكثر آلية
 ```
 
 ### خطوة 2: اقرأ الدليل
+
 ```
 EXPORT_SUMMARY.md (2 دقيقة)
 أو
@@ -241,6 +260,7 @@ EXPORT_QUICK_START.md (30 ثانية)
 ```
 
 ### خطوة 3: نفّذ
+
 ```
 اتبع الخطوات في الدليل
 وابدأ التصدير الآن!
@@ -251,7 +271,7 @@ EXPORT_QUICK_START.md (30 ثانية)
 ## 🔗 الروابط السريعة
 
 - 🏠 [الرئيسية](../../README.md)
-- 📊 [Dashboard](https://tamnyfordr.online/admin)
+- 📊 [Dashboard](https://lexusforbon.com/admin)
 - 🔐 [بيانات حساسة](./SENSITIVE_DATA_INVENTORY.md)
 - 📝 [ملاحظات الأمان](./SECURITY.md)
 

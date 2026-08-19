@@ -1,8 +1,8 @@
 # 🚀 Insurance2026 Production Deployment Guide
 
-**Date**: August 16, 2026  
-**Server**: server1.ttamikomzz.com (209.74.64.215)  
-**Status**: OS Reinstalled - Ready for Deployment  
+**Date**: August 16, 2026
+**Server**: server1.lexusforbon.com (209.74.64.215)
+**Status**: OS Reinstalled - Ready for Deployment
 
 ---
 
@@ -18,7 +18,7 @@
 ✅ **Server Credentials (NEW)**
 
 - IP: 209.74.64.215
-- Hostname: server1.ttamikomzz.com
+- Hostname: server1.lexusforbon.com
 - Root Username: root
 - Root Password: `TY4gW9m4hp97AEcb4P`
 
@@ -94,10 +94,10 @@ cat > /opt/insurance2026/.env << 'EOF'
 APP_NAME=Insurance2026
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://ttamikomzz.com
+APP_URL=https://lexusforbon.com
 
-ASSET_URL=https://ttamikomzz.com/build/assets
-VITE_ASSET_URL=https://ttamikomzz.com/build/assets
+ASSET_URL=https://lexusforbon.com/build/assets
+VITE_ASSET_URL=https://lexusforbon.com/build/assets
 
 # Database
 DB_CONNECTION=mysql
@@ -118,7 +118,7 @@ REDIS_PORT=6379
 MAIL_MAILER=smtp
 MAIL_HOST=127.0.0.1
 MAIL_PORT=2525
-MAIL_FROM_ADDRESS=noreply@ttamikomzz.com
+MAIL_FROM_ADDRESS=noreply@lexusforbon.com
 MAIL_FROM_NAME=Insurance2026
 
 # Broadcasting
@@ -162,7 +162,7 @@ echo "📊 Service Status:"
 docker compose ps
 
 echo "🏥 Application Health:"
-curl -sk https://localhost/api/health -H "Host: ttamikomzz.com" | python3 -m json.tool
+curl -sk https://localhost/api/health -H "Host: lexusforbon.com" | python3 -m json.tool
 
 echo "✅ DEPLOYMENT COMPLETE"
 ```
@@ -190,7 +190,7 @@ docker compose ps
 ### Test API Health
 
 ```bash
-curl -sk https://localhost/api/health -H "Host: ttamikomzz.com"
+curl -sk https://localhost/api/health -H "Host: lexusforbon.com"
 
 # Expected response:
 # {"ok":true,"database":"ok","redis":"ok"}
@@ -218,7 +218,7 @@ docker compose exec -T redis redis-cli ping
 ### Test SSL Certificate
 
 ```bash
-openssl s_client -connect localhost:443 -servername ttamikomzz.com </dev/null 2>/dev/null | grep -A 2 "subject="
+openssl s_client -connect localhost:443 -servername lexusforbon.com </dev/null 2>/dev/null | grep -A 2 "subject="
 ```
 
 ---
@@ -339,7 +339,7 @@ docker compose exec -T app php artisan tinker
 - [ ] All 7 containers showing "Up" status
 - [ ] Health endpoint returns `{"ok":true}`
 - [ ] SSL certificate valid
-- [ ] Application loads on <https://ttamikomzz.com>
+- [ ] Application loads on <https://lexusforbon.com>
 - [ ] No errors in application logs
 - [ ] Database migrations completed
 - [ ] Redis cache working

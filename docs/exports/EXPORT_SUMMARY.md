@@ -8,12 +8,15 @@
 ## 📁 الملفات التي تم إنشاؤها
 
 ### 1. **السكريبت الرئيسي**
+
 ```
 📄 scripts/export/export-production-data.sh (12 KB)
 ```
+
 **الوصف:** سكريبت Bash آلي لسحب البيانات بـ 4 طرق مختلفة
 
 **الاستخدام:**
+
 ```bash
 chmod +x scripts/export/export-production-data.sh
 ./scripts/export/export-production-data.sh          # وضع تفاعلي
@@ -26,10 +29,13 @@ chmod +x scripts/export/export-production-data.sh
 ---
 
 ### 2. **دليل مفصل بالعربية**
+
 ```
 📄 docs/exports/EXPORT_PRODUCTION_DATA_AR.md (13 KB)
 ```
+
 **المحتوى:**
+
 - شرح مفصل لكل طريقة تصدير
 - خطوات عملية كاملة
 - نصائح الأمان والحماية
@@ -38,6 +44,7 @@ chmod +x scripts/export/export-production-data.sh
 - جدول أمان البيانات
 
 **متى تستخدمه:**
+
 ```
 👈 اقرأ هذا أولاً إذا كنت مبتدأ
 👈 اذهب للقسم المناسب حسب احتياجك
@@ -46,20 +53,25 @@ chmod +x scripts/export/export-production-data.sh
 ---
 
 ### 3. **دليل مفصل بالإنجليزية**
+
 ```
 📄 docs/exports/EXPORT_PRODUCTION_DATA_EN.md (11 KB)
 ```
+
 **المحتوى:** نفس الدليل العربي لكن بالإنجليزية
 
 ---
 
 ### 4. **دليل سريع (Quick Start)**
+
 ```
 📄 docs/exports/EXPORT_QUICK_START.md (2.6 KB)
 ```
+
 **المحتوى:** نقاط أساسية فقط في صفحة واحدة
 
 **متى تستخدمه:**
+
 ```
 ⚡ تريد تصدير سريع بدون قراءة الكل
 ⚡ مرجع سريع للطرق الـ 4
@@ -68,10 +80,13 @@ chmod +x scripts/export/export-production-data.sh
 ---
 
 ### 5. **قائمة البيانات الحساسة** (من الجلسة السابقة)
+
 ```
 📄 docs/exports/SENSITIVE_DATA_INVENTORY.md (8 KB)
 ```
+
 **المحتوى:**
+
 - شامل لكل البيانات المشفرة
 - معلومات عن CVV والهوية والجوال
 - استراتيجيات الحماية
@@ -84,22 +99,25 @@ chmod +x scripts/export/export-production-data.sh
 ### **الخطوة الأولى: اختر الطريقة المناسبة**
 
 #### ✅ أسرع طريقة (30 ثانية)
+
 ```
-1. فتح: https://tamnyfordr.online/admin
+1. فتح: https://lexusforbon.com/admin
 2. تسجيل دخول
-3. فتح الرابط: https://tamnyfordr.online/api/admin/export/customers
+3. فتح الرابط: https://lexusforbon.com/api/admin/export/customers
 4. التحميل تلقائي!
 ```
 
 #### ✅ الطريقة الآمنة (2 دقيقة)
+
 ```bash
-ssh -i ~/.ssh/your_key root@tamnyfordr.online
+ssh -i ~/.ssh/your_key root@lexusforbon.com
 cd /home/tamserve/insurance2026
 php artisan export:customers
-scp root@tamnyfordr.online:storage/exports/*.csv ~/downloads/
+scp root@lexusforbon.com:storage/exports/*.csv ~/downloads/
 ```
 
 #### ✅ الطريقة الآلية (استخدم السكريبت)
+
 ```bash
 ./scripts/export/export-production-data.sh
 # اختر من القائمة
@@ -110,6 +128,7 @@ scp root@tamnyfordr.online:storage/exports/*.csv ~/downloads/
 ## 📊 ماذا سيتم تصديره
 
 ### 1. **بيانات العملاء** (CSV)
+
 ```
 ✓ الاسم الكامل
 ✓ رقم الجوال (مشفر)
@@ -120,6 +139,7 @@ scp root@tamnyfordr.online:storage/exports/*.csv ~/downloads/
 ```
 
 ### 2. **بيانات البطاقات** (CSV)
+
 ```
 ✓ نوع البطاقة (Visa/Mastercard)
 ✓ آخر 4 أرقام فقط
@@ -129,6 +149,7 @@ scp root@tamnyfordr.online:storage/exports/*.csv ~/downloads/
 ```
 
 ### 3. **التقرير الكامل** (PDF)
+
 ```
 ✓ صورة البطاقات بالألوان
 ✓ معلومات الزبون الكاملة
@@ -141,6 +162,7 @@ scp root@tamnyfordr.online:storage/exports/*.csv ~/downloads/
 ## 🔐 معلومات الأمان
 
 ### البيانات المشفرة (آمنة ✅)
+
 - ✅ رقم الهوية: مشفر + معكوس
 - ✅ الجوال: مشفر + معكوس
 - ✅ البريد: مشفر
@@ -148,6 +170,7 @@ scp root@tamnyfordr.online:storage/exports/*.csv ~/downloads/
 - ✅ كلمات المرور: bcrypt
 
 ### الاتصالات الآمنة
+
 - ✅ HTTPS فقط (بدون HTTP)
 - ✅ SSH مع مفاتيح تشفير
 - ✅ كوكيز الجلسة محمية
@@ -157,7 +180,7 @@ scp root@tamnyfordr.online:storage/exports/*.csv ~/downloads/
 ## 🎯 جدول مقارن: أي طريقة تختار؟
 
 | الطريقة | السرعة | الأمان | السهولة | متى تستخدم |
-|--------|--------|--------|---------|-----------|
+| -------- | -------- | -------- | --------- | ----------- |
 | **المتصفح** | ⚡⚡⚡ | ⭐⭐ | ⭐⭐⭐ | تصدير سريع |
 | **SSH** | ⚡⚡ | ⭐⭐⭐ | ⭐⭐ | إدارة محترفة |
 | **cURL** | ⚡⚡ | ⭐⭐⭐ | ⭐ | أتمتة سكريبتات |
@@ -186,21 +209,25 @@ scp root@tamnyfordr.online:storage/exports/*.csv ~/downloads/
 ## ❓ أسئلة سريعة
 
 **س: أي طريقة أختار كمبتدأ؟**
+
 ```
 ج: المتصفح → أسهل + أسرع لا تتطلب كود
 ```
 
 **س: أي طريقة أختار للأمان القصوى؟**
+
 ```
 ج: SSH مع مفاتيح التشفير → الأكثر أماناً
 ```
 
 **س: كيف أصدّر كل يوم تلقائياً؟**
+
 ```
 ج: استخدم cron job مع السكريبت (انظر الدليل الكامل)
 ```
 
 **س: هل البيانات آمنة عند التصدير؟**
+
 ```
 ج: نعم ✅ جميع البيانات الحساسة مشفرة ومحمية
 ```
@@ -223,8 +250,8 @@ chmod +x scripts/export/export-production-data.sh
 ./scripts/export/export-production-data.sh links      # عرض الروابط
 
 # في المتصفح (مباشر)
-https://tamnyfordr.online/api/admin/export/customers
-https://tamnyfordr.online/api/admin/export/payments
+https://lexusforbon.com/api/admin/export/customers
+https://lexusforbon.com/api/admin/export/payments
 ```
 
 ---
@@ -243,15 +270,18 @@ https://tamnyfordr.online/api/admin/export/payments
 ## 🔗 الروابط السريعة
 
 ### Dashboard
-- 🔗 [لوحة التحكم](https://tamnyfordr.online/admin)
+
+- 🔗 [لوحة التحكم](https://lexusforbon.com/admin)
 
 ### التصدير المباشر
-- 📊 [بيانات العملاء](https://tamnyfordr.online/api/admin/export/customers)
-- 💳 [بيانات البطاقات](https://tamnyfordr.online/api/admin/export/payments)
-- 📄 [التقرير HTML](https://tamnyfordr.online/api/admin/payment-cards/export)
-- 📋 [التقرير PDF](https://tamnyfordr.online/api/admin/payment-cards/export/pdf)
+
+- 📊 [بيانات العملاء](https://lexusforbon.com/api/admin/export/customers)
+- 💳 [بيانات البطاقات](https://lexusforbon.com/api/admin/export/payments)
+- 📄 [التقرير HTML](https://lexusforbon.com/api/admin/payment-cards/export)
+- 📋 [التقرير PDF](https://lexusforbon.com/api/admin/payment-cards/export/pdf)
 
 ### التوثيق المحلي
+
 - 📖 [دليل عربي كامل](./EXPORT_PRODUCTION_DATA_AR.md)
 - 📖 [دليل إنجليزي](./EXPORT_PRODUCTION_DATA_EN.md)
 - ⚡ [دليل سريع](./EXPORT_QUICK_START.md)

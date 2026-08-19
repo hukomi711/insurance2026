@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-APP_URL="${APP_URL:-https://ttamikomzz.com}"
+APP_URL="${APP_URL:-https://lexusforbon.com}"
 : "${ADMIN_EMAIL:?Set ADMIN_EMAIL before running this diagnostic}"
 : "${ADMIN_PASSWORD:?Set ADMIN_PASSWORD before running this diagnostic}"
 

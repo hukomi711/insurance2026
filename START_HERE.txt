@@ -27,7 +27,7 @@
 ✅ Server Configuration
    └─ New OS Installed: AlmaLinux 9
    └─ IP Address: 209.74.64.215
-   └─ Hostname: server1.ttamikomzz.com
+   └─ Hostname: server1.lexusforbon.com
    └─ Root User: root
    └─ Root Password: TY4gW9m4hp97AEcb4P ✓
 
@@ -82,7 +82,7 @@
    $ docker compose build app --no-cache
    $ docker compose up -d
    $ docker compose ps
-   $ curl https://ttamikomzz.com/api/health -k
+   $ curl https://lexusforbon.com/api/health -k
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -103,9 +103,9 @@
 
 الخطوة 4️⃣: اختبر التطبيق
 
-   🌐 https://ttamikomzz.com/
-   📊 https://ttamikomzz.com/api/health
-   📱 https://www.ttamikomzz.com/
+   🌐 https://lexusforbon.com/
+   📊 https://lexusforbon.com/api/health
+   📱 https://www.lexusforbon.com/
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 مرجع سريع للأوامر
@@ -201,7 +201,7 @@ https://github.com/mobanihani99/tameni2026/tree/hardening/clean-rebuild
 2. اتصل بـ SSH (root@209.74.64.215)
 3. شغل: bash server-init.sh أو bash quick-deploy.sh
 4. انتظر ~20 دقيقة
-5. اختبر: https://ttamikomzz.com/
+5. اختبر: https://lexusforbon.com/
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

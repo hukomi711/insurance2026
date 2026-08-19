@@ -1,13 +1,14 @@
 # VPS Deployment Checklist & Commands Reference
 
-**Server**: 66.29.149.94 | **Domain**: tamnyfordr.online | **OS**: AlmaLinux 9
+**Server**: 66.29.149.94 | **Domain**: lexusforbon.com | **OS**: AlmaLinux 9
 
 ---
 
 ## 📋 Pre-Deployment Checklist
 
 ### Local Preparation
-- [ ] Domain updated to `tamnyfordr.online` in codebase
+
+- [ ] Domain updated to `lexusforbon.com` in codebase
 - [ ] `.env.production.example` reviewed and updated (no secrets)
 - [ ] `.env` file prepared locally with all production values
 - [ ] Database backup created (if migrating)
@@ -15,6 +16,7 @@
 - [ ] Latest code pushed to repository
 
 ### Database Credentials Ready
+
 - [ ] Database name: `insurance2026`
 - [ ] Database user: `ins_user`
 - [ ] Database password: (stored securely, not in Git)
@@ -22,6 +24,7 @@
 - [ ] Email service credentials ready
 
 ### API & Integration Keys
+
 - [ ] Pusher/Reverb credentials (REVERB_APP_ID, REVERB_APP_KEY, etc.)
 - [ ] Email service (SMTP credentials)
 - [ ] Payment gateway credentials (if applicable)
@@ -32,6 +35,7 @@
 ## 🚀 Step-by-Step Deployment Guide
 
 ### Step 1: Initial SSH Connection
+
 ```bash
 # From your local machine
 ssh root@66.29.149.94 -p 22
@@ -44,6 +48,7 @@ uname -a
 ```
 
 ### Step 2: Run Initial Setup (15-20 minutes)
+
 ```bash
 # On VPS, as root
 sudo bash /path/to/vps-initial-setup.sh
@@ -52,11 +57,13 @@ sudo bash /path/to/vps-initial-setup.sh
 ```
 
 **What this does:**
+
 - Updates AlmaLinux system
 - Installs PHP 8.3 with all extensions
 - Installs Composer, MariaDB, Redis, Nginx, Node.js, Supervisor, Certbot
 
 ### Step 3: Secure MariaDB
+
 ```bash
 # On VPS
 sudo mysql_secure_installation
@@ -71,6 +78,7 @@ sudo mysql_secure_installation
 ```
 
 ### Step 4: Create Database & User
+
 ```bash
 # On VPS
 sudo mysql -u root -p
@@ -84,6 +92,7 @@ EXIT;
 ```
 
 ### Step 5: Clone Repository
+
 ```bash
 # On VPS
 cd /opt/insurance2026
@@ -96,6 +105,7 @@ sudo chown -R www-data:www-data /opt/insurance2026
 ```
 
 ### Step 6: Create & Configure .env File
+
 ```bash
 # On VPS
 sudo cp /opt/insurance2026/.env.production.example /opt/insurance2026/.env
@@ -113,6 +123,7 @@ sudo nano /opt/insurance2026/.env
 ```
 
 ### Step 7: Set File Permissions
+
 ```bash
 # On VPS
 sudo chmod 640 /opt/insurance2026/.env
@@ -123,6 +134,7 @@ ls -l /opt/insurance2026/.env
 ```
 
 ### Step 8: Run Application Deployment
+
 ```bash
 # On VPS, as root
 cd /opt/insurance2026
@@ -132,6 +144,7 @@ sudo bash deploy/vps-deploy-app.sh
 ```
 
 **What this does:**
+
 - Installs PHP dependencies (Composer)
 - Generates application key
 - Installs Node dependencies
@@ -144,8 +157,9 @@ sudo bash deploy/vps-deploy-app.sh
 - Optimizes PHP-FPM
 
 ### Step 9: Configure DNS
+
 ```
-Log in to Namecheap → Domain Management → tamnyfordr.online → Advanced DNS
+Log in to Namecheap → Domain Management → lexusforbon.com → Advanced DNS
 
 Add/Update Records:
 ┌─────────────────────────────────────────────┐
@@ -159,24 +173,25 @@ DNS propagation: 24-48 hours
 ```
 
 ### Step 10: Test Application
+
 ```bash
 # Wait for DNS to propagate (can take up to 48 hours)
 # Then test:
 
 # Test HTTP → HTTPS redirect
-curl -I http://tamnyfordr.online/
+curl -I http://lexusforbon.com/
 
 # Test HTTPS
-curl -I https://tamnyfordr.online/
+curl -I https://lexusforbon.com/
 
 # Test API health
-curl -I https://tamnyfordr.online/api/health
+curl -I https://lexusforbon.com/api/health
 
 # View certificate
-curl --insecure -vvI https://tamnyfordr.online/ 2>&1 | grep -A5 "SSL"
+curl --insecure -vvI https://lexusforbon.com/ 2>&1 | grep -A5 "SSL"
 
 # Test in browser
-# Open: https://tamnyfordr.online
+# Open: https://lexusforbon.com
 ```
 
 ---
@@ -184,6 +199,7 @@ curl --insecure -vvI https://tamnyfordr.online/ 2>&1 | grep -A5 "SSL"
 ## 🔍 Verification & Diagnostics
 
 ### Check Service Status
+
 ```bash
 # On VPS
 
@@ -210,6 +226,7 @@ sudo supervisorctl status insurance2026-horizon
 ```
 
 ### View Application Logs
+
 ```bash
 # On VPS
 
@@ -232,6 +249,7 @@ sudo journalctl -u php-fpm -n 50
 ```
 
 ### Route List & Configuration
+
 ```bash
 # On VPS
 cd /opt/insurance2026
@@ -249,6 +267,7 @@ sudo -u www-data php artisan config:show | grep -E "APP_URL|DB_"
 ```
 
 ### Check Disk & Memory
+
 ```bash
 # On VPS
 
@@ -267,6 +286,7 @@ top
 ```
 
 ### SSL Certificate Status
+
 ```bash
 # On VPS
 
@@ -274,13 +294,14 @@ top
 sudo certbot certificates
 
 # Check expiration
-sudo openssl x509 -in /etc/letsencrypt/live/tamnyfordr.online/fullchain.pem -noout -dates
+sudo openssl x509 -in /etc/letsencrypt/live/lexusforbon.com/fullchain.pem -noout -dates
 
 # Dry-run renewal
 sudo certbot renew --dry-run
 ```
 
 ### Port Availability Check
+
 ```bash
 # On VPS
 
@@ -300,6 +321,7 @@ sudo ss -tlnp | grep -E ":(80|443|3306|6379|9000)"
 ## 🛠️ Common Operations
 
 ### Restart Services
+
 ```bash
 # On VPS
 
@@ -317,6 +339,7 @@ sudo systemctl restart nginx php-fpm mariadb redis supervisord
 ```
 
 ### Clear Application Caches
+
 ```bash
 # On VPS
 cd /opt/insurance2026
@@ -328,6 +351,7 @@ sudo -u www-data php artisan route:clear
 ```
 
 ### Update Application
+
 ```bash
 # On VPS
 cd /opt/insurance2026
@@ -357,6 +381,7 @@ sudo supervisorctl restart insurance2026-horizon
 ```
 
 ### Put Application in Maintenance Mode
+
 ```bash
 # On VPS
 cd /opt/insurance2026
@@ -372,6 +397,7 @@ sudo -u www-data php artisan up
 ```
 
 ### Restart Horizon Queue Worker
+
 ```bash
 # On VPS
 sudo supervisorctl restart insurance2026-horizon
@@ -382,6 +408,7 @@ sudo supervisorctl start insurance2026-horizon
 ```
 
 ### Backup Database
+
 ```bash
 # On VPS
 
@@ -397,6 +424,7 @@ sudo gunzip < /backups/backup.sql.gz | mysql -u ins_user -p insurance2026
 ## ❌ Troubleshooting
 
 ### Issue: 502 Bad Gateway
+
 ```bash
 # On VPS
 
@@ -413,6 +441,7 @@ sudo chown www-data:www-data /run/php-fpm/www.sock
 ```
 
 ### Issue: Database Connection Error
+
 ```bash
 # On VPS
 
@@ -430,6 +459,7 @@ mysql -u ins_user -p -e "SHOW DATABASES;"
 ```
 
 ### Issue: High Memory Usage
+
 ```bash
 # On VPS
 
@@ -444,23 +474,25 @@ sudo systemctl restart nginx php-fpm redis
 ```
 
 ### Issue: SSL Certificate Not Working
+
 ```bash
 # On VPS
 
 # Check certificate exists
-sudo ls -l /etc/letsencrypt/live/tamnyfordr.online/
+sudo ls -l /etc/letsencrypt/live/lexusforbon.com/
 
 # Check certificate validity
-sudo openssl x509 -in /etc/letsencrypt/live/tamnyfordr.online/fullchain.pem -noout -text | grep -E "Subject:|Issuer:|Not Before|Not After"
+sudo openssl x509 -in /etc/letsencrypt/live/lexusforbon.com/fullchain.pem -noout -text | grep -E "Subject:|Issuer:|Not Before|Not After"
 
 # Renew certificate
 sudo certbot renew --force-renewal
 
 # Test SSL
-curl -I https://tamnyfordr.online/
+curl -I https://lexusforbon.com/
 ```
 
 ### Issue: Logs Are Filling Up Disk
+
 ```bash
 # On VPS
 
@@ -482,6 +514,7 @@ find . -name "laravel-*.log" -mtime +7 -exec gzip {} \;
 ## 📊 Performance Monitoring
 
 ### Real-time Monitoring
+
 ```bash
 # On VPS
 
@@ -498,6 +531,7 @@ netstat -an | grep ESTABLISHED | wc -l
 ```
 
 ### Application Performance
+
 ```bash
 # On VPS
 cd /opt/insurance2026
@@ -514,6 +548,7 @@ sudo supervisorctl tail -f insurance2026-horizon
 ## 🔐 Security Reminders
 
 ✅ **Do This:**
+
 - [ ] Store `.env` file only on server (chmod 640)
 - [ ] Use strong passwords for all services
 - [ ] Enable SSL certificate (automatic with script)
@@ -525,6 +560,7 @@ sudo supervisorctl tail -f insurance2026-horizon
 - [ ] Configure firewall rules
 
 ❌ **Don't Do This:**
+
 - Don't commit `.env` to Git
 - Don't use weak passwords
 - Don't disable SSL
@@ -538,13 +574,13 @@ sudo supervisorctl tail -f insurance2026-horizon
 
 ## 📞 Support & Resources
 
-- **Laravel Docs**: https://laravel.com/docs
-- **Nginx Docs**: https://nginx.org/en/docs/
-- **PHP-FPM Docs**: https://www.php.net/manual/en/install.fpm.php
-- **MariaDB Docs**: https://mariadb.com/kb/en/
-- **Let's Encrypt**: https://letsencrypt.org/
+- **Laravel Docs**: <https://laravel.com/docs>
+- **Nginx Docs**: <https://nginx.org/en/docs/>
+- **PHP-FPM Docs**: <https://www.php.net/manual/en/install.fpm.php>
+- **MariaDB Docs**: <https://mariadb.com/kb/en/>
+- **Let's Encrypt**: <https://letsencrypt.org/>
 
 ---
 
 **Last Updated**: May 29, 2026
-**Created for**: Insurance2026 Project | tamnyfordr.online
+**Created for**: Insurance2026 Project | lexusforbon.com

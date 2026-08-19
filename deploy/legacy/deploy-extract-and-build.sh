@@ -16,14 +16,14 @@
 #
 # Prerequisites (must exist on VPS):
 #   - /opt/insurance2026-upload.tar.gz (uploaded via scp)
-#   - domain: tamnyfordr.online (DNS already configured)
+#   - domain: lexusforbon.com (DNS already configured)
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
 
 ARCHIVE_PATH="/opt/insurance2026-upload.tar.gz"
 DEPLOY_DIR="/opt/insurance2026"
-DOMAIN="tamnyfordr.online"
+DOMAIN="lexusforbon.com"
 WWW_DOMAIN="www.${DOMAIN}"
 SMTP_IDENTITY="${SMTP_IDENTITY:-support@lexusforbon.it.com}"
 CERTBOT_SAVED_DIR="/tmp/insurance2026.certbot.backup"

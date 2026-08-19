@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================================
 # VPS Application Deployment Script
-# Domain: tamnyfordr.online
+# Domain: lexusforbon.com
 # ============================================================================
 # Run as root: sudo bash vps-deploy-app.sh
 # Prerequisites: vps-initial-setup.sh must be run first
@@ -11,7 +11,7 @@ set -e  # Exit on error
 
 echo "╔════════════════════════════════════════════════════════════════╗"
 echo "║    Insurance2026 Application Deployment                       ║"
-echo "║    Domain: tamnyfordr.online                                  ║"
+echo "║    Domain: lexusforbon.com                                  ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -170,7 +170,7 @@ cat > /etc/nginx/sites-available/insurance2026.conf << 'EOF'
 server {
     listen 80;
     listen [::]:80;
-    server_name tamnyfordr.online www.tamnyfordr.online;
+    server_name lexusforbon.com www.lexusforbon.com;
 
     location / {
         return 301 https://$host$request_uri;
@@ -181,14 +181,14 @@ server {
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name tamnyfordr.online www.tamnyfordr.online;
+    server_name lexusforbon.com www.lexusforbon.com;
 
     root /opt/insurance2026/public;
     index index.php;
 
     # SSL Certificate paths (will be set by Certbot)
-    ssl_certificate /etc/letsencrypt/live/tamnyfordr.online/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/tamnyfordr.online/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/lexusforbon.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/lexusforbon.com/privkey.pem;
 
     # SSL configuration
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -205,7 +205,7 @@ server {
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
     # CSP header
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' wss://tamnyfordr.online; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' wss://lexusforbon.com; media-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'self'" always;
 
     # Client max upload size
     client_max_body_size 100M;
@@ -325,14 +325,14 @@ echo "📦 Phase 10: Installing SSL Certificate..."
 echo ""
 
 # Check if certificate already exists
-if [ ! -f "/etc/letsencrypt/live/tamnyfordr.online/fullchain.pem" ]; then
+if [ ! -f "/etc/letsencrypt/live/lexusforbon.com/fullchain.pem" ]; then
     echo "   🔐 Obtaining SSL certificate..."
     certbot --nginx \
-      -d tamnyfordr.online \
-      -d www.tamnyfordr.online \
+      -d lexusforbon.com \
+      -d www.lexusforbon.com \
       --non-interactive \
       --agree-tos \
-      -m admin@tamnyfordr.online \
+      -m admin@lexusforbon.com \
       --rsa-key-size 2048
 else
     echo "   ℹ️  SSL certificate already exists"
@@ -408,7 +408,7 @@ echo "║         ✅ Deployment Complete!                              ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 echo "Application Status:"
-echo "  • URL: https://tamnyfordr.online"
+echo "  • URL: https://lexusforbon.com"
 echo "  • Root: $APP_DIR"
 echo "  • User: $APP_USER"
 echo ""
@@ -430,7 +430,7 @@ echo "     A record: @ -> 66.29.149.94"
 echo "     A record: www -> 66.29.149.94"
 echo ""
 echo "  2. Test SSL certificate:"
-echo "     curl -I https://tamnyfordr.online/"
+echo "     curl -I https://lexusforbon.com/"
 echo ""
 echo "  3. Monitor logs during first 24 hours:"
 echo "     tail -f $APP_DIR/storage/logs/laravel.log"

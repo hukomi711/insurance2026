@@ -14,7 +14,7 @@ REDIS_PASSWORD=""
 
 echo "╔════════════════════════════════════════════════════════╗"
 echo "║  🚀 INSURANCE2026 - COMPLETE SERVER SETUP               ║"
-echo "║     Server: server1.ttamikomzz.com (209.74.64.215)      ║"
+echo "║     Server: server1.lexusforbon.com (209.74.64.215)      ║"
 echo "╚════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -81,11 +81,11 @@ cat > "$PROJECT_ROOT/.env" << 'ENVFILE'
 APP_NAME=Insurance2026
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://ttamikomzz.com
+APP_URL=https://lexusforbon.com
 APP_TIMEZONE=Asia/Riyadh
 
-ASSET_URL=https://ttamikomzz.com/build/assets
-VITE_ASSET_URL=https://ttamikomzz.com/build/assets
+ASSET_URL=https://lexusforbon.com/build/assets
+VITE_ASSET_URL=https://lexusforbon.com/build/assets
 
 # Database
 DB_CONNECTION=mysql
@@ -107,7 +107,7 @@ REDIS_PASSWORD=
 MAIL_MAILER=smtp
 MAIL_HOST=127.0.0.1
 MAIL_PORT=2525
-MAIL_FROM_ADDRESS=noreply@ttamikomzz.com
+MAIL_FROM_ADDRESS=noreply@lexusforbon.com
 MAIL_FROM_NAME="Insurance2026"
 
 # Broadcasting
@@ -160,7 +160,7 @@ docker compose ps
 echo ""
 
 echo "🏥 Health Check:"
-curl -sk https://localhost/api/health -H "Host: ttamikomzz.com" | python3 -m json.tool
+curl -sk https://localhost/api/health -H "Host: lexusforbon.com" | python3 -m json.tool
 echo ""
 
 # Step 12: Summary
@@ -169,8 +169,8 @@ echo "║  ✅ SERVER SETUP COMPLETE                              ║"
 echo "╚════════════════════════════════════════════════════════╝"
 echo ""
 echo "🌐 Production URLs:"
-echo "   Homepage:   https://ttamikomzz.com/"
-echo "   API Health: https://ttamikomzz.com/api/health"
+echo "   Homepage:   https://lexusforbon.com/"
+echo "   API Health: https://lexusforbon.com/api/health"
 echo ""
 echo "📊 Services Running:"
 echo "   ✓ PHP-FPM (app)     - Port 9000"

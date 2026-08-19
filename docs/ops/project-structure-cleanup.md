@@ -53,7 +53,7 @@ These are active or potentially active project surfaces and should stay:
 - `app/`, `config/`, `database/`, `resources/`, `routes/`, `tests/`
 - `docker/` and `docker-compose.yml`
 - `deploy/new-server/` as the main server runbook/workflow
-- `deploy/tamnyfordr-remote-deploy.sh` for direct remote deployment
+- `deploy/lexusforbon-remote-deploy.sh` for direct remote deployment
 - `deploy/legacy/` for older manual deployment paths that may still be useful
 - `deploy/admin/` for server/admin repair helpers
 - `scripts/export/export-production-data.sh` and related operational scripts
@@ -66,7 +66,7 @@ deploy/
   admin/
   new-server/
   legacy/
-  tamnyfordr-remote-deploy.sh
+  lexusforbon-remote-deploy.sh
 docs/
   deployment/
   ops/
@@ -86,7 +86,7 @@ scripts/
 ```bash
 rg --hidden -n "<old-domain-pattern>" --glob "!.git/**" --glob "!node_modules/**" --glob "!vendor/**" .
 npm run build
-bash -n deploy/tamnyfordr-remote-deploy.sh
+bash -n deploy/lexusforbon-remote-deploy.sh
 bash -n scripts/export/export-production-data.sh
 bash -n deploy/legacy/deploy-extract-and-build.sh
 bash -n deploy/admin/production-setup.sh

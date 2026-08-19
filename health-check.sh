@@ -45,13 +45,13 @@ echo "2️⃣  APPLICATION"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 check "API Health endpoint" \
-  "curl -sk https://localhost/api/health -H 'Host: ttamikomzz.com' | grep -q ok"
+  "curl -sk https://localhost/api/health -H 'Host: lexusforbon.com' | grep -q ok"
 
 check "Homepage loads" \
-  "curl -sk https://ttamikomzz.com/ | grep -q 'html'"
+  "curl -sk https://lexusforbon.com/ | grep -q 'html'"
 
 check "SSL certificate valid" \
-  "openssl s_client -connect localhost:443 -servername ttamikomzz.com </dev/null 2>/dev/null | grep -q 'Verify return code: 0'"
+  "openssl s_client -connect localhost:443 -servername lexusforbon.com </dev/null 2>/dev/null | grep -q 'Verify return code: 0'"
 
 # 3. Database
 echo ""
@@ -117,7 +117,7 @@ check ".env owner is appuser" \
   "docker compose exec -T app stat -c %U:%G /var/www/html/.env | grep -q appuser"
 
 check "HTTPS enforced" \
-  "curl -I http://ttamikomzz.com 2>/dev/null | grep -q 'redirect\\|301\\|302' || curl -I https://localhost -H 'Host: ttamikomzz.com' 2>/dev/null | grep -q '200\\|301'"
+  "curl -I http://lexusforbon.com 2>/dev/null | grep -q 'redirect\\|301\\|302' || curl -I https://localhost -H 'Host: lexusforbon.com' 2>/dev/null | grep -q '200\\|301'"
 
 # 8. Logs
 echo ""

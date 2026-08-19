@@ -7,7 +7,7 @@ All scripts and templates have been reviewed and verified. **No deployment has b
 ### Security Audit Results
 
 | Check | Result | Files Verified |
-|-------|--------|-----------------|
+| ------- | -------- | ----------------- |
 | **Exposed Secrets** | ✅ 0 found (only CHANGE_ME) | 4/4 clean |
 | **Dangerous Commands** | ✅ 0 found | deploy.sh verified |
 | **SSH Key Setup** | ✅ Corrected (ssh-copy-id) | DEPLOYMENT-GUIDE.md updated |
@@ -116,7 +116,7 @@ All scripts and templates have been reviewed and verified. **No deployment has b
 
 ## Important Reminders
 
-- ✅ DNS must be verified (`nslookup tamnyfordr.online 8.8.8.8` → 69.57.161.222)
+- ✅ DNS must be verified (`nslookup lexusforbon.com 8.8.8.8` → 209.74.64.215)
 - ✅ SSH key already set up (`~/.ssh/insurance2026_deploy`)
 - ✅ SSH public key will be installed on VPS root user
 - ✅ deploy.sh will run 9 automated steps (~10 min total)
@@ -134,7 +134,7 @@ ssh-copy-id -i ~/.ssh/insurance2026_deploy.pub root@69.57.161.222
 # Enter temp root password from Namecheap
 
 # 2. Verify DNS
-nslookup tamnyfordr.online 8.8.8.8
+nslookup lexusforbon.com 8.8.8.8
 
 # 3. Run deployment
 bash deploy/legacy/deploy-prod.sh "git@github.com:OWNER/insurance2026.git"

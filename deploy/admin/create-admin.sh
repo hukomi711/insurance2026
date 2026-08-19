@@ -1,6 +1,6 @@
 #!/bin/bash
 # ════════════════════════════════════════════════════════════════
-# Create Admin User: dr@tamnyfordr.online
+# Create Admin User: dr@lexusforbon.com
 # Run directly on production server
 # ════════════════════════════════════════════════════════════════
 
@@ -9,11 +9,11 @@ set -e
 cd /opt/insurance2026
 
 echo "════════════════════════════════════════════════════════════════"
-echo "Creating Admin User: dr@tamnyfordr.online"
+echo "Creating Admin User: dr@lexusforbon.com"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 
-read -s -p "Enter password for dr@tamnyfordr.online: " ADMIN_PASS
+read -s -p "Enter password for dr@lexusforbon.com: " ADMIN_PASS
 echo ""
 read -s -p "Confirm password: " ADMIN_PASS_CONFIRM
 echo ""
@@ -35,7 +35,7 @@ docker exec -e ADMIN_PASS="$ADMIN_PASS" ins2026-app php artisan tinker --execute
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
-$email = "dr@tamnyfordr.online";
+$email = "dr@lexusforbon.com";
 
 $user = User::updateOrCreate(
     ["email" => $email],
@@ -65,7 +65,7 @@ docker exec ins2026-app php artisan tinker --execute='
 use App\Models\User;
 User::query()
     ->select("id", "name", "email", "role", "created_at")
-    ->whereIn("email", ["admin@tamnyfordr.online", "dr@tamnyfordr.online"])
+    ->whereIn("email", ["admin@lexusforbon.com", "dr@lexusforbon.com"])
     ->orderBy("id")
     ->get()
     ->each(fn ($u) => echo sprintf("  %d: %s <%s> [%s]\n", $u->id, $u->name, $u->email, $u->role));
@@ -76,8 +76,8 @@ echo "════════════════════════�
 echo "Login Information:"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
-echo "URL:      https://tamnyfordr.online/login"
-echo "Email:    dr@tamnyfordr.online"
+echo "URL:      https://lexusforbon.com/login"
+echo "Email:    dr@lexusforbon.com"
 echo "Password: (as you entered above)"
 echo ""
 echo "⚠️  If login gives 500 error, check SMTP configuration:"

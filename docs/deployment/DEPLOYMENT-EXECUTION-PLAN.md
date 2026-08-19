@@ -1,5 +1,6 @@
 # VPS Deployment Execution Plan
-**Insurance2026 → tamnyfordr.online | 66.29.149.94**
+
+**Insurance2026 → lexusforbon.com | 66.29.149.94**
 
 **Status**: 🟡 Ready for Execution | **Created**: May 29, 2026
 
@@ -10,7 +11,8 @@
 This document provides the **complete step-by-step execution workflow** for deploying Insurance2026 to a VPS at 66.29.149.94 (AlmaLinux 9).
 
 **All preparation is complete:**
-- ✅ Code updated with new domain (tamnyfordr.online)
+
+- ✅ Code updated with new domain (lexusforbon.com)
 - ✅ Deployment automation scripts created
 - ✅ Comprehensive documentation ready
 - ✅ Security review completed
@@ -22,7 +24,7 @@ This document provides the **complete step-by-step execution workflow** for depl
 ## 🎯 Deployment Phases at a Glance
 
 | Phase | Duration | What Happens | Automation |
-|-------|----------|--------------|-----------|
+| ------- | ---------- | -------------- | ----------- |
 | **0** | 5 min | SSH connection, password change | Manual |
 | **1** | 15-20 min | System setup, service installation | `vps-initial-setup.sh` |
 | **2-12** | 5-10 min | App deployment, config, SSL | `vps-deploy-app.sh` |
@@ -39,7 +41,7 @@ This document provides the **complete step-by-step execution workflow** for depl
 **Location**: `d:\insurance2026\`
 
 | File | Purpose | Size | User |
-|------|---------|------|------|
+| ------ | --------- | ------ | ------ |
 | `docs/deployment/DEPLOYMENT-VPS-GUIDE.md` | Detailed 12-phase manual guide | 809 lines | Reference |
 | `docs/deployment/DEPLOYMENT-CHECKLIST.md` | Pre-deployment checklist & commands | 400 lines | Reference |
 | `deploy/vps-initial-setup.sh` | Phase 1 automation (system setup) | 300 lines | Run on VPS |
@@ -62,7 +64,7 @@ git status
 # Should show: "On branch main ... nothing to commit"
 
 # Verify domain was updated correctly
-grep -r "tamnyfordr.online" config/ app/
+grep -r "lexusforbon.com" config/ app/
 # Should show many matches
 
 # Verify build succeeds
@@ -83,6 +85,7 @@ git diff
 **Time**: 5 minutes | **Location**: Your local machine
 
 ### Step 0.1: Test SSH Connection
+
 ```bash
 # From your Windows terminal/Git Bash
 ssh root@66.29.149.94 -p 22
@@ -95,11 +98,13 @@ ssh root@66.29.149.94 -p 22
 ```
 
 **Troubleshooting SSH**:
+
 - If connection refused: Verify IP is correct (66.29.149.94)
 - If timeout: Check firewall/network - contact VPS provider
 - If permission denied: Verify password with VPS provider
 
 ### Step 0.2: Change Root Password Immediately
+
 ```bash
 # On VPS, at root prompt
 passwd
@@ -115,6 +120,7 @@ passwd
 **Security**: Use a strong password (16+ chars, mix of upper/lowercase, numbers, symbols)
 
 ### Step 0.3: Verify System Information
+
 ```bash
 # Still on VPS
 uname -a
@@ -137,6 +143,7 @@ cat /etc/almalinux-release
 ### Step 1.1: Get Setup Script to VPS
 
 **Option A: Via Git (Recommended)**
+
 ```bash
 # On VPS, as root
 cd /tmp
@@ -146,6 +153,7 @@ sudo bash deploy/vps-initial-setup.sh
 ```
 
 **Option B: Via SSH Copy**
+
 ```bash
 # From your local machine
 scp deploy/vps-initial-setup.sh root@66.29.149.94:/tmp/
@@ -155,6 +163,7 @@ sudo bash /tmp/vps-initial-setup.sh
 ```
 
 ### Step 1.2: Run Automated Setup
+
 ```bash
 # On VPS
 sudo bash vps-initial-setup.sh
@@ -176,6 +185,7 @@ sudo bash vps-initial-setup.sh
 ```
 
 ### Step 1.3: Verify Installation
+
 ```bash
 # After script completes, verify each service
 php --version
@@ -277,8 +287,8 @@ APP_NAME="Insurance2026"
 APP_ENV=production
 APP_DEBUG=false
 APP_KEY=
-APP_URL=https://tamnyfordr.online
-APP_ASSET_URL=https://tamnyfordr.online
+APP_URL=https://lexusforbon.com
+APP_ASSET_URL=https://lexusforbon.com
 
 # Database Configuration
 DB_CONNECTION=mysql
@@ -302,32 +312,32 @@ MAIL_HOST=smtp.mailtrap.io
 MAIL_PORT=2525
 MAIL_USERNAME=your_mailtrap_username
 MAIL_PASSWORD=your_mailtrap_password
-MAIL_FROM_ADDRESS=no-reply@tamnyfordr.online
+MAIL_FROM_ADDRESS=no-reply@lexusforbon.com
 MAIL_FROM_NAME="Insurance2026"
 
 # Sanctum/API Configuration
-SANCTUM_STATEFUL_DOMAINS=tamnyfordr.online
+SANCTUM_STATEFUL_DOMAINS=lexusforbon.com
 SANCTUM_ENCRYPT_COOKIES=true
 
 # Session Configuration
-SESSION_DOMAIN=.tamnyfordr.online
+SESSION_DOMAIN=.lexusforbon.com
 SESSION_SECURE_COOKIES=true
 SESSION_SAME_SITE_COOKIES=lax
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS=https://tamnyfordr.online,https://www.tamnyfordr.online
+CORS_ALLOWED_ORIGINS=https://lexusforbon.com,https://www.lexusforbon.com
 
 # Reverb WebSocket Configuration
 REVERB_APP_ID=insurance2026
 REVERB_APP_KEY=insurance2026-app-key-12345
 REVERB_APP_SECRET=insurance2026-app-secret-67890
-REVERB_HOST=tamnyfordr.online
+REVERB_HOST=lexusforbon.com
 REVERB_PORT=443
 REVERB_SCHEME=https
 
 # Frontend URL
-FRONTEND_URL=https://tamnyfordr.online
-VITE_REVERB_HOST=tamnyfordr.online
+FRONTEND_URL=https://lexusforbon.com
+VITE_REVERB_HOST=lexusforbon.com
 VITE_REVERB_PORT=443
 
 # Feature Flags
@@ -336,6 +346,7 @@ QUEUE_FAILED_TABLE=failed_jobs
 ```
 
 **In nano editor**:
+
 - Paste the template
 - Edit the [REQUIRED] fields (especially DB_PASSWORD, MAIL credentials)
 - Save: `Ctrl+X`, then `Y`, then `Enter`
@@ -365,7 +376,7 @@ sudo bash deploy/vps-deploy-app.sh
 # Expected output (5-10 minutes):
 # ╔════════════════════════════════════════════════════════════════╗
 # ║    Insurance2026 Application Deployment                       ║
-# ║    Domain: tamnyfordr.online                                ║
+# ║    Domain: lexusforbon.com                                ║
 # ╚════════════════════════════════════════════════════════════════╝
 #
 # 📦 Phase X: [Configuring X]...
@@ -420,17 +431,19 @@ tail -20 /opt/insurance2026/storage/logs/laravel.log
 1. Go to [Namecheap Dashboard](https://www.namecheap.com/myaccount/login/)
 2. Log in with your credentials
 3. Click **Domain List** in left sidebar
-4. Find **tamnyfordr.online** and click **Manage**
+4. Find **lexusforbon.com** and click **Manage**
 5. Go to **Advanced DNS** tab
 6. Update these A records:
 
 **For the root domain (@):**
+
 - Type: `A Record`
 - Host: `@`
 - Value: `66.29.149.94`
 - TTL: `3600` (or leave as-is)
 
 **For the www subdomain:**
+
 - Type: `A Record`
 - Host: `www`
 - Value: `66.29.149.94`
@@ -442,12 +455,12 @@ tail -20 /opt/insurance2026/storage/logs/laravel.log
 
 ```bash
 # From your local machine (wait 5-60 seconds for Namecheap to update)
-nslookup tamnyfordr.online
+nslookup lexusforbon.com
 # Should eventually show: Address: 66.29.149.94
 
 # Check with dig for more detail
-dig tamnyfordr.online
-# Look for: "tamnyfordr.online. ... A 66.29.149.94"
+dig lexusforbon.com
+# Look for: "lexusforbon.com. ... A 66.29.149.94"
 ```
 
 **Note**: Full DNS propagation takes 24-48 hours, but usually works within 1-5 minutes.
@@ -461,23 +474,26 @@ dig tamnyfordr.online
 **Automatic Process** - No action needed
 
 DNS changes propagate globally over 24-48 hours. During this time:
+
 - Some users may still see old IP
 - SSL certificate may not issue (needs DNS to validate)
 - App may not be fully accessible
 
 **What happens automatically**:
+
 1. Certbot (SSL) waits for DNS to propagate
 2. Once DNS resolves, Certbot validates domain ownership
 3. SSL certificate is issued and auto-renewed
 
 **Monitor propagation**:
+
 ```bash
 # Check if DNS is live globally
-nslookup tamnyfordr.online
+nslookup lexusforbon.com
 # When it returns 66.29.149.94, DNS is ready
 
 # Check if SSL certificate is issued
-curl -I https://tamnyfordr.online/
+curl -I https://lexusforbon.com/
 # If you see certificate errors, DNS not ready yet
 ```
 
@@ -491,7 +507,7 @@ curl -I https://tamnyfordr.online/
 
 ```bash
 # From your local machine, periodically check
-nslookup tamnyfordr.online
+nslookup lexusforbon.com
 
 # Keep checking until it returns 66.29.149.94
 # Then wait ~5 minutes more for SSL to be ready
@@ -501,21 +517,21 @@ nslookup tamnyfordr.online
 
 ```bash
 # From your local machine, once DNS is live
-curl -I https://tamnyfordr.online/
+curl -I https://lexusforbon.com/
 # Should return: HTTP/2 200 or 301 (not 502/503)
 
 # Test www subdomain
-curl -I https://www.tamnyfordr.online/
-# Should redirect to https://tamnyfordr.online
+curl -I https://www.lexusforbon.com/
+# Should redirect to https://lexusforbon.com
 
 # Test in browser
-# Open: https://tamnyfordr.online
+# Open: https://lexusforbon.com
 # Should load login page (or dashboard if configured)
 
 # Check SSL certificate
-curl -vvI https://tamnyfordr.online/ 2>&1 | grep -A5 "SSL"
+curl -vvI https://lexusforbon.com/ 2>&1 | grep -A5 "SSL"
 # Should show:
-#   subject: CN = tamnyfordr.online
+#   subject: CN = lexusforbon.com
 #   issuer: CN = R3, O = Let's Encrypt, C = US
 ```
 
@@ -545,7 +561,7 @@ sudo systemctl status nginx php-fpm mariadb redis supervisord
 # All should be "active (running)"
 
 # 2. Application accessible
-curl -I https://tamnyfordr.online/
+curl -I https://lexusforbon.com/
 # Should return HTTP/2 200
 
 # 3. Database connected
@@ -567,8 +583,8 @@ df -h /
 # Should show >10GB available
 
 # 7. SSL valid
-echo | openssl s_client -servername tamnyfordr.online -connect tamnyfordr.online:443 2>/dev/null | grep -A2 "subject="
-# Should show: CN = tamnyfordr.online
+echo | openssl s_client -servername lexusforbon.com -connect lexusforbon.com:443 2>/dev/null | grep -A2 "subject="
+# Should show: CN = lexusforbon.com
 ```
 
 ✅ **Phase 15 Complete** - Application verified and live!
@@ -600,7 +616,7 @@ Copy this table and update as you progress:
 **If you encounter issues:**
 
 | Problem | Cause | Solution |
-|---------|-------|----------|
+| --------- | ------- | ---------- |
 | SSH connection refused | Network/firewall | Verify IP, check VPS provider |
 | Phase 1 fails halfway | Missing yum packages | Run: `sudo yum install -y gcc` |
 | "docker: command not found" | Docker script error | Ignore - not needed for this stack |
@@ -616,11 +632,13 @@ Copy this table and update as you progress:
 ## 📞 Support Resources
 
 **Documentation**:
+
 - Detailed manual steps: `docs/deployment/DEPLOYMENT-VPS-GUIDE.md`
 - Commands reference: `docs/deployment/DEPLOYMENT-CHECKLIST.md`
 - This execution plan: `docs/deployment/DEPLOYMENT-EXECUTION-PLAN.md`
 
 **Useful Commands to Know**:
+
 ```bash
 # SSH back to VPS anytime
 ssh root@66.29.149.94
@@ -648,12 +666,14 @@ redis-cli ping
 Once Phase 15 is complete and verified:
 
 1. **Set up SSH keys** (for password-less login)
+
    ```bash
    ssh-keygen -t ed25519 -C "your-email@example.com"
    ssh-copy-id -i ~/.ssh/id_ed25519.pub root@66.29.149.94
    ```
 
 2. **Disable password login** (security hardening)
+
    ```bash
    sudo nano /etc/ssh/sshd_config
    # Set: PermitRootLogin no
@@ -670,6 +690,7 @@ Once Phase 15 is complete and verified:
    - Set up alerts for disk space/memory
 
 5. **Update firewall rules**
+
    ```bash
    sudo firewall-cmd --permanent --add-service=http
    sudo firewall-cmd --permanent --add-service=https
@@ -681,6 +702,7 @@ Once Phase 15 is complete and verified:
 ## 📝 Important Reminders
 
 ✅ **Security**:
+
 - Never commit `.env` file to Git
 - Change root password immediately (Step 0.2)
 - Use strong passwords for all services
@@ -688,12 +710,14 @@ Once Phase 15 is complete and verified:
 - Keep system updated: `sudo yum update -y`
 
 ✅ **Monitoring**:
+
 - Check logs daily for first week
 - Monitor disk space (should have >10GB available)
 - Monitor memory usage
 - Review access logs for unusual patterns
 
 ✅ **Maintenance**:
+
 - SSL renews automatically (Certbot)
 - Keep dependencies updated
 - Backup database daily

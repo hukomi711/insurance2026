@@ -2,7 +2,7 @@
 set -euo pipefail
 
 DEPLOY_DIR="/opt/insurance2026"
-DOMAIN="tamnyfordr.online"
+DOMAIN="lexusforbon.com"
 WWW_DOMAIN="www.${DOMAIN}"
 ENV_FILE="${DEPLOY_DIR}/.env.production"
 DB_VOLUME="insurance2026_db-data"
