@@ -77,7 +77,7 @@
                     <!-- NCD Discount Banner -->
                     <div class="flex gap-2 items-center justify-between cursor-pointer rounded-lg p-4 mb-4 hover:opacity-80 transition-opacity bg-green-600 text-white">
                         <div class="flex gap-2 items-center">
-                            <img :src="ncdBannerImg" alt="ncd-discount-clap" class="max-w-full w-5 h-5" loading="lazy" width="20" height="20" />
+                            <img :src="IMAGES.ncdBannerImg" alt="ncd-discount-clap" class="max-w-full w-5 h-5" loading="lazy" width="20" height="20" />
                             <span class="text-sm font-medium">مبروك عليك خصم يبدأ من 10% نتيجة قيادتك الآمنة + خصم تأميني 20%</span>
                         </div>
                         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -89,7 +89,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 mb-4">
                         <div :class="showCoverageLimit ? 'sm:col-span-4' : 'sm:col-span-9'">
                             <AppSelect id="repairMethod" v-model="quoteOptions.repairMethod"
-                                label="طريقة الإصلاح" :options="repairMethodOptions" variant="standard"
+                                label="طريقة الإصلاح" :options="REPAIR_METHOD_OPTIONS" variant="standard"
                                 name="repairMethod" />
                         </div>
                         <div v-if="showCoverageLimit" class="sm:col-span-5">
@@ -133,7 +133,7 @@
                         </p>
                         <div class="flex items-center gap-2">
                             <span class="typ-c1 text-muted bg-slate-100 rounded-full px-2.5 py-1">
-                                {{ sortOptions.find( o => o.value === sortBy )?.label || 'السعر: الأقل' }}
+                                {{ SORT_OPTIONS.find( o => o.value === sortBy )?.label || 'السعر: الأقل' }}
                             </span>
                             <button class="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white typ-s2 text-foreground font-bold rounded-full shadow-sm"
                                 @click="showMobileFilters = true">
@@ -246,6 +246,10 @@
 </template>
 
 <script setup>
+// ═══════════════════════════════════════════════════════════════════════════════════
+// IMPORTS & ASYNC COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
 import { ref, reactive, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { TabsRoot, TabsList, TabsTrigger } from 'radix-vue';
@@ -266,107 +270,242 @@ import AppSelect from '@/components/ui/AppSelect.vue';
 import QuotesLoading from '@/components/ui/QuotesLoading.vue';
 import AppError from '@/components/ui/AppError.vue';
 import QuoteCard from '@/car.insurance/components/compare/QuoteCard.vue';
-const OfferDetailsSheet = defineAsyncComponent( () => import( '@/components/OfferDetailsSheet.vue' ) );
-const TaminkomHeroModal = defineAsyncComponent( () => import( '@/components/TaminkomHeroModal.vue' ) );
-const CompareModal = defineAsyncComponent( () => import( '@/car.insurance/components/compare/CompareModal.vue' ) );
-const MobileFiltersSheet = defineAsyncComponent( () => import( '@/car.insurance/components/compare/MobileFiltersSheet.vue' ) );
 import CompareSidebar from '@/car.insurance/components/compare/CompareSidebar.vue';
 import logger from '@/utils/logger';
 import { getSessionToken } from '@/utils/sessionToken';
 
-const ncdBannerImg = new URL( '../../../images/motorapp/mabruk.webp', import.meta.url ).href;
+// Async Components (lazy-loaded for better performance)
+const OfferDetailsSheet = defineAsyncComponent( () => import( '@/components/OfferDetailsSheet.vue' ) );
+const TaminkomHeroModal = defineAsyncComponent( () => import( '@/components/TaminkomHeroModal.vue' ) );
+const CompareModal = defineAsyncComponent( () => import( '@/car.insurance/components/compare/CompareModal.vue' ) );
+const MobileFiltersSheet = defineAsyncComponent( () => import( '@/car.insurance/components/compare/MobileFiltersSheet.vue' ) );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// ROUTER, STORE & COMPOSABLES
+// ═══════════════════════════════════════════════════════════════════════════════════
 
 const route = useRoute();
 const router = useRouter();
 const { trackStep, resumeSession } = useQuoteTracking();
 const insuranceStore = useInsuranceStore();
+const { store: storePricingSignature } = usePricingSignature();
+const { load: loadConstants } = usePricingConstants();
 
-// ── Quotes data (loaded from API) ──
+// ═══════════════════════════════════════════════════════════════════════════════════
+// CONSTANTS & IMAGE ASSETS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+const IMAGES = {
+    ncdBannerImg: new URL( '../../../images/motorapp/mabruk.webp', import.meta.url ).href,
+};
+
+const QUOTE_LOADING_CONFIG = {
+    MIN_DURATION: 5000, // Minimum 5 seconds before showing results
+    PROGRESS_INTERVAL: 400, // Progress bar update interval
+    PROGRESS_INCREMENT: { min: 3, max: 12 }, // Random increment range
+    PROGRESS_CAP: 90, // Cap at 90% until API responds
+};
+
+const REPAIR_METHOD_OPTIONS = [
+    { value: 'authorized', label: 'الورش المعتمدة' },
+    { value: 'agency', label: 'وكالة' },
+];
+
+const SORT_OPTIONS = [
+    { value: 'price-asc', label: 'السعر: الأقل' },
+    { value: 'price-desc', label: 'السعر: الأعلى' },
+    { value: 'rating', label: 'التقييم' },
+    { value: 'deductible', label: 'التحمل: الأقل' },
+];
+
+const CATEGORY_TYPES = [
+    { value: 'thirdParty', label: 'ضد الغير' },
+    { value: 'thirdPartyPlus', label: 'ضد الغير بلس' },
+    { value: 'vehicleDamagePlus', label: 'أضرار المركبة بلس' },
+    { value: 'comprehensive', label: 'الشامل' },
+];
+
+const COVERAGE_AFFECTED_SUBTYPES = [ 'comprehensive', 'vehicleDamagePlus', 'thirdPartyPlus' ];
+
+const DEFAULT_FILTER_STATE = {
+    type: 'all',
+    maxPrice: 8000,
+    maxDeductible: 5000,
+    companies: [],
+};
+
+const DEFAULT_QUOTE_OPTIONS = {
+    repairMethod: 'authorized',
+    coverageLimit: 55667,
+};
+
+const DEFAULT_COUNTDOWN = {
+    total: 15 * 60,
+    formatted: '15:00',
+};
+
+const DEFAULT_VEHICLE_INFO = {
+    makeName: 'غير محدد',
+    year: '',
+    color: '',
+    bodyType: '',
+    sequenceNumber: '',
+    plateNumber: '',
+};
+
+const COMPARE_LIMIT = 3; // Maximum number of plans for comparison
+const DISPLAY_LIMIT = 5; // Default number of plans to display
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// STATE: QUOTES & LOADING
+// ═══════════════════════════════════════════════════════════════════════════════════
+
 const quotesData = ref( [] );
 const quotesError = ref( null );
-
-// ── Loading state ──
 const isLoadingQuotes = ref( true );
 const loadingProgress = ref( 0 );
 let loadingInterval;
 let loadingAborted = false;
+let loadingDoneTimer = null;
+let updatingDoneTimer = null;
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// STATE: UI & SELECTIONS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+const showCompareModal = ref( false );
+const showMobileFilters = ref( false );
+const showOfferSheet = ref( false );
+const showHeroModal = ref( false );
+const offerSheetPlan = ref( null );
+const offerSheetEntrySource = ref( 'offer_sheet' );
+const selectedPlans = ref( [] );
+const shakingCards = ref( [] );
+const pulsingCards = ref( [] );
+const expandedCards = ref( [] );
+const expandedBenefits = ref( [] );
+const selectionError = ref( '' );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// STATE: OPTIONS & FILTERS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+const activeTab = ref( 'thirdParty' );
+const sortBy = ref( 'price-asc' );
+const compactView = ref( false );
+const showAllPlans = ref( false );
+const isUpdatingQuotes = ref( false );
+
+const quoteOptions = reactive( { ...DEFAULT_QUOTE_OPTIONS } );
+const filters = reactive( { type: route.query.type || DEFAULT_FILTER_STATE.type, ...DEFAULT_FILTER_STATE } );
+const vehicleInfo = reactive( { ...DEFAULT_VEHICLE_INFO } );
+const countdown = reactive( { ...DEFAULT_COUNTDOWN } );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// COMPUTED PROPERTIES
+// ═══════════════════════════════════════════════════════════════════════════════════
 
 /**
- * Fetch quotes from API with progress indication.
- * Progress bar animates independently — completes when API responds.
- * Now uses dynamic pricing via the insurance store.
+ * Show coverage limit input for specific coverage types
  */
-async function startLoadingQuotes() {
-    if ( isCustomerBlocked() ) {
-        loadingAborted = true;
-        isLoadingQuotes.value = false;
-        return;
+const showCoverageLimit = computed( () => COVERAGE_AFFECTED_SUBTYPES.includes( activeTab.value ) );
+
+/**
+ * Plans with company data enriched
+ */
+const plansWithCompany = computed( () =>
+    quotesData.value.map( plan => ( {
+        ...plan,
+        company: plan.company || getCompany( plan.companyId ),
+    } ) )
+);
+
+/**
+ * Category tabs with counts and minimum prices
+ */
+const categoryTabs = computed( () => {
+    const buckets = {};
+    for ( const p of plansWithCompany.value ) {
+        if ( !buckets[ p.subType ] ) buckets[ p.subType ] = { count: 0, minPrice: Infinity };
+        buckets[ p.subType ].count++;
+        if ( p.annualPrice < buckets[ p.subType ].minPrice ) buckets[ p.subType ].minPrice = p.annualPrice;
     }
+    return CATEGORY_TYPES.map( t => {
+        const b = buckets[ t.value ];
+        return {
+            ...t,
+            count: b ? b.count : 0,
+            priceLabel: b ? formatNumber( Math.round( b.minPrice ) ) : 'لا يوجد تسعيرات',
+        };
+    } );
+} );
 
-    loadingProgress.value = 0;
-    isLoadingQuotes.value = true;
-    quotesError.value = null;
-    loadingAborted = false;
+/**
+ * Filtered plans by tab, price, deductible, and company
+ */
+const filteredPlans = computed( () => {
+    return plansWithCompany.value.filter( plan => {
+        if ( plan.subType !== activeTab.value ) return false;
+        if ( plan.annualPrice > filters.maxPrice ) return false;
+        if ( plan.deductible > filters.maxDeductible ) return false;
+        if ( filters.companies.length > 0 && !filters.companies.includes( plan.companyId ) ) return false;
+        return true;
+    } );
+} );
 
-    const MIN_LOADING_MS = 5000;
-    const loadingStart = Date.now();
-
-    // Animate progress bar independently of API
-    loadingInterval = setInterval( () => {
-        if ( loadingAborted ) return;
-        // Cap at 90% until API responds
-        if ( loadingProgress.value < 90 ) {
-            loadingProgress.value = Math.min( 90, loadingProgress.value + Math.random() * 12 + 3 );
-        }
-    }, 400 );
-
-    try {
-        // استعادة بيانات التأمين من sessionStorage إلى المتجر
-        insuranceStore.hydrateFromSession();
-
-        // استدعاء API مع بيانات النموذج للتسعير الديناميكي
-        const result = await getQuotes( insuranceStore.allFormData );
-        quotesData.value = withDisplayCoverage( result.plans || [] );
-
-        // حفظ الأسعار المحسوبة في المتجر
-        insuranceStore.setCalculatedQuotes( quotesData.value );
-
-        // انتظار 5 ثوانٍ كحد أدنى قبل إظهار العروض
-        const elapsed = Date.now() - loadingStart;
-        const remaining = Math.max( 0, MIN_LOADING_MS - elapsed );
-        await new Promise( resolve => setTimeout( resolve, remaining ) );
-
-        // Complete progress bar
-        loadingProgress.value = 100;
-        clearInterval( loadingInterval );
-
-        loadingDoneTimer = setTimeout( () => {
-            isLoadingQuotes.value = false;
-        }, 400 );
-    } catch ( err ) {
-        clearInterval( loadingInterval );
-        loadingAborted = true;
-        quotesError.value = err;
-        isLoadingQuotes.value = false;
-        logger.error( '[ComparePage] Failed to fetch quotes:', err );
+/**
+ * Sorted plans based on selected sort option
+ */
+const sortedPlans = computed( () => {
+    const plans = [ ...filteredPlans.value ];
+    switch ( sortBy.value ) {
+        case 'price-asc': return plans.sort( ( a, b ) => a.annualPrice - b.annualPrice );
+        case 'price-desc': return plans.sort( ( a, b ) => b.annualPrice - a.annualPrice );
+        case 'rating': return plans.sort( ( a, b ) => b.company.rating - a.company.rating );
+        case 'deductible': return plans.sort( ( a, b ) => a.deductible - b.deductible );
+        default: return plans;
     }
-}
+} );
 
-/** Retry fetching quotes after an error */
-function retryLoadQuotes() {
-    quotesError.value = null;
-    startLoadingQuotes();
-}
+/**
+ * Display limited or all plans based on showAllPlans flag
+ */
+const displayedPlans = computed( () => {
+    const plans = sortedPlans.value;
+    return showAllPlans.value ? plans : plans.slice( 0, DISPLAY_LIMIT );
+} );
 
-// Logo & format helpers use shared composables/utilities (imported above)
+/**
+ * Plans selected for comparison
+ */
+const comparedPlans = computed( () =>
+    plansWithCompany.value.filter( p => selectedPlans.value.includes( p.id ) )
+);
 
-// Initialize composables
-const { store: storePricingSignature } = usePricingSignature();
-const { load: loadConstants } = usePricingConstants();
+// ═══════════════════════════════════════════════════════════════════════════════════
+// WATCHERS & DEBOUNCING
+// ═══════════════════════════════════════════════════════════════════════════════════
 
-// Resume tracking
+// Reset display limit when active tab changes
+watch( activeTab, () => { showAllPlans.value = false; } );
+
+// Quote options debouncer
+let _quoteDebounce = null;
+watch( () => [ quoteOptions.repairMethod, quoteOptions.coverageLimit ], () => {
+    if ( quotesData.value.length > 0 ) {
+        clearTimeout( _quoteDebounce );
+        _quoteDebounce = setTimeout( updateQuoteOptions, 200 );
+    }
+} );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// LIFECYCLE HOOKS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Initialize component: load constants, restore session, sync state, and start loading quotes
+ */
 onMounted( async () => {
-    // Load pricing constants from backend for version sync
     try {
         await loadConstants();
     } catch ( err ) {
@@ -383,7 +522,7 @@ onMounted( async () => {
     insuranceStore.hydrateFromSession();
     loadVehicleInfo();
 
-    // مزامنة التبويب النشط مع نوع التغطية المختار
+    // Sync active tab with coverage type
     const ct = insuranceStore.policy.coverageType;
     if ( ct === 'comprehensive' ) {
         activeTab.value = 'comprehensive';
@@ -391,7 +530,7 @@ onMounted( async () => {
         activeTab.value = 'thirdParty';
     }
 
-    // مزامنة طريقة الإصلاح من المتجر
+    // Sync repair method from store
     const storeRepair = insuranceStore.policy.repairMethod;
     if ( storeRepair === 'agency' ) {
         quoteOptions.repairMethod = 'agency';
@@ -399,7 +538,7 @@ onMounted( async () => {
         quoteOptions.repairMethod = 'authorized';
     }
 
-    // مزامنة حد التغطية من قيمة المركبة أو المتجر
+    // Sync coverage limit
     const storeLimit = insuranceStore.policy.coverageLimit;
     const vehicleValue = Number( insuranceStore.vehicle.estimatedValue );
     if ( vehicleValue > 0 ) {
@@ -414,98 +553,109 @@ onMounted( async () => {
     } );
 
     startLoadingQuotes();
-
-    // Countdown timer
     countdownInterval = setInterval( updateCountdown, 1000 );
-
-    // Pause timers when tab is hidden, resume when visible
     document.addEventListener( 'visibilitychange', handleVisibilityChange );
 } );
 
-// State
-const showCompareModal = ref( false );
-const showMobileFilters = ref( false );
-const showOfferSheet = ref( false );
-const showHeroModal = ref( false );
-const offerSheetPlan = ref( null );
-const offerSheetEntrySource = ref( 'offer_sheet' );
-const selectedPlans = ref( [] );
-const shakingCards = ref( [] );
-const pulsingCards = ref( [] );
-const sortBy = ref( 'price-asc' );
-const compactView = ref( false );
-const activeTab = ref( 'thirdParty' );
-const showCoverageLimit = computed( () => [ 'comprehensive', 'vehicleDamagePlus', 'thirdPartyPlus' ].includes( activeTab.value ) );
-const expandedCards = ref( [] );
-const selectionError = ref( '' );
-
-// Quote options (repair method & coverage)
-const quoteOptions = reactive( {
-    repairMethod: 'authorized',
-    coverageLimit: 55667,
-} );
-const isUpdatingQuotes = ref( false );
-const expandedBenefits = ref( [] );
-const showAllPlans = ref( false );
-
-watch( activeTab, () => { showAllPlans.value = false; } );
-
-function triggerAnimation( list, id, duration = 600 ) {
-    list.value.push( id );
-    setTimeout( () => {
-        list.value = list.value.filter( x => x !== id );
-    }, duration );
-}
-
-function onCompareToggle( planId, checked ) {
-    if ( checked ) {
-        if ( selectedPlans.value.length >= 3 ) {
-            // Shake all selected cards + the attempted one
-            [ ...selectedPlans.value, planId ].forEach( id => triggerAnimation( shakingCards, id, 500 ) );
-            return;
-        }
-        if ( !selectedPlans.value.includes( planId ) ) {
-            selectedPlans.value.push( planId );
-            triggerAnimation( pulsingCards, planId, 600 );
-        }
-    } else {
-        selectedPlans.value = selectedPlans.value.filter( id => id !== planId );
-    }
-}
-
-function toggleExpandedBenefits( planId ) {
-    const idx = expandedBenefits.value.indexOf( planId );
-    if ( idx === -1 ) {
-        expandedBenefits.value.push( planId );
-    } else {
-        expandedBenefits.value.splice( idx, 1 );
-    }
-}
-
-function toggleCardExpand( planId ) {
-    const idx = expandedCards.value.indexOf( planId );
-    if ( idx === -1 ) {
-        expandedCards.value.push( planId );
-    } else {
-        expandedCards.value.splice( idx, 1 );
-    }
-}
-
-const repairMethodOptions = [
-    { value: 'authorized', label: 'الورش المعتمدة' },
-    { value: 'agency', label: 'وكالة' },
-];
-
-// تحديث تلقائي عند تغيير طريقة الإصلاح أو حد التغطية
-let _quoteDebounce = null;
-watch( () => [ quoteOptions.repairMethod, quoteOptions.coverageLimit ], () => {
-    if ( quotesData.value.length > 0 ) {
-        clearTimeout( _quoteDebounce );
-        _quoteDebounce = setTimeout( updateQuoteOptions, 200 );
-    }
+/**
+ * Cleanup: clear timers and event listeners
+ */
+onUnmounted( () => {
+    clearInterval( countdownInterval );
+    clearInterval( loadingInterval );
+    clearTimeout( loadingDoneTimer );
+    clearTimeout( updatingDoneTimer );
+    document.removeEventListener( 'visibilitychange', handleVisibilityChange );
 } );
 
-function formDataWithPolicyOverrides ( overrides = {} ) {
+// ═══════════════════════════════════════════════════════════════════════════════════
+// QUOTES: LOADING & ERROR HANDLING
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Fetch quotes from API with animated progress bar
+ * @async
+ */
+async function startLoadingQuotes() {
+    if ( isCustomerBlocked() ) {
+        loadingAborted = true;
+        isLoadingQuotes.value = false;
+        return;
+    }
+
+    loadingProgress.value = 0;
+    isLoadingQuotes.value = true;
+    quotesError.value = null;
+    loadingAborted = false;
+
+    const loadingStart = Date.now();
+
+    // Animate progress bar independently of API
+    loadingInterval = setInterval( () => {
+        if ( loadingAborted ) return;
+        if ( loadingProgress.value < QUOTE_LOADING_CONFIG.PROGRESS_CAP ) {
+            const increment = Math.random() * ( QUOTE_LOADING_CONFIG.PROGRESS_INCREMENT.max - QUOTE_LOADING_CONFIG.PROGRESS_INCREMENT.min ) + QUOTE_LOADING_CONFIG.PROGRESS_INCREMENT.min;
+            loadingProgress.value = Math.min( QUOTE_LOADING_CONFIG.PROGRESS_CAP, loadingProgress.value + increment );
+        }
+    }, QUOTE_LOADING_CONFIG.PROGRESS_INTERVAL );
+
+    try {
+        insuranceStore.hydrateFromSession();
+        const result = await getQuotes( insuranceStore.allFormData );
+        quotesData.value = withDisplayCoverage( result.plans || [] );
+        insuranceStore.setCalculatedQuotes( quotesData.value );
+
+        // Enforce minimum loading duration for UX
+        const elapsed = Date.now() - loadingStart;
+        const remaining = Math.max( 0, QUOTE_LOADING_CONFIG.MIN_DURATION - elapsed );
+        await new Promise( resolve => setTimeout( resolve, remaining ) );
+
+        loadingProgress.value = 100;
+        clearInterval( loadingInterval );
+
+        loadingDoneTimer = setTimeout( () => {
+            isLoadingQuotes.value = false;
+        }, 400 );
+    } catch ( err ) {
+        clearInterval( loadingInterval );
+        loadingAborted = true;
+        quotesError.value = err;
+        isLoadingQuotes.value = false;
+        logger.error( '[ComparePage] Failed to fetch quotes:', err );
+    }
+}
+
+/**
+ * Retry fetching quotes after an error
+ */
+function retryLoadQuotes() {
+    quotesError.value = null;
+    startLoadingQuotes();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// QUOTES: OPTION UPDATES & PRICING
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Apply display coverage based on user-selected coverage limit
+ * @param {Array} plans - Plans from API
+ * @returns {Array} Plans with adjusted coverage display
+ */
+function withDisplayCoverage( plans ) {
+    const userLimit = quoteOptions.coverageLimit;
+    return plans.map( p => ( {
+        ...p,
+        coverageLimit: COVERAGE_AFFECTED_SUBTYPES.includes( p.subType ) && userLimit ? userLimit : p.coverageLimit,
+    } ) );
+}
+
+/**
+ * Build complete form data with policy overrides
+ * @param {Object} overrides - Policy overrides
+ * @returns {Object} Complete form data
+ */
+function formDataWithPolicyOverrides( overrides = {} ) {
     return {
         ...insuranceStore.allFormData,
         policy: {
@@ -517,26 +667,27 @@ function formDataWithPolicyOverrides ( overrides = {} ) {
     };
 }
 
-function withDisplayCoverage ( plans ) {
-    const userLimit = quoteOptions.coverageLimit;
-    const affectedSubTypes = [ 'comprehensive', 'vehicleDamagePlus', 'thirdPartyPlus' ];
-    return plans.map( p => ( {
-        ...p,
-        coverageLimit: affectedSubTypes.includes( p.subType ) && userLimit ? userLimit : p.coverageLimit,
-    } ) );
-}
-
-async function pricePlansFromServer ( plans, overrides = {} ) {
+/**
+ * Fetch repriced plans from server
+ * @async
+ * @param {Array} plans - Plans to reprice
+ * @param {Object} overrides - Policy overrides
+ * @returns {Array} Repriced plans
+ */
+async function pricePlansFromServer( plans, overrides = {} ) {
     const result = await getQuotes( formDataWithPolicyOverrides( overrides ), plans );
     return withDisplayCoverage( result.plans || [] );
 }
 
+/**
+ * Update all quote options (repair method and coverage limit)
+ * @async
+ */
 async function updateQuoteOptions() {
     clearTimeout( _quoteDebounce );
     isUpdatingQuotes.value = true;
     selectionError.value = '';
 
-    // تحديث بيانات الوثيقة في المتجر
     insuranceStore.setPolicyData( {
         repairMethod: quoteOptions.repairMethod,
         coverageLimit: quoteOptions.coverageLimit,
@@ -556,45 +707,11 @@ async function updateQuoteOptions() {
     }
 }
 
-// Vehicle info from store / sessionStorage
-const vehicleInfo = reactive( {
-    makeName: 'غير محدد',
-    year: '',
-    color: '',
-    bodyType: '',
-    sequenceNumber: '',
-    plateNumber: '',
-} );
-
-function loadVehicleInfo() {
-    // أولاً: من المتجر المركزي
-    if ( insuranceStore.vehicle.make ) {
-        vehicleInfo.makeName = insuranceStore.vehicle.makeName || insuranceStore.vehicle.make;
-        vehicleInfo.year = insuranceStore.vehicle.year;
-        vehicleInfo.sequenceNumber = insuranceStore.vehicle.sequenceNumber;
-        vehicleInfo.plateNumber = insuranceStore.vehicle.plateNumber;
-        return;
-    }
-    // التراجع: sessionStorage
-    const vehicleDetails = sessionStorage.getItem( 'vehicleDetails' );
-    const vehicleForm = sessionStorage.getItem( 'vehicleForm' );
-    if ( vehicleDetails ) {
-        try {
-            const parsed = JSON.parse( vehicleDetails );
-            if ( parsed.sequenceNumber ) vehicleInfo.sequenceNumber = parsed.sequenceNumber;
-        } catch { /* ignore */ }
-    }
-    if ( vehicleForm ) {
-        try {
-            const parsed = JSON.parse( vehicleForm );
-            if ( parsed.vehicleMake ) vehicleInfo.makeName = parsed.vehicleMake;
-            if ( parsed.vehicleYear ) vehicleInfo.year = parsed.vehicleYear;
-        } catch { /* ignore */ }
-    }
-}
-
 /**
- * إعادة حساب سعر خطة واحدة عند تغيير الخصم من القائمة المنسدلة في الكارت
+ * Update pricing for a single plan deductible change
+ * @async
+ * @param {string} planId - Plan identifier
+ * @param {number} newDeductible - New deductible value
  */
 async function onPlanDeductibleChange( planId, newDeductible ) {
     const idx = quotesData.value.findIndex( p => p.id === planId );
@@ -624,142 +741,66 @@ async function onPlanDeductibleChange( planId, newDeductible ) {
     }
 }
 
-const filters = reactive( {
-    type: route.query.type || 'all',
-    maxPrice: 8000,
-    maxDeductible: 5000,
-    companies: [],
-} );
+// ═══════════════════════════════════════════════════════════════════════════════════
+// VEHICLE INFO & DATA LOADING
+// ═══════════════════════════════════════════════════════════════════════════════════
 
-// Sort options
-const sortOptions = [
-    { value: 'price-asc', label: 'السعر: الأقل' },
-    { value: 'price-desc', label: 'السعر: الأعلى' },
-    { value: 'rating', label: 'التقييم' },
-    { value: 'deductible', label: 'التحمل: الأقل' },
-];
-
-// Category tabs
-const categoryTabs = computed( () => {
-    const types = [
-        { value: 'thirdParty', label: 'ضد الغير' },
-        { value: 'thirdPartyPlus', label: 'ضد الغير بلس' },
-        { value: 'vehicleDamagePlus', label: 'أضرار المركبة بلس' },
-        { value: 'comprehensive', label: 'الشامل' },
-    ];
-    // Single pass: bucket plans by subType and track min price per bucket
-    const buckets = {};
-    for ( const p of plansWithCompany.value ) {
-        if ( !buckets[ p.subType ] ) buckets[ p.subType ] = { count: 0, minPrice: Infinity };
-        buckets[ p.subType ].count++;
-        if ( p.annualPrice < buckets[ p.subType ].minPrice ) buckets[ p.subType ].minPrice = p.annualPrice;
-    }
-    return types.map( t => {
-        const b = buckets[ t.value ];
-        return {
-            ...t,
-            count: b ? b.count : 0,
-            priceLabel: b ? formatNumber( Math.round( b.minPrice ) ) : 'لا يوجد تسعيرات',
-        };
-    } );
-} );
-
-// Plans with company data (from API response)
-const plansWithCompany = computed( () =>
-    quotesData.value.map( plan => ( {
-        ...plan,
-        company: plan.company || getCompany( plan.companyId ),
-    } ) )
-);
-
-
-// Filtered plans
-const filteredPlans = computed( () => {
-    return plansWithCompany.value.filter( plan => {
-        // Tab filter
-        if ( plan.subType !== activeTab.value ) return false;
-        // Price filter
-        if ( plan.annualPrice > filters.maxPrice ) return false;
-        // Deductible filter
-        if ( plan.deductible > filters.maxDeductible ) return false;
-        // Company filter
-        if ( filters.companies.length > 0 && !filters.companies.includes( plan.companyId ) ) return false;
-        return true;
-    } );
-} );
-
-// Sorted plans
-const sortedPlans = computed( () => {
-    const plans = [ ...filteredPlans.value ];
-    switch ( sortBy.value ) {
-        case 'price-asc': return plans.sort( ( a, b ) => a.annualPrice - b.annualPrice );
-        case 'price-desc': return plans.sort( ( a, b ) => b.annualPrice - a.annualPrice );
-        case 'rating': return plans.sort( ( a, b ) => b.company.rating - a.company.rating );
-        case 'deductible': return plans.sort( ( a, b ) => a.deductible - b.deductible );
-        default: return plans;
-    }
-} );
-
-// Display limit (show top 5 by default)
-const displayedPlans = computed( () => {
-    const plans = sortedPlans.value;
-    return showAllPlans.value ? plans : plans.slice( 0, 5 );
-} );
-
-// Compared plans
-const comparedPlans = computed( () =>
-    plansWithCompany.value.filter( p => selectedPlans.value.includes( p.id ) )
-);
-
-// Countdown timer
-const countdown = reactive( { total: 15 * 60, formatted: '15:00' } );
-let countdownInterval;
-
-function updateCountdown() {
-    if ( countdown.total <= 0 ) {
-        clearInterval( countdownInterval );
-        // Auto-refresh quotes when timer expires
-        countdown.total = 15 * 60;
-        countdown.formatted = '15:00';
-        startLoadingQuotes();
-        countdownInterval = setInterval( updateCountdown, 1000 );
+/**
+ * Load vehicle information from store or session storage
+ */
+function loadVehicleInfo() {
+    // Primary: from central store
+    if ( insuranceStore.vehicle.make ) {
+        vehicleInfo.makeName = insuranceStore.vehicle.makeName || insuranceStore.vehicle.make;
+        vehicleInfo.year = insuranceStore.vehicle.year;
+        vehicleInfo.sequenceNumber = insuranceStore.vehicle.sequenceNumber;
+        vehicleInfo.plateNumber = insuranceStore.vehicle.plateNumber;
         return;
     }
-    countdown.total--;
-    const min = Math.floor( countdown.total / 60 );
-    const sec = countdown.total % 60;
-    countdown.formatted = `${ String( min ).padStart( 2, '0' ) }:${ String( sec ).padStart( 2, '0' ) }`;
-}
-
-let loadingDoneTimer = null;
-let updatingDoneTimer = null;
-
-function handleVisibilityChange() {
-    if ( document.hidden ) {
-        clearInterval( countdownInterval );
-    } else {
-        countdownInterval = setInterval( updateCountdown, 1000 );
+    // Fallback: sessionStorage
+    const vehicleDetails = sessionStorage.getItem( 'vehicleDetails' );
+    const vehicleForm = sessionStorage.getItem( 'vehicleForm' );
+    if ( vehicleDetails ) {
+        try {
+            const parsed = JSON.parse( vehicleDetails );
+            if ( parsed.sequenceNumber ) vehicleInfo.sequenceNumber = parsed.sequenceNumber;
+        } catch { /* ignore */ }
+    }
+    if ( vehicleForm ) {
+        try {
+            const parsed = JSON.parse( vehicleForm );
+            if ( parsed.vehicleMake ) vehicleInfo.makeName = parsed.vehicleMake;
+            if ( parsed.vehicleYear ) vehicleInfo.year = parsed.vehicleYear;
+        } catch { /* ignore */ }
     }
 }
 
-onUnmounted( () => {
-    clearInterval( countdownInterval );
-    clearInterval( loadingInterval );
-    clearTimeout( loadingDoneTimer );
-    clearTimeout( updatingDoneTimer );
-    document.removeEventListener( 'visibilitychange', handleVisibilityChange );
-} );
+// ═══════════════════════════════════════════════════════════════════════════════════
+// FILTERS & SORT
+// ═══════════════════════════════════════════════════════════════════════════════════
 
-// Actions
+/**
+ * Reset all filters to default values
+ */
 function resetFilters() {
-    filters.maxPrice = 8000;
-    filters.maxDeductible = 5000;
+    filters.maxPrice = DEFAULT_FILTER_STATE.maxPrice;
+    filters.maxDeductible = DEFAULT_FILTER_STATE.maxDeductible;
     filters.companies = [];
     activeTab.value = 'thirdParty';
     showAllPlans.value = false;
 }
 
-async function issueQuoteLock ( selection ) {
+// ═══════════════════════════════════════════════════════════════════════════════════
+// PLAN SELECTION & OFFER HANDLING
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Issue a quote lock on the server to reserve pricing
+ * @async
+ * @param {Object} selection - Selected plan with details
+ * @returns {Object} Quote lock token and pricing data
+ */
+async function issueQuoteLock( selection ) {
     const subtotal = Number( selection.annualPrice || 0 ) + Number( selection.addonsTotal || 0 );
     const vat = Math.round( subtotal * 0.15 );
     const total = subtotal + vat;
@@ -791,7 +832,12 @@ async function issueQuoteLock ( selection ) {
     };
 }
 
-function ensureSignatureFields ( quote ) {
+/**
+ * Verify plan has pricing signature fields
+ * @param {Object} quote - Plan to verify
+ * @returns {boolean} True if signature fields present
+ */
+function ensureSignatureFields( quote ) {
     const hasSignature = Boolean( quote?.signature && quote?.timestamp && quote?.expiresAt );
     if ( hasSignature ) return true;
 
@@ -804,6 +850,12 @@ function ensureSignatureFields ( quote ) {
     return false;
 }
 
+/**
+ * Select a plan and proceed to order review
+ * @async
+ * @param {Object} plan - Selected plan
+ * @param {string} source - Source of selection (for tracking)
+ */
 async function selectPlan( plan, source = 'card_expanded' ) {
     selectionError.value = '';
     if ( !ensureSignatureFields( plan ) ) return;
@@ -828,7 +880,7 @@ async function selectPlan( plan, source = 'card_expanded' ) {
         return;
     }
 
-    // Store signed quote packet in in-memory shared state (secure flow)
+    // Store signed quote packet in memory (secure flow)
     try {
         storePricingSignature( {
             planId: plan.id,
@@ -859,7 +911,6 @@ async function selectPlan( plan, source = 'card_expanded' ) {
         addons: [],
         quoteLockToken: lock.quoteLockToken,
         quoteLockExpiresAt: lock.quoteLockExpiresAt,
-        // مصدر الحقيقة للأسعار — من الـlock المثبت على السيرفر
         subtotal: lock.subtotal,
         subtotalBeforeVAT: lock.subtotal,
         vatAmount: lock.vatAmount,
@@ -873,6 +924,11 @@ async function selectPlan( plan, source = 'card_expanded' ) {
     router.push( { name: 'orderReview' } );
 }
 
+/**
+ * Open the offer details sheet to show full plan details
+ * @param {Object} plan - Plan to display
+ * @param {string} source - Source of opening (for tracking)
+ */
 function openOfferSheet( plan, source = 'offer_sheet' ) {
     offerSheetPlan.value = plan;
     offerSheetEntrySource.value = source;
@@ -880,6 +936,11 @@ function openOfferSheet( plan, source = 'offer_sheet' ) {
     trackStep( 'view_offer_details', 4, { selected_plan_id: plan.id, source }, 'next' );
 }
 
+/**
+ * Handle offer selection with deductible and addons
+ * @async
+ * @param {Object} selection - Selection with plan, deductible, and addons
+ */
 async function handleOfferSelect( selection ) {
     selectionError.value = '';
     showOfferSheet.value = false;
@@ -923,7 +984,7 @@ async function handleOfferSelect( selection ) {
         return;
     }
 
-    // Store signed quote packet in in-memory shared state (secure flow)
+    // Store signed quote packet in memory (secure flow)
     try {
         storePricingSignature( {
             planId: signedPlan.id,
@@ -966,6 +1027,104 @@ async function handleOfferSelect( selection ) {
     trackStepCompleted( 'compare', 'orderReview' );
     offerSheetEntrySource.value = 'offer_sheet';
     router.push( { name: 'orderReview' } );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// ANIMATION & UI INTERACTIONS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Trigger animation on a card by adding and removing from list
+ * @param {Ref} list - Reactive list to track animation
+ * @param {string} id - Card ID to animate
+ * @param {number} duration - Animation duration in ms
+ */
+function triggerAnimation( list, id, duration = 600 ) {
+    list.value.push( id );
+    setTimeout( () => {
+        list.value = list.value.filter( x => x !== id );
+    }, duration );
+}
+
+/**
+ * Toggle plan comparison checkbox
+ * @param {string} planId - Plan to compare
+ * @param {boolean} checked - Whether plan is selected
+ */
+function onCompareToggle( planId, checked ) {
+    if ( checked ) {
+        if ( selectedPlans.value.length >= COMPARE_LIMIT ) {
+            [ ...selectedPlans.value, planId ].forEach( id => triggerAnimation( shakingCards, id, 500 ) );
+            return;
+        }
+        if ( !selectedPlans.value.includes( planId ) ) {
+            selectedPlans.value.push( planId );
+            triggerAnimation( pulsingCards, planId, 600 );
+        }
+    } else {
+        selectedPlans.value = selectedPlans.value.filter( id => id !== planId );
+    }
+}
+
+/**
+ * Toggle benefits expansion for a plan
+ * @param {string} planId - Plan ID
+ */
+function toggleExpandedBenefits( planId ) {
+    const idx = expandedBenefits.value.indexOf( planId );
+    if ( idx === -1 ) {
+        expandedBenefits.value.push( planId );
+    } else {
+        expandedBenefits.value.splice( idx, 1 );
+    }
+}
+
+/**
+ * Toggle card expansion for a plan
+ * @param {string} planId - Plan ID
+ */
+function toggleCardExpand( planId ) {
+    const idx = expandedCards.value.indexOf( planId );
+    if ( idx === -1 ) {
+        expandedCards.value.push( planId );
+    } else {
+        expandedCards.value.splice( idx, 1 );
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// COUNTDOWN TIMER
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+let countdownInterval;
+
+/**
+ * Update countdown timer display and auto-refresh quotes when expired
+ */
+function updateCountdown() {
+    if ( countdown.total <= 0 ) {
+        clearInterval( countdownInterval );
+        countdown.total = DEFAULT_COUNTDOWN.total;
+        countdown.formatted = DEFAULT_COUNTDOWN.formatted;
+        startLoadingQuotes();
+        countdownInterval = setInterval( updateCountdown, 1000 );
+        return;
+    }
+    countdown.total--;
+    const min = Math.floor( countdown.total / 60 );
+    const sec = countdown.total % 60;
+    countdown.formatted = `${ String( min ).padStart( 2, '0' ) }:${ String( sec ).padStart( 2, '0' ) }`;
+}
+
+/**
+ * Handle document visibility changes (pause/resume countdown)
+ */
+function handleVisibilityChange() {
+    if ( document.hidden ) {
+        clearInterval( countdownInterval );
+    } else {
+        countdownInterval = setInterval( updateCountdown, 1000 );
+    }
 }
 </script>
 
