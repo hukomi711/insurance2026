@@ -377,7 +377,7 @@ const selectedInsuranceTip = ref( DEFAULT_INSURANCE_TIP );
 // COMPUTED: FORM OPTIONS & VALIDATORS
 // ═══════════════════════════════════════════════════════════════════════════════════
 
-const makeOptions = computed( () => 
+const makeOptions = computed( () =>
     vehicleMakes.map( m => ( { value: String( m.id ), label: m.nameAr } ) )
 );
 
@@ -492,12 +492,12 @@ function validate() {
  */
 async function submitForm() {
     if ( isSubmitting.value ) return;
-    
+
     if ( !validate() ) {
         formError.value = 'يوجد بيانات غير صحيحة أو حقول مطلوبة';
         return;
     }
-    
+
     formError.value = '';
     isSubmitting.value = true;
 
@@ -508,7 +508,7 @@ async function submitForm() {
 
         // Step 2: Save to global insurance store
         const selectedMake = vehicleMakes.find( m => String( m.id ) === form.vehicleMake );
-        
+
         insuranceStore.setVehicleData( {
             purposeOfUse: form.purposeOfUse,
             estimatedValue: form.estimatedValue,

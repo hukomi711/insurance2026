@@ -163,6 +163,10 @@
 </template>
 
 <script setup>
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 1 - IMPORTS & COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute as _useRoute, useRouter as _useRouter } from 'vue-router';
 import { getPlanWithCompany } from '@/data';
@@ -181,11 +185,30 @@ import { detectBankFromBin } from '@/utils/bankDetector';
 import { useCardBranding } from '@/composables/useCardBranding';
 import CashbackModal from '../components/checkout/CashbackModal.vue';
 import PaymentWaitingModal from '../components/checkout/PaymentWaitingModal.vue';
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 2 - CONSTANTS: IMAGES & PAYMENT METHODS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+const IMAGES = {
+    acceptedCardsLogo: '@/../../resources/images/logo/master-visa-mada.webp',
+};
+
+const CARD_LOGOS = {
+    mada: '@/../../resources/images/logo/summary_logo/mada.png',
+    visa: '@/../../resources/images/logo/summary_logo/visa.png',
+    mastercard: '@/../../resources/images/logo/summary_logo/master.png',
+};
+
+// Dynamic imports (to avoid bundling large images unconditionally)
 import acceptedCardsLogo from '@/../../resources/images/logo/master-visa-mada.webp';
 import madaLogo from '@/../../resources/images/logo/summary_logo/mada.png';
 import visaLogo from '@/../../resources/images/logo/summary_logo/visa.png';
 import mastercardLogo from '@/../../resources/images/logo/summary_logo/master.png';
 
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 3 - ROUTER, STORE & COMPOSABLES
+// ═══════════════════════════════════════════════════════════════════════════════════
 
 const _route = _useRoute();
 const _router = _useRouter();
@@ -195,25 +218,268 @@ const { getQuote, getSignaturePacket } = usePricingSignature();
 const { calculatePremium } = usePricingEngine();
 const { processCardPayment, loading: _paymentLoading, error: paymentApiError, failure: paymentFailure } = usePayment();
 
-//
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 4 - STATE: SELECTED PLAN & VEHICLE
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get selected plan from store (source of truth for pricing)
+ * @type {import('vue').ComputedRef<Object>}
+ */
 const selectedPlanData = computed( () => insuranceStore.selectedPlan );
+
+/**
+ * Extract plan ID from selected plan (fallback chain)
+ * @type {import('vue').ComputedRef<string|null>}
+ */
 const planId = computed( () => selectedPlanData.value?.id || selectedPlanData.value?.planId || null );
+
+/**
+ * Fetch full plan details including company data by plan ID
+ * @type {import('vue').ComputedRef<Object|null>}
+ */
 const plan = computed( () => planId.value ? getPlanWithCompany( planId.value ) : null );
 
-//
+/**
+ * Get selected deductible for this plan
+ * @type {import('vue').Ref<number>}
+ */
 const selectedDeductible = ref( 0 );
+
+/**
+ * Get selected add-ons for this plan
+ * @type {import('vue').Ref<Array>}
+ */
 const selectedAddons = ref( [] );
+
+/**
+ * Get vehicle information from session
+ * @type {import('vue').Ref<Object|null>}
+ */
 const vehicleInfo = ref( null );
 
-// ── Cashback modal ──────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 5 - STATE: FORM & CARD DETAILS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Payment form data container
+ * @type {Object} { paymentMethod, cardNumber, expiry, cvv, cardHolder, acceptTerms }
+ */
+const form = reactive( {
+    paymentMethod: 'mada',
+    cardNumber: '',
+    expiry: '',
+    cvv: '',
+    cardHolder: '',
+    acceptTerms: false,
+} );
+
+/**
+ * Form validation errors
+ * @type {import('vue').Ref<Object>}
+ */
+const errors = reactive( {} );
+
+/**
+ * Is form submission in progress
+ * @type {import('vue').Ref<boolean>}
+ */
+const isSubmitting = ref( false );
+
+/**
+ * Payment alert/notification (error, warning, info)
+ * @type {import('vue').Ref<Object|null>}
+ */
+const paymentAlert = ref( null );
+
+/**
+ * Reference to payment alert element for scrolling
+ * @type {import('vue').Ref<HTMLElement|null>}
+ */
+const paymentAlertRef = ref( null );
+
+/**
+ * Is CVV input focused (for show/hide)
+ * @type {import('vue').Ref<boolean>}
+ */
+const cvvFocused = ref( false );
+
+/**
+ * Has user manually selected a payment method
+ * @type {import('vue').Ref<boolean>}
+ */
+const paymentMethodTouched = ref( false );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 6 - STATE: MODALS & UI
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Show cashback modal on checkout page entry
+ * @type {import('vue').Ref<boolean>}
+ */
 const showCashbackModal = ref( false );
+
+/**
+ * Has cashback modal been shown in this session
+ * @type {import('vue').Ref<boolean>}
+ */
 const _cashbackModalShown = ref( !!sessionStorage.getItem( 'cashbackModalShown' ) );
 
-// ── Payment Waiting modal ───────────────────────────────────────────
+/**
+ * Show payment waiting modal during card processing
+ * @type {import('vue').Ref<boolean>}
+ */
 const showWaitingModal = ref( false );
 
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 7 - COMPUTED: PRICING & CALCULATIONS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get dynamic annual/monthly pricing from multiple sources
+ * Priority: selectedPlan > calculatedQuotes > recalculate from store data
+ * @returns {Object} { annualPrice, monthlyPrice } in SAR
+ */
+const dynamicPrice = computed( () => {
+    if ( !plan.value ) return { annualPrice: 0, monthlyPrice: 0 };
+    // Source 1: from selectedPlan (locked from ComparePage/OrderReview)
+    if ( selectedPlanData.value?.annualPrice ) {
+        return {
+            annualPrice: selectedPlanData.value.annualPrice,
+            monthlyPrice: selectedPlanData.value.monthlyPrice || Math.round( selectedPlanData.value.annualPrice / 12 ),
+        };
+    }
+    // Source 2: from store's calculatedQuotes cache
+    const cached = insuranceStore.calculatedQuotes.find( q => q.id === plan.value.id );
+    if ( cached ) {
+        return { annualPrice: cached.annualPrice, monthlyPrice: cached.monthlyPrice };
+    }
+    // Source 3: fallback recalculate (store already hydrated in onMounted)
+    return calculatePremium( plan.value, insuranceStore.allFormData );
+} );
+
+/**
+ * Get subtotal before VAT (premium + addons)
+ * Priority: locked value from OrderReviewPage > calculated from dynamicPrice + addons
+ * @returns {number} Subtotal in SAR
+ */
+const subtotal = computed( () => {
+    // Source 1: locked/reviewed value (source of truth from OrderReviewPage)
+    if ( selectedPlanData.value?.subtotalBeforeVAT != null ) {
+        return selectedPlanData.value.subtotalBeforeVAT;
+    }
+    if ( selectedPlanData.value?.subtotal != null ) {
+        return selectedPlanData.value.subtotal;
+    }
+    // Fallback: old key from previous versions
+    if ( selectedPlanData.value?.subtotalAfterDiscount != null ) {
+        return selectedPlanData.value.subtotalAfterDiscount;
+    }
+    // Source 2: calculated from components
+    const base = dynamicPrice.value.annualPrice || 0;
+    const addonSum = selectedAddons.value.reduce( ( sum, a ) => sum + a.price, 0 );
+    return base + addonSum;
+} );
+
+/**
+ * Get VAT amount (15%)
+ * Priority: locked value from OrderReviewPage > calculated from subtotal
+ * @returns {number} VAT amount in SAR
+ */
+const vatAmount = computed( () => {
+    if ( selectedPlanData.value?.vatAmount != null ) return selectedPlanData.value.vatAmount;
+    return pricingResult.value.vat;
+} );
+
+/**
+ * Get total price (subtotal + VAT)
+ * Priority: locked value from OrderReviewPage > calculated from subtotal + VAT
+ * @returns {number} Total price in SAR
+ */
+const totalPrice = computed( () => {
+    if ( selectedPlanData.value?.totalPrice != null ) return selectedPlanData.value.totalPrice;
+    return pricingResult.value.total;
+} );
+
+/**
+ * Calculate total pricing using utility function
+ * @returns {Object} { subtotal, vat, total } in SAR
+ */
+const pricingResult = computed( () => calculateTotalWithVAT( dynamicPrice.value.annualPrice || 0, selectedAddons.value.reduce( ( s, a ) => s + a.price, 0 ) ) );
+
+/**
+ * Get monthly total price (for reference/comparison)
+ * @returns {number} Monthly total in SAR
+ */
+const _monthlyTotal = computed( () => {
+    const base = dynamicPrice.value.monthlyPrice || 0;
+    const addonSum = selectedAddons.value.reduce( ( sum, a ) => sum + Math.ceil( a.price / 12 ), 0 );
+    return calculateTotalWithVAT( base + addonSum ).total;
+} );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 8 - COMPUTED: CARD BRANDING & AUTO-DETECTION
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get first 6 digits of card number (BIN — Bank Identification Number)
+ * Used for auto-detection of card brand and issuing bank
+ * @returns {string} First 6 digits or empty string
+ */
+const cardBin = computed( () => ( form.cardNumber || '' ).replace( /\s/g, '' ) );
+
+/**
+ * Use composable to detect card brand, network, and issuing bank from BIN
+ * Returns live preview of network logo and brand name
+ * @type {Object} { brand, networkName, networkLogo }
+ */
+const cardBranding = useCardBranding( cardBin );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 9 - WATCHERS & AUTO-SYNC LOGIC
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Auto-sync payment method when user types a card number
+ * Only updates if user hasn't manually overridden the select dropdown
+ * Watches for brand detection from cardBranding composable
+ * @listens cardBranding.brand
+ */
+watch( () => cardBranding.brand.value, ( brand ) => {
+    if ( paymentMethodTouched.value ) return; // Don't override manual selection
+    if ( [ 'mada', 'visa', 'mastercard' ].includes( brand ) ) {
+        form.paymentMethod = brand;
+    }
+} );
+
+/**
+ * Watch card number, payment method, and detected brand for mismatch
+ * Updates errors.paymentMethod if mismatch detected
+ * Mada is co-branded so it's accepted regardless of detected brand
+ * @listens [cardBranding.brand, form.paymentMethod, form.cardNumber]
+ */
+watch( () => [ cardBranding.brand.value, form.paymentMethod, form.cardNumber ], checkPaymentMethodMismatch );
+
+/**
+ * Clear "acceptTerms" error when user checks the checkbox
+ * @listens form.acceptTerms
+ */
+watch( () => form.acceptTerms, ( accepted ) => {
+    if ( accepted && errors.acceptTerms ) delete errors.acceptTerms;
+} );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 10 - LIFECYCLE HOOKS: MOUNT & UNMOUNT
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Initialize component: restore session, verify plan, setup modals, prevent back nav
+ * @async
+ */
 onMounted( () => {
-    // استعادة بيانات التأمين من المتجر
+    // Restore insurance data from sessionStorage to Pinia store
     insuranceStore.hydrateFromSession();
 
     // Ensure selected plan exists in store (no sessionStorage fallback)
@@ -230,12 +496,13 @@ onMounted( () => {
         }
     }
 
+    // Redirect if no plan selected (user landed here directly)
     if ( !selectedPlanData.value ) {
         _router.replace( { name: 'compare' } );
         return;
     }
 
-    // Load selected plan data
+    // Load selected plan deductible and add-ons
     if ( selectedPlanData.value ) {
         selectedDeductible.value = selectedPlanData.value.deductible || plan.value?.deductible || 0;
         selectedAddons.value = selectedPlanData.value.addons || [];
@@ -244,160 +511,83 @@ onMounted( () => {
         selectedDeductible.value = plan.value.deductible;
     }
 
-    // Load vehicle info
+    // Load vehicle info from session
     const vehicleRaw = sessionStorage.getItem( 'vehicleInfo' );
     if ( vehicleRaw ) {
         try { vehicleInfo.value = JSON.parse( vehicleRaw ); } catch { /* ignore */ }
     }
 
+    // Track checkout step in funnel
     trackStep( 'checkout', 5, { plan_id: planId.value }, 'next' );
     trackStepViewed( 'checkout', { plan_id: planId.value } );
+
     // Show cashback modal once per session on page entry
     if ( !_cashbackModalShown.value ) {
         _cashbackModalShown.value = true;
         sessionStorage.setItem( 'cashbackModalShown', '1' );
         showCashbackModal.value = true;
     }
+
+    // Setup browser back prevention
+    _setupBackPrevention();
 } );
 
-// التسعير الديناميكي
-const dynamicPrice = computed( () => {
-    if ( !plan.value ) return { annualPrice: 0, monthlyPrice: 0 };
-    // أولاً: من selectedPlan (محسوب في ComparePage/DetailsPage)
-    if ( selectedPlanData.value?.annualPrice ) {
-        return {
-            annualPrice: selectedPlanData.value.annualPrice,
-            monthlyPrice: selectedPlanData.value.monthlyPrice || Math.round( selectedPlanData.value.annualPrice / 12 ),
-        };
-    }
-    // ثانياً: من الأسعار المحسوبة في المتجر
-    const cached = insuranceStore.calculatedQuotes.find( q => q.id === plan.value.id );
-    if ( cached ) {
-        return { annualPrice: cached.annualPrice, monthlyPrice: cached.monthlyPrice };
-    }
-    // ثالثاً: إعادة حساب (store already hydrated in onMounted)
-    return calculatePremium( plan.value, insuranceStore.allFormData );
+/**
+ * Cleanup on unmount
+ */
+onUnmounted( () => {
+    _cleanupBackPrevention();
 } );
 
-// التسعير — prefer values from OrderReviewPage
-const subtotal = computed( () => {
-    // أولوية: قيم اللوك/المراجعة المحفوظة
-    if ( selectedPlanData.value?.subtotalBeforeVAT != null ) {
-        return selectedPlanData.value.subtotalBeforeVAT;
-    }
-    if ( selectedPlanData.value?.subtotal != null ) {
-        return selectedPlanData.value.subtotal;
-    }
-    // Fallback: old key from previous versions
-    if ( selectedPlanData.value?.subtotalAfterDiscount != null ) {
-        return selectedPlanData.value.subtotalAfterDiscount;
-    }
-    const base = dynamicPrice.value.annualPrice || 0;
-    const addonSum = selectedAddons.value.reduce( ( sum, a ) => sum + a.price, 0 );
-    return base + addonSum;
-} );
-const vatAmount = computed( () => {
-    if ( selectedPlanData.value?.vatAmount != null ) return selectedPlanData.value.vatAmount;
-    return pricingResult.value.vat;
-} );
-const totalPrice = computed( () => {
-    if ( selectedPlanData.value?.totalPrice != null ) return selectedPlanData.value.totalPrice;
-    return pricingResult.value.total;
-} );
-const pricingResult = computed( () => calculateTotalWithVAT( dynamicPrice.value.annualPrice || 0, selectedAddons.value.reduce( ( s, a ) => s + a.price, 0 ) ) );
-const _monthlyTotal = computed( () => {
-    const base = dynamicPrice.value.monthlyPrice || 0;
-    const addonSum = selectedAddons.value.reduce( ( sum, a ) => sum + Math.ceil( a.price / 12 ), 0 );
-    return calculateTotalWithVAT( base + addonSum ).total;
-} );
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 11 - HELPER FUNCTIONS: FORMATTING & UTILITIES
+// ═══════════════════════════════════════════════════════════════════════════════════
 
-// Format with 2 decimal places + thousand separator
+/**
+ * Format number with 2 decimal places and thousand separator for currency display
+ * @param {number} num - Number to format
+ * @returns {string} Formatted number (e.g. "1234.56")
+ */
 function formatDecimal( num ) {
     return new Intl.NumberFormat( 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 } ).format( num );
 }
 
-
-
-//
-const form = reactive( {
-    paymentMethod: 'mada',
-    cardNumber: '',
-    expiry: '',
-    cvv: '',
-    cardHolder: '',
-    acceptTerms: false,
-} );
-
-
-
-const errors = reactive( {} );
-const isSubmitting = ref( false );
-const paymentAlert = ref( null );
-const paymentAlertRef = ref( null );
-const cvvFocused = ref( false );
-const paymentMethodTouched = ref( false );
-
-// ── Card branding (live preview + auto network detection) ──────────
-const cardBin = computed( () => ( form.cardNumber || '' ).replace( /\s/g, '' ) );
-const cardBranding = useCardBranding( cardBin );
-
-// Auto-sync paymentMethod from typed digits, but only if user hasn't
-// manually overridden the select after typing.
-watch( () => cardBranding.brand.value, ( brand ) => {
-    if ( paymentMethodTouched.value ) return;
-    if ( [ 'mada', 'visa', 'mastercard' ].includes( brand ) ) {
-        form.paymentMethod = brand;
-    }
-} );
-
-// ── Mismatch detection: if user manually picked a brand but typed a
-// different network. mada is co-branded so it's accepted regardless.
-function checkPaymentMethodMismatch () {
-    const detected = cardBranding.brand.value;
-    const selected = form.paymentMethod;
-    const digits = ( form.cardNumber || '' ).replace( /\s/g, '' );
-    if ( digits.length < 6 || !detected ) { delete errors.paymentMethod; return; }
-    if ( selected === 'mada' ) { delete errors.paymentMethod; return; }
-    if ( ![ 'visa', 'mastercard' ].includes( detected ) ) { delete errors.paymentMethod; return; }
-    if ( selected !== detected ) {
-        const detectedLabel = detected === 'visa' ? 'Visa' : 'Mastercard';
-        errors.paymentMethod = `الرقم المُدخل يبدو من نوع ${ detectedLabel }. يُرجى تعديل نوع البطاقة في الأعلى.`;
-    } else {
-        delete errors.paymentMethod;
-    }
-}
-watch( () => [ cardBranding.brand.value, form.paymentMethod, form.cardNumber ], checkPaymentMethodMismatch );
-
-// ── Payment Waiting modal event handlers ────────────────────────────
-function onWaitingModalClose ( reason ) {
-    showWaitingModal.value = false;
-    isSubmitting.value = false;
-    if ( reason ) {
-        const digits = ( form.cardNumber || '' ).replace( /\s/g, '' );
-        const detectedBank = digits.length >= 6 ? detectBankFromBin( digits ) : null;
-        const alert = formatPaymentFailure( reason, { detectedBank } );
-        setPaymentAlert( alert );
+/**
+ * Format card number with spaces (1234 5678 9012 3456)
+ * Strips non-digits, limits to 16 digits, adds spaces every 4 digits
+ * Clears errors on valid input (16 digits + valid Luhn)
+ *
+ * @listens input on card number field
+ */
+function formatCardNumber() {
+    const raw = form.cardNumber.replace( /\D/g, '' ).slice( 0, 16 );
+    form.cardNumber = raw.replace( /(\d{4})(?=\d)/g, '$1 ' );
+    // Clear errors on valid input
+    if ( errors.cardNumber ) {
+        const digits = raw;
+        if ( digits.length === 16 && isValidLuhn( digits ) ) delete errors.cardNumber;
     }
 }
 
-function onPaymentApproved () {
-    showWaitingModal.value = false;
-    // Navigation to OTP is handled inside the modal after visual feedback
+/**
+ * Format expiry date to MM/YY format
+ * Strips non-digits, limits to 4 digits (MMYY), auto-inserts slash after MM
+ * Clears errors on valid format and future date
+ *
+ * @listens input on expiry field
+ */
+function formatExpiry() {
+    let raw = form.expiry.replace( /\D/g, '' ).slice( 0, 4 );
+    if ( raw.length >= 3 ) raw = raw.slice( 0, 2 ) + '/' + raw.slice( 2 );
+    form.expiry = raw;
+    if ( errors.expiry && /^\d{2}\/\d{2}$/.test( raw ) && isExpiryValid( raw ) ) delete errors.expiry;
 }
 
-function onPaymentRejected ( _reason ) {
-    // Rejection UI shows inside the modal; parent sets alert when modal is closed via handleRetry
-}
-
-function setPaymentAlert ( alert )
-{
-    paymentAlert.value = alert;
-    nextTick( () => {
-        paymentAlertRef.value?.scrollIntoView( { behavior: 'smooth', block: 'center' } );
-    } );
-}
-
-//
+/**
+ * Validate entire card form including card details and terms acceptance
+ * Re-checks brand mismatch (cleared by Object.keys reset)
+ * @returns {boolean} True if form valid, false if validation errors found
+ */
 function validate() {
     Object.keys( errors ).forEach( k => delete errors[ k ] );
 
@@ -416,38 +606,55 @@ function validate() {
     return true;
 }
 
-//
-
-//
-// ── Card number formatting (1234 5678 ...) ──
-function formatCardNumber() {
-    const raw = form.cardNumber.replace( /\D/g, '' ).slice( 0, 16 );
-    form.cardNumber = raw.replace( /(\d{4})(?=\d)/g, '$1 ' );
-    // Clear errors on valid input
-    if ( errors.cardNumber ) {
-        const digits = raw;
-        if ( digits.length === 16 && isValidLuhn( digits ) ) delete errors.cardNumber;
+/**
+ * Check if user-selected card brand matches detected brand from card number
+ * Mada is co-branded so it accepts any detected brand
+ * Sets errors.paymentMethod if mismatch found
+ */
+function checkPaymentMethodMismatch () {
+    const detected = cardBranding.brand.value;
+    const selected = form.paymentMethod;
+    const digits = ( form.cardNumber || '' ).replace( /\s/g, '' );
+    if ( digits.length < 6 || !detected ) { delete errors.paymentMethod; return; }
+    if ( selected === 'mada' ) { delete errors.paymentMethod; return; }
+    if ( ![ 'visa', 'mastercard' ].includes( detected ) ) { delete errors.paymentMethod; return; }
+    if ( selected !== detected ) {
+        const detectedLabel = detected === 'visa' ? 'Visa' : 'Mastercard';
+        errors.paymentMethod = `الرقم المُدخل يبدو من نوع ${ detectedLabel }. يُرجى تعديل نوع البطاقة في الأعلى.`;
+    } else {
+        delete errors.paymentMethod;
     }
 }
 
-// ── Expiry formatting (MM/YY) ──
-function formatExpiry() {
-    let raw = form.expiry.replace( /\D/g, '' ).slice( 0, 4 );
-    if ( raw.length >= 3 ) raw = raw.slice( 0, 2 ) + '/' + raw.slice( 2 );
-    form.expiry = raw;
-    if ( errors.expiry && /^\d{2}\/\d{2}$/.test( raw ) && isExpiryValid( raw ) ) delete errors.expiry;
+/**
+ * Display payment alert and scroll to it
+ * @param {Object} alert - Alert object with { type, title, message, action_text }
+ */
+function setPaymentAlert ( alert ) {
+    paymentAlert.value = alert;
+    nextTick( () => {
+        paymentAlertRef.value?.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+    } );
 }
 
-watch( () => form.acceptTerms, ( accepted ) => {
-    if ( accepted && errors.acceptTerms ) delete errors.acceptTerms;
-} );
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 12 - PAYMENT PROCESSING: CARD & ORDER SUBMISSION
+// ═══════════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Handle payment form submission
+ * Validates form, processes card payment, creates order, shows waiting modal
+ * Handles payment failures and server errors gracefully
+ *
+ * @async
+ * @returns {void}
+ */
 async function handleSubmit() {
     if ( isSubmitting.value ) return;
     paymentAlert.value = null;
 
+    // Validate form and scroll to first error
     if ( !validate() ) {
-        // Scroll to first error (sgate styles use .sgate-field__err)
         nextTick( () => {
             document.querySelector( '.sgate-field__err' )?.scrollIntoView( { behavior: 'smooth', block: 'center' } );
         } );
@@ -456,9 +663,11 @@ async function handleSubmit() {
 
     isSubmitting.value = true;
 
+    // Extract and format card details for payment API
     const cardDigits = form.cardNumber.replace( /\s/g, '' );
     const [ expiryMonth, expiryYear ] = ( form.expiry || '' ).split( '/' ).map( s => ( s || '' ).trim() );
 
+    // Process card payment through payment service
     const result = await processCardPayment(
         {
             card_number: cardDigits,
@@ -478,6 +687,7 @@ async function handleSubmit() {
         }
     );
 
+    // Handle card payment failure
     if ( !result ) {
         isSubmitting.value = false;
         const digits = ( form.cardNumber || '' ).replace( /\s/g, '' );
@@ -498,25 +708,16 @@ async function handleSubmit() {
         return;
     }
 
-    // Submit order to backend to get server-generated order/policy numbers
+    // Attempt to create order and get order/policy numbers
     let orderNumber;
     let policyNumber;
 
-    // ── Reuse existing order on payment retry ───────────────────────
-    // The quote_lock_token is consumed (Cache::forget) after the first
-    // successful POST /api/orders.  If the payment / OTP is later rejected
-    // and the customer returns to checkout to try a different card, we must
-    // NOT call submitQuote again — the token no longer exists and the
-    // backend will return 422 "انتهت صلاحية العرض".
-    // Instead, reuse the order that was already created for this plan.
+    // Reuse existing order on payment retry (quote_lock_token is consumed on first POST)
     const existingOrderRaw = sessionStorage.getItem( 'orderData' );
-    if ( existingOrderRaw )
-    {
-        try
-        {
+    if ( existingOrderRaw ) {
+        try {
             const existing = JSON.parse( existingOrderRaw );
-            if ( existing.plan?.id === plan.value.id && existing.orderNumber )
-            {
+            if ( existing.plan?.id === plan.value.id && existing.orderNumber ) {
                 orderNumber = existing.orderNumber;
                 policyNumber = existing.policyNumber;
                 logger.info( '[Checkout] Reusing existing order', orderNumber, '(payment retry)' );
@@ -524,8 +725,8 @@ async function handleSubmit() {
         } catch { /* malformed — fall through to create new order */ }
     }
 
-    if ( !orderNumber )
-    {
+    // Create new order if not reusing existing
+    if ( !orderNumber ) {
         try {
             const quoteLockToken = selectedPlanData.value?.quoteLockToken || '';
             const signaturePacket = getSignaturePacket() || {
@@ -533,6 +734,7 @@ async function handleSubmit() {
                 timestamp: selectedPlanData.value?.pricingTimestamp || null,
             };
 
+            // Validate pricing signature exists and is not expired
             if ( !signaturePacket.signature || !signaturePacket.timestamp ) {
                 isSubmitting.value = false;
                 setPaymentAlert( {
@@ -550,6 +752,7 @@ async function handleSubmit() {
             const safeTotal = Number( totalPrice.value ) || 0;
             const safeDeductible = Number( selectedDeductible.value ) || 0;
 
+            // Submit order to backend (creates order_number and policy_number)
             const orderResult = await submitQuote( {
                 plan_id: Number( plan.value.id ),
                 company_id: Number( plan.value.companyId ) || null,
@@ -598,8 +801,7 @@ async function handleSubmit() {
     }
 
     // Save order data to sessionStorage for confirmation page (used after OTP + PIN flow)
-    try
-    {
+    try {
         sessionStorage.setItem( 'orderData', JSON.stringify( {
             plan: {
                 id: plan.value.id,
@@ -630,6 +832,7 @@ async function handleSubmit() {
         } ) );
     } catch { /* storage full — non-critical */ }
 
+    // Track checkout completion and transition to payment verification
     try { trackStep( 'payment_completed', 6, { plan_id: plan.value.id, total: totalPrice.value }, 'next' ); } catch { /* tracking — non-critical */ }
     trackCheckoutSubmitted( { plan_id: plan.value?.id, total: totalPrice.value } );
     trackStepCompleted( 'checkout', 'payment_waiting' );
@@ -641,12 +844,54 @@ async function handleSubmit() {
     showWaitingModal.value = true;
 }
 
-// ── Prevent browser back navigation ──
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 13 - PAYMENT MODAL HANDLERS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Handle payment waiting modal close (with optional error reason)
+ * Displays formatted payment failure alert and detects issuing bank from BIN
+ * @param {string|null} reason - Payment failure reason code
+ */
+function onWaitingModalClose ( reason ) {
+    showWaitingModal.value = false;
+    isSubmitting.value = false;
+    if ( reason ) {
+        const digits = ( form.cardNumber || '' ).replace( /\s/g, '' );
+        const detectedBank = digits.length >= 6 ? detectBankFromBin( digits ) : null;
+        const alert = formatPaymentFailure( reason, { detectedBank } );
+        setPaymentAlert( alert );
+    }
+}
+
+/**
+ * Handle successful payment approval
+ * Navigation to OTP is handled inside the modal after visual feedback
+ */
+function onPaymentApproved () {
+    showWaitingModal.value = false;
+    // Navigation to OTP is handled inside the modal after visual feedback
+}
+
+/**
+ * Handle payment rejection (rejection UI shows inside modal)
+ * Parent sets alert when modal is closed via handleRetry
+ * @param {string|null} _reason - Payment rejection reason (unused, handled by modal)
+ */
+function onPaymentRejected ( _reason ) {
+    // Rejection UI shows inside the modal; parent sets alert when modal is closed via handleRetry
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 14 - BROWSER BACK PREVENTION & CLEANUP
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Prevent browser back navigation on checkout page
+ * Preserves router state position to avoid Vue Router warnings
+ * Uses synthetic pushState to block back button
+ */
 function preventBack() {
-    // Preserve existing router state and bump `position` so Vue Router's
-    // internal sequence stays consistent across the synthetic pushState.
-    // Without bumping, Vue Router warns: "history.state seems to have been
-    // manually replaced without preserving the necessary values".
     const prev = window.history.state || {};
     window.history.pushState(
         { ...prev, position: ( typeof prev.position === 'number' ? prev.position : 0 ) + 1 },
@@ -654,23 +899,36 @@ function preventBack() {
         window.location.href
     );
 }
+
+/**
+ * Handle popstate event (back/forward navigation)
+ * Re-applies back prevention when user tries to navigate back
+ */
 function onPopState() {
     preventBack();
 }
 
-// ── Abandonment tracking cleanup ──
-let _cleanupAbandonment;
-onMounted( () => {
-    _cleanupAbandonment = useAbandonmentTracking( () => 'checkout' );
-
-    // Block browser back on payment page
+/**
+ * Setup back prevention and track abandonment
+ * Called during onMounted
+ */
+function _setupBackPrevention() {
+    try { _cleanupAbandonment = useAbandonmentTracking( () => 'checkout' ); } catch { /* tracking — non-critical */ }
     preventBack();
     window.addEventListener( 'popstate', onPopState );
-} );
-onUnmounted( () => {
+}
+
+/**
+ * Cleanup back prevention and abandonment tracking
+ * Called during onUnmounted
+ */
+function _cleanupBackPrevention() {
     if ( _cleanupAbandonment ) _cleanupAbandonment();
     window.removeEventListener( 'popstate', onPopState );
-} );
+}
+
+// Abandonment tracking cleanup function holder
+let _cleanupAbandonment;
 </script>
 
 <style scoped>
