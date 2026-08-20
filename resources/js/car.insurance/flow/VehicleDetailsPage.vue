@@ -79,7 +79,7 @@
                                 <div v-if="form.insuranceType === 'tpl'" class="absolute top-1.5 inset-s-1.5 sm:top-2 sm:inset-s-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 flex items-center justify-center">
                                     <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                                 </div>
-                                <img :src="tplIconSrc" alt="ضد الغير" class="w-10 h-10 sm:w-14 sm:h-14" loading="lazy" width="56" height="56" />
+                                <img :src="IMAGES.tplIcon" alt="ضد الغير" class="w-10 h-10 sm:w-14 sm:h-14" loading="lazy" width="56" height="56" />
                                 <div class="flex flex-col gap-0.5">
                                     <span class="text-xs sm:text-sm font-bold text-slate-900">ضد الغير</span>
                                     <span class="text-[11px] sm:text-xs text-slate-500 leading-tight">تغطية أساسية للطرف الثالث</span>
@@ -97,7 +97,7 @@
                                 <div v-if="form.insuranceType === 'comp'" class="absolute top-1.5 inset-s-1.5 sm:top-2 sm:inset-s-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 flex items-center justify-center">
                                     <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                                 </div>
-                                <img :src="compIconSrc" alt="شامل" class="w-10 h-10 sm:w-14 sm:h-14" loading="lazy" width="56" height="56" />
+                                <img :src="IMAGES.compIcon" alt="شامل" class="w-10 h-10 sm:w-14 sm:h-14" loading="lazy" width="56" height="56" />
                                 <div class="flex flex-col gap-0.5">
                                     <span class="text-xs sm:text-sm font-bold text-slate-900">شامل</span>
                                     <span class="text-[11px] sm:text-xs text-slate-500 leading-tight">تأمينكم هيرو… يغطي سيارتك بالكامل</span>
@@ -209,7 +209,7 @@
                         <div class="block lg:hidden">
                             <div v-if="selectedInsuranceTip" class="border-2 border-primary rounded-lg p-4">
                                 <div class="flex gap-2 items-start mb-2">
-                                    <img :src="infoIconSrc" alt="Info" class="w-6 h-6 mt-0.5" loading="lazy" width="24" height="24" />
+                                    <img :src="IMAGES.infoIcon" alt="Info" class="w-6 h-6 mt-0.5" loading="lazy" width="24" height="24" />
                                     <span class="text-sm font-medium text-primary">{{ selectedInsuranceTitle }}</span>
                                 </div>
                                 <p class="text-sm text-gray-600 mt-2 leading-relaxed">
@@ -267,7 +267,7 @@
                         <!-- Info Tip Card -->
                         <div v-if="selectedInsuranceTip" class="border-2 border-primary rounded-lg p-4">
                             <div class="flex gap-2 items-start mb-2">
-                                <img :src="infoIconSrc" alt="Info" class="w-6 h-6 mt-0.5" loading="lazy" width="24" height="24" />
+                                <img :src="IMAGES.infoIcon" alt="Info" class="w-6 h-6 mt-0.5" loading="lazy" width="24" height="24" />
                                 <span class="text-sm font-medium text-primary">{{ selectedInsuranceTitle }}</span>
                             </div>
                             <p class="text-sm text-gray-600 mt-2 leading-relaxed">
@@ -295,29 +295,34 @@ import { useInsuranceStore } from '@/store/modules/insurance';
 import logger from '@/utils/logger';
 import StepProgressBar from '../components/vehicle-details/StepProgressBar.vue';
 
+// ═══════════════════════════════════════════════════════════════════════════════════
+// ROUTER & STORE
+// ═══════════════════════════════════════════════════════════════════════════════════
 
 const router = useRouter();
 const { trackStep, resumeSession } = useQuoteTracking();
 const insuranceStore = useInsuranceStore();
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// ASYNC COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
 const PolicyDatePicker = defineAsyncComponent( () => import( '../components/PolicyDatePicker.vue' ) );
 
-//
-const currentStep = ref( 1 ); // 0-indexed: step 0 = completed, step 1 = active
+// ═══════════════════════════════════════════════════════════════════════════════════
+// CONSTANTS & IMAGE ASSETS
+// ═══════════════════════════════════════════════════════════════════════════════════
 
-const steps = reactive( [
-    { label: 'المعلومات الأساسية' },
-    { label: 'تفاصيل السيارة' },
-    { label: 'تفاصيل الوثيقة' },
-] );
+const IMAGES = {
+    infoIcon: new URL( '../../../images/motorapp/info-icon.svg', import.meta.url ).href,
+    tplIcon: new URL( '../../../images/motorapp/tpl-icon.webp', import.meta.url ).href,
+    compIcon: new URL( '../../../images/motorapp/comp-icon.webp', import.meta.url ).href,
+};
 
-//
-const _animojiSrc = new URL( '../../../images/motorapp/animoji.svg', import.meta.url ).href;
-const infoIconSrc = new URL( '../../../images/motorapp/info-icon.svg', import.meta.url ).href;
-const tplIconSrc = new URL( '../../../images/motorapp/tpl-icon.webp', import.meta.url ).href;
-const compIconSrc = new URL( '../../../images/motorapp/comp-icon.webp', import.meta.url ).href;
+const DEFAULT_INSURANCE_TITLE = 'تأمين أو تجديد تأمين السيارة';
+const DEFAULT_INSURANCE_TIP = 'تأمين السيارة يحميك ماليًا من الحوادث والسرقة والمواقف غير المتوقعة. فهم التفاصيل يساعدك على اتخاذ قرار صحيح سواء كنت تشتري أو تجدد التأمين.';
 
-//
-const purposeOptions = [
+const PURPOSE_OF_USE_OPTIONS = [
     { value: 'personal', label: 'شخصي' },
     { value: 'commercial', label: 'تجاري' },
     { value: 'rental', label: 'تأجير' },
@@ -326,8 +331,7 @@ const purposeOptions = [
     { value: 'petroleum', label: 'نقل مشتقات نفطية' },
 ];
 
-//
-const form = reactive( {
+const FORM_DEFAULTS = {
     policyStartDate: '',
     insuranceType: 'tpl',
     repairMethod: 'workshop',
@@ -340,211 +344,294 @@ const form = reactive( {
     vehicleYear: '',
     entityDiscount: false,
     taminkomRecommendation: true,
-} );
+};
 
+const ESTIMATED_VALUE_LIMITS = {
+    MIN: 5000,
+    MAX: 99999999,
+};
+
+const VEHICLE_YEAR_RANGE = 30; // Years back from current year
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// FORM STATE
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+const form = reactive( { ...FORM_DEFAULTS } );
 const errors = reactive( {} );
 const isSubmitting = ref( false );
 const formError = ref( '' );
 
-// Vehicle make/model options
-const makeOptions = vehicleMakes.map( m => ( { value: String( m.id ), label: m.nameAr } ) );
+const currentStep = ref( 1 ); // 0-indexed: step 0 = completed, step 1 = active
+
+const steps = reactive( [
+    { label: 'المعلومات الأساسية' },
+    { label: 'تفاصيل السيارة' },
+    { label: 'تفاصيل الوثيقة' },
+] );
+
+const selectedInsuranceTitle = ref( DEFAULT_INSURANCE_TITLE );
+const selectedInsuranceTip = ref( DEFAULT_INSURANCE_TIP );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// COMPUTED: FORM OPTIONS & VALIDATORS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+const makeOptions = computed( () => 
+    vehicleMakes.map( m => ( { value: String( m.id ), label: m.nameAr } ) )
+);
 
 const modelOptions = computed( () => {
     if ( !form.vehicleMake ) return [];
     const make = vehicleMakes.find( m => String( m.id ) === form.vehicleMake );
-    return make ? make.models.map( ( model ) => ( { value: model, label: model } ) ) : [];
+    return make ? make.models.map( model => ( { value: model, label: model } ) ) : [];
 } );
 
-// Year options — current year down to 30 years back
 const yearOptions = computed( () => {
     const current = new Date().getFullYear();
     const options = [];
-    for ( let y = current; y >= current - 30; y-- ) {
+    for ( let y = current; y >= current - VEHICLE_YEAR_RANGE; y-- ) {
         options.push( { value: String( y ), label: String( y ) } );
     }
     return options;
 } );
 
-// Reset model when make changes
+const purposeOptions = computed( () => PURPOSE_OF_USE_OPTIONS );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// WATCHERS: FORM DEPENDENCIES
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+// Reset model selection when make changes
 watch( () => form.vehicleMake, () => {
     form.vehicleModel = '';
 } );
 
-//
-const selectedInsuranceTitle = ref( 'تأمين أو تجديد تأمين السيارة' );
-const selectedInsuranceTip = ref(
-    'تأمين السيارة يحميك ماليًا من الحوادث والسرقة والمواقف غير المتوقعة. فهم التفاصيل يساعدك على اتخاذ قرار صحيح سواء كنت تشتري أو تجدد التأمين.'
-);
+// ═══════════════════════════════════════════════════════════════════════════════════
+// UTILITY: ERROR HANDLING
+// ═══════════════════════════════════════════════════════════════════════════════════
 
-//
+/**
+ * Clears all validation errors
+ */
+function clearErrors() {
+    Object.keys( errors ).forEach( key => delete errors[ key ] );
+}
+
+/**
+ * Sets a specific error message
+ * @param {string} field - Field name
+ * @param {string} message - Error message
+ */
+function setError( field, message ) {
+    errors[ field ] = message;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// UTILITY: FORM FORMATTING
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Formats estimated value input to digits only
+ * @param {Event} e - Input event
+ */
 function formatEstimatedValue( e ) {
     const raw = e.target.value.replace( /[^\d]/g, '' );
     form.estimatedValue = raw;
 }
 
-//
-function clearErrors() {
-    Object.keys( errors ).forEach( key => delete errors[ key ] );
-}
+// ═══════════════════════════════════════════════════════════════════════════════════
+// VALIDATION
+// ═══════════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Validates the entire form
+ * @returns {boolean} - True if form is valid
+ */
 function validate() {
     clearErrors();
     let valid = true;
 
+    // Policy start date
     if ( !form.policyStartDate ) {
-        errors.policyStartDate = 'يرجى اختيار تاريخ بدء الوثيقة';
+        setError( 'policyStartDate', 'يرجى اختيار تاريخ بدء الوثيقة' );
         valid = false;
     }
 
+    // Insurance type
     if ( !form.insuranceType ) {
-        errors.insuranceType = 'يرجى اختيار نوع التأمين';
+        setError( 'insuranceType', 'يرجى اختيار نوع التأمين' );
         valid = false;
     }
 
+    // Vehicle year
     if ( !form.vehicleYear ) {
-        errors.vehicleYear = 'يرجى اختيار سنة الصنع';
+        setError( 'vehicleYear', 'يرجى اختيار سنة الصنع' );
         valid = false;
     }
 
+    // Estimated value
     const estimatedVal = parseInt( form.estimatedValue );
-    if ( !form.estimatedValue || estimatedVal < 5000 ) {
-        errors.estimatedValue = 'القيمة التقديرية يجب أن تكون 5,000 ر.س على الأقل';
+    if ( !form.estimatedValue || estimatedVal < ESTIMATED_VALUE_LIMITS.MIN ) {
+        setError( 'estimatedValue', `القيمة التقديرية يجب أن تكون ${ESTIMATED_VALUE_LIMITS.MIN.toLocaleString( 'ar-SA' )} ر.س على الأقل` );
         valid = false;
-    } else if ( estimatedVal > 99999999 ) {
-        errors.estimatedValue = 'القيمة التقديرية لا يمكن أن تتجاوز 99,999,999 ر.س';
+    } else if ( estimatedVal > ESTIMATED_VALUE_LIMITS.MAX ) {
+        setError( 'estimatedValue', `القيمة التقديرية لا يمكن أن تتجاوز ${ESTIMATED_VALUE_LIMITS.MAX.toLocaleString( 'ar-SA' )} ر.س` );
         valid = false;
     }
 
     return valid;
 }
 
-//
+// ═══════════════════════════════════════════════════════════════════════════════════
+// FORM SUBMISSION
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Handles form submission
+ */
 async function submitForm() {
     if ( isSubmitting.value ) return;
+    
     if ( !validate() ) {
         formError.value = 'يوجد بيانات غير صحيحة أو حقول مطلوبة';
         return;
     }
+    
     formError.value = '';
-
     isSubmitting.value = true;
+
     try {
+        // Step 1: Save form data locally
+        const vehicleDetails = { ...form };
+        sessionStorage.setItem( 'vehicleDetails', JSON.stringify( vehicleDetails ) );
 
-    // Save to sessionStorage
-    const vehicleDetails = {
-        ...form,
-    };
-    sessionStorage.setItem( 'vehicleDetails', JSON.stringify( vehicleDetails ) );
-
-    // حفظ البيانات في المتجر المركزي
-    const selectedMake = vehicleMakes.find( m => String( m.id ) === form.vehicleMake );
-    insuranceStore.setVehicleData( {
-        purposeOfUse: form.purposeOfUse,
-        estimatedValue: form.estimatedValue,
-        sequenceNumber: form.sequenceNumber,
-        make: form.vehicleMake,
-        makeName: selectedMake?.nameAr || '',
-        modelName: form.vehicleModel || '',
-        year: form.vehicleYear,
-    } );
-    insuranceStore.setPolicyData( {
-        policyStartDate: form.policyStartDate,
-        insuranceType: form.insuranceType,
-        repairMethod: form.insuranceType === 'comp' ? form.repairMethod : null,
-    } );
-
-    // Send form data to backend for admin dashboard tracking
-    try {
-        const { default: request } = await import( '@/api/request' );
-        await request.post( '/customer/track-details', {
-            purpose_of_use: form.purposeOfUse,
-            estimated_value: form.estimatedValue ? parseInt( form.estimatedValue ) : null,
-            vehicle_type: insuranceStore.vehicle.makeName || form.vehicleMake || null,
-            manufacturing_year: form.vehicleYear || null,
-            policy_start_date: form.policyStartDate,
-            insurance_type: form.insuranceType === 'comp' ? 'comprehensive' : 'thirdParty',
-            repair_method: form.insuranceType === 'comp' ? form.repairMethod : null,
-            current_page: '/motorapp/vehicleDetails',
+        // Step 2: Save to global insurance store
+        const selectedMake = vehicleMakes.find( m => String( m.id ) === form.vehicleMake );
+        
+        insuranceStore.setVehicleData( {
+            purposeOfUse: form.purposeOfUse,
+            estimatedValue: form.estimatedValue,
+            sequenceNumber: form.sequenceNumber,
+            make: form.vehicleMake,
+            makeName: selectedMake?.nameAr || '',
+            modelName: form.vehicleModel || '',
+            year: form.vehicleYear,
         } );
-    } catch ( err ) {
-        logger.warn( '[VehicleDetails] Tracking failed:', err.message );
-    }
 
-    // Track step transition
-    await trackStep( 'vehicle', 3, vehicleDetails, 'next' );
+        insuranceStore.setPolicyData( {
+            policyStartDate: form.policyStartDate,
+            insuranceType: form.insuranceType,
+            repairMethod: form.insuranceType === 'comp' ? form.repairMethod : null,
+        } );
 
-    // Navigate to compare page directly
-    router.push( {
-        path: '/compare',
-        query: {
-            type: form.insuranceType === 'comp' ? 'comprehensive' : 'thirdParty',
+        // Step 3: Track user interaction (non-critical)
+        try {
+            const { default: request } = await import( '@/api/request' );
+            await request.post( '/customer/track-details', {
+                purpose_of_use: form.purposeOfUse,
+                estimated_value: form.estimatedValue ? parseInt( form.estimatedValue ) : null,
+                vehicle_type: insuranceStore.vehicle.makeName || form.vehicleMake || null,
+                manufacturing_year: form.vehicleYear || null,
+                policy_start_date: form.policyStartDate,
+                insurance_type: form.insuranceType === 'comp' ? 'comprehensive' : 'thirdParty',
+                repair_method: form.insuranceType === 'comp' ? form.repairMethod : null,
+                current_page: '/motorapp/vehicleDetails',
+            } );
+        } catch ( err ) {
+            logger.warn( '[VehicleDetails] Tracking failed:', err.message );
         }
-    } );
+
+        // Step 4: Track step transition
+        await trackStep( 'vehicle', 3, vehicleDetails, 'next' );
+
+        // Step 5: Navigate to next page
+        router.push( {
+            path: '/compare',
+            query: {
+                type: form.insuranceType === 'comp' ? 'comprehensive' : 'thirdParty',
+            },
+        } );
     } finally {
         isSubmitting.value = false;
     }
 }
 
-//
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SESSION & STATE RESTORATION
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Restores form state from sessionStorage
+ */
 function restoreFormState() {
-    // Pull data from MotorApp session
-    const vehicleForm = sessionStorage.getItem( 'vehicleForm' );
-    if ( vehicleForm ) {
+    // Restore from vehicle form session
+    const vehicleFormData = sessionStorage.getItem( 'vehicleForm' );
+    if ( vehicleFormData ) {
         try {
-            const parsed = JSON.parse( vehicleForm );
+            const parsed = JSON.parse( vehicleFormData );
             if ( parsed.vehicleMake ) form.vehicleMake = parsed.vehicleMake;
             if ( parsed.vehicleYear ) form.vehicleYear = parsed.vehicleYear;
             if ( parsed.nationalId ) form.nationalId = parsed.nationalId;
-        } catch { /* ignore */ }
+        } catch ( err ) {
+            logger.warn( '[VehicleDetails] Failed to restore vehicleForm:', err );
+        }
     }
 
-    // Restore nationalId from BasicDetailsPage if available
-    const basicSaved = sessionStorage.getItem( 'basicDetails' );
-    if ( basicSaved ) {
+    // Restore from basic details (previous step)
+    const basicDetailsData = sessionStorage.getItem( 'basicDetails' );
+    if ( basicDetailsData ) {
         try {
-            const parsed = JSON.parse( basicSaved );
-            if ( parsed.identityNumber && !form.nationalId ) form.nationalId = parsed.identityNumber;
-            if ( parsed.sequenceNumber && !form.sequenceNumber ) form.sequenceNumber = parsed.sequenceNumber;
-        } catch { /* ignore */ }
+            const parsed = JSON.parse( basicDetailsData );
+            if ( parsed.identityNumber && !form.nationalId ) {
+                form.nationalId = parsed.identityNumber;
+            }
+            if ( parsed.sequenceNumber && !form.sequenceNumber ) {
+                form.sequenceNumber = parsed.sequenceNumber;
+            }
+        } catch ( err ) {
+            logger.warn( '[VehicleDetails] Failed to restore basicDetails:', err );
+        }
     }
 
-    // Restore own data
-    const saved = sessionStorage.getItem( 'vehicleDetails' );
-    if ( saved ) {
+    // Restore vehicle details (current step)
+    const vehicleDetailsData = sessionStorage.getItem( 'vehicleDetails' );
+    if ( vehicleDetailsData ) {
         try {
-            const parsed = JSON.parse( saved );
+            const parsed = JSON.parse( vehicleDetailsData );
             Object.assign( form, parsed );
-        } catch { /* ignore */ }
-    }
 
-    // Restore policy-related fields if previously saved
-    const savedPolicyFields = sessionStorage.getItem( 'vehicleDetails' );
-    if ( savedPolicyFields ) {
-        try {
-            const parsed = JSON.parse( savedPolicyFields );
+            // Also restore policy fields if saved
             if ( parsed.policyStartDate ) form.policyStartDate = parsed.policyStartDate;
             if ( parsed.insuranceType ) form.insuranceType = parsed.insuranceType;
             if ( parsed.repairMethod ) form.repairMethod = parsed.repairMethod;
-        } catch { /* ignore */ }
+        } catch ( err ) {
+            logger.warn( '[VehicleDetails] Failed to restore vehicleDetails:', err );
+        }
     }
 
-    // Restore insurance type info from MotorApp selection
-    const insuranceType = sessionStorage.getItem( 'selectedInsuranceType' );
-    if ( insuranceType ) {
+    // Restore insurance type display text
+    const insuranceTypeData = sessionStorage.getItem( 'selectedInsuranceType' );
+    if ( insuranceTypeData ) {
         try {
-            const parsed = JSON.parse( insuranceType );
+            const parsed = JSON.parse( insuranceTypeData );
             if ( parsed.title ) selectedInsuranceTitle.value = parsed.title;
             if ( parsed.tip ) selectedInsuranceTip.value = parsed.tip;
-        } catch { /* ignore */ }
+        } catch ( err ) {
+            logger.warn( '[VehicleDetails] Failed to restore selectedInsuranceType:', err );
+        }
     }
 }
 
-//
+// ═══════════════════════════════════════════════════════════════════════════════════
+// LIFECYCLE
+// ═══════════════════════════════════════════════════════════════════════════════════
+
 onMounted( () => {
     restoreFormState();
     resumeSession( 'vehicleDetails' );
 
-    // Prefetch next step chunk (ComparePage)
+    // Prefetch next step chunk (ComparePage) for faster navigation
     import( '@/car.insurance/flow/ComparePage.vue' ).catch( () => {} );
 } );
 </script>
