@@ -248,6 +248,10 @@
 </template>
 
 <script setup>
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 1 - IMPORTS & COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useInsuranceStore } from '@/store/modules/insurance';
@@ -257,20 +261,184 @@ import { getCompanyLogo } from '@/utils/companyLogos';
 import { formatNumber } from '@/utils/formatters';
 import SarIcon from '@/components/SarIcon.vue';
 
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 2 - ROUTER, STORE & COMPOSABLES
+// ═══════════════════════════════════════════════════════════════════════════════════
+
 const router = useRouter();
 const insuranceStore = useInsuranceStore();
 const { getQuote, verify: verifySignaturePacket, getSignaturePacket } = usePricingSignature();
 
-// ── Selected plan source of truth (store/state only) ──
-const selectedPlanData = computed( () => insuranceStore.selectedPlan );
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 3 - STATE: SIGNATURE & PAYMENT
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Pricing signature status verification
+ * @type {import('vue').Ref<{ valid: boolean; remainingSeconds: number } | null>}
+ */
 const signatureStatus = ref( null );
 
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 4 - COMPUTED: PLAN SELECTION
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get selected plan from store (source of truth)
+ * @returns {Object} Selected plan data with pricing and company info
+ */
+const selectedPlanData = computed( () => insuranceStore.selectedPlan );
+
+/**
+ * Extract plan ID from selected plan (fallback chain)
+ * @returns {string|null} Plan ID or null if not selected
+ */
+const planId = computed( () => selectedPlanData.value?.id || selectedPlanData.value?.planId || null );
+
+/**
+ * Fetch full plan details including company data by plan ID
+ * @returns {Object|null} Plan with company details or null
+ */
+const plan = computed( () => planId.value ? getPlanWithCompany( planId.value ) : null );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 5 - COMPUTED: COMPANY & INSURANCE TYPE
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get company logo URL for display
+ * @returns {string} Logo image URL or empty string
+ */
+const companyLogo = computed( () => plan.value ? getCompanyLogo( plan.value.companyId ) : '' );
+
+/**
+ * Get company name in Arabic
+ * @returns {string} Company name (from plan or selected data)
+ */
+const companyName = computed( () => plan.value?.company?.nameAr || selectedPlanData.value?.companyName || '' );
+
+/**
+ * Get plan name/description
+ * @returns {string} Plan name
+ */
+const planName = computed( () => plan.value?.name || selectedPlanData.value?.name || '' );
+
+/**
+ * Get insurance type (e.g. 'comprehensive', 'thirdParty')
+ * @returns {string} Insurance type code
+ */
+const insuranceType = computed( () => plan.value?.type || selectedPlanData.value?.type || 'thirdParty' );
+
+/**
+ * Get localized insurance type label
+ * @returns {string} Arabic label for insurance type
+ */
+const insuranceTypeLabel = computed( () =>
+    insuranceType.value === 'comprehensive' ? 'تأمين شامل' : 'تأمين ضد الغير' );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 6 - COMPUTED: PRICING & DISCOUNTS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get annual premium price from selected plan or plan data
+ * @returns {number} Annual price in SAR
+ */
+const annualPrice = computed( () => selectedPlanData.value?.annualPrice || plan.value?.annualPrice || 0 );
+
+/**
+ * Get original price before any discounts (baseline for comparison)
+ * @returns {number} Original price in SAR
+ */
+const originalPrice = computed( () => selectedPlanData.value?.originalPrice || annualPrice.value );
+
+/**
+ * Check if selected plan has discount applied
+ * @returns {boolean} True if original price > annual price
+ */
+const hasDiscount = computed( () => originalPrice.value > annualPrice.value );
+
+/**
+ * Calculate discount amount (original - annual)
+ * @returns {number} Discount amount in SAR
+ */
+const discountAmount = computed( () => Math.round( ( originalPrice.value - annualPrice.value ) * 100 ) / 100 );
+
+/**
+ * Get tamini (Tamini app) specific discount
+ * @returns {number} Discount amount in SAR
+ */
+const taminiDiscount = computed( () => discountAmount.value );
+
+/**
+ * Get array of selected add-ons
+ * @returns {Array} Array of addon objects with { name, price }
+ */
+const addons = computed( () => selectedPlanData.value?.addons || [] );
+
+/**
+ * Calculate total cost of all add-ons
+ * @returns {number} Sum of all addon prices in SAR
+ */
+const addonsTotal = computed( () => addons.value.reduce( ( sum, a ) => sum + Number( a?.price || 0 ), 0 ) );
+
+/**
+ * Calculate subtotal before VAT (premium + addons)
+ * Priority: locked value from ComparePage > calculated from annual + addons
+ * @returns {number} Subtotal in SAR
+ */
+const subtotalBeforeVAT = computed( () => {
+    if ( selectedPlanData.value?.subtotalBeforeVAT != null ) return selectedPlanData.value.subtotalBeforeVAT;
+    if ( selectedPlanData.value?.subtotal != null ) return selectedPlanData.value.subtotal;
+    return annualPrice.value + addonsTotal.value;
+} );
+
+/**
+ * Calculate VAT amount (15% of subtotal)
+ * Priority: locked value from ComparePage > calculated 15% of subtotal
+ * @returns {number} VAT amount in SAR
+ */
+const vatAmount = computed( () => {
+    if ( selectedPlanData.value?.vatAmount != null ) return selectedPlanData.value.vatAmount;
+    return Math.round( subtotalBeforeVAT.value * 0.15 * 100 ) / 100;
+} );
+
+/**
+ * Calculate total price (subtotal + VAT)
+ * Priority: locked value from ComparePage > calculated total
+ * @returns {number} Total price in SAR
+ */
+const totalPrice = computed( () => {
+    if ( selectedPlanData.value?.totalPrice != null ) return selectedPlanData.value.totalPrice;
+    return Math.round( ( subtotalBeforeVAT.value + vatAmount.value ) * 100 ) / 100;
+} );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 7 - COMPUTED: SIGNATURE & PAYMENT STATUS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Check if customer can proceed to payment
+ * Requires: plan selected + valid signature + total price > 0
+ * @returns {boolean} True if all conditions met
+ */
 const canProceedToPayment = computed( () =>
     Boolean( selectedPlanData.value && signatureStatus.value?.valid && totalPrice.value > 0 )
 );
+
+/**
+ * Get localized title for signature status display
+ * @returns {string} Status title in Arabic
+ */
 const signatureStatusTitle = computed( () =>
     signatureStatus.value?.valid ? 'تم التحقق من السعر' : 'تعذّر التحقق من السعر'
 );
+
+/**
+ * Get localized message for signature status
+ * Displays expiry time if valid, or error message if expired/invalid
+ * @returns {string} Status message in Arabic
+ */
 const signatureStatusMessage = computed( () => {
     if ( !signatureStatus.value ) return '';
     if ( signatureStatus.value.valid ) {
@@ -280,41 +448,15 @@ const signatureStatusMessage = computed( () => {
     return 'انتهت صلاحية التوقيع أو تغيّر السعر. الرجاء العودة للعروض وإعادة الاختيار.';
 } );
 
-const planId = computed( () => selectedPlanData.value?.id || selectedPlanData.value?.planId || null );
-const plan = computed( () => planId.value ? getPlanWithCompany( planId.value ) : null );
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 8 - COMPUTED: POLICY DETAILS ROWS
+// ═══════════════════════════════════════════════════════════════════════════════════
 
-// ── Company info ──
-const companyLogo = computed( () => plan.value ? getCompanyLogo( plan.value.companyId ) : '' );
-const companyName = computed( () => plan.value?.company?.nameAr || selectedPlanData.value?.companyName || '' );
-const planName = computed( () => plan.value?.name || selectedPlanData.value?.name || '' );
-const insuranceType = computed( () => plan.value?.type || selectedPlanData.value?.type || 'thirdParty' );
-const insuranceTypeLabel = computed( () =>
-    insuranceType.value === 'comprehensive' ? 'تأمين شامل' : 'تأمين ضد الغير' );
-
-// ── Pricing with real data from selectedPlan ──
-const annualPrice = computed( () => selectedPlanData.value?.annualPrice || plan.value?.annualPrice || 0 );
-const originalPrice = computed( () => selectedPlanData.value?.originalPrice || annualPrice.value );
-const hasDiscount = computed( () => originalPrice.value > annualPrice.value );
-const discountAmount = computed( () => Math.round( ( originalPrice.value - annualPrice.value ) * 100 ) / 100 );
-const taminiDiscount = computed( () => discountAmount.value );
-const addons = computed( () => selectedPlanData.value?.addons || [] );
-const addonsTotal = computed( () => addons.value.reduce( ( sum, a ) => sum + Number( a?.price || 0 ), 0 ) );
-// أولوية لقيم الـlock المحفوظة من ComparePage — مصدر الحقيقة الوحيد
-const subtotalBeforeVAT = computed( () => {
-    if ( selectedPlanData.value?.subtotalBeforeVAT != null ) return selectedPlanData.value.subtotalBeforeVAT;
-    if ( selectedPlanData.value?.subtotal != null ) return selectedPlanData.value.subtotal;
-    return annualPrice.value + addonsTotal.value;
-} );
-const vatAmount = computed( () => {
-    if ( selectedPlanData.value?.vatAmount != null ) return selectedPlanData.value.vatAmount;
-    return Math.round( subtotalBeforeVAT.value * 0.15 * 100 ) / 100;
-} );
-const totalPrice = computed( () => {
-    if ( selectedPlanData.value?.totalPrice != null ) return selectedPlanData.value.totalPrice;
-    return Math.round( ( subtotalBeforeVAT.value + vatAmount.value ) * 100 ) / 100;
-} );
-
-// ── Policy data rows ──
+/**
+ * Build policy details display rows
+ * Includes insurance type, company, repair location, deductible, coverage limit, policy start date
+ * @returns {Array} Array of { label, value } objects
+ */
 const policyRows = computed( () => {
     const p = insuranceStore.policy;
     const rows = [
@@ -336,7 +478,15 @@ const policyRows = computed( () => {
     return rows;
 } );
 
-// ── Vehicle data rows ──
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 9 - COMPUTED: VEHICLE DETAILS ROWS
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Build vehicle details display rows
+ * Includes make, year, plate, sequence number, estimated value, purpose of use
+ * @returns {Array} Array of { label, value } objects
+ */
 const vehicleRows = computed( () => {
     const v = insuranceStore.vehicle;
     const rows = [];
@@ -352,7 +502,46 @@ const vehicleRows = computed( () => {
     return rows;
 } );
 
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 10 - LIFECYCLE HOOKS
+// ═══════════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Initialize component: restore session, verify pricing signature, handle fallback navigation
+ * @async
+ */
+onMounted( () => {
+    // Restore insurance data from sessionStorage to Pinia store
+    insuranceStore.hydrateFromSession();
+
+    // Check if pricing signature is cached (from ComparePage selection)
+    const signedQuote = getQuote();
+    if ( signedQuote && !selectedPlanData.value ) {
+        insuranceStore.setSelectedPlan( {
+            ...signedQuote,
+            id: signedQuote.planId,
+            totalPrice: signedQuote.totalPrice,
+        } );
+    }
+
+    // Verify pricing signature validity (expiry, tampering, etc.)
+    signatureStatus.value = verifySignaturePacket();
+
+    // Redirect to compare if no plan selected (user landed here directly)
+    if ( !selectedPlanData.value ) {
+        router.replace( { name: 'compare' } );
+    }
+} );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 11 - HELPER FUNCTIONS: FORMATTING
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Format number with 2 decimal places for price display
+ * @param {number} num - Number to format
+ * @returns {string} Formatted number (e.g. "1234.56")
+ */
 function formatDecimal( num ) {
     return new Intl.NumberFormat( 'en-US', {
         minimumFractionDigits: 2,
@@ -360,21 +549,37 @@ function formatDecimal( num ) {
     } ).format( num );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 12 - ACTION FUNCTIONS: PAYMENT FLOW
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Validate pricing signature and proceed to checkout page
+ * Verifies signature validity and handles payment data persistence
+ * On invalid signature: redirects to compare page
+ * On valid signature: enriches plan with pricing data and navigates to checkout
+ *
+ * @async
+ * @returns {void}
+ */
 function proceedToPayment() {
+    // Verify pricing signature (checks expiry and tampering)
     signatureStatus.value = verifySignaturePacket();
 
+    // Redirect if signature invalid or expired
     if ( !signatureStatus.value?.valid ) {
         router.replace( { name: 'compare' } );
         return;
     }
 
+    // Get signed pricing packet from composable memory
     const signaturePacket = getSignaturePacket();
     if ( !signaturePacket ) {
         router.replace( { name: 'compare' } );
         return;
     }
 
-    // Persist enriched selected plan in store for checkout page
+    // Enrich selected plan with calculated pricing for checkout page
     const paymentData = {
         ...selectedPlanData.value,
         originalPrice: originalPrice.value,
@@ -386,26 +591,11 @@ function proceedToPayment() {
         pricingSignature: signaturePacket.signature,
         pricingTimestamp: signaturePacket.timestamp,
     };
+
+    // Persist enriched plan to store for checkout page access
     insuranceStore.setSelectedPlan( paymentData );
+
+    // Navigate to checkout page
     router.push( { name: 'checkout' } );
 }
-
-onMounted( () => {
-    insuranceStore.hydrateFromSession();
-
-    const signedQuote = getQuote();
-    if ( signedQuote && !selectedPlanData.value ) {
-        insuranceStore.setSelectedPlan( {
-            ...signedQuote,
-            id: signedQuote.planId,
-            totalPrice: signedQuote.totalPrice,
-        } );
-    }
-
-    signatureStatus.value = verifySignaturePacket();
-
-    if ( !selectedPlanData.value ) {
-        router.replace( { name: 'compare' } );
-    }
-} );
 </script>
