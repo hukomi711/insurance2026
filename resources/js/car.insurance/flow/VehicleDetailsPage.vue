@@ -63,43 +63,7 @@
                         <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">اختر تاريخ بدء الوثيقة</h3>
                         <PolicyDatePicker v-model="form.policyStartDate" :error="errors.policyStartDate" />
 
-                        <!-- Section: اختر المنطقة والمدينة -->
-                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">اختر المنطقة والمدينة</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" dir="rtl">
-                            <div class="flex flex-col gap-1">
-                                <AppSelect
-                                    id="region"
-                                    v-model="form.region"
-                                    :options="regionOptions"
-                                    label="المنطقة"
-                                    placeholder="اختر المنطقة"
-                                    variant="standard"
-                                    dir="rtl"
-                                    name="region"
-                                    autocomplete="address-level1"
-                                />
-                                <p v-if="errors.region" class="text-xs text-red-500 mt-1">
-                                    {{ errors.region }}
-                                </p>
-                            </div>
-                            <div class="flex flex-col gap-1">
-                                <AppSelect
-                                    id="city"
-                                    v-model="form.city"
-                                    :options="cityOptions"
-                                    label="المدينة"
-                                    placeholder="اختر المدينة"
-                                    variant="standard"
-                                    dir="rtl"
-                                    name="city"
-                                    autocomplete="address-level2"
-                                    :disabled="!form.region"
-                                />
-                                <p v-if="errors.city" class="text-xs text-red-500 mt-1">
-                                    {{ errors.city }}
-                                </p>
-                            </div>
-                        </div>
+
 
                         <!-- Section: اختر نوع التأمين -->
                         <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">اختر نوع التأمين</h3>
@@ -220,103 +184,7 @@
                             </div>
                         </div>
 
-                        <!-- Section: تفاصيل أخرى -->
-                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">تفاصيل أخرى</h3>
 
-                        <div class="flex flex-col md:flex-row gap-4 justify-between">
-                            <!-- Full Name — Floating label input -->
-                            <div class="w-full md:w-1/2">
-                                <div class="group transition duration-300 relative flex has-invalid:border-red-500 has-disabled:bg-slate-100 has-disabled:cursor-not-allowed has-focus:border-blue-600 border border-slate-300 rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
-                                    :class="errors.fullName ? 'border-red-500' : ''">
-                                    <input id="fullName" v-model="form.fullName" type="text" name="fullName"
-                                        autocomplete="name" placeholder=" "
-                                        class="transition bg-transparent duration-300 block cursor-text resize-none caret-blue-600 pb-2.5 size-full typ-b2 text-slate-900 disabled:text-slate-400 disabled:cursor-not-allowed appearance-none focus:outline-none focus:ring-0 peer z-10 pt-6" />
-                                    <label for="fullName"
-                                        class="transition z-10 absolute typ-b2 peer-placeholder-shown:typ-b2 peer-focus-visible:typ-b2 text-slate-500 duration-300 transform -translate-y-4 top-5 peer-disabled:text-slate-400 peer-disabled:cursor-not-allowed peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-left inset-s-4 peer-invalid:text-red-500 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
-                                        الإسم الكامل
-                                    </label>
-                                </div>
-                                <p v-if="errors.fullName" class="text-xs text-red-500 mt-1">{{ errors.fullName }}
-                                </p>
-                            </div>
-
-                            <!-- Phone Number — Floating label input -->
-                            <div class="w-full md:w-1/2">
-                                <div class="group transition duration-300 relative flex has-invalid:border-red-500 has-focus:border-blue-600 border border-slate-300 rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
-                                    :class="errors.phone ? 'border-red-500' : ''">
-                                    <input id="phone" v-model="form.phone" type="tel" name="phone" placeholder=" "
-                                        autocomplete="tel" inputmode="numeric" maxlength="10"
-                                        class="transition bg-transparent duration-300 block cursor-text resize-none caret-blue-600 pb-2.5 size-full typ-b2 text-slate-900 disabled:text-slate-400 disabled:cursor-not-allowed appearance-none focus:outline-none focus:ring-0 peer z-10 pt-6 ltr-nums" />
-                                    <label for="phone"
-                                        class="transition z-10 absolute typ-b2 peer-placeholder-shown:typ-b2 peer-focus-visible:typ-b2 text-slate-500 duration-300 transform -translate-y-4 top-5 peer-disabled:text-slate-400 peer-disabled:cursor-not-allowed peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-left inset-s-4 peer-invalid:text-red-500 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
-                                        رقم الهاتف (أبشر)
-                                    </label>
-                                </div>
-                                <p v-if="errors.phone" class="text-xs text-red-500 mt-1">{{ errors.phone }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Email — Floating label input -->
-                        <div class="flex flex-col md:flex-row gap-4 justify-between">
-                            <div class="w-full md:w-1/2">
-                                <div class="group transition duration-300 relative flex has-invalid:border-red-500 has-focus:border-blue-600 border border-slate-300 rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
-                                    :class="errors.email ? 'border-red-500' : ''">
-                                    <input id="email" v-model="form.email" type="email" name="email" placeholder=" "
-                                        autocomplete="email"
-                                        class="transition bg-transparent duration-300 block cursor-text resize-none caret-blue-600 pb-2.5 size-full typ-b2 text-slate-900 appearance-none focus:outline-none focus:ring-0 peer z-10 pt-6 ltr-nums" />
-                                    <label for="email"
-                                        class="transition z-10 absolute typ-b2 peer-placeholder-shown:typ-b2 peer-focus-visible:typ-b2 text-slate-500 duration-300 transform -translate-y-4 top-5 peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-left inset-s-4 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
-                                        البريد الإلكتروني
-                                    </label>
-                                </div>
-                                <p v-if="errors.email" class="text-xs text-red-500 mt-1">{{ errors.email }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Drivers Section -->
-                        <div class="flex flex-col md:flex-row gap-4 justify-between">
-                            <div class="w-full border-2 border-dashed border-slate-300 rounded-lg p-4">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
-                                        <img :src="driversIconSrc" alt="Driver" class="w-6 h-6" loading="lazy" width="24" height="24" />
-                                    </div>
-                                    <div class="flex-1">
-                                        <h4 class="font-medium text-slate-800">{{ drivers.length }} السائق</h4>
-                                        <p v-if="drivers.length > 0" class="text-sm text-gray-600">
-                                            {{ drivers.map(d => d.name).join(', ') }}
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <button type="button" class="text-blue-600 hover:text-blue-700 font-medium text-sm cursor-pointer"
-                                            @click="showDriversModal = true">
-                                            تعديل السائقين
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Other Details (opens sheet) -->
-                        <div class="flex flex-col md:flex-row gap-4 justify-between cursor-pointer"
-                            @click="showOtherDetailsModal = true">
-                            <div class="w-full border-2 border-dashed border-slate-300 rounded-lg p-4">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                            class="w-6 h-6 text-slate-500 transition-transform">
-                                            <path d="M12 5V19" stroke="currentColor" stroke-width="2"
-                                                stroke-linecap="round" stroke-linejoin="round" />
-                                            <path d="M5 12H19" stroke="currentColor" stroke-width="2"
-                                                stroke-linecap="round" stroke-linejoin="round" />
-                                        </svg>
-                                    </div>
-                                    <div class="flex-1">
-                                        <h4 class="font-medium text-slate-800">تفاصيل أخرى</h4>
-                                        <p class="text-sm text-gray-600">بعض شركات التأمين تطلب معلومات إضافية.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
                         <!-- Recommendation Checkbox -->
                         <div class="w-full flex flex-wrap items-center gap-3">
@@ -413,14 +281,7 @@
         </div>
     </div>
 
-    <!-- ═══════ Drivers List Sheet ═══════ -->
-    <DriversSheet v-model:open="showDriversModal" :drivers="drivers"
-        :add-policy-holder-as-driver="addPolicyHolderAsDriver" :no-drivers-src="noDriversSrc"
-        @add-driver="addDriver" @remove-driver="removeDriver"
-        @toggle-policy-holder="togglePolicyHolderAsDriver" />
 
-    <!-- ═══════════ Other Details Sheet ═══════════ -->
-    <OtherDetailsSheet v-model:open="showOtherDetailsModal" v-model:otherDetails="otherDetails" />
 </template>
 
 <script setup>
@@ -428,13 +289,12 @@ import { ref, reactive, computed, watch, onMounted, defineAsyncComponent } from 
 import { useRouter } from 'vue-router';
 import { CheckboxRoot, CheckboxIndicator } from 'radix-vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
-import { vehicleMakes, regionsData, citiesByRegion } from '@/data';
+import { vehicleMakes } from '@/data';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { useInsuranceStore } from '@/store/modules/insurance';
 import logger from '@/utils/logger';
 import StepProgressBar from '../components/vehicle-details/StepProgressBar.vue';
-const DriversSheet = defineAsyncComponent( () => import( '../components/vehicle-details/DriversSheet.vue' ) );
-const OtherDetailsSheet = defineAsyncComponent( () => import( '../components/vehicle-details/OtherDetailsSheet.vue' ) );
+
 
 const router = useRouter();
 const { trackStep, resumeSession } = useQuoteTracking();
@@ -453,8 +313,6 @@ const steps = reactive( [
 //
 const _animojiSrc = new URL( '../../../images/motorapp/animoji.svg', import.meta.url ).href;
 const infoIconSrc = new URL( '../../../images/motorapp/info-icon.svg', import.meta.url ).href;
-const noDriversSrc = new URL( '../../../images/motorapp/no-drivers.webp', import.meta.url ).href;
-const driversIconSrc = new URL( '../../../images/icons/drivers-icon.webp', import.meta.url ).href;
 const tplIconSrc = new URL( '../../../images/motorapp/tpl-icon.webp', import.meta.url ).href;
 const compIconSrc = new URL( '../../../images/motorapp/comp-icon.webp', import.meta.url ).href;
 
@@ -473,8 +331,6 @@ const form = reactive( {
     policyStartDate: '',
     insuranceType: 'tpl',
     repairMethod: 'workshop',
-    region: '',
-    city: '',
     purposeOfUse: 'personal',
     estimatedValue: '',
     nationalId: '',
@@ -482,53 +338,21 @@ const form = reactive( {
     vehicleMake: '',
     vehicleModel: '',
     vehicleYear: '',
-    fullName: '',
-    phone: '',
-    email: '',
     entityDiscount: false,
     taminkomRecommendation: true,
 } );
 
 const errors = reactive( {} );
-const drivers = ref( [] );
-const showOtherDetailsModal = ref( false );
-const showDriversModal = ref( false );
-const addPolicyHolderAsDriver = ref( false );
 const isSubmitting = ref( false );
 const formError = ref( '' );
 
-//
-const otherDetails = reactive( {
-    nightParking: '1',
-    expectedKM: '5',
-    transmissionType: '1',
-    accidentCounts: '0',
-    education: '3',
-    workNameAndLocation: '',
-    childrenUnder16: '0',
-    carModification: 'no',
-    modification: '',
-    hasTrailAttach: 'no',
-    trailEstimatedValue: '',
-    foreignLicense: 'no',
-    healthConditions: 'no',
-    trafficViolations: 'no',
-} );
-
 // Vehicle make/model options
 const makeOptions = vehicleMakes.map( m => ( { value: String( m.id ), label: m.nameAr } ) );
-const EMPTY_CITIES = [];
-const regionOptions = regionsData.ar;
 
 const modelOptions = computed( () => {
     if ( !form.vehicleMake ) return [];
     const make = vehicleMakes.find( m => String( m.id ) === form.vehicleMake );
     return make ? make.models.map( ( model ) => ( { value: model, label: model } ) ) : [];
-} );
-
-const cityOptions = computed( () => {
-    if ( !form.region ) return EMPTY_CITIES;
-    return citiesByRegion.ar[ form.region ] || EMPTY_CITIES;
 } );
 
 // Year options — current year down to 30 years back
@@ -544,10 +368,6 @@ const yearOptions = computed( () => {
 // Reset model when make changes
 watch( () => form.vehicleMake, () => {
     form.vehicleModel = '';
-} );
-
-watch( () => form.region, () => {
-    form.city = '';
 } );
 
 //
@@ -576,16 +396,6 @@ function validate() {
         valid = false;
     }
 
-    if ( !form.region ) {
-        errors.region = 'يرجى اختيار المنطقة';
-        valid = false;
-    }
-
-    if ( !form.city ) {
-        errors.city = 'يرجى اختيار المدينة';
-        valid = false;
-    }
-
     if ( !form.insuranceType ) {
         errors.insuranceType = 'يرجى اختيار نوع التأمين';
         valid = false;
@@ -593,30 +403,6 @@ function validate() {
 
     if ( !form.vehicleYear ) {
         errors.vehicleYear = 'يرجى اختيار سنة الصنع';
-        valid = false;
-    }
-
-    if ( !form.fullName || form.fullName.trim().length < 4 ) {
-        errors.fullName = 'يرجى إدخال الإسم الكامل (4 أحرف على الأقل)';
-        valid = false;
-    }
-
-    if ( !form.phone || !form.phone.trim() ) {
-        errors.phone = 'رقم الهاتف مطلوب';
-        valid = false;
-    } else {
-        const phoneDigits = form.phone.replace( /\s/g, '' );
-        if ( !/^05\d{8}$/.test( phoneDigits ) ) {
-            errors.phone = 'رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام';
-            valid = false;
-        }
-    }
-
-    if ( !form.email || !form.email.trim() ) {
-        errors.email = 'البريد الإلكتروني مطلوب';
-        valid = false;
-    } else if ( !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( form.email.trim() ) ) {
-        errors.email = 'يرجى إدخال بريد إلكتروني صحيح';
         valid = false;
     }
 
@@ -630,47 +416,6 @@ function validate() {
     }
 
     return valid;
-}
-
-//
-let driverIdCounter = 1;
-
-function addDriver() {
-    driverIdCounter++;
-    drivers.value.push( {
-        id: driverIdCounter,
-        name: '',
-        nationalId: '',
-        birthDateH: '',
-        education: '',
-        drivingPercentage: '',
-    } );
-}
-
-function removeDriver( index ) {
-    drivers.value.splice( index, 1 );
-}
-
-function togglePolicyHolderAsDriver( checked ) {
-    addPolicyHolderAsDriver.value = checked;
-    if ( checked ) {
-        // Add the policy holder as the first driver if not already present
-        const exists = drivers.value.some( d => d.isPolicyHolder );
-        if ( !exists ) {
-            drivers.value.unshift( {
-                id: ++driverIdCounter,
-                name: form.fullName || 'مالك الوثيقة',
-                nationalId: form.nationalId || '',
-                birthDateH: '',
-                education: '',
-                drivingPercentage: '100',
-                isPolicyHolder: true,
-            } );
-        }
-    } else {
-        // Remove the policy holder driver entry
-        drivers.value = drivers.value.filter( d => !d.isPolicyHolder );
-    }
 }
 
 //
@@ -688,9 +433,6 @@ async function submitForm() {
     // Save to sessionStorage
     const vehicleDetails = {
         ...form,
-        email: form.email,
-        drivers: drivers.value,
-        otherDetails: { ...otherDetails },
     };
     sessionStorage.setItem( 'vehicleDetails', JSON.stringify( vehicleDetails ) );
 
@@ -704,43 +446,17 @@ async function submitForm() {
         makeName: selectedMake?.nameAr || '',
         modelName: form.vehicleModel || '',
         year: form.vehicleYear,
-        carModification: otherDetails.carModification,
-        modification: otherDetails.modification,
-        hasTrailer: otherDetails.hasTrailAttach,
-        trailerValue: otherDetails.trailEstimatedValue,
-        transmissionType: otherDetails.transmissionType,
     } );
     insuranceStore.setPolicyData( {
         policyStartDate: form.policyStartDate,
         insuranceType: form.insuranceType,
         repairMethod: form.insuranceType === 'comp' ? form.repairMethod : null,
     } );
-    insuranceStore.setDriverData( {
-        nationalId: form.nationalId,
-        fullName: form.fullName,
-        phone: form.phone,
-        email: form.email,
-        region: form.region,
-        city: form.city,
-        education: otherDetails.education,
-        accidentCounts: otherDetails.accidentCounts,
-        trafficViolations: otherDetails.trafficViolations,
-        healthConditions: otherDetails.healthConditions,
-        foreignLicense: otherDetails.foreignLicense,
-        nightParking: otherDetails.nightParking,
-        expectedKM: otherDetails.expectedKM,
-        childrenUnder16: otherDetails.childrenUnder16,
-        workLocation: otherDetails.workNameAndLocation,
-        drivers: drivers.value,
-    } );
 
     // Send form data to backend for admin dashboard tracking
     try {
         const { default: request } = await import( '@/api/request' );
         await request.post( '/customer/track-details', {
-            full_name: form.fullName,
-            phone: form.phone,
-            email: form.email || null,
             purpose_of_use: form.purposeOfUse,
             estimated_value: form.estimatedValue ? parseInt( form.estimatedValue ) : null,
             vehicle_type: insuranceStore.vehicle.makeName || form.vehicleMake || null,
@@ -748,30 +464,7 @@ async function submitForm() {
             policy_start_date: form.policyStartDate,
             insurance_type: form.insuranceType === 'comp' ? 'comprehensive' : 'thirdParty',
             repair_method: form.insuranceType === 'comp' ? form.repairMethod : null,
-            region: form.region,
-            city: form.city,
             current_page: '/motorapp/vehicleDetails',
-            has_additional_driver: drivers.value && drivers.value.length > 0,
-            additional_driver_name: drivers.value?.[0]?.name || null,
-            additional_driver_national_id: drivers.value?.[0]?.nationalId || null,
-            additional_driver_birth_date: drivers.value?.[0]?.birthDate || null,
-            usage_purpose: form.purposeOfUse || null,
-            // تفاصيل أخرى (extra details)
-            night_parking: otherDetails.nightParking || null,
-            expected_km: otherDetails.expectedKM || null,
-            transmission_type: otherDetails.transmissionType || null,
-            accident_counts: otherDetails.accidentCounts || null,
-            education: otherDetails.education || null,
-            work_location: otherDetails.workNameAndLocation || null,
-            children_under_16: otherDetails.childrenUnder16 || null,
-            car_modification: otherDetails.carModification || null,
-            modification_desc: otherDetails.modification || null,
-            has_trailer: otherDetails.hasTrailAttach || null,
-            trailer_value: otherDetails.trailEstimatedValue || null,
-            foreign_license: otherDetails.foreignLicense || null,
-            health_conditions: otherDetails.healthConditions || null,
-            traffic_violations: otherDetails.trafficViolations || null,
-            drivers: drivers.value && drivers.value.length > 0 ? drivers.value : null,
         } );
     } catch ( err ) {
         logger.warn( '[VehicleDetails] Tracking failed:', err.message );
@@ -802,8 +495,6 @@ function restoreFormState() {
             if ( parsed.vehicleMake ) form.vehicleMake = parsed.vehicleMake;
             if ( parsed.vehicleYear ) form.vehicleYear = parsed.vehicleYear;
             if ( parsed.nationalId ) form.nationalId = parsed.nationalId;
-            if ( parsed.fullName ) form.fullName = parsed.fullName;
-            if ( parsed.phone ) form.phone = parsed.phone;
         } catch { /* ignore */ }
     }
 
@@ -823,8 +514,6 @@ function restoreFormState() {
         try {
             const parsed = JSON.parse( saved );
             Object.assign( form, parsed );
-            if ( parsed.drivers ) drivers.value = parsed.drivers;
-            if ( parsed.otherDetails ) Object.assign( otherDetails, parsed.otherDetails );
         } catch { /* ignore */ }
     }
 
@@ -836,8 +525,6 @@ function restoreFormState() {
             if ( parsed.policyStartDate ) form.policyStartDate = parsed.policyStartDate;
             if ( parsed.insuranceType ) form.insuranceType = parsed.insuranceType;
             if ( parsed.repairMethod ) form.repairMethod = parsed.repairMethod;
-            if ( parsed.region ) form.region = parsed.region;
-            if ( parsed.city ) form.city = parsed.city;
         } catch { /* ignore */ }
     }
 
