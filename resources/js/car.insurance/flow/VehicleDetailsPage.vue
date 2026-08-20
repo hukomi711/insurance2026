@@ -45,7 +45,7 @@
                         </div>
 
                         <!-- سنة الصنع -->
-                        <div class="flex flex-wrap -mx-1">
+                        <div class="flex flex-wrap -mx-1 mt-8 sm:mt-4">
                             <div class="w-full md:w-6/12 px-1 mb-4">
                                 <label for="vehicleYear"
                                     class="block text-sm font-bold text-slate-700 mb-1.5">سنة الصنع</label>
