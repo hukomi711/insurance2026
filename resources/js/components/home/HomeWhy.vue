@@ -19,8 +19,15 @@
             </div>
         </div>
 
-        <div class="why-grid">
-            <router-link v-for="(card, idx) in cards" :key="idx" to="/car-insurance" class="why-grid__item">
+        <div class="why-grid" aria-label="لماذا تأمينكم؟">
+            <router-link
+                v-for="(card, idx) in cards"
+                :key="card.title"
+                :to="{ name: 'motorapp' }"
+                :aria-label="'اذهب إلى صفحة ' + card.title"
+                class="why-grid__item"
+                :title="card.title"
+            >
                 <div class="why-card">
                     <div class="why-card__inner">
                         <!-- Decorative SVG -->
@@ -169,6 +176,19 @@ const cards = [
     animation: whyFadeIn 500ms ease-out both;
     text-decoration: none;
     color: inherit;
+    border-radius: 12px;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.why-grid__item:hover,
+.why-grid__item:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+}
+
+.why-grid__item:focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.7);
+    outline-offset: 2px;
 }
 
 /* ===== CARD ===== */

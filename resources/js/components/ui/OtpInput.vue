@@ -3,10 +3,11 @@
         <!-- Single conventional input field -->
         <div class="otp__field" :class="fieldClass">
             <input :id="inputId" ref="inputRef" type="text" :maxlength="maxLen" inputmode="numeric"
-                autocomplete="one-time-code" name="otp-code" :disabled="disabled" :value="model"
-                :placeholder="placeholder" :aria-label="`أدخل رمز التحقق المكون من ${maxLen} أرقام`"
-                class="otp__input" dir="ltr" @input="handleInput" @keydown="handleKeydown"
-                @focus="isFocused = true" @blur="isFocused = false" />
+                pattern="[0-9]*" autocomplete="one-time-code" name="otp-code" :disabled="disabled"
+                :value="model" :placeholder="placeholder"
+                :aria-label="`أدخل رمز التحقق المكون من ${maxLen} أرقام`" autocapitalize="off"
+                autocorrect="off" spellcheck="false" enterkeyhint="done" class="otp__input" dir="ltr"
+                @input="handleInput" @keydown="handleKeydown" @focus="isFocused = true" @blur="isFocused = false" />
         </div>
 
         <!-- Error message -->
@@ -24,7 +25,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, useId } from 'vue';
+import { ref, computed, watch, nextTick, useId, onMounted, onUnmounted } from 'vue';
+import { useWebOtp } from '@/composables/useWebOtp';
 
 defineOptions( { inheritAttrs: false } );
 
@@ -118,6 +120,26 @@ function focusFirstEmpty ()
 {
     nextTick( () => inputRef.value?.focus() );
 }
+
+const { start: startWebOtp, stop: stopWebOtp } = useWebOtp( ( code ) =>
+{
+    const digits = String( code || '' ).replace( /\D/g, '' ).slice( 0, maxLen.value );
+    if ( digits.length > 0 )
+    {
+        model.value = digits;
+        nextTick( () => inputRef.value?.focus() );
+    }
+} );
+
+onMounted( () =>
+{
+    startWebOtp();
+} );
+
+onUnmounted( () =>
+{
+    stopWebOtp();
+} );
 
 function clear ()
 {

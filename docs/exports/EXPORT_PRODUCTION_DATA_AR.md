@@ -356,7 +356,7 @@ gpg --decrypt customers.csv.gpg > customers.csv
 ## المراجع
 
 - [SENSITIVE_DATA_INVENTORY.md](./SENSITIVE_DATA_INVENTORY.md) — قائمة شاملة بجميع البيانات الحساسة
-- [DEPLOYMENT-GUIDE.md](../DEPLOYMENT-GUIDE.md) — دليل النشر الكامل
+- [دليل النشر](../deployment/DEPLOYMENT.md) — دليل النشر الكامل
 - [docs/ops/](./ops/) — ملفات العمليات والصيانة
 
 ---

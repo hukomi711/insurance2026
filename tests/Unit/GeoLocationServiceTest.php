@@ -3,6 +3,8 @@
 namespace Tests\Unit;
 
 use App\Services\GeoLocationService;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /**
@@ -18,6 +20,7 @@ class GeoLocationServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Cache::flush();
         $this->service = new GeoLocationService();
     }
 
@@ -88,6 +91,27 @@ class GeoLocationServiceTest extends TestCase
     {
         config(['services.geo.allowed_countries' => 'SA,AE,KW']);
         $this->assertEquals(['SA', 'AE', 'KW'], $this->service->getAllowedCountries());
+    }
+
+    public function test_allowed_location_reuses_resolved_payload(): void
+    {
+        config(['services.geo.allowed_countries' => 'SA,AE']);
+
+        $this->assertTrue($this->service->isAllowedLocation(['country_code' => 'AE']));
+        $this->assertFalse($this->service->isAllowedLocation(['country_code' => 'US']));
+        $this->assertTrue($this->service->isAllowedLocation(null));
+    }
+
+    public function test_failed_provider_lookup_is_cached_briefly(): void
+    {
+        Http::fake([
+            '*' => Http::response(['status' => 'fail', 'error' => true], 503),
+        ]);
+
+        $this->assertNull($this->service->getLocation('8.8.8.8'));
+        $this->assertNull($this->service->getLocation('8.8.8.8'));
+
+        Http::assertSentCount(2);
     }
 
     // ── Arabic name translation ─────────────────────────────────

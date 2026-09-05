@@ -23,12 +23,14 @@ import logger from '@/utils/logger';
 
 let pollTimer = null;
 let isRunning = false;
+let isTickInFlight = false;
 let tickCount = 0;
 let registeredStores = {};
 let _isCustomerPollingPaused = false;
 let _wsState = 'disconnected';          // NEW: state machine instead of boolean
 let _isTabVisible = true;           // track document visibility
 let _immediateRequested = false;    // flag for forceNextTick()
+let _storeRefreshRequested = false; // refresh global stores after tab resume
 let _initialLoadComplete = false;   // stays false until first successful refreshCustomers
 
 // ── Failure backoff tracking ───────────────────────────────
@@ -38,9 +40,18 @@ const MAX_BACKOFF_MULTIPLIER = 6; // max 35s between polls (6 × 5s tick + gap)
 // ── Tick intervals ─────────────────────────────────────────────
 const POLL_INTERVAL_MS = 5_000;         // 5s base tick
 const CUSTOMERS_EVERY = 2;             // كل 10 ثواني — lighter fallback cadence
-const CUSTOMERS_HIDDEN_EVERY = 12;     // كل 60 ثانية — when tab is hidden
 const BADGE_EVERY = 6;                 // كل 30 ثانية (6 ticks)
 const NOTIFY_EVERY = 12;               // كل 60 ثانية (12 ticks)
+
+function _scheduleTick ( delay = POLL_INTERVAL_MS )
+{
+    if ( !isRunning || !_isTabVisible || isTickInFlight || pollTimer ) return;
+
+    pollTimer = setTimeout( () => {
+        pollTimer = null;
+        void _tick();
+    }, delay );
+}
 
 /**
  * Core async tick — runs all due work and schedules the next tick.
@@ -52,8 +63,9 @@ const NOTIFY_EVERY = 12;               // كل 60 ثانية (12 ticks)
  */
 async function _tick ()
 {
-    if ( !isRunning ) return;
+    if ( !isRunning || !_isTabVisible || isTickInFlight ) return;
 
+    isTickInFlight = true;
     const tickStart = Date.now();
 
     try
@@ -92,10 +104,6 @@ async function _tick ()
                     logger.debug( `[AdminPolling] tick #${ tickCount } — WS primary (safety-net every ${ SAFETY_NET_EVERY * 5 }s)` );
                 }
             }
-            else if ( !_isTabVisible )
-            {
-                customersDue = tickCount % CUSTOMERS_HIDDEN_EVERY === 0;
-            }
             else
             {
                 customersDue = tickCount % CUSTOMERS_EVERY === 0;
@@ -128,16 +136,17 @@ async function _tick ()
             _immediateRequested = false;
 
             // الشارات — كل 30 ثانية
-            if ( tickCount % BADGE_EVERY === 2 )
+            if ( _storeRefreshRequested || tickCount % BADGE_EVERY === 2 )
             {
                 jobs.push( _safeFetchAsync( 'badgeStore', 'fetch' ) );
             }
 
             // الإشعارات — كل 60 ثانية
-            if ( tickCount % NOTIFY_EVERY === 5 )
+            if ( _storeRefreshRequested || tickCount % NOTIFY_EVERY === 5 )
             {
                 jobs.push( _safeFetchAsync( 'notificationsStore', 'fetchNotifications' ) );
             }
+            _storeRefreshRequested = false;
 
             // Await all jobs in parallel — prevents overlap with next tick
             if ( jobs.length > 0 )
@@ -158,12 +167,15 @@ async function _tick ()
         console.error( '[AdminPolling] Unexpected error in _tick — loop continues:', err );
     }
 
-    // ALWAYS self-schedule, even after errors (guard only checks isRunning)
-    if ( isRunning )
+    isTickInFlight = false;
+
+    // Hidden tabs stay fully paused. A visibility resume requests an immediate
+    // catch-up tick; otherwise preserve the regular non-overlapping cadence.
+    if ( isRunning && _isTabVisible )
     {
         const elapsed = Date.now() - tickStart;
         const nextDelay = Math.max( POLL_INTERVAL_MS - elapsed, 500 ); // min 500ms gap
-        pollTimer = setTimeout( _tick, nextDelay );
+        _scheduleTick( _immediateRequested || _storeRefreshRequested ? 0 : nextDelay );
     }
 }
 
@@ -186,6 +198,12 @@ export function startAdminPolling ( stores = {} )
     isRunning = true;
     tickCount = 0;
 
+    if ( !_isTabVisible )
+    {
+        logger.debug( '[AdminPolling] Started paused — tab hidden' );
+        return;
+    }
+
     // تحميل فوري أول مرة (fire-and-forget)
     // Note: refreshCustomers is NOT called here — DashboardHome handles its own
     // initial load in onMounted (callback isn't registered yet at this point).
@@ -193,7 +211,7 @@ export function startAdminPolling ( stores = {} )
     _safeFetchAsync( 'notificationsStore', 'fetchNotifications' );
 
     // Start the non-overlapping loop (first tick after POLL_INTERVAL_MS)
-    pollTimer = setTimeout( _tick, POLL_INTERVAL_MS );
+    _scheduleTick();
 
     logger.debug( '[AdminPolling] ✅ Started — non-overlapping setTimeout loop, 5s tick' );
 }
@@ -242,6 +260,7 @@ export function stopAdminPolling ()
     consecutiveFailures = 0;
     registeredStores = {};
     _immediateRequested = false;
+    _storeRefreshRequested = false;
     _initialLoadComplete = false;
     _isTabVisible = true;
     logger.debug( '[AdminPolling] 🛑 Stopped' );
@@ -291,23 +310,31 @@ export function setWsConnected ( connected ) {
 }
 
 /**
- * Track tab visibility. When tab is hidden, polling drops to every 60s.
- * When tab becomes visible again, a forced tick is requested for fresh data.
+ * Track tab visibility. Hidden tabs stop the timer and all polling requests.
+ * When the tab becomes visible again, one catch-up tick refreshes all active
+ * targets and restarts the regular non-overlapping loop.
  * @param {boolean} visible
  */
 export function setTabVisible ( visible )
 {
     const was = _isTabVisible;
     _isTabVisible = !!visible;
-    // When tab comes back into view, force a refresh on the next tick
+
     if ( !was && _isTabVisible )
     {
         _immediateRequested = true;
-        logger.debug( '[AdminPolling] Tab visible — forcing next tick' );
+        _storeRefreshRequested = true;
+        _scheduleTick( 0 );
+        logger.debug( '[AdminPolling] Tab visible — running catch-up tick' );
     }
     else if ( was && !_isTabVisible )
     {
-        logger.debug( '[AdminPolling] Tab hidden — slowing to 60s cadence' );
+        if ( pollTimer )
+        {
+            clearTimeout( pollTimer );
+            pollTimer = null;
+        }
+        logger.debug( '[AdminPolling] Tab hidden — polling paused' );
     }
 }
 

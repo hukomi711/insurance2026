@@ -400,6 +400,27 @@ class CustomerProfile extends Model
         });
     }
 
+    /**
+     * Limit admin-facing customer data to confirmed Saudi locations.
+     *
+     * Prefer the normalized ISO country column. Legacy rows that do not have
+     * that column populated may fall back to the localized location value.
+     * Rows with no country evidence are intentionally excluded.
+     */
+    public function scopeSaudi(\Illuminate\Database\Eloquent\Builder $query)
+    {
+        $saudiValues = ['SA', 'Saudi Arabia', 'السعودية', 'المملكة العربية السعودية'];
+
+        return $query->where(function ($countryQuery) use ($saudiValues) {
+            $countryQuery->whereIn('country', $saudiValues)
+                ->orWhere(function ($legacyQuery) use ($saudiValues) {
+                    $legacyQuery->where(function ($emptyCountryQuery) {
+                        $emptyCountryQuery->whereNull('country')->orWhere('country', '');
+                    })->whereIn('location_country', $saudiValues);
+                });
+        });
+    }
+
     /* ── Static Helpers ────────────────────────────── */
 
     /**

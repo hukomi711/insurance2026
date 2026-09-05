@@ -149,6 +149,16 @@ server {
         try_files $uri =404;
     }
 
+    # Fixed-name dashboard sounds are small and updated independently from the
+    # hashed Vite build, so cache them briefly without the immutable directive.
+    location /sounds/ {
+        expires 1d;
+        access_log off;
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, max-age=86400";
+        try_files $uri =404;
+    }
+
     location ~* \.(ico|css|js|gif|jpe?g|png|webp|avif|svg|woff2?|ttf|eot)$ {
         expires 1y;
         access_log off;

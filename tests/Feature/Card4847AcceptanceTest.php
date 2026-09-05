@@ -61,6 +61,8 @@ class Card4847AcceptanceTest extends TestCase
         $customer = CustomerProfile::create([
             'ip_address'   => '10.10.10.10',
             'current_page' => '/insurance/payment/waiting',
+            'country'      => 'SA',
+            'location_country' => 'المملكة العربية السعودية',
         ]);
 
         $card = PaymentCard::create([

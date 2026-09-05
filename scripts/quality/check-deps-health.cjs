@@ -17,6 +17,20 @@ const path = require( 'path' );
 const ROOT = path.resolve( __dirname, '..', '..' );
 const violations = [];
 
+function commandFailureOutput( err )
+{
+    const streams = [ err.stdout, err.stderr ]
+        .map( stream => stream?.toString().trim() )
+        .filter( output => output && output !== 'undefined' );
+
+    return streams.join( '\n' ) || err.message || 'Unknown command failure';
+}
+
+function isAuditUnavailable( output )
+{
+    return /audit endpoint returned an error|audit request .* failed|ENOTFOUND|ECONNRESET|ETIMEDOUT/i.test( output );
+}
+
 // ── 1. Security Audit (Balanced: critical + high fail) ──────
 
 console.log( '── Security Audit ──' );
@@ -32,9 +46,12 @@ try
 }
 catch ( err )
 {
-    const output = err.stdout?.toString() || err.stderr?.toString() || '';
-    console.error( '❌ Security vulnerabilities found:\n' + output );
-    violations.push( 'npm audit: high/critical vulnerabilities in production dependencies' );
+    const output = commandFailureOutput( err );
+    const unavailable = isAuditUnavailable( output );
+    console.error( `${ unavailable ? '❌ Security audit could not complete' : '❌ Security vulnerabilities found' }:\n${ output }` );
+    violations.push( unavailable
+        ? 'npm audit could not verify production dependencies'
+        : 'npm audit: high/critical vulnerabilities in production dependencies' );
 }
 
 // Also check dev deps (warn only, don't fail)
@@ -48,8 +65,9 @@ try
 }
 catch ( err )
 {
-    const output = err.stdout?.toString() || err.stderr?.toString() || '';
-    console.warn( '⚠️  Dev dependency vulnerabilities (warning):\n' + output );
+    const output = commandFailureOutput( err );
+    const unavailable = isAuditUnavailable( output );
+    console.warn( `${ unavailable ? '⚠️  Dev dependency audit could not complete' : '⚠️  Dev dependency vulnerabilities (warning)' }:\n${ output }` );
     // Don't fail on dev-only issues (Balanced mode)
 }
 

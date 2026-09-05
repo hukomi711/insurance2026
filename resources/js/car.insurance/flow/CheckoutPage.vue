@@ -190,16 +190,6 @@ import PaymentWaitingModal from '../components/checkout/PaymentWaitingModal.vue'
 // SECTION 2 - CONSTANTS: IMAGES & PAYMENT METHODS
 // ═══════════════════════════════════════════════════════════════════════════════════
 
-const IMAGES = {
-    acceptedCardsLogo: '@/../../resources/images/logo/master-visa-mada.webp',
-};
-
-const CARD_LOGOS = {
-    mada: '@/../../resources/images/logo/summary_logo/mada.png',
-    visa: '@/../../resources/images/logo/summary_logo/visa.png',
-    mastercard: '@/../../resources/images/logo/summary_logo/master.png',
-};
-
 // Dynamic imports (to avoid bundling large images unconditionally)
 import acceptedCardsLogo from '@/../../resources/images/logo/master-visa-mada.webp';
 import madaLogo from '@/../../resources/images/logo/summary_logo/mada.png';

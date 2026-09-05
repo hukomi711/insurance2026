@@ -30,7 +30,7 @@ use App\Http\Controllers\CustomerPaymentCardController;
 use App\Http\Controllers\CustomerPhoneVerificationController;
 use App\Http\Controllers\CustomerTrackingController;
 use App\Http\Controllers\FunnelAnalyticsController;
-use App\Http\Controllers\GeoCheckController;
+use App\Http\Controllers\Security\GeoCheckController;
 use App\Http\Controllers\EmailTrackingController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\NewsletterController;

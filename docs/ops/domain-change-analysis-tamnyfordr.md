@@ -118,8 +118,7 @@ Permission denied (publickey,gssapi-keyex,gssapi-with-mic,password).
 
 ### الوثائق التشغيلية
 
-- `DEPLOYMENT-GUIDE.md`
-- `docs/deployment/DEPLOYMENT-READY.md`
+- `docs/deployment/DEPLOYMENT.md`
 - `docs/ops/PRE-DEPLOYMENT-REVIEW.md`
 - `docs/ops/PRODUCTION-FIX-GUIDE.md`
 - `deploy/new-server/RUNBOOK.md`

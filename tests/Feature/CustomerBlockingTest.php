@@ -124,6 +124,8 @@ class CustomerBlockingTest extends TestCase
             'ip_address' => '203.0.113.20',
             'session_id' => '4d50df10-f3f7-42c1-b7ce-3358ef3cc0d3',
             'is_active' => true,
+            'country' => 'SA',
+            'location_country' => 'المملكة العربية السعودية',
         ]);
 
         $this->postJson("/api/admin/customers/{$customer->id}/block")
@@ -144,6 +146,8 @@ class CustomerBlockingTest extends TestCase
             'ip_address' => '203.0.113.20',
             'session_id' => '4d50df10-f3f7-42c1-b7ce-3358ef3cc0d3',
             'is_active' => true,
+            'country' => 'SA',
+            'location_country' => 'المملكة العربية السعودية',
         ]);
 
         $this->postJson("/api/admin/customers/{$customer->id}/block")

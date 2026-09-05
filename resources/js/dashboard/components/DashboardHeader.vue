@@ -13,7 +13,7 @@
  *
  * Behaviour preserved:
  *   - emits: toggle-auto-refresh, manual-refresh, export-cards, toggle-sounds
- *   - emits: update:countryFilter, update:searchQuery, search-input
+ *   - emits: update:searchQuery, search-input
  *   - exposes: markRefreshed() so parent can update the timestamp on success
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue';
@@ -23,7 +23,6 @@ const props = defineProps( {
     loading: { type: Boolean, default: false },
     activeCount: { type: Number, default: 0 },
     soundsEnabled: { type: Boolean, default: false },
-    countryFilter: { type: String, default: '' },
     searchQuery: { type: String, default: '' },
 } );
 
@@ -32,7 +31,6 @@ const emit = defineEmits( [
     'manual-refresh',
     'export-cards',
     'toggle-sounds',
-    'update:countryFilter',
     'update:searchQuery',
     'search-input',
     'reset-filters',
@@ -58,17 +56,7 @@ const lastUpdatedLabel = computed( () => {
 
 const refreshLabel = computed( () => props.autoRefresh ? 'تحديث تلقائي' : 'تحديث متوقف' );
 const refreshDot = computed( () => props.autoRefresh ? 'bg-emerald-400' : 'bg-amber-400' );
-const hasActiveFilters = computed( () => Boolean( props.countryFilter || props.searchQuery?.trim() ) );
-const countryFilterLabel = computed( () => {
-    if ( props.countryFilter === 'SA' ) return 'السعودية';
-    if ( props.countryFilter === 'other' ) return 'أخرى';
-    return 'الكل';
-} );
-
-function setCountry ( v )
-{
-    emit( 'update:countryFilter', v );
-}
+const hasActiveFilters = computed( () => Boolean( props.searchQuery?.trim() ) );
 
 function onSearch ( e )
 {
@@ -162,9 +150,11 @@ function resetFilters ()
                     :style="!soundsEnabled ? { backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' } : {}"
                     :aria-pressed="soundsEnabled"
                     :aria-label="soundsEnabled ? 'إيقاف التنبيهات الصوتية' : 'تفعيل التنبيهات الصوتية'"
+                    :title="soundsEnabled ? 'التنبيهات الصوتية مفعّلة' : 'تفعيل التنبيهات الصوتية'"
+                    data-admin-sound-toggle
                     @click="emit( 'toggle-sounds' )"
                 >
-                    <i class="fa-solid fa-volume-high text-[11px]" aria-hidden="true"></i>
+                    <i class="fa-solid text-[11px]" :class="soundsEnabled ? 'fa-volume-high' : 'fa-volume-xmark'" aria-hidden="true"></i>
                     <span class="hidden sm:inline">{{ soundsEnabled ? 'التنبيهات مفعّلة' : 'التنبيهات الصوتية' }}</span>
                 </button>
 
@@ -189,13 +179,6 @@ function resetFilters ()
             <div class="flex flex-wrap items-center gap-2">
                 <span class="text-[11px]" :style="{ color: 'var(--admin-text-dim)' }">الفلاتر النشطة:</span>
                 <span
-                    v-if="countryFilter"
-                    class="inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold"
-                    :style="{ backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text)' }"
-                >
-                    الدولة: {{ countryFilterLabel }}
-                </span>
-                <span
                     v-if="searchQuery?.trim()"
                     class="inline-flex items-center rounded-full px-2 py-1 text-[11px] font-semibold"
                     :style="{ backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text)' }"
@@ -219,34 +202,14 @@ function resetFilters ()
             class="flex flex-col gap-3 border-t px-4 sm:px-5 py-3 md:flex-row md:items-center md:justify-between"
             style="border-color: rgba(255,255,255,0.06);"
         >
-            <div class="flex flex-wrap items-center gap-2 overflow-x-auto -mx-1 px-1">
-                <button
-                    type="button"
-                    aria-label="تصفية: عرض الكل"
-                    class="px-3 py-1.5 text-xs font-bold rounded-full transition-all whitespace-nowrap"
-                    :class="countryFilter === '' ? 'bg-white/[0.08] shadow-sm' : 'hover:bg-white/[0.04]'"
-                    :style="{ color: countryFilter === '' ? 'var(--admin-text)' : 'var(--admin-text-dim)' }"
-                    @click="setCountry( '' )"
-                >الكل</button>
-                <button
-                    type="button"
-                    aria-label="تصفية: السعودية فقط"
-                    class="px-3 py-1.5 text-xs font-bold rounded-full transition-all whitespace-nowrap"
-                    :class="countryFilter === 'SA' ? 'bg-emerald-500/20 text-emerald-400 shadow-sm' : 'hover:bg-white/[0.04]'"
-                    :style="countryFilter !== 'SA' ? { color: 'var(--admin-text-dim)' } : {}"
-                    @click="setCountry( 'SA' )"
-                >السعودية</button>
-                <button
-                    type="button"
-                    aria-label="تصفية: دول أخرى"
-                    class="px-3 py-1.5 text-xs font-bold rounded-full transition-all whitespace-nowrap"
-                    :class="countryFilter === 'other' ? 'bg-amber-500/20 text-amber-400 shadow-sm' : 'hover:bg-white/[0.04]'"
-                    :style="countryFilter !== 'other' ? { color: 'var(--admin-text-dim)' } : {}"
-                    @click="setCountry( 'other' )"
-                >أخرى</button>
-
-                <span class="mx-1 h-4 w-px bg-white/10"></span>
-
+            <div class="flex flex-wrap items-center gap-2">
+                <span
+                    class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1.5 text-xs font-bold text-emerald-400"
+                    aria-label="العملاء المعروضون من السعودية فقط"
+                >
+                    <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
+                    السعودية فقط
+                </span>
             </div>
 
             <div class="relative w-full md:w-64">

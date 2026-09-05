@@ -20,7 +20,7 @@
   - ✅ STATUS_POLL_SECRET=CHANGE_ME
   - ✅ ADMIN_PASSWORD=CHANGE_ME
 
-### ✅ DEPLOYMENT-GUIDE.md
+### ✅ docs/deployment/DEPLOYMENT.md
 
 - **FIXED:** Step 2 now uses `ssh-copy-id` with password auth (correct method)
 - **FIXED:** Secret generation section removed exposed values, moved to server-only process

@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Security;
 
+use App\Http\Controllers\Controller;
 use App\Models\CustomerBlock;
 use App\Services\GeoLocationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * GeoCheckController
+ * Provides the frontend with the visitor's geographic access policy.
  *
- * يوفر endpoint خفيف لفحص الموقع الجغرافي من الـ frontend.
- * GET /api/geo/check → { is_saudi, access_scope, country, country_ar }
+ * GET /api/geo/check
  */
 class GeoCheckController extends Controller
 {
@@ -19,26 +19,19 @@ class GeoCheckController extends Controller
         protected GeoLocationService $geoService,
     ) {}
 
-    /**
-     * فحص الموقع الجغرافي للزائر
-     */
     public function check(Request $request): JsonResponse
     {
-        // $request->ip() respects TrustProxies — only proxy CIDRs
-        // declared in bootstrap/app.php are trusted. Safe from spoofing.
+        // $request->ip() respects only the proxies trusted in bootstrap/app.php.
         $ip = $request->ip() ?? '127.0.0.1';
         $location = $this->geoService->getLocation($ip);
 
         $countryCode = $location['country_code'] ?? null;
-        $isSaudi = $this->geoService->isSaudiArabia($ip);
+        $isSaudi = $this->geoService->isAllowedLocation($location);
         $isAdmin = $this->geoService->isAdminIp($ip);
         $sessionToken = (string) $request->header('X-Session-Token', $request->input('session_id', ''));
-        $sessionToken = is_string($sessionToken) && strlen($sessionToken) <= 128 ? $sessionToken : '';
+        $sessionToken = strlen($sessionToken) <= 128 ? $sessionToken : '';
 
-        // access_scope: تحديد نطاق الوصول بدون كشف حالة admin IP
-        // full  = صلاحية كاملة (owner)
-        // local = زائر محلي (سعودي) — الموقع بدون dashboard
-        // blog  = زائر أجنبي — المدونة فقط
+        // full: owner access, local: allowed public access, blog: foreign visitor.
         $accessScope = $isAdmin ? 'full' : ($isSaudi ? 'local' : 'blog');
 
         return response()->json([
@@ -49,7 +42,6 @@ class GeoCheckController extends Controller
             'country' => $location['country'] ?? null,
             'country_code' => $countryCode,
             'country_ar' => $this->geoService->getArabicCountryName($countryCode),
-        ]);
+        ])->header('Cache-Control', 'private, no-store');
     }
-
 }

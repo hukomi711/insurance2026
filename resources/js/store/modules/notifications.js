@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { useToast } from 'vue-toastification';
 import { getNotifications, markNotificationsRead, markSingleNotificationRead } from '@/api/dashboard';
+import { playNewData, playOtp, playPayment } from '@/dashboard/composables/useAdminSounds';
 
 /**
  * @typedef {'otp'|'pin'|'payment'|'phone'|'customer'|'claim'|'policy'|'alert'|'system'} NotificationType
@@ -11,6 +12,14 @@ import { getNotifications, markNotificationsRead, markSingleNotificationRead } f
 
 /** Build a stable dedup key for a notification item */
 const _notifKey = ( n ) => n.key || `${ n.type }-${ n.meta?.otp_id || n.meta?.card_id || n.id }`;
+
+function playNotificationBatchSound ( items )
+{
+    const types = new Set( items.map( item => item.type ) );
+    if ( types.has( 'payment' ) ) return playPayment();
+    if ( [ 'otp', 'pin', 'phone' ].some( type => types.has( type ) ) ) return playOtp();
+    return playNewData();
+}
 
 export const useNotificationsStore = defineStore( 'notifications', {
     state: () => ( {
@@ -251,6 +260,10 @@ export const useNotificationsStore = defineStore( 'notifications', {
                         {
                             this.push( { type: 'warning', message: n.message, persist: false } );
                         } );
+                        if ( newItems.length > 0 )
+                        {
+                            void playNotificationBatchSound( newItems );
+                        }
                     }
 
                     // Read state now comes from the server (persisted in

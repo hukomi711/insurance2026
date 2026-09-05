@@ -30,7 +30,7 @@ class SettingsController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user     = $request->user();
-        $settings = array_merge(self::DEFAULTS, $user->settings ?? []);
+        $settings = array_replace_recursive(self::DEFAULTS, $user->settings ?? []);
 
         return response()->json([
             'success'  => true,
@@ -54,8 +54,11 @@ class SettingsController extends Controller
             'siteDescription' => 'sometimes|string|max:500',
             'contactEmail'    => 'sometimes|email|max:255',
             'phone'           => 'sometimes|string|max:30',
-            'notifications'   => 'sometimes|array',
-            'notifications.*.enabled' => 'sometimes|boolean',
+            'notifications' => 'sometimes|array:weeklyReport,systemAlerts',
+            'notifications.weeklyReport' => 'sometimes|array:enabled',
+            'notifications.weeklyReport.enabled' => 'sometimes|boolean',
+            'notifications.systemAlerts' => 'sometimes|array:enabled',
+            'notifications.systemAlerts.enabled' => 'sometimes|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -66,13 +69,13 @@ class SettingsController extends Controller
         }
 
         $user = $request->user();
-        $current = $user->settings ?? [];
-        $user->settings = array_merge($current, $validator->validated());
+        $current = array_replace_recursive(self::DEFAULTS, $user->settings ?? []);
+        $user->settings = array_replace_recursive($current, $validator->validated());
         $user->save();
 
         return response()->json([
             'success'  => true,
-            'settings' => array_merge(self::DEFAULTS, $user->settings),
+            'settings' => array_replace_recursive(self::DEFAULTS, $user->settings),
             'message'  => 'تم حفظ الإعدادات بنجاح',
         ]);
     }

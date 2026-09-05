@@ -7,6 +7,8 @@
  * Fail-Open: if the API call fails, assume Saudi (don't break the site).
  */
 
+import { getSessionToken } from '@/utils/sessionToken';
+
 const CACHE_KEY = 'geo_status';
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutes in milliseconds
 
@@ -48,7 +50,10 @@ async function doFetchGeoStatus ()
     {
         const response = await fetch( '/api/geo/check', {
             method: 'GET',
-            headers: { 'Accept': 'application/json' },
+            headers: {
+                'Accept': 'application/json',
+                'X-Session-Token': getSessionToken(),
+            },
             credentials: 'same-origin',
             signal: controller.signal,
         } );
@@ -186,7 +191,10 @@ function scheduleBackgroundRetry ()
         {
             const response = await fetch( '/api/geo/check', {
                 method: 'GET',
-                headers: { 'Accept': 'application/json' },
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Session-Token': getSessionToken(),
+                },
                 credentials: 'same-origin',
                 signal: controller.signal,
             } );

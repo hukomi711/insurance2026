@@ -44,25 +44,42 @@
                     </p>
                 </div>
 
+                <div class="mt-3 space-y-1">
+                    <p class="px-3 pb-1 pt-1 text-[10px] font-bold tracking-[0.12em] text-gray-400">حسابي</p>
+
+                    <button
+                        type="button"
+                        class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition-colors hover:bg-gray-50"
+                        @click="openProfile"
+                    >
+                        <i class="fa-solid fa-user w-4 text-center text-[13px] text-gray-500" aria-hidden="true"></i>
+                        <span>الملف الشخصي</span>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition-colors hover:bg-gray-50"
+                        @click="openPassword"
+                    >
+                        <i class="fa-solid fa-key w-4 text-center text-[13px] text-gray-500" aria-hidden="true"></i>
+                        <span>تغيير كلمة المرور</span>
+                    </button>
+                </div>
+
                 <div class="my-2 h-px bg-gray-100"></div>
 
-                <button
-                    type="button"
-                    class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition-colors hover:bg-gray-50"
-                    @click="openProfile"
-                >
-                    <i class="fa-solid fa-user w-4 text-center text-[13px] text-gray-500" aria-hidden="true"></i>
-                    <span>الملف الشخصي</span>
-                </button>
+                <div class="space-y-1">
+                    <p class="px-3 pb-1 pt-1 text-[10px] font-bold tracking-[0.12em] text-gray-400">إدارة النظام</p>
 
-                <button
-                    type="button"
-                    class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition-colors hover:bg-gray-50"
-                    @click="openSettings"
-                >
-                    <i class="fa-solid fa-gear w-4 text-center text-[13px] text-gray-500" aria-hidden="true"></i>
-                    <span>الإعدادات</span>
-                </button>
+                    <button
+                        type="button"
+                        class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition-colors hover:bg-gray-50"
+                        @click="openSettings"
+                    >
+                        <i class="fa-solid fa-gear w-4 text-center text-[13px] text-gray-500" aria-hidden="true"></i>
+                        <span>إعدادات الموقع</span>
+                    </button>
+                </div>
 
                 <div class="my-2 h-px bg-gray-100"></div>
 
@@ -114,12 +131,19 @@ function openProfile() {
     router.push({ name: 'dashboard-settings', query: { section: 'account' } });
 }
 
+function openPassword() {
+    closeMenu();
+    router.push({ name: 'dashboard-settings', query: { section: 'password' } });
+}
+
 function openSettings() {
     closeMenu();
     router.push({ name: 'dashboard-settings', query: { section: 'general' } });
 }
 
 async function handleLogout() {
+    const confirmed = window.confirm('هل أنت متأكد من تسجيل الخروج؟');
+    if (!confirmed) return;
     closeMenu();
     await userStore.logout();
     router.push({ name: 'login' });

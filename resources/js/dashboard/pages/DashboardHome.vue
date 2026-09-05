@@ -9,13 +9,11 @@
                 :loading="refreshLoading"
                 :active-count="activeCustomersCount"
                 :sounds-enabled="soundsEnabled"
-                :country-filter="countryFilter"
                 :search-query="searchQuery"
                 @toggle-auto-refresh="toggleAutoRefresh"
                 @manual-refresh="manualRefresh"
                 @export-cards="exportPaymentCardsPdf"
                 @toggle-sounds="onEnableSoundsClick"
-                @update:countryFilter="setCountryFilter"
                 @update:searchQuery="( v ) => { searchQuery = v; }"
                 @search-input="onSearchInput"
                 @reset-filters="resetAllFilters"
@@ -191,7 +189,16 @@ import { useBadgeStore } from '@/store/modules/badges';
 import CustomerDataTable from '../components/CustomerDataTable.vue';
 import DashboardHeader from '../components/DashboardHeader.vue';
 import logger from '@/utils/logger';
-import { enableSounds, playNewData, playPayment, playOtp } from '../composables/useAdminSounds';const notificationsStore = useNotificationsStore();
+import { useAdminSounds } from '../composables/useAdminSounds';
+
+const {
+    soundsReady: soundsEnabled,
+    toggleSounds,
+    playNewData,
+    playPayment,
+    playOtp,
+} = useAdminSounds();
+const notificationsStore = useNotificationsStore();
 const badgeStore = useBadgeStore();
 
 // --- Dashboard Header State ---
@@ -346,20 +353,15 @@ async function exportPaymentCardsPdf () {
 }
 
 // ── Notification sounds enable button state ──
-const soundsEnabled = ref( false );
-function onEnableSoundsClick () {
-    enableSounds();
-    soundsEnabled.value = true;
-    // Play a quick confirmation tone so the admin knows audio is unlocked
-    playNewData();
+async function onEnableSoundsClick () {
+    const enabled = await toggleSounds();
+    if ( enabled ) {
+        await playNewData();
+    }
 }
 
 onMounted( async () => {
     _refreshEnabled = true;
-    // ✅ Enable notification sounds after first user interaction
-    document.addEventListener( 'click', enableSounds, { once: true } );
-    document.addEventListener( 'click', () => { soundsEnabled.value = true; }, { once: true } );
-
     // ✅ Register with central polling before initial fetch
     registerPollingCallback( 'refreshCustomers', refreshCustomers );
     connectDashboardWebSocket();
@@ -380,8 +382,6 @@ onUnmounted( () => {
     clearReconnectTimer();
     teardownChannelListeners();
     setWsState( 'disconnected' );
-
-    document.removeEventListener( 'click', enableSounds );
 
     // ✅ Unregister from central polling
     unregisterPollingCallback( 'refreshCustomers' );
@@ -1341,8 +1341,7 @@ function customerCountryCode ( customer ) {
 
 function matchesCountryFilter ( customer, filter ) {
     const code = customerCountryCode( customer );
-    if ( filter === 'SA' ) return code === 'SA' || !code;
-    if ( filter === 'other' ) return Boolean( code ) && code !== 'SA';
+    if ( filter === 'SA' ) return code === 'SA';
     return true;
 }
 
@@ -1371,22 +1370,16 @@ function goToPage ( page ) {
 }
 
 // ── Country filter ──
-const countryFilter = ref( '' );
-function setCountryFilter ( value ) {
-    countryFilter.value = value;
-    currentPage.value = 1; // reset to page 1 on filter change
-    refreshCustomers();
-}
+const countryFilter = ref( 'SA' );
 
 
 
 // ── Search filter ──
 const searchQuery = ref( '' );
 let _searchDebounce = null;
-const hasActiveFilters = computed( () => Boolean( countryFilter.value || searchQuery.value.trim() ) );
+const hasActiveFilters = computed( () => Boolean( searchQuery.value.trim() ) );
 
 function resetAllFilters () {
-    countryFilter.value = '';
     searchQuery.value = '';
     currentPage.value = 1;
     clearTimeout( _searchDebounce );

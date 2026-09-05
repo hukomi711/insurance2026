@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Log;
  */
 class GeoLocationService
 {
+    private const LOOKUP_FAILED = '__geo_lookup_failed__';
+
     /**
      * خريطة أسماء المدن السعودية بالعربية
      */
@@ -104,7 +106,9 @@ class GeoLocationService
 
         // IP غير صالح → لا تتصل بالمزود
         if (! filter_var($ip, FILTER_VALIDATE_IP)) {
-            Log::info('GeoLocation: invalid IP skipped', ['ip' => $ip]);
+            Log::info('GeoLocation: invalid IP skipped', [
+                'ip_hash' => hash('sha256', $ip),
+            ]);
 
             return null;
         }
@@ -114,21 +118,35 @@ class GeoLocationService
             return $this->getDefaultLocation();
         }
 
-        // كاش النتيجة لمدة 24 ساعة (cache key hashed للخصوصية)
-        return Cache::remember($this->cacheKey($ip), now()->addDay(), function () use ($ip) {
-            // المزود الأساسي: ip-api.com
-            $result = $this->fetchFromPrimaryApi($ip);
+        $cacheKey = $this->cacheKey($ip);
+        $cached = Cache::get($cacheKey);
 
-            // المزود الاحتياطي: ipapi.co
-            if ($result === null) {
-                Log::info('GeoLocation: primary API failed, trying fallback', [
-                    'ip_hash' => hash('sha256', $ip),
-                ]);
-                $result = $this->fetchFromFallbackApi($ip);
-            }
+        if ($cached === self::LOOKUP_FAILED) {
+            return null;
+        }
 
-            return $result;
-        });
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $result = $this->fetchFromPrimaryApi($ip);
+
+        if ($result === null) {
+            Log::info('GeoLocation: primary API failed, trying fallback', [
+                'ip_hash' => hash('sha256', $ip),
+            ]);
+            $result = $this->fetchFromFallbackApi($ip);
+        }
+
+        // Cache successful lookups for a day. Cache provider failures briefly
+        // so an outage cannot amplify every page load into two HTTP requests.
+        Cache::put(
+            $cacheKey,
+            $result ?? self::LOOKUP_FAILED,
+            $result === null ? now()->addMinutes(5) : now()->addDay(),
+        );
+
+        return $result;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -154,7 +172,16 @@ class GeoLocationService
      */
     public function isAllowedCountry(string $ip): bool
     {
-        $location = $this->getLocation($ip);
+        return $this->isAllowedLocation($this->getLocation($ip));
+    }
+
+    /**
+     * Apply the configured country policy to an already-resolved location.
+     * This avoids a second cache/provider lookup when a caller also needs the
+     * location payload.
+     */
+    public function isAllowedLocation(?array $location): bool
+    {
 
         // Fail-Open: لا نعرف الموقع → نسمح
         if ($location === null) {
@@ -278,7 +305,11 @@ class GeoLocationService
 
             $startedAt = microtime(true);
             $response = Http::connectTimeout(1)->timeout(2)->get($url, $params);
-            Log::info('[TrackingAPI] geo duration_ms=' . $this->durationMs($startedAt) . ' provider=ip-api ip=' . $ip);
+            Log::debug('GeoLocation lookup completed', [
+                'duration_ms' => $this->durationMs($startedAt),
+                'provider' => 'ip-api',
+                'ip_hash' => hash('sha256', $ip),
+            ]);
 
             if ($response->successful() && $response->json('status') === 'success') {
                 $data = $response->json();
@@ -294,14 +325,14 @@ class GeoLocationService
             }
 
             Log::info('GeoLocation primary API non-success response', [
-                'ip' => $ip,
+                'ip_hash' => hash('sha256', $ip),
                 'status' => $response->json('status'),
                 'code' => $response->status(),
             ]);
         } catch (\Exception $e) {
             Log::warning('GeoLocation primary API failed', [
-                'ip' => $ip,
-                'error' => $e->getMessage(),
+                'ip_hash' => hash('sha256', $ip),
+                'error_type' => $e::class,
             ]);
         }
 
@@ -324,7 +355,11 @@ class GeoLocationService
                 ->timeout(2)
                 ->withHeaders(['User-Agent' => 'TaminkomInsurance/1.0'])
                 ->get("https://ipapi.co/{$ip}/json/");
-            Log::info('[TrackingAPI] geo duration_ms=' . $this->durationMs($startedAt) . ' provider=ipapi ip=' . $ip);
+            Log::debug('GeoLocation lookup completed', [
+                'duration_ms' => $this->durationMs($startedAt),
+                'provider' => 'ipapi',
+                'ip_hash' => hash('sha256', $ip),
+            ]);
 
             if ($response->successful() && ! $response->json('error')) {
                 $data = $response->json();
@@ -340,14 +375,14 @@ class GeoLocationService
             }
 
             Log::info('GeoLocation fallback API non-success response', [
-                'ip' => $ip,
+                'ip_hash' => hash('sha256', $ip),
                 'code' => $response->status(),
                 'error' => $response->json('reason') ?? 'unknown',
             ]);
         } catch (\Exception $e) {
             Log::warning('GeoLocation fallback API failed', [
-                'ip' => $ip,
-                'error' => $e->getMessage(),
+                'ip_hash' => hash('sha256', $ip),
+                'error_type' => $e::class,
             ]);
         }
 

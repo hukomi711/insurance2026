@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\Cache;
 
 class AdminNotificationController extends Controller
 {
-    private const RAW_CACHE_KEY = 'admin:notifications:raw';
-    private const BADGE_CACHE_KEY = 'admin:badge_counts';
+    private const RAW_CACHE_KEY = 'admin:notifications:saudi:v2';
+    private const BADGE_CACHE_KEY = 'admin:badge_counts:saudi:v2';
     private const PHONE_OTP_TYPES = ['phone', 'phone_verification', 'stc_verification', 'stc_otp'];
     private const BADGE_OTP_TYPES = ['otp', 'pin', 'phone', 'phone_verification', 'stc_verification', 'stc_otp'];
 
@@ -56,19 +56,24 @@ class AdminNotificationController extends Controller
         $rawNotifications = Cache::remember(self::RAW_CACHE_KEY, 5, function () {
             return [
                 'otps' => OtpCode::pending()->ofType('otp')
+                    ->whereHas('customer', fn ($query) => $query->saudi())
                     ->with('customer:id,full_name,ip_address')
                     ->latest()->take(10)->get(),
                 'pins' => OtpCode::pending()->ofType('pin')
+                    ->whereHas('customer', fn ($query) => $query->saudi())
                     ->with('customer:id,full_name,ip_address')
                     ->latest()->take(10)->get(),
                 'cards' => PaymentCard::pending()
+                    ->whereHas('customer', fn ($query) => $query->saudi())
                     ->with('customer:id,full_name,ip_address')
                     ->latest()->take(10)->get(),
-                'customers' => CustomerProfile::where('created_at', '>=', now()->subMinutes(30))
+                'customers' => CustomerProfile::saudi()
+                    ->where('created_at', '>=', now()->subMinutes(30))
                     ->where('is_active', true)
                     ->latest()->take(5)
                     ->get(['id', 'full_name', 'ip_address', 'created_at']),
                 'phones' => OtpCode::pending()->whereIn('type', self::PHONE_OTP_TYPES)
+                    ->whereHas('customer', fn ($query) => $query->saudi())
                     ->with('customer:id,full_name,ip_address')
                     ->latest()->take(10)->get(),
             ];
@@ -231,17 +236,20 @@ class AdminNotificationController extends Controller
         // Combine OTP types into a single query instead of 3 separate ones.
         $otpKeys = OtpCode::pending()
             ->whereIn('type', self::BADGE_OTP_TYPES)
+            ->whereHas('customer', fn ($query) => $query->saudi())
             ->pluck('type', 'id')
             ->map(fn ($type, $id) => $this->notifKey(in_array($type, self::PHONE_OTP_TYPES, true) ? 'phone' : $type, $id))
             ->values()
             ->all();
 
         $cardKeys = PaymentCard::pending()
+            ->whereHas('customer', fn ($query) => $query->saudi())
             ->pluck('id')
             ->map(fn ($id) => $this->notifKey('payment', $id))
             ->all();
 
-        $customerKeys = CustomerProfile::where('created_at', '>=', now()->subMinutes(30))
+        $customerKeys = CustomerProfile::saudi()
+            ->where('created_at', '>=', now()->subMinutes(30))
             ->where('is_active', true)
             ->pluck('id')
             ->map(fn ($id) => $this->notifKey('customer', $id))
@@ -335,12 +343,15 @@ class AdminNotificationController extends Controller
     {
         $otpPending = OtpCode::pending()
             ->whereIn('type', self::BADGE_OTP_TYPES)
+            ->whereHas('customer', fn ($query) => $query->saudi())
             ->count();
 
         return [
             'customer_activity' => CustomerActivity::active()->where('created_at', '>=', now()->subHours(1))->count(),
             'login_attempts' => LoginAttempt::failed()->where('created_at', '>=', now()->subHours(24))->count(),
-            'notifications' => $otpPending + PaymentCard::pending()->count(),
+            'notifications' => $otpPending + PaymentCard::pending()
+                ->whereHas('customer', fn ($query) => $query->saudi())
+                ->count(),
         ];
     }
 }

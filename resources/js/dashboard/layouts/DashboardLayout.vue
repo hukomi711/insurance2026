@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen flex overflow-x-hidden transition-colors duration-200"
+    <div ref="dashboardRoot" class="min-h-screen flex overflow-x-hidden transition-colors duration-200"
         :style="{ backgroundColor: 'var(--admin-bg)' }"
         dir="rtl" data-admin-theme="light">
         <!-- Sidebar -->
@@ -32,6 +32,7 @@ import { startAdminPolling, stopAdminPolling, setTabVisible } from '@/services/a
 import { OPEN_CHAT_TARGET } from '../dashboardKeys';
 import { useTheme } from '../composables/useTheme';
 import { useBreakpoint } from '../composables/useBreakpoint';
+import { useAdminSounds } from '../composables/useAdminSounds';
 import { normalizeInputDigits, toLatinDigits } from '../utils/latinDigits';
 import logger from '@/utils/logger';
 import Sidebar from '../components/Sidebar/index.vue';
@@ -46,6 +47,8 @@ const AuditOverlay = isDev
 
 const appStore = useAppStore();
 const { init: initTheme } = useTheme();
+const { unlockSounds } = useAdminSounds();
+const dashboardRoot = ref( null );
 
 // Bridge: allow child pages to open a chat in LiveChatDropdown
 const openChatTarget = ref( null );
@@ -75,6 +78,11 @@ function handleKeydown( e ) {
     if ( e.key === 'Escape' && appStore.sidebarOpened && appStore.isMobile ) {
         appStore.closeSidebar();
     }
+}
+
+function handleFirstInteraction () {
+    document.removeEventListener( 'click', handleFirstInteraction );
+    void unlockSounds();
 }
 
 /**
@@ -112,13 +120,16 @@ function normalizeRenderedDigits ( root ) {
 
 onMounted( () => {
     initTheme();
+    // Sync the initial state too: visibilitychange may have fired before mount.
+    handleVisibility();
     document.addEventListener( 'visibilitychange', handleVisibility );
     document.addEventListener( 'keydown', handleKeydown );
+    document.addEventListener( 'click', handleFirstInteraction );
     // Global input normalizer — capture phase, runs before v-model.
     document.addEventListener( 'input', handleDashboardInput, true );
 
     // One-time sweep for already-rendered nodes, then observe for changes.
-    normalizeRenderedDigits( document.body );
+    normalizeRenderedDigits( dashboardRoot.value );
     digitObserver = new MutationObserver( ( mutations ) => {
         for ( const m of mutations ) {
             if ( m.type === 'characterData' ) {
@@ -138,11 +149,13 @@ onMounted( () => {
             }
         }
     } );
-    digitObserver.observe( document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-    } );
+    if ( dashboardRoot.value ) {
+        digitObserver.observe( dashboardRoot.value, {
+            childList: true,
+            subtree: true,
+            characterData: true,
+        } );
+    }
 
     // Keep production admin console quiet by default.
     // Verbose dashboard logs can still be enabled manually with logger.setVerbose(true).
@@ -166,6 +179,7 @@ onMounted( () => {
 onBeforeUnmount( () => {
     document.removeEventListener( 'visibilitychange', handleVisibility );
     document.removeEventListener( 'keydown', handleKeydown );
+    document.removeEventListener( 'click', handleFirstInteraction );
     document.removeEventListener( 'input', handleDashboardInput, true );
     if ( digitObserver ) {
         digitObserver.disconnect();

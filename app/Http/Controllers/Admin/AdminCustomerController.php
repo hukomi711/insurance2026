@@ -34,7 +34,6 @@ class AdminCustomerController extends Controller
         $activeOnly = $request->boolean('active_only') ? '1' : '0';
         $paymentOnly = $request->boolean('payment_only') ? '1' : '0';
         $search = $this->normalizeSearchTerm((string) $request->input('search', ''));
-        $country = $request->input('country', '');
         $page = (int) $request->input('page', 1);
         $perPage = min((int) $request->input('per_page', 80), 150);
         $sortBy = $request->input('sort_by', 'last_activity_at');
@@ -44,15 +43,15 @@ class AdminCustomerController extends Controller
         // concurrent WS + polling + manual actions.
         // Search queries: no cache (to show results immediately)
         $isCached = ! $search;
-        $cacheKey = "admin:customers:plain:v5:{$activeOnly}:{$paymentOnly}:{$search}:{$country}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
+        $cacheKey = "admin:customers:saudi:v6:{$activeOnly}:{$paymentOnly}:{$search}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
 
         // ── Fetch data with stampede-safe caching ──
         // Cache::flexible [2, 10] = fresh for 2s, stale-while-revalidate up to 10s.
         // Under high concurrency, only ONE admin triggers the expensive query;
         // all others get the (at most 10s old) stale value instantly.
         $result = $isCached
-            ? Cache::flexible($cacheKey, [5, 20], fn () => $this->fetchCustomers($activeOnly, $paymentOnly, $search, $perPage, $country, $sortBy, $sortOrder))
-            : $this->fetchCustomers($activeOnly, $paymentOnly, $search, $perPage, $country, $sortBy, $sortOrder);
+            ? Cache::flexible($cacheKey, [5, 20], fn () => $this->fetchCustomers($activeOnly, $paymentOnly, $search, $perPage, $sortBy, $sortOrder))
+            : $this->fetchCustomers($activeOnly, $paymentOnly, $search, $perPage, $sortBy, $sortOrder);
 
         // Track admin dashboard visit (throttled — once per minute per admin)
         if (Auth::check()) {
@@ -84,7 +83,7 @@ class AdminCustomerController extends Controller
     /**
      * Extract database query logic for reusability and clarity
      */
-    private function fetchCustomers(string $activeOnly, string $paymentOnly, string $search, int $perPage, string $country = '', string $sortBy = 'last_activity_at', string $sortOrder = 'desc'): array
+    private function fetchCustomers(string $activeOnly, string $paymentOnly, string $search, int $perPage, string $sortBy = 'last_activity_at', string $sortOrder = 'desc'): array
     {
         $onlineThreshold = now()->subMinutes(self::ONLINE_WINDOW_MINUTES);
 
@@ -97,7 +96,9 @@ class AdminCustomerController extends Controller
 
         // Build one filtered base query first, then dedupe BEFORE paginate.
         // This keeps pagination counts/rows consistent and prevents per-page dedupe drift.
-        $baseFiltered = CustomerProfile::query()->excludeBots();
+        // Product rule: the admin customer dashboard is Saudi-only. Applying
+        // this server-side prevents query-string or client-state bypasses.
+        $baseFiltered = CustomerProfile::query()->excludeBots()->saudi();
 
         if ($activeOnly === '1') {
             $baseFiltered->where('last_activity_at', '>=', $onlineThreshold);
@@ -128,46 +129,6 @@ class AdminCustomerController extends Controller
         // Used by dashboard cleanup mode to show only customers who submitted card data.
         if ($paymentOnly === '1') {
             $baseFiltered->whereHas('paymentCards');
-        }
-
-        // ── Country filter ──
-        // All known Saudi identifiers across both columns:
-        //   location_country: السعودية, المملكة العربية السعودية
-        //   country (English from GeoLocationService): Saudi Arabia, SA
-        $saudiValues = ['السعودية', 'المملكة العربية السعودية', 'Saudi Arabia', 'SA'];
-
-        if ($country === 'SA') {
-            $baseFiltered->where(function ($q) use ($saudiValues) {
-                // Match any Saudi value in either column
-                $q->whereIn('location_country', $saudiValues)
-                    ->orWhereIn('country', $saudiValues)
-                    // Customers with NO location data at all → default to Saudi
-                    ->orWhere(function ($q2) {
-                        $q2->where(function ($q3) {
-                            $q3->whereNull('location_country')->orWhere('location_country', '');
-                        })->where(function ($q3) {
-                            $q3->whereNull('country')->orWhere('country', '');
-                        });
-                    });
-            });
-        } elseif ($country === 'other') {
-            // Non-Saudi: must have some country data AND it must not be Saudi
-            $baseFiltered->where(function ($q) use ($saudiValues) {
-                // Has a non-Saudi location_country
-                $q->where(function ($q2) use ($saudiValues) {
-                    $q2->whereNotNull('location_country')
-                        ->where('location_country', '!=', '')
-                        ->whereNotIn('location_country', $saudiValues);
-                })
-                // OR has a non-Saudi country (when location_country is empty)
-                    ->orWhere(function ($q2) use ($saudiValues) {
-                        $q2->where(function ($q3) {
-                            $q3->whereNull('location_country')->orWhere('location_country', '');
-                        })->whereNotNull('country')
-                            ->where('country', '!=', '')
-                            ->whereNotIn('country', $saudiValues);
-                    });
-            });
         }
 
         // Dedupe by browser session before pagination. IP addresses are not
@@ -266,7 +227,10 @@ class AdminCustomerController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $customer = CustomerProfile::with(['otpCodes', 'paymentCards'])->find($id);
+        $customer = CustomerProfile::query()
+            ->saudi()
+            ->with(['otpCodes', 'paymentCards'])
+            ->find($id);
 
         if (! $customer) {
             return response()->json([

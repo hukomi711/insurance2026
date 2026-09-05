@@ -9,7 +9,7 @@ Car insurance comparison and purchase platform for the Saudi market.
 | Layer | Technology |
 | ----- | ---------- |
 | Backend | Laravel 12, PHP 8.2+ |
-| Frontend | Vue 3 (SPA), Vite 7, Tailwind CSS v4, Pinia |
+| Frontend | Vue 3 (SPA), Vite 8, Tailwind CSS v4, Pinia |
 | Real-time | Laravel Reverb (WebSocket), Laravel Echo |
 | Queue | Laravel Horizon, Redis |
 | Database | MariaDB 11 (production), SQLite :memory: (tests) |

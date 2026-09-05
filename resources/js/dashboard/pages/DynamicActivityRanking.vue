@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="text-2xl font-bold font-heading" :style="{ color: 'var(--admin-text)' }">
           <i class="fa-solid fa-ranking-star ml-2" :style="{ color: 'var(--admin-accent-blue)' }" aria-hidden="true"></i>
@@ -12,7 +12,7 @@
         </p>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-2 sm:gap-3">
         <!-- Error filter toggle -->
         <button
           class="rounded-xl px-4 py-2 text-sm font-semibold transition-all flex items-center gap-2"
@@ -20,6 +20,7 @@
             ? 'bg-red-500/20 text-red-400 ring-1 ring-red-500/30'
             : ''"
           :style="!errorsOnly ? { backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-secondary)' } : {}"
+          :aria-pressed="errorsOnly"
           @click="errorsOnly = !errorsOnly"
         >
           <i class="fa-solid fa-filter text-xs" aria-hidden="true"></i>
@@ -37,6 +38,9 @@
             : ''"
           :style="!audioEnabled ? { backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' } : {}"
           :title="audioEnabled ? 'إيقاف التنبيه الصوتي' : 'تفعيل التنبيه الصوتي'"
+          :aria-label="audioEnabled ? 'إيقاف التنبيه الصوتي' : 'تفعيل التنبيه الصوتي'"
+          :aria-pressed="audioEnabled"
+          data-admin-sound-toggle
           @click="toggleAudio"
         >
           <i :class="audioEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark'" aria-hidden="true"></i>
@@ -47,6 +51,7 @@
           class="rounded-xl px-3 py-2 text-sm transition-colors"
           :style="{ backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' }"
           :disabled="loading"
+          aria-label="تحديث النشاطات"
           @click="manualRefresh"
         >
           <i class="fa-solid fa-arrows-rotate text-xs" :class="{ 'fa-spin': loading }" aria-hidden="true"></i>
@@ -55,7 +60,7 @@
         <!-- WS Status -->
         <span :class="wsConnected ? 'bg-green-500/15 text-green-400' : ''"
           :style="wsConnected ? {} : { backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' }"
-          class="text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5">
+          class="text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5" role="status">
           <span class="w-2 h-2 rounded-full" :class="wsConnected ? 'bg-green-500 animate-pulse' : ''"
             :style="wsConnected ? {} : { backgroundColor: 'var(--admin-text-dim)' }"></span>
           {{ wsConnected ? 'فوري' : 'استطلاع' }}
@@ -184,7 +189,7 @@ import { fetchCustomerActivities } from '@/api/customerActivities';
 import { formatNumber } from '@/utils/formatters';
 import { registerPollingCallback, unregisterPollingCallback } from '@/services/adminPolling';
 import { getEcho } from '@/services/echo';
-import { enableSounds, playPayment } from '@/dashboard/composables/useAdminSounds';
+import { useAdminSounds } from '@/dashboard/composables/useAdminSounds';
 import logger from '@/utils/logger';
 
 defineOptions( { name: 'DynamicActivityRanking' } );
@@ -196,7 +201,7 @@ const loading = ref( false );
 const errorsOnly = ref( false );
 const wsConnected = ref( false );
 const pulsingId = ref( null );
-const audioEnabled = ref( localStorage.getItem( 'ranking-audio-enabled' ) !== 'false' );
+const { soundsReady: audioEnabled, toggleSounds, playPayment } = useAdminSounds();
 
 // ── Throttle ──
 const NOTIFICATION_THROTTLE = 2500;
@@ -254,10 +259,9 @@ const statCards = computed( () => [
 ] );
 
 // ── Audio ──
-function toggleAudio () {
-    audioEnabled.value = !audioEnabled.value;
-    localStorage.setItem( 'ranking-audio-enabled', audioEnabled.value );
-    if ( audioEnabled.value ) enableSounds();
+async function toggleAudio () {
+    const enabled = await toggleSounds();
+    if ( enabled ) await playPayment();
 }
 
 function playErrorAlert () {
@@ -265,8 +269,7 @@ function playErrorAlert () {
     const now = Date.now();
     if ( now - lastNotificationTime < NOTIFICATION_THROTTLE ) return;
     lastNotificationTime = now;
-    enableSounds();
-    playPayment();
+    void playPayment();
     if ( navigator.vibrate ) navigator.vibrate( [ 100, 50, 100 ] );
 }
 
@@ -495,7 +498,6 @@ onMounted( () => {
     loadActivities();
     connectWebSocket();
     registerPollingCallback( 'activityRanking', loadActivities );
-    if ( audioEnabled.value ) enableSounds();
 } );
 
 onUnmounted( () => {

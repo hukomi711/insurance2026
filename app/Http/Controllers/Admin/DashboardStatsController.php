@@ -22,9 +22,9 @@ class DashboardStatsController extends Controller
      */
     public function stats(): JsonResponse
     {
-        $data = Cache::flexible('admin:dashboard:stats', [30, 90], function () {
+        $data = Cache::flexible('admin:dashboard:stats:saudi:v2', [30, 90], function () {
             // Single query for customers: total + new this month
-            $customerAgg = CustomerProfile::selectRaw("
+            $customerAgg = CustomerProfile::saudi()->selectRaw("
                 COUNT(*) as total,
                 SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as new_this_month
             ", [now()->startOfMonth()])->first();
@@ -95,6 +95,7 @@ class DashboardStatsController extends Controller
     public static function flushCache(): void
     {
         Cache::forget('admin:dashboard:stats');
+        Cache::forget('admin:dashboard:stats:saudi:v2');
         Cache::forget('admin:dashboard:monthly_sales');
     }
 }

@@ -30,11 +30,27 @@
             <!-- Theme Toggle (desktop — mobile/tablet moved into More menu) -->
             <ThemeToggle class="hidden lg:inline-flex" />
 
+            <button
+                type="button"
+                class="admin-touch inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors"
+                :class="soundsReady ? 'bg-emerald-500/15 text-emerald-600' : ''"
+                :style="soundsReady ? {} : { color: 'var(--admin-text-muted)' }"
+                :aria-label="soundsReady ? 'إيقاف التنبيهات الصوتية' : 'تفعيل التنبيهات الصوتية'"
+                :aria-pressed="soundsReady"
+                :title="soundsReady ? 'التنبيهات الصوتية مفعّلة' : 'تفعيل التنبيهات الصوتية'"
+                data-admin-sound-toggle
+                @click="handleSoundToggle"
+            >
+                <i class="fa-solid" :class="soundsReady ? 'fa-volume-high' : 'fa-volume-xmark'" aria-hidden="true"></i>
+            </button>
+
             <!-- Notifications -->
             <div ref="notifRef" class="relative">
                 <button class="admin-touch relative inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors"
                     aria-label="الإشعارات"
                     :aria-expanded="showDropdown"
+                    aria-haspopup="dialog"
+                    aria-controls="admin-notifications-panel"
                     :style="{ color: 'var(--admin-text-muted)' }"
                     @click="toggleDropdown">
                     <i class="fa-solid fa-bell w-5 h-5" aria-hidden="true"></i>
@@ -54,9 +70,9 @@
                     leave-from-class="opacity-100 translate-y-0"
                     leave-to-class="opacity-0 translate-y-1"
                 >
-                    <div v-if="showDropdown"
+                    <div v-if="showDropdown" id="admin-notifications-panel"
                         class="absolute left-0 top-full mt-2 w-[min(92vw,360px)] max-h-120 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 flex flex-col"
-                        dir="rtl">
+                        dir="rtl" role="dialog" aria-label="مركز الإشعارات">
                         <!-- Header -->
                         <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
                             <h3 class="text-sm font-bold text-gray-800">الإشعارات</h3>
@@ -154,8 +170,10 @@
                 <button class="admin-touch inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors"
                     aria-label="المزيد"
                     :aria-expanded="showMore"
+                    aria-haspopup="dialog"
+                    aria-controls="admin-more-menu"
                     :style="{ color: 'var(--admin-text-muted)' }"
-                    @click="showMore = !showMore">
+                    @click="toggleMoreMenu">
                     <i class="fa-solid fa-ellipsis-vertical w-5 h-5" aria-hidden="true"></i>
                 </button>
                 <Transition
@@ -166,7 +184,7 @@
                     leave-from-class="opacity-100 translate-y-0"
                     leave-to-class="opacity-0 translate-y-1"
                 >
-                    <div v-if="showMore"
+                    <div v-if="showMore" id="admin-more-menu" role="dialog" aria-label="المزيد من خيارات لوحة التحكم"
                         class="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl p-2 shadow-xl"
                         :style="{
                             backgroundColor: 'var(--admin-card-bg)',
@@ -298,6 +316,7 @@ import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, nextTick }
 import { useRouter } from 'vue-router';
 import { useNotificationsStore } from '@/store/modules/notifications';
 import { useUserStore } from '@/store/modules/user';
+import { useAdminSounds } from '@/dashboard/composables/useAdminSounds';
 import Hamburger from './Hamburger.vue';
 import Breadcrumb from './Breadcrumb.vue';
 import UserDropdown from './UserDropdown.vue';
@@ -308,6 +327,7 @@ const router = useRouter();
 const route = router.currentRoute;
 const notificationsStore = useNotificationsStore();
 const userStore = useUserStore();
+const { soundsReady, toggleSounds, playNewData } = useAdminSounds();
 const showDropdown = ref(false);
 const notifRef = ref(null);
 
@@ -366,6 +386,7 @@ function navigateToResultMobile(page) {
 function openMobileSearch() {
     mobileSearchOpen.value = true;
     showMore.value = false;
+    showDropdown.value = false;
     nextTick(() => {
         mobileSearchInput.value?.focus();
     });
@@ -373,6 +394,16 @@ function openMobileSearch() {
 
 function closeMoreMenu() {
     showMore.value = false;
+}
+
+function toggleMoreMenu() {
+    showMore.value = !showMore.value;
+    if ( showMore.value ) showDropdown.value = false;
+}
+
+async function handleSoundToggle() {
+    const enabled = await toggleSounds();
+    if ( enabled ) await playNewData();
 }
 
 function openSettings() {
@@ -407,6 +438,7 @@ function onSearchClickOutside(e) {
 function toggleDropdown() {
     showDropdown.value = !showDropdown.value;
     if (showDropdown.value) {
+        showMore.value = false;
         notificationsStore.fetchNotifications();
     }
 }

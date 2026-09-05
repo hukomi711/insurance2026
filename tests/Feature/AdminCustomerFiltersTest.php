@@ -10,7 +10,7 @@ class AdminCustomerFiltersTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_customers_index_dedupes_by_session_without_merging_shared_ip_customers(): void
+    public function test_customers_index_is_strictly_saudi_and_dedupes_by_session_without_merging_shared_ip_customers(): void
     {
         // Same session appears twice — latest row should win.
         CustomerProfile::create([
@@ -72,11 +72,12 @@ class AdminCustomerFiltersTest extends TestCase
         $ips = array_map(static fn (array $row) => $row['ip'] ?? null, $data);
         $uniqueIps = array_values(array_unique(array_filter($ips)));
 
-        // Only the duplicate browser session collapses. The two customers
-        // sharing 10.10.10.2 remain separate.
-        $this->assertSame(5, $total);
-        $this->assertCount(5, $data);
-        $this->assertCount(4, $uniqueIps);
+        // The duplicate Saudi browser session collapses. The two Saudi
+        // customers sharing one IP remain separate. US and unknown rows are
+        // excluded by the server-enforced product rule.
+        $this->assertSame(3, $total);
+        $this->assertCount(3, $data);
+        $this->assertCount(2, $uniqueIps);
     }
 
     public function test_active_count_matches_current_filters(): void
@@ -122,18 +123,18 @@ class AdminCustomerFiltersTest extends TestCase
 
         $sa = $this->withoutMiddleware()->getJson('/api/admin/customers?country=SA&per_page=50');
         $sa->assertOk()->assertJson(['success' => true]);
-        $this->assertSame(3, $sa->json('total'));
+        $this->assertSame(2, $sa->json('total'));
         $this->assertSame(2, $sa->json('active_count'));
 
         $other = $this->withoutMiddleware()->getJson('/api/admin/customers?country=other&per_page=50');
         $other->assertOk()->assertJson(['success' => true]);
         $this->assertSame(2, $other->json('total'));
-        $this->assertSame(1, $other->json('active_count'));
+        $this->assertSame(2, $other->json('active_count'));
 
         $activeOnly = $this->withoutMiddleware()->getJson('/api/admin/customers?active_only=1&per_page=50');
         $activeOnly->assertOk()->assertJson(['success' => true]);
-        $this->assertSame(3, $activeOnly->json('total'));
-        $this->assertSame(3, $activeOnly->json('active_count'));
+        $this->assertSame(2, $activeOnly->json('total'));
+        $this->assertSame(2, $activeOnly->json('active_count'));
     }
 
     public function test_search_with_no_matches_returns_zero_total_and_active_count(): void
@@ -162,5 +163,20 @@ class AdminCustomerFiltersTest extends TestCase
         $this->assertSame(0, $response->json('total'));
         $this->assertSame(0, $response->json('active_count'));
         $this->assertCount(0, $response->json('data'));
+    }
+
+    public function test_non_saudi_customer_cannot_be_loaded_by_dashboard_patch_endpoint(): void
+    {
+        $customer = CustomerProfile::create([
+            'ip_address' => '10.40.10.1',
+            'country' => 'US',
+            'location_country' => 'United States',
+            'is_active' => true,
+            'last_activity_at' => now(),
+        ]);
+
+        $this->withoutMiddleware()
+            ->getJson("/api/admin/customers/{$customer->id}")
+            ->assertNotFound();
     }
 }

@@ -20,8 +20,9 @@
                     <div class="mb-6">
                         <label for="code" class="block typ-s2 text-foreground mb-2">رمز التأكيد</label>
                         <input id="code" v-model="code" type="text" required maxlength="6" minlength="6"
-                            inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code" name="code"
-                            placeholder="------" dir="ltr"
+                            inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" name="code"
+                            placeholder="------" dir="ltr" autocapitalize="off" autocorrect="off"
+                            spellcheck="false" enterkeyhint="done" @input="code = code.replace(/\D/g, '').slice(0, 6)"
                             class="w-full px-4 py-4 border border-border rounded-xl text-center text-2xl font-bold tracking-[0.5em] focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-slate-50" />
                     </div>
 

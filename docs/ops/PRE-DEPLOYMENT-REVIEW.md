@@ -10,7 +10,7 @@ All scripts and templates have been reviewed and verified. **No deployment has b
 | ------- | -------- | ----------------- |
 | **Exposed Secrets** | ✅ 0 found (only CHANGE_ME) | 4/4 clean |
 | **Dangerous Commands** | ✅ 0 found | deploy.sh verified |
-| **SSH Key Setup** | ✅ Corrected (ssh-copy-id) | DEPLOYMENT-GUIDE.md updated |
+| **SSH Key Setup** | ✅ Corrected (ssh-copy-id) | `docs/deployment/DEPLOYMENT.md` updated |
 | **Config cache policy** | ✅ Built after runtime secrets are injected | deploy scripts + entrypoint |
 | **Docker Permissions** | ✅ Safe (appuser:appuser) | No chmod -R 777 |
 
@@ -29,7 +29,7 @@ All scripts and templates have been reviewed and verified. **No deployment has b
 - All domains = **DOMAIN** placeholder
 - Ready to commit to git
 
-✅ **DEPLOYMENT-GUIDE.md**
+✅ **docs/deployment/DEPLOYMENT.md**
 
 - Step 1-5: Complete SSH setup flow
 - Correct ssh-copy-id method with password auth

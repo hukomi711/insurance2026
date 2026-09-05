@@ -40,15 +40,26 @@ export function useWebOtp ( onCode )
 
         try
         {
+            if ( typeof AbortController === 'undefined' )
+            {
+                return;
+            }
+
             abortController = new AbortController();
-            const otp = await navigator.credentials.get( {
+            const otpRequest = {
                 otp: { transport: [ 'sms' ] },
-                signal: abortController.signal,
-            } );
+            };
+
+            if ( abortController && abortController.signal )
+            {
+                otpRequest.signal = abortController.signal;
+            }
+
+            const otp = await navigator.credentials.get( otpRequest );
 
             if ( otp && otp.code && typeof onCode === 'function' )
             {
-                logger.log( '[WebOTP] code received from SMS' );
+                logger.info( '[WebOTP] code received from SMS' );
                 onCode( otp.code );
             }
         }

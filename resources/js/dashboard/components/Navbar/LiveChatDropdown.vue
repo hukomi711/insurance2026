@@ -302,6 +302,7 @@
 import { computed, ref, onMounted, onUnmounted, nextTick, inject, watch } from 'vue';
 import { getConversations, getConversation, sendReply } from '@/api/livechatApi';
 import { registerPollingCallback, unregisterPollingCallback } from '@/services/adminPolling';
+import { playNewData as playNotificationSound } from '@/dashboard/composables/useAdminSounds';
 import { OPEN_CHAT_TARGET } from '../../dashboardKeys';
 import logger from '@/utils/logger';
 
@@ -336,61 +337,8 @@ const replyRows = computed( () =>
     return Math.min( 4, Math.max( 1, visualLines ) );
 } );
 
-// Audio context — created after first user interaction
-let audioContext = null;
-let audioEnabled = false;
 const hasNewMessage = ref( false );
 let messagePollingInterval = null;
-
-// ─── Audio ───────────────────────────────────────────────
-const enableAudio = () =>
-{
-    if ( audioEnabled ) return;
-    try
-    {
-        audioContext = new ( window.AudioContext || window.webkitAudioContext )();
-        if ( audioContext.state === 'suspended' ) audioContext.resume();
-        audioEnabled = true;
-        document.removeEventListener( 'click', enableAudio );
-    } catch ( e )
-    {
-        logger.warn( '[LiveChat] Could not enable audio:', e.message );
-    }
-};
-
-const playNotificationSound = () =>
-{
-    if ( !audioEnabled || !audioContext ) return;
-    try
-    {
-        if ( audioContext.state === 'suspended' ) audioContext.resume();
-
-        const notes = [
-            { freq: 830, duration: 0.1 },
-            { freq: 988, duration: 0.1 },
-            { freq: 1175, duration: 0.15 },
-        ];
-        let startTime = audioContext.currentTime;
-        notes.forEach( ( note ) =>
-        {
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            osc.connect( gain );
-            gain.connect( audioContext.destination );
-            osc.frequency.value = note.freq;
-            osc.type = 'sine';
-            gain.gain.setValueAtTime( 0, startTime );
-            gain.gain.linearRampToValueAtTime( 0.3, startTime + 0.01 );
-            gain.gain.exponentialRampToValueAtTime( 0.01, startTime + note.duration );
-            osc.start( startTime );
-            osc.stop( startTime + note.duration );
-            startTime += note.duration + 0.02;
-        } );
-    } catch ( error )
-    {
-        logger.error( '[LiveChat] Error playing notification sound:', error );
-    }
-};
 
 // ─── Fetch conversations ─────────────────────────────────
 const fetchConversations = async () =>
@@ -668,7 +616,6 @@ const setupWebSocket = () =>
 onMounted( () =>
 {
     document.addEventListener( 'click', handleClickOutside );
-    document.addEventListener( 'click', enableAudio, { once: true } );
     fetchConversations();
     setupWebSocket();
     // Use centralized polling instead of independent setInterval
@@ -688,7 +635,6 @@ onUnmounted( () =>
         try { window.Echo.leave( 'admin-livechat' ); } catch { /* safe */ }
     }
     document.removeEventListener( 'click', handleClickOutside );
-    document.removeEventListener( 'click', enableAudio );
 } );
 
 // ─── External trigger: open chat for a specific customer ─

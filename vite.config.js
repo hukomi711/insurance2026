@@ -41,28 +41,12 @@ export default defineConfig( {
         __INTLIFY_PROD_DEVTOOLS__: false,
     },
     build: {
-        // ── Manual chunk splitting ──────────────────────────────
-        // Breaks the monolithic vendor bundle into smaller, cacheable pieces.
-        // Reduces main‑thread blocking and enables parallel HTTP/2 downloads.
+        // Let Vite/Rolldown follow the dynamic-import graph. The previous
+        // package-level manual chunks co-loaded route-only Radix/DOMPurify
+        // modules with Vue/Axios in the startup dependency closure.
         rollupOptions: {
             checks: {
                 pluginTimings: false,
-            },
-            output: {
-                manualChunks( id ) {
-                    if ( id.includes( 'node_modules/vue/' ) || id.includes( 'node_modules/@vue/' ) || id.includes( 'node_modules/ة vue-router/' ) || id.includes( 'node_modules/pinia/' ) || id.includes( 'node_modules/vue-i18n/' ) || id.includes( 'node_modules/@intlify/' ) ) {
-                        return 'vendor-vue';
-                    }
-                    if ( id.includes( 'node_modules/pusher-js/' ) || id.includes( 'node_modules/laravel-echo/' ) ) {
-                        return 'vendor-echo';
-                    }
-                    if ( id.includes( 'node_modules/radix-vue/' ) || id.includes( 'node_modules/@floating-ui/' ) || id.includes( 'node_modules/@internationalized/' ) || id.includes( 'node_modules/@swc/' ) ) {
-                        return 'vendor-ui';
-                    }
-                    if ( id.includes( 'node_modules/axios/' ) || id.includes( 'node_modules/dompurify/' ) || id.includes( 'node_modules/vue-toastification/' ) ) {
-                        return 'vendor-utils';
-                    }
-                },
             },
         },
     },
