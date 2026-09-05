@@ -76,6 +76,12 @@ const dashboardRoutes = {
             component: lazyWithReload( () => import( '../pages/SettingsPage.vue' ) ),
             meta: { title: 'الإعدادات', icon: 'settings' },
         },
+        {
+            path: 'system-controls',
+            name: 'dashboard-system-controls',
+            component: lazyWithReload( () => import( '../pages/SystemControlsPage.vue' ) ),
+            meta: { title: 'ضوابط النظام', icon: 'settings' },
+        },
     ],
 };
 

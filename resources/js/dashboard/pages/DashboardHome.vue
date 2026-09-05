@@ -2,12 +2,28 @@
     <div>
         <!-- Connected Customers Section -->
         <section class="mb-8" dir="rtl" aria-labelledby="connected-customers-title">
+            <nav class="mb-4 flex items-end gap-6 overflow-x-auto border-b border-gray-200 bg-white px-4" aria-label="قوائم العملاء">
+                <button
+                    v-for="view in dashboardViews"
+                    :key="view.key"
+                    type="button"
+                    class="relative min-h-12 shrink-0 px-2 text-sm font-semibold transition-colors"
+                    :class="activeDashboardView === view.key ? 'text-blue-600' : 'text-gray-500 hover:text-gray-800'"
+                    :aria-current="activeDashboardView === view.key ? 'page' : undefined"
+                    @click="selectDashboardView(view.key)"
+                >
+                    {{ view.label }} ({{ view.count }})
+                    <span v-if="activeDashboardView === view.key" class="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-blue-600"></span>
+                </button>
+            </nav>
+
             <!-- ─── Unified Header (title + status + actions + filters + search) ─── -->
             <DashboardHeader
                 ref="headerRef"
                 :auto-refresh="autoRefreshEnabled"
                 :loading="refreshLoading"
                 :active-count="activeCustomersCount"
+                :title="activeDashboardView === 'cards' ? 'المستخدمون مع البطاقات' : activeDashboardView === 'archive' ? 'الأرشيف' : 'جميع الزوار'"
                 :sounds-enabled="soundsEnabled"
                 :search-query="searchQuery"
                 @toggle-auto-refresh="toggleAutoRefresh"
@@ -37,9 +53,9 @@
             </div>
 
             <!-- State 3: Customer data loaded -->
-            <div v-else-if="customers.length > 0">
+            <div v-else-if="displayedCustomers.length > 0">
                 <CustomerDataTable
-                    :customers="customers"
+                    :customers="displayedCustomers"
                     :processing-action="processingAction"
                     :focused-customer-id="focusedCustomerId"
                     :current-page="currentPage"
@@ -109,7 +125,7 @@
             <div v-else class="rounded-2xl p-12 text-center" :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
                 <i class="fa-solid fa-users text-3xl mb-3" style="color: var(--admin-text-dim);" aria-hidden="true"></i>
                 <p class="text-sm" style="color: var(--admin-text-dim);">
-                    {{ hasActiveFilters ? 'لا توجد نتائج مطابقة للفلاتر الحالية' : 'لا يوجد عملاء دخلوا الموقع حتى الآن' }}
+                    {{ emptyViewMessage }}
                 </p>
                 <button
                     v-if="hasActiveFilters"
@@ -1130,6 +1146,39 @@ function handleWindowRead ( event ) {
 // (eliminates Vue reactivity overhead for cards, OTPs, PINs arrays within each customer).
 // All mutations create a new array reference (customers.value = [...]) for clean Vue diffing.
 const customers = shallowRef( [] );
+const activeDashboardView = ref( 'visitors' );
+const visitorsTotal = ref( 0 );
+const cardsTotal = ref( 0 );
+const displayedCustomers = computed( () => {
+    if ( activeDashboardView.value === 'archive' ) return [];
+    return customers.value;
+} );
+const dashboardViews = computed( () => [
+    { key: 'visitors', label: 'الزوار', count: visitorsTotal.value },
+    { key: 'cards', label: 'البطاقات', count: cardsTotal.value },
+    { key: 'archive', label: 'الأرشيف', count: 0 },
+] );
+const emptyViewMessage = computed( () => {
+    if ( hasActiveFilters.value ) return 'لا توجد نتائج مطابقة للفلاتر الحالية';
+    if ( activeDashboardView.value === 'cards' ) return 'لا يوجد مستخدمون لديهم بيانات دفع مقنّعة حتى الآن';
+    if ( activeDashboardView.value === 'archive' ) return 'لا توجد عناصر في الأرشيف';
+    return 'لا يوجد عملاء دخلوا الموقع حتى الآن';
+} );
+
+function selectDashboardView ( view ) {
+    if ( ![ 'visitors', 'cards', 'archive' ].includes( view ) ) return;
+    activeDashboardView.value = view;
+    currentPage.value = 1;
+    _lastDataHash = '';
+    router.replace( { query: { ...route.query, view } } ).catch( () => {} );
+    if ( view !== 'archive' ) refreshCustomers();
+}
+
+watch( () => route.query.view, view => {
+    if ( typeof view === 'string' && [ 'visitors', 'cards', 'archive' ].includes( view ) ) {
+        activeDashboardView.value = view;
+    }
+}, { immediate: true } );
 
 /**
  * Remove duplicate customers from list — prefer stable row id.
@@ -1465,13 +1514,16 @@ const refreshCustomers = async () => {
         if ( searchQuery.value.trim() ) {
             params.search = searchQuery.value.trim();
         }
+        if ( activeDashboardView.value === 'cards' ) {
+            params.payment_only = true;
+        }
         const { data } = await getCustomers( params, { signal: controller.signal, silent: true, timeout: CUSTOMER_REFRESH_TIMEOUT_MS } );
         if ( controller.signal.aborted ) {
             return true;
         }
         const rows = ( data.data || [] ).filter( shouldDisplayCustomer );
         // ── Smart refresh: skip re-render when data hasn't changed ──
-        const fingerprint = `${ data.total }:${ data.active_count }:` +
+        const fingerprint = `${ activeDashboardView.value }:${ data.total }:${ data.active_count }:` +
             rows.map( r => `${ r.id }|${ r.updated_at }|${ r.last_activity_at }|${ r.is_online ? 1 : 0 }|${ r.is_blocked ? 1 : 0 }|${ r.is_active ? 1 : 0 }|${ r.current_page }|${ r.has_new_vehicle ? 1 : 0 }|${ r.has_new_insurance ? 1 : 0 }|${ r.has_new_payment ? 1 : 0 }` ).join( ';' );
         if ( fingerprint === _lastDataHash && !initialLoading.value ) {
             logger.debug( `[Dashboard] refreshCustomers — no changes, skip render (${ rows.length } rows)` );
@@ -1487,6 +1539,8 @@ const refreshCustomers = async () => {
         currentPage.value = data.current_page ?? 1;
         lastPage.value = data.last_page ?? 1;
         totalCustomers.value = data.total ?? customers.value.length;
+        if ( activeDashboardView.value === 'cards' ) cardsTotal.value = totalCustomers.value;
+        if ( activeDashboardView.value === 'visitors' ) visitorsTotal.value = totalCustomers.value;
         perPage.value = data.per_page ?? 50;
         activeCustomersCount.value = data.active_count ?? 0;
         // ✅ Clear error/loading states on success

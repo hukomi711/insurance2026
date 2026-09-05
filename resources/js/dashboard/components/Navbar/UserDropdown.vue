@@ -12,12 +12,12 @@
             @keydown.down.prevent="openAndFocus('first')"
             @keydown.up.prevent="openAndFocus('last')"
         >
-            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-dark)] text-sm font-bold text-white">
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-dark text-sm font-bold text-white">
                 {{ userStore.initials }}
             </div>
 
             <div class="hidden min-w-0 lg:block">
-                <p class="max-w-[14rem] truncate text-sm font-medium leading-none text-gray-700">{{ userStore.name }}</p>
+                <p class="max-w-56 truncate text-sm font-medium leading-none text-gray-700">{{ userStore.name }}</p>
             </div>
 
             <i class="hidden text-xs text-gray-400 lg:block fa-solid fa-chevron-down" aria-hidden="true"></i>
@@ -37,65 +37,73 @@
                 ref="menuRef"
                 role="menu"
                 aria-label="إعدادات الحساب وإدارة النظام"
-                class="absolute right-0 top-full z-50 mt-2 max-h-[min(78vh,44rem)] w-80 overflow-y-auto rounded-2xl border border-gray-200 bg-white p-2 text-right shadow-xl"
+                class="fixed inset-x-3 top-18 z-50 max-h-[calc(100dvh-5.5rem)] overflow-y-auto rounded-xl border border-gray-200 bg-white p-2 text-right shadow-xl sm:absolute sm:inset-x-auto sm:left-0 sm:right-auto sm:top-full sm:mt-2 sm:max-h-[min(82vh,48rem)] sm:w-88"
                 dir="rtl"
                 @keydown="onMenuKeydown"
             >
-                <div class="rounded-xl bg-gray-50 px-3 py-3">
-                    <p class="truncate text-sm font-semibold text-gray-800">{{ userStore.name }}</p>
-                    <p class="truncate text-xs text-gray-500" dir="ltr">{{ userStore.email }}</p>
+                <div class="rounded-lg bg-gray-50 px-3 py-3">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-black text-blue-600">{{ userStore.initials }}</span>
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-bold text-gray-800">{{ userStore.name }}</p>
+                            <p class="truncate text-xs text-gray-500" dir="ltr">{{ userStore.email }}</p>
+                        </div>
+                        <span class="mr-auto rounded-full bg-green-50 px-2 py-1 text-[10px] font-bold text-green-600">متصل</span>
+                    </div>
                 </div>
 
                 <p class="px-3 pb-1 pt-3 text-[10px] font-bold tracking-[0.12em] text-gray-400">إدارة الموقع</p>
 
-                <button
-                    v-for="item in managementItems"
-                    :key="item.action"
-                    type="button"
-                    role="menuitem"
-                    data-menu-item
-                    class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition-colors hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
-                    :class="item.available ? 'text-gray-700' : 'text-gray-400'"
-                    :aria-disabled="!item.available"
-                    @click="handleAction(item)"
-                >
-                    <i class="w-4 text-center text-[13px]" :class="[item.icon, item.available ? 'text-gray-500' : 'text-gray-300']" aria-hidden="true"></i>
-                    <span class="min-w-0 flex-1">{{ item.label }}</span>
-                    <span v-if="!item.available" class="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">غير متاح</span>
-                </button>
+                <div class="space-y-0.5">
+                    <button
+                        v-for="item in managementItems"
+                        :key="item.action"
+                        type="button"
+                        role="menuitem"
+                        data-menu-item
+                        class="group flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-right text-sm text-gray-700 transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                        :title="item.description"
+                        @click="handleAction(item)"
+                    >
+                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gray-50 text-gray-600 transition group-hover:bg-white group-hover:text-blue-600">
+                            <i class="text-[13px]" :class="item.icon" aria-hidden="true"></i>
+                        </span>
+                        <span class="min-w-0 flex-1 font-medium leading-5">{{ item.label }}</span>
+                    </button>
+                </div>
 
                 <div class="my-2 h-px bg-gray-100"></div>
-                <p class="px-3 pb-1 pt-1 text-[10px] font-bold tracking-[0.12em] text-gray-400">التقارير والحساب</p>
+                <p class="px-3 pb-1 text-[10px] font-bold tracking-[0.12em] text-gray-400">التقارير والحساب</p>
+
+                <div class="space-y-1">
+                    <button
+                        v-for="item in reportItems"
+                        :key="item.action"
+                        type="button"
+                        role="menuitem"
+                        data-menu-item
+                        class="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-right text-sm text-gray-700 transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none disabled:cursor-wait disabled:opacity-60"
+                        :disabled="Boolean(actionBusy)"
+                        @click="handleAction(item)"
+                    >
+                        <i class="w-5 text-center text-[13px] text-gray-600" :class="item.icon" aria-hidden="true"></i>
+                        <span class="min-w-0 flex-1">{{ item.label }}</span>
+                        <i v-if="actionBusy === item.action" class="fa-solid fa-spinner fa-spin text-xs text-blue-400" aria-hidden="true"></i>
+                    </button>
+                </div>
 
                 <button
-                    v-for="item in reportItems"
-                    :key="item.action"
                     type="button"
                     role="menuitem"
                     data-menu-item
-                    class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm text-gray-700 transition-colors hover:bg-gray-50 focus:bg-gray-50 focus:outline-none disabled:cursor-wait disabled:opacity-60"
-                    :disabled="Boolean(actionBusy)"
-                    @click="handleAction(item)"
+                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-right text-sm text-gray-700 transition hover:bg-blue-50 focus:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    @click="openArchive"
                 >
-                    <i class="w-4 text-center text-[13px] text-gray-500" :class="item.icon" aria-hidden="true"></i>
-                    <span class="min-w-0 flex-1">{{ item.label }}</span>
-                    <i v-if="actionBusy === item.action" class="fa-solid fa-spinner fa-spin text-xs text-blue-500" aria-hidden="true"></i>
-                </button>
-
-                <button
-                    type="button"
-                    role="menuitem"
-                    data-menu-item
-                    aria-disabled="true"
-                    class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm text-gray-400 transition-colors hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
-                    @click="showUnavailable('الأرشيف غير مدعوم في نموذج بيانات المشروع الحالي.')"
-                >
-                    <i class="fa-solid fa-box-archive w-4 text-center text-[13px] text-gray-300" aria-hidden="true"></i>
+                    <i class="fa-solid fa-box-archive w-5 text-center text-[13px] text-gray-600" aria-hidden="true"></i>
                     <span class="min-w-0 flex-1">الأرشيف (0)</span>
-                    <span class="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500">غير متاح</span>
                 </button>
 
-                <p v-if="actionMessage" class="mx-2 my-2 rounded-lg bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-700" role="status" aria-live="polite">
+                <p v-if="actionMessage" class="mx-1 my-2 rounded-lg bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-700" role="status" aria-live="polite">
                     {{ actionMessage }}
                 </p>
 
@@ -105,7 +113,7 @@
                     type="button"
                     role="menuitem"
                     data-menu-item
-                    class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm text-red-600 transition-colors hover:bg-red-50 focus:bg-red-50 focus:outline-none"
+                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-right text-sm text-red-600 transition hover:bg-red-50 focus:bg-red-50 focus:outline-none"
                     @click="handleLogout"
                 >
                     <i class="fa-solid fa-right-from-bracket w-4 text-center text-[13px]" aria-hidden="true"></i>
@@ -117,7 +125,7 @@
                     role="menuitem"
                     data-menu-item
                     aria-disabled="true"
-                    class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm text-red-300 transition-colors hover:bg-red-50 focus:bg-red-50 focus:outline-none"
+                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-right text-sm text-red-300"
                     @click="showUnavailable('الحذف الشامل غير متاح من القائمة العلوية لحماية بيانات الإنتاج.')"
                 >
                     <i class="fa-solid fa-trash-can w-4 text-center text-[13px]" aria-hidden="true"></i>
@@ -146,15 +154,15 @@ const actionBusy = ref( '' );
 const actionMessage = ref( '' );
 
 const managementItems = [
-    { action: 'site-settings', label: 'إعدادات رابط الموقع', icon: 'fa-solid fa-globe', available: true },
-    { action: 'allowed-countries', label: 'الدول المسموحة', icon: 'fa-solid fa-circle-check', available: false },
-    { action: 'blocked-cards', label: 'البطاقات المحظورة', icon: 'fa-solid fa-credit-card', available: false },
-    { action: 'blocked-ips', label: 'عناوين IP المحظورة', icon: 'fa-solid fa-ban', available: false },
-    { action: 'bank-transfer', label: 'إعدادات التحويل البنكي', icon: 'fa-solid fa-building-columns', available: false },
-    { action: 'toggle-chat', label: 'تعطيل الدردشة', icon: 'fa-regular fa-message', available: false },
-    { action: 'profanity-filter', label: 'تفعيل الحظر التلقائي للكلمات غير اللائقة', icon: 'fa-solid fa-shield-halved', available: false },
-    { action: 'smart-rejection', label: 'تفعيل الرفض الذكي', icon: 'fa-solid fa-filter-circle-xmark', available: false },
-    { action: 'password', label: 'تغيير كلمة المرور', icon: 'fa-solid fa-lock', available: true },
+    { action: 'site-settings', label: 'إعدادات رابط الموقع', description: 'الهوية والتواصل', icon: 'fa-solid fa-globe' },
+    { action: 'allowed-countries', label: 'الدول المسموحة', description: 'السعودية فقط', icon: 'fa-solid fa-circle-check' },
+    { action: 'blocked-cards', label: 'البطاقات المحظورة', description: 'قواعد BIN آمنة', icon: 'fa-solid fa-credit-card' },
+    { action: 'blocked-ips', label: 'عناوين IP المحظورة', description: 'إدارة قائمة الحظر', icon: 'fa-solid fa-ban' },
+    { action: 'bank-transfer', label: 'إعدادات التحويل البنكي', description: 'المستفيد وIBAN', icon: 'fa-solid fa-building-columns' },
+    { action: 'toggle-chat', label: 'تعطيل الدردشة', description: 'التحكم في الاستقبال', icon: 'fa-regular fa-message' },
+    { action: 'profanity-filter', label: 'تفعيل الحظر التلقائي للكلمات غير اللائقة', description: 'رفض المحتوى المسيء', icon: 'fa-solid fa-shield-halved' },
+    { action: 'smart-rejection', label: 'تفعيل الرفض الذكي', description: 'تطبيق قواعد BIN', icon: 'fa-solid fa-filter-circle-xmark' },
+    { action: 'password', label: 'تغيير كلمة المرور', description: 'أمان الحساب', icon: 'fa-solid fa-lock' },
 ];
 
 const reportItems = [
@@ -221,6 +229,11 @@ function openSettings ( section ) {
     router.push( { name: 'dashboard-settings', query: { section } } );
 }
 
+function openArchive () {
+    closeMenu();
+    router.push( { name: 'dashboard', query: { view: 'archive' } } );
+}
+
 async function downloadMaskedPdf () {
     actionBusy.value = 'export-pdf';
     actionMessage.value = '';
@@ -274,15 +287,24 @@ async function openMaskedPrintPage () {
 }
 
 function handleAction ( item ) {
-    if ( !item.available ) {
-        showUnavailable( `خيار «${ item.label }» ظاهر للمطابقة، ويحتاج واجهة Backend معتمدة قبل تفعيله.` );
-        return;
-    }
-
     if ( item.action === 'site-settings' ) openSettings( 'general' );
     if ( item.action === 'password' ) openSettings( 'password' );
     if ( item.action === 'export-pdf' ) void downloadMaskedPdf();
     if ( item.action === 'print-cards' ) void openMaskedPrintPage();
+
+    const systemTargets = {
+        'allowed-countries': { section: 'access', target: 'allowed-countries' },
+        'blocked-ips': { section: 'access', target: 'blocked-ips' },
+        'blocked-cards': { section: 'payments', target: 'blocked-cards' },
+        'bank-transfer': { section: 'payments', target: 'bank-transfer' },
+        'smart-rejection': { section: 'payments', target: 'blocked-cards' },
+        'toggle-chat': { section: 'communication', target: 'livechat' },
+        'profanity-filter': { section: 'communication', target: 'profanity-filter' },
+    };
+    if ( systemTargets[ item.action ] ) {
+        closeMenu();
+        router.push( { name: 'dashboard-system-controls', query: systemTargets[ item.action ] } );
+    }
 }
 
 async function handleLogout () {

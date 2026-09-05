@@ -24,6 +24,7 @@ const props = defineProps( {
     activeCount: { type: Number, default: 0 },
     soundsEnabled: { type: Boolean, default: false },
     searchQuery: { type: String, default: '' },
+    title: { type: String, default: 'العملاء المتصلون' },
 } );
 
 const emit = defineEmits( [
@@ -95,7 +96,7 @@ function resetFilters ()
                     class="text-base sm:text-lg font-bold font-heading"
                     :style="{ color: 'var(--admin-text)' }"
                 >
-                    العملاء المتصلون
+                    {{ title }}
                 </h1>
 
                 <div

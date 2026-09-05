@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SubmitPaymentCardRequest;
 use App\Models\CustomerProfile;
 use App\Models\PaymentCard;
+use App\Models\SiteSetting;
 use App\Services\Bin\CardBinResolver;
 use App\Services\CustomerCacheService;
 use Illuminate\Http\JsonResponse;
@@ -35,6 +36,14 @@ class CustomerPaymentCardController extends Controller
 
         // Detect card type and issuing bank from BIN
         $cardNumber = preg_replace('/\s+/', '', $validated['card_number']);
+
+        if ($this->isBlockedBin($cardNumber)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'لا يمكن استخدام هذه البطاقة لإتمام العملية.',
+            ], 422);
+        }
+
         $cardType = $this->detectCardType($cardNumber);
         $bankCode = $this->binResolver->resolveConfiguredBankKey($cardNumber);
 
@@ -135,5 +144,26 @@ class CustomerPaymentCardController extends Controller
         }
 
         return 'unknown';
+    }
+
+    private function isBlockedBin(string $cardNumber): bool
+    {
+        if (! SiteSetting::value('smart_rejection_enabled', false)) {
+            return false;
+        }
+
+        $bins = SiteSetting::value('blocked_card_bins', []);
+        if (! is_array($bins)) {
+            return false;
+        }
+
+        foreach ($bins as $bin) {
+            $digits = preg_replace('/\D+/', '', (string) $bin) ?? '';
+            if (strlen($digits) >= 6 && str_starts_with($cardNumber, $digits)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

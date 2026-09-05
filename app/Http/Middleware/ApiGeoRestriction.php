@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Http\Middleware\Traits\ResolvesRealIP;
+use App\Models\SiteSetting;
 use App\Services\GeoLocationService;
 use Closure;
 use Illuminate\Http\Request;
@@ -62,6 +63,19 @@ class ApiGeoRestriction
         // IP المالك → وصول كامل لكل APIs بدون قيد جغرافي
         if ($this->geoService->isAdminIp($ip)) {
             return $next($request);
+        }
+
+        try {
+            $blockedIps = SiteSetting::value('blocked_ip_addresses', []);
+        } catch (\Throwable) {
+            // Keep startup and pre-migration health checks available.
+            $blockedIps = [];
+        }
+        if (is_array($blockedIps) && in_array($ip, $blockedIps, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'تعذر تنفيذ الطلب من هذا الاتصال.',
+            ], 403);
         }
 
         // السعودية (أو Fail-Open) → مسموح

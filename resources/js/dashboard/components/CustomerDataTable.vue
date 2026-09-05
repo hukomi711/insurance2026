@@ -1,6 +1,6 @@
 <template>
   <div class="customer-data-table" dir="rtl">
-    <div class="customer-table-scroll overflow-x-auto overscroll-x-contain rounded-lg bg-gray-900 shadow">
+    <div class="customer-table-scroll overflow-x-auto overscroll-x-contain rounded-xl border border-gray-200 bg-white shadow-sm">
       <table class="min-w-280 w-full table-fixed text-sm md:min-w-345 xl:min-w-405">
         <thead class="border-b border-gray-700 bg-gray-800">
           <tr>
@@ -713,6 +713,49 @@ onUnmounted(() => {
 .customer-table-scroll {
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
+}
+
+.customer-data-table thead {
+  border-color: #e5e7eb;
+  background: #f8fafc;
+}
+
+.customer-data-table thead th {
+  color: #4b5563;
+}
+
+.customer-data-table tbody {
+  --tw-divide-opacity: 1;
+  border-color: #e5e7eb;
+}
+
+.customer-data-table tbody tr {
+  background: #ffffff;
+}
+
+.customer-data-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.customer-data-table tbody td,
+.customer-data-table tbody td > span,
+.customer-data-table tbody td .text-white,
+.customer-data-table tbody td .text-gray-300,
+.customer-data-table tbody td .text-gray-400 {
+  color: #4b5563;
+}
+
+.customer-data-table tbody .bg-slate-700,
+.customer-data-table tbody .bg-slate-600,
+.customer-data-table tbody .bg-gray-700 {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.customer-data-table tbody .bg-slate-700:hover,
+.customer-data-table tbody .bg-slate-600:hover {
+  background: #e5e7eb;
+  color: #111827;
 }
 
 .customer-data-table table td,

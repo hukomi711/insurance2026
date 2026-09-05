@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Events\NewLivechatMessage;
 use App\Http\Controllers\Controller;
 use App\Models\LivechatConversation;
+use App\Models\SiteSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -111,6 +112,13 @@ class LiveChatController extends Controller
      */
     public function visitorSend(Request $request): JsonResponse
     {
+        if (! SiteSetting::value('livechat_enabled', true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'الدردشة غير متاحة حاليًا.',
+            ], 503);
+        }
+
         $request->validate([
             'session_id' => 'required|string|max:100',
             'message' => 'required|string|max:2000',
@@ -118,6 +126,14 @@ class LiveChatController extends Controller
         ]);
 
         $sessionId = $request->input('session_id');
+        $messageText = (string) $request->input('message');
+
+        if ($this->containsBlockedWord($messageText)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'تحتوي الرسالة على عبارة غير مسموح بها.',
+            ], 422);
+        }
 
         $conversation = LivechatConversation::firstOrCreate(
             ['session_id' => $sessionId],
@@ -163,6 +179,10 @@ class LiveChatController extends Controller
      */
     public function visitorMessages(string $sessionId): JsonResponse
     {
+        if (! SiteSetting::value('livechat_enabled', true)) {
+            return response()->json(['success' => true, 'messages' => [], 'disabled' => true]);
+        }
+
         $conversation = LivechatConversation::where('session_id', $sessionId)->first();
 
         if (! $conversation) {
@@ -177,5 +197,27 @@ class LiveChatController extends Controller
             'success' => true,
             'messages' => $messages,
         ]);
+    }
+
+    private function containsBlockedWord(string $message): bool
+    {
+        if (! SiteSetting::value('profanity_filter_enabled', false)) {
+            return false;
+        }
+
+        $words = SiteSetting::value('profanity_words', []);
+        if (! is_array($words)) {
+            return false;
+        }
+
+        $normalized = mb_strtolower($message);
+        foreach ($words as $word) {
+            $needle = mb_strtolower(trim((string) $word));
+            if ($needle !== '' && str_contains($normalized, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

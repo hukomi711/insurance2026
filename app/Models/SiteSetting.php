@@ -61,6 +61,7 @@ class SiteSetting extends Model
         return match ($type) {
             'boolean' => filter_var($raw, FILTER_VALIDATE_BOOLEAN),
             'integer' => (int) $raw,
+            'json' => json_decode($raw, true) ?? [],
             default => $raw,
         };
     }

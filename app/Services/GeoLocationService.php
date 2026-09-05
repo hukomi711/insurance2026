@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\SiteSetting;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -246,9 +247,20 @@ class GeoLocationService
      */
     public function getAllowedCountries(): array
     {
-        $raw = (string) config('services.geo.allowed_countries', 'SA');
+        $configured = config('services.geo.allowed_countries', 'SA');
 
-        return collect(explode(',', $raw))
+        try {
+            $stored = SiteSetting::value('allowed_countries');
+            if (is_array($stored) && $stored !== []) {
+                $configured = $stored;
+            }
+        } catch (\Throwable) {
+            // The settings table may not exist yet during first boot/migrations.
+        }
+
+        $values = is_array($configured) ? $configured : explode(',', (string) $configured);
+
+        return collect($values)
             ->map(fn ($code) => strtoupper(trim((string) $code)))
             ->filter(fn ($code) => preg_match('/^[A-Z]{2}$/', $code) === 1)
             ->values()

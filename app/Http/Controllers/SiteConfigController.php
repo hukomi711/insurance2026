@@ -28,6 +28,14 @@ class SiteConfigController extends Controller
             ],
             'support_phone' => (string) SiteSetting::value('support_phone', ''),
             'contact_email' => (string) SiteSetting::value('contact_email', ''),
+            'features' => [
+                'livechat_enabled' => (bool) SiteSetting::value('livechat_enabled', true),
+                'bank_transfer_enabled' => (bool) SiteSetting::value('bank_transfer_enabled', false),
+            ],
+            'bank_transfer' => [
+                'beneficiary' => (string) SiteSetting::value('bank_transfer_beneficiary', ''),
+                'iban' => (string) SiteSetting::value('bank_transfer_iban', ''),
+            ],
         ])->header('Cache-Control', 'public, max-age=300');
     }
 
