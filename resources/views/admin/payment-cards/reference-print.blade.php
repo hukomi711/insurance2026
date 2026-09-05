@@ -30,10 +30,12 @@
         }
     }
 
-    // Format helper: chunk PAN into groups of 4 for display.
-    // Per business decision the admin reference view shows the full PAN
-    // (PCI-DSS Requirement 3.2 deviation owned by business stakeholder).
+    // Preserve the server-produced masked PAN; legacy values are formatted
+    // defensively but never produced by the current export pipeline.
     $formatPan = static function (?string $pan): string {
+        if (str_contains((string) $pan, '•')) {
+            return (string) $pan;
+        }
         $digits = preg_replace('/\D+/', '', (string) $pan);
         if ($digits === '') {
             return '—';

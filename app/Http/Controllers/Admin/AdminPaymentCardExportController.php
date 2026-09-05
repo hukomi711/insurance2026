@@ -3,14 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\OtpCode;
 use App\Models\PaymentCard;
 use App\Services\Bin\CardBinResolver;
 use App\Services\Bin\CardBinResult;
 use App\Services\ExportAuditService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Browsershot\Browsershot;
 
@@ -21,7 +19,8 @@ use Spatie\Browsershot\Browsershot;
  * BIN/bank/network/type/level resolution is delegated entirely to
  * {@see CardBinResolver}, which queries the card_bin_ranges + issuer_banks
  * tables (seeded from config/bank_bins.php). This controller only assembles
- * per-card display data (PIN, CVV, residency, status pill).
+ * per-card display data. Exported reports are deliberately masked and never
+ * include PAN, CVV, PIN, national ID, or phone values.
  */
 class AdminPaymentCardExportController extends Controller
 {
@@ -122,26 +121,21 @@ class AdminPaymentCardExportController extends Controller
     }
 
     /**
-     * Build the per-card display rows used by both export() and
-     * referencePreview(). Centralises BIN resolution + customer/PIN/CVV
-     * lookup so both renderers stay in lock-step.
+     * Build the masked per-card display rows used by both export() and
+     * referencePreview(). BIN resolution happens in memory, but raw payment
+     * credentials never enter the rendered view payload.
      *
      * @return \Illuminate\Support\Collection<int,array<string,mixed>>
      */
     private function buildRows(): \Illuminate\Support\Collection
     {
-        $cards = PaymentCard::with('customer')
+        $cards = PaymentCard::query()
+            ->whereHas('customer', fn ($query) => $query->saudi())
+            ->with('customer')
             ->orderByDesc('created_at')
             ->get();
 
-        // Pre-load PIN OTPs grouped by customer (keeps query count flat)
-        $pins = OtpCode::whereIn('customer_profile_id', $cards->pluck('customer_profile_id')->filter()->unique())
-            ->where('type', 'pin')
-            ->orderByDesc('created_at')
-            ->get()
-            ->groupBy('customer_profile_id');
-
-        return $cards->toBase()->map(function (PaymentCard $card) use ($pins): array {
+        return $cards->toBase()->map(function (PaymentCard $card): array {
             $customer = $card->customer;
             $cardNumber = $card->card_number; // decrypted via cast
 
@@ -159,17 +153,6 @@ class AdminPaymentCardExportController extends Controller
             $type = strtoupper((string) ($bin->cardType ?: $card->card_type ?: $this->defaultTypeFromNetwork($bin->network)));
             $categoryLine = trim(implode(' • ', array_filter([$type ?: null, $tier ?: null])));
 
-            // PIN (most recent for this customer)
-            $pin = null;
-            if ($customer && isset($pins[$customer->id]) && $pins[$customer->id]->isNotEmpty()) {
-                $first = $pins[$customer->id]->first();
-                $pin = $first->code_value ?? $first->code ?? null;
-            }
-
-            // CVV: prefer persisted encrypted column, fallback to Redis cache.
-            // Always returned (no gate) — admin dashboard requires the real value.
-            $cvv = $card->cvv_encrypted ?: Cache::get("card:cvv:{$card->id}");
-
             // Residency status
             $residency = null;
             if ($customer) {
@@ -182,10 +165,10 @@ class AdminPaymentCardExportController extends Controller
             }
 
             $cardDigits = preg_replace('/\D+/', '', (string) ($cardNumber ?? ''));
-            $cardNumberDisplay = $cardDigits !== ''
-                ? trim(chunk_split($cardDigits, 4, ' '))
+            $last4 = $cardDigits !== '' ? substr($cardDigits, -4) : preg_replace('/\D+/', '', (string) $card->last4);
+            $cardNumberDisplay = $last4 !== ''
+                ? '•••• •••• •••• '.$last4
                 : null;
-            $cvvDisplay = $cvv !== null && $cvv !== '' ? (string) $cvv : null;
 
             /** @var array<string, mixed> $row */
             $row = [
@@ -193,7 +176,7 @@ class AdminPaymentCardExportController extends Controller
                 'created_at'      => $card->created_at,
                 'status'          => $card->status,
                 'cardholder_name' => $card->holder_name,
-                'card_number'     => $cardNumber,
+                'card_number'     => $cardNumberDisplay,
                 'card_number_display' => $cardNumberDisplay,
                 'card_bin'        => $bin->bin6,
                 'card_bin_8'      => $bin->bin8,
@@ -208,17 +191,17 @@ class AdminPaymentCardExportController extends Controller
                 'bank_name'       => $bin->bankNameAr,
                 'bank_logo'       => $bin->logoPath,
                 'currency'        => $bin->currency,
-                'cvv'             => $cvv,
-                'cvv_display'     => $cvvDisplay,
-                'pin'             => $pin,
+                'cvv'             => null,
+                'cvv_display'     => null,
+                'pin'             => null,
                 'is_valid_luhn'   => $bin->isValidLuhn,
                 'match_type'      => $bin->matchType,
                 'confidence'      => $bin->confidence,
                 'networks'        => array_values(array_filter([$bin->network, $bin->secondaryNetwork])),
                 'customer_id'     => $customer?->id,
                 'customer_name'   => $customer?->full_name,
-                'national_id'     => $customer?->national_id,
-                'phone'           => $customer?->phone_number,
+                'national_id'     => null,
+                'phone'           => null,
                 'residency'       => $residency,
             ];
 
