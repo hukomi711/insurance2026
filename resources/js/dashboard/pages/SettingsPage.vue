@@ -339,6 +339,15 @@ async function saveSiteSettings () {
     siteSaving.value = true;
     siteSaveMessage.value = '';
     try {
+        const phonePattern = /^[\d+\s\-()]*$/;
+        if ( !phonePattern.test( siteSettings.whatsapp_number || '' ) || !phonePattern.test( siteSettings.support_phone || '' ) ) {
+            siteSaveMessage.value = 'رقم التواصل غير صالح. استخدم الأرقام وعلامة + والشرطات والأقواس فقط.';
+            return;
+        }
+        if ( siteSettings.contact_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( siteSettings.contact_email ) ) {
+            siteSaveMessage.value = 'البريد الإلكتروني غير صالح.';
+            return;
+        }
         const { data } = await updateSiteSettings( {
             whatsapp_enabled: siteSettings.whatsapp_enabled,
             whatsapp_number: siteSettings.whatsapp_number || '',

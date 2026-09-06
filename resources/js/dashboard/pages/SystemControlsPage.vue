@@ -174,6 +174,37 @@ function lines ( value ) {
     return [ ...new Set( value.split( /[\n,]+/ ).map( item => item.trim() ).filter( Boolean ) ) ];
 }
 
+function isValidIpv4 ( value ) {
+    const parts = value.split( '.' );
+    return parts.length === 4 && parts.every( part => /^\d{1,3}$/.test( part ) && Number( part ) <= 255 );
+}
+
+function isValidIpv6 ( value ) {
+    if ( !/^[0-9a-f:]+$/i.test( value ) || !value.includes( ':' ) ) return false;
+    const halves = value.split( '::' );
+    if ( halves.length > 2 ) return false;
+    const groups = halves.flatMap( half => half ? half.split( ':' ) : [] );
+    if ( !groups.every( group => /^[0-9a-f]{1,4}$/i.test( group ) ) ) return false;
+    return halves.length === 2 ? groups.length < 8 : groups.length === 8;
+}
+
+function validatePayload ( payload ) {
+    const invalidIp = payload.blocked_ip_addresses.find( value => !isValidIpv4( value ) && !isValidIpv6( value ) );
+    if ( invalidIp ) return `عنوان IP غير صالح: ${ invalidIp }`;
+
+    const invalidBin = payload.blocked_card_bins.find( value => !/^\d{6,8}$/.test( value ) );
+    if ( invalidBin ) return `رقم BIN غير صالح: ${ invalidBin }. أدخل 6 إلى 8 أرقام فقط.`;
+
+    if ( payload.bank_transfer_iban && !/^SA\d{22}$/.test( payload.bank_transfer_iban ) ) {
+        return 'رقم IBAN غير صالح. يجب أن يبدأ بـ SA ويتبعه 22 رقمًا.';
+    }
+
+    const invalidWord = payload.profanity_words.find( value => [ ...value ].length < 2 || [ ...value ].length > 40 );
+    if ( invalidWord ) return 'كل كلمة محظورة يجب أن تتكون من 2 إلى 40 حرفًا.';
+
+    return '';
+}
+
 function selectSection ( section ) {
     activeSection.value = section;
     router.replace( { query: { ...route.query, section } } );
@@ -221,6 +252,12 @@ async function save () {
             profanity_filter_enabled: form.profanity_filter_enabled,
             profanity_words: lines( form.profanityWords ),
         };
+        const validationError = validatePayload( payload );
+        if ( validationError ) {
+            saveError.value = true;
+            saveMessage.value = validationError;
+            return;
+        }
         const { data } = await updateSiteSettings( payload );
         applyData( data?.data || payload );
         saveMessage.value = 'تم حفظ الإعدادات وتطبيقها بنجاح.';

@@ -89,7 +89,7 @@
                         <button
                             aria-label="الصفحة السابقة"
                             class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-all"
-                            :class="currentPage <= 1 ? 'border-white/4 text-white/20 cursor-not-allowed' : 'border-white/8 hover:bg-white/6'"
+                            :class="currentPage <= 1 ? 'border-gray-100 text-gray-300 cursor-not-allowed' : 'border-gray-200 bg-white hover:bg-gray-50'"
                             :style="currentPage > 1 ? { color: 'var(--admin-text-muted)' } : {}"
                             :disabled="currentPage <= 1"
                             @click="goToPage(currentPage - 1)"
@@ -102,7 +102,7 @@
                                 :aria-label="`صفحة ${p}`"
                                 :aria-current="p === currentPage ? 'page' : undefined"
                                 class="min-w-8 px-2 py-1.5 text-xs font-medium rounded-lg border transition-all"
-                                :class="p === currentPage ? 'bg-blue-600 text-white border-blue-600' : 'border-white/8 hover:bg-white/6'"
+                                :class="p === currentPage ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 bg-white hover:bg-gray-50'"
                                 :style="p !== currentPage ? { color: 'var(--admin-text-muted)' } : {}"
                                 @click="goToPage(p)"
                             >{{ p }}</button>
@@ -110,7 +110,7 @@
                         <button
                             aria-label="الصفحة التالية"
                             class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-all"
-                            :class="currentPage >= lastPage ? 'border-white/4 text-white/20 cursor-not-allowed' : 'border-white/8 hover:bg-white/6'"
+                            :class="currentPage >= lastPage ? 'border-gray-100 text-gray-300 cursor-not-allowed' : 'border-gray-200 bg-white hover:bg-gray-50'"
                             :style="currentPage < lastPage ? { color: 'var(--admin-text-muted)' } : {}"
                             :disabled="currentPage >= lastPage"
                             @click="goToPage(currentPage + 1)"

@@ -2,55 +2,56 @@
   <div class="customer-data-table" dir="rtl">
     <div class="customer-table-scroll overflow-x-auto overscroll-x-contain rounded-xl border border-gray-200 bg-white shadow-sm">
       <table class="min-w-280 w-full table-fixed text-sm md:min-w-345 xl:min-w-405">
-        <thead class="border-b border-gray-700 bg-gray-800">
+        <thead class="border-b border-gray-200 bg-slate-50">
           <tr>
-            <th class="w-12.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">حذف</th>
-            <th class="w-27.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">المزيد</th>
-            <th class="w-42.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">المسار الحالي</th>
-            <th class="w-25 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">الدفع</th>
-            <th class="w-27.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">بيانات التأمين</th>
-            <th class="w-32.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-12.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">حذف</th>
+            <th class="w-27.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">المزيد</th>
+            <th class="w-42.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">المسار الحالي</th>
+            <th class="w-25 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">الدفع</th>
+            <th class="w-27.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">بيانات التأمين</th>
+            <th class="w-32.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
               الاسم
             </th>
-            <th class="w-27.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">البيانات الأساسية</th>
-            <th class="w-27.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-27.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">البيانات الأساسية</th>
+            <th class="w-27.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
               رقم الهوية
             </th>
-            <th class="w-22.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-22.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
               الموقع
             </th>
-            <th class="w-22.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-22.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
               المنطقة
             </th>
-            <th class="w-30 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-30 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
               IP
             </th>
-            <th class="w-27.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-27.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
               آخر نشاط
             </th>
-            <th class="w-12.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">
+            <th class="w-12.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
               الحالة
             </th>
-            <th class="w-22.5 px-2 py-3 text-center font-semibold text-gray-300 whitespace-nowrap">#</th>
+            <th class="w-22.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">#</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-700">
+        <tbody class="divide-y divide-gray-100 bg-white">
           <tr
             v-for="(customer, index) in customers"
             :id="`customer-row-${customer.id}`"
             :key="customer.id"
             :class="[
-              'transition-colors hover:bg-gray-700',
+              'transition-colors hover:bg-blue-50/60',
               { 'admin-row-focus': focusedCustomerId === customer.id },
-              { 'bg-red-950/20 ring-1 ring-inset ring-red-500/15': customer.is_blocked },
+              { 'bg-red-50 ring-1 ring-inset ring-red-200': customer.is_blocked },
             ]"
           >
             <!-- حذف -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <button
-                class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-700 text-slate-300 hover:bg-red-600 hover:text-white transition-all duration-200"
-                title="حذف العميل"
-                aria-label="حذف العميل"
+                type="button"
+                class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                title="حذف بيانات العميل من النظام"
+                aria-label="حذف بيانات العميل من النظام بشكل دائم"
                 @click="$emit('delete-card', customer.id)"
               >
                 <i class="fa-solid fa-trash w-4 h-4" aria-hidden="true"></i>
@@ -61,7 +62,7 @@
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <div class="flex items-center justify-center gap-2">
                 <button
-                  class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-slate-700 text-slate-300 hover:bg-cyan-600 hover:text-white transition-all duration-200"
+                  class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
                   title="المزيد من التفاصيل"
                   aria-label="المزيد من التفاصيل"
                   @click="openInfoModal(customer)"
@@ -94,7 +95,7 @@
                 <button
                   :ref="(el) => setButtonRef(customer.id, el)"
                   data-journey-trigger
-                  class="inline-flex w-40 items-center justify-between rounded-md bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600 transition-colors"
+                  class="inline-flex w-40 items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                   @click="toggleJourneyDropdown(customer.id, $event)"
                 >
                   <span class="truncate">{{
@@ -112,10 +113,10 @@
                 class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-200"
                 :class="
                   !hasPaymentData(customer)
-                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : hasNewPaymentData(customer)
                       ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 animate-pulse hover:bg-emerald-600'
-                      : 'bg-slate-600 text-slate-200 hover:bg-slate-500'
+                      : 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100 hover:bg-blue-100'
                 "
                 :title="
                   !hasPaymentData(customer)
@@ -127,7 +128,7 @@
                 @click="openPaymentModal(customer)"
               >
                 <template v-if="hasPaymentData(customer)">
-                  <span v-if="!hasNewPaymentData(customer)" class="text-slate-300">👁</span>
+                  <span v-if="!hasNewPaymentData(customer)" class="text-blue-500">👁</span>
                   <span v-else class="h-2 w-2 rounded-full bg-white animate-ping"></span>
                 </template>
                 <span v-else class="text-gray-400">—</span>
@@ -141,10 +142,10 @@
                 class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-200"
                 :class="
                   !hasInsuranceData(customer)
-                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : hasNewInsuranceData(customer)
                       ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 animate-pulse hover:bg-emerald-600'
-                      : 'bg-slate-600 text-slate-200 hover:bg-slate-500'
+                      : 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100 hover:bg-blue-100'
                 "
                 :title="
                   !hasInsuranceData(customer)
@@ -156,7 +157,7 @@
                 @click="openInsuranceDataModal(customer)"
               >
                 <template v-if="hasInsuranceData(customer)">
-                  <span v-if="!hasNewInsuranceData(customer)" class="text-slate-300">👁</span>
+                  <span v-if="!hasNewInsuranceData(customer)" class="text-blue-500">👁</span>
                   <span v-else class="h-2 w-2 rounded-full bg-white animate-ping"></span>
                 </template>
                 <span v-else class="text-gray-400">—</span>
@@ -167,10 +168,10 @@
             <!-- الاسم -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <div class="flex flex-col items-center gap-1">
-                <span class="font-medium text-white">{{ getCustomerName(customer) || '\u2014' }}</span>
+                <span class="font-semibold text-gray-800">{{ getCustomerName(customer) || '\u2014' }}</span>
                 <span
                   v-if="customer.is_blocked"
-                  class="inline-flex items-center gap-1 rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-bold text-red-300 ring-1 ring-inset ring-red-500/30"
+                  class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700 ring-1 ring-inset ring-red-200"
                   title="هذا العميل محظور"
                 >
                   <i class="fa-solid fa-ban text-[9px]" aria-hidden="true"></i>
@@ -185,10 +186,10 @@
                 class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-200"
                 :class="
                   !hasVehicleData(customer)
-                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : hasNewVehicleQuoteData(customer)
                       ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 animate-pulse hover:bg-emerald-600'
-                      : 'bg-slate-600 text-slate-200 hover:bg-slate-500'
+                      : 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100 hover:bg-blue-100'
                 "
                 :title="
                   !hasVehicleData(customer)
@@ -200,7 +201,7 @@
                 @click="openVehicleQuoteModal(customer)"
               >
                 <template v-if="hasVehicleData(customer)">
-                  <span v-if="!hasNewVehicleQuoteData(customer)" class="text-slate-300">👁</span>
+                  <span v-if="!hasNewVehicleQuoteData(customer)" class="text-blue-500">👁</span>
                   <span v-else class="h-2 w-2 rounded-full bg-white animate-ping"></span>
                 </template>
                 <span v-else class="text-gray-400">—</span>
@@ -209,7 +210,7 @@
             </td>
 
             <!-- رقم الهوية -->
-            <td class="px-3 py-2 font-mono text-xs text-white whitespace-nowrap">{{ customer.nationalId || '\u2014' }}</td>
+            <td class="px-3 py-2 font-mono text-xs text-gray-700 whitespace-nowrap">{{ customer.nationalId || '\u2014' }}</td>
 
             <!-- الموقع -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
@@ -217,8 +218,8 @@
                 v-if="getDisplayCity(customer) || getDisplayCountry(customer)"
                 class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium"
                 :class="isSaudi(getDisplayCountry(customer))
-                    ? 'bg-green-500/20 text-green-400'
-                    : 'bg-amber-500/20 text-amber-400'
+                    ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200'
+                    : 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200'
                 "
                 :title="(getDisplayCity(customer) || '') + ', ' + (getDisplayCountry(customer) || '')"
               >
@@ -231,17 +232,17 @@
             </td>
 
             <!-- المنطقة -->
-            <td class="px-2 py-2 text-center text-xs text-gray-300 whitespace-nowrap">
+            <td class="px-2 py-2 text-center text-xs text-gray-600 whitespace-nowrap">
               <span class="max-w-20 truncate inline-block" :title="getDisplayRegion(customer) || ''">
                 {{ getDisplayRegion(customer) || '—' }}
               </span>
             </td>
 
             <!-- IP -->
-            <td class="px-3 py-2 font-mono text-xs text-white whitespace-nowrap">{{ customer.ip }}</td>
+            <td class="px-3 py-2 font-mono text-xs text-gray-700 whitespace-nowrap">{{ customer.ip }}</td>
 
             <!-- آخر نشاط -->
-            <td class="px-2 py-2 text-center text-xs text-gray-400 whitespace-nowrap" :title="customer.last_activity_at">
+            <td class="px-2 py-2 text-center text-xs text-gray-500 whitespace-nowrap" :title="customer.last_activity_at">
               {{ formatRelativeTime(customer.last_activity_at) }}
             </td>
 
@@ -252,7 +253,7 @@
                 :class="
                   isCustomerOnline(customer)
                     ? 'animate-pulse bg-emerald-500 shadow-lg shadow-emerald-500/50'
-                    : 'bg-gray-500'
+                    : 'bg-gray-300'
                 "
                 :title="isCustomerOnline(customer) ? 'نشط' : 'غير نشط'"
               >
@@ -262,7 +263,7 @@
             <!-- # -->
             <td class="px-2 py-2 text-center whitespace-nowrap">
               <div class="flex flex-col items-center gap-1">
-                <span class="text-gray-400">{{ rowNumber(index) }}</span>
+                <span class="text-gray-500">{{ rowNumber(index) }}</span>
               </div>
             </td>
           </tr>
@@ -275,31 +276,31 @@
       <div
         v-if="activeJourneyDropdown && dropdownPosition"
         data-journey-dropdown
-        class="fixed z-9999 w-56 overflow-hidden rounded-lg border border-slate-600 bg-slate-800 shadow-xl"
+        class="fixed z-9999 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl"
         :style="{ top: dropdownPosition.top + 'px', left: dropdownPosition.left + 'px' }"
         @click.stop
       >
         <div
-          class="flex items-center justify-between border-b border-slate-600 bg-slate-700 px-3 py-2"
+          class="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-3 py-2"
         >
-          <span class="text-sm font-medium text-white">
-            <i class="fa-solid fa-route me-1.5 text-blue-400" aria-hidden="true"></i>تغيير المسار
+          <span class="text-sm font-semibold text-gray-800">
+            <i class="fa-solid fa-route me-1.5 text-blue-600" aria-hidden="true"></i>تغيير المسار
           </span>
-          <button class="text-slate-400 hover:text-white" aria-label="إغلاق" @click="closeJourneyDropdown">
+          <button class="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label="إغلاق" @click="closeJourneyDropdown">
             <i class="fa-solid fa-xmark w-4 h-4" aria-hidden="true"></i>
           </button>
         </div>
         <div class="max-h-80 overflow-y-auto py-1">
           <template v-for="(pages, category) in pageCategories" :key="category">
-            <div class="sticky top-0 bg-slate-800/95 backdrop-blur-sm px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-700/50">
+            <div class="sticky top-0 border-b border-gray-100 bg-gray-50/95 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500 backdrop-blur-sm">
               {{ category }}
             </div>
             <button
               v-for="page in pages"
               :key="page.value"
-              class="flex w-full items-center gap-2 px-3 py-2 text-right text-sm transition-colors hover:bg-slate-700"
+              class="flex min-h-10 w-full items-center gap-2 px-3 py-2 text-right text-sm transition-colors hover:bg-blue-50"
               :class="
-                getActiveCustomerPage() === page.url ? 'bg-blue-600/90 text-white' : 'text-slate-300'
+                getActiveCustomerPage() === page.url ? 'bg-blue-600 text-white hover:bg-blue-700' : 'text-gray-700'
               "
               @click="redirectCustomerToPage(activeJourneyDropdown, page.value)"
             >
@@ -310,7 +311,7 @@
                 class="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full"
                 >الحالي</span
               >
-              <span v-else-if="page.isWaiting" class="text-[10px] text-orange-400 bg-orange-400/10 px-1.5 py-0.5 rounded-full">انتظار</span>
+              <span v-else-if="page.isWaiting" class="rounded-full bg-orange-50 px-1.5 py-0.5 text-[10px] text-orange-700">انتظار</span>
             </button>
           </template>
         </div>

@@ -103,12 +103,12 @@ function resetFilters ()
                     class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]"
                     :style="{ color: 'var(--admin-text-dim)' }"
                 >
-                    <span class="font-semibold text-emerald-400">{{ activeCount }} نشط</span>
+                    <span class="font-semibold text-emerald-600">{{ activeCount }} نشط</span>
                     <span aria-hidden="true">•</span>
                     <button
                         type="button"
-                        class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-semibold transition-colors hover:bg-white/[0.04]"
-                        :class="autoRefresh ? 'text-emerald-400' : 'text-amber-400'"
+                        class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-semibold transition-colors hover:bg-gray-100"
+                        :class="autoRefresh ? 'text-emerald-600' : 'text-amber-600'"
                         :aria-pressed="autoRefresh"
                         :aria-label="autoRefresh ? 'إيقاف التحديث التلقائي' : 'تشغيل التحديث التلقائي'"
                         @click="emit( 'toggle-auto-refresh' )"
@@ -147,7 +147,7 @@ function resetFilters ()
                 <button
                     type="button"
                     class="admin-touch rounded-lg px-3 text-xs font-semibold transition-colors inline-flex items-center gap-1.5"
-                    :class="soundsEnabled ? 'bg-emerald-500/15 text-emerald-400' : 'hover:opacity-90'"
+                    :class="soundsEnabled ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200' : 'hover:opacity-90'"
                     :style="!soundsEnabled ? { backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' } : {}"
                     :aria-pressed="soundsEnabled"
                     :aria-label="soundsEnabled ? 'إيقاف التنبيهات الصوتية' : 'تفعيل التنبيهات الصوتية'"
@@ -175,7 +175,7 @@ function resetFilters ()
         <div
             v-if="hasActiveFilters"
             class="flex flex-wrap items-center justify-between gap-2 border-t px-4 sm:px-5 py-2"
-            style="border-color: rgba(255,255,255,0.06);"
+            :style="{ borderColor: 'var(--admin-card-border)' }"
         >
             <div class="flex flex-wrap items-center gap-2">
                 <span class="text-[11px]" :style="{ color: 'var(--admin-text-dim)' }">الفلاتر النشطة:</span>
@@ -201,11 +201,11 @@ function resetFilters ()
         <!-- ── Row 2: Filters + Search ─────────────────────────── -->
         <div
             class="flex flex-col gap-3 border-t px-4 sm:px-5 py-3 md:flex-row md:items-center md:justify-between"
-            style="border-color: rgba(255,255,255,0.06);"
+            :style="{ borderColor: 'var(--admin-card-border)' }"
         >
             <div class="flex flex-wrap items-center gap-2">
                 <span
-                    class="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1.5 text-xs font-bold text-emerald-400"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 ring-1 ring-inset ring-emerald-200"
                     aria-label="العملاء المعروضون من السعودية فقط"
                 >
                     <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
@@ -238,7 +238,7 @@ function resetFilters ()
                 <button
                     v-if="searchQuery"
                     type="button"
-                    class="absolute left-2 top-1/2 -translate-y-1/2 rounded-md px-1.5 py-0.5 text-[10px] font-bold transition-colors hover:bg-white/10"
+                    class="absolute left-2 top-1/2 -translate-y-1/2 rounded-md px-1.5 py-0.5 text-[10px] font-bold transition-colors hover:bg-gray-200"
                     :style="{ color: 'var(--admin-text-dim)' }"
                     aria-label="مسح البحث"
                     @click="clearSearch"
