@@ -73,6 +73,7 @@ class QuoteLockOrderTamperingTest extends TestCase
             'vat_amount' => $lock['vat_amount'],
             'total' => $lock['total'],
             'deductible' => 1000,
+            'accept_terms' => true,
             'addon_ids' => [0],
             'addons' => [
                 [
@@ -218,6 +219,7 @@ class QuoteLockOrderTamperingTest extends TestCase
             'vat_amount' => 150,
             'total' => 1149,
             'deductible' => 1000,
+            'accept_terms' => true,
             'addon_ids' => [0],
             'addons' => [
                 [
@@ -236,6 +238,28 @@ class QuoteLockOrderTamperingTest extends TestCase
                 'success' => false,
                 'message' => 'الأسعار المرسلة لا تطابق آلية التسعير الثابتة.',
             ]);
+
+        $this->assertDatabaseCount('orders', 0);
+    }
+
+    public function test_order_rejects_when_terms_are_not_accepted(): void
+    {
+        $lock = $this->issueQuoteLock([
+            'addon_ids' => [0],
+            'addons' => [
+                ['id' => 0, 'name' => $this->addonName(0), 'price' => 123],
+            ],
+        ]);
+
+        $payload = $this->orderPayloadFromLock($lock, [
+            'accept_terms' => false,
+        ]);
+
+        $response = $this->withoutMiddleware($this->middlewareBypass())
+            ->postJson('/api/orders', $payload);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['accept_terms']);
 
         $this->assertDatabaseCount('orders', 0);
     }

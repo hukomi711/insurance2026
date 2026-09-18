@@ -85,6 +85,7 @@ class OrderController extends Controller
 
             // Payment
             'payment_method' => 'nullable|string|in:card,mada,visa,mastercard,tabby,tamara',
+            'accept_terms' => 'required|accepted',
 
             // Quote lock
             'quote_lock_token' => 'nullable|string|max:64',
@@ -92,6 +93,9 @@ class OrderController extends Controller
             // Pricing signature (anti-tampering)
             'pricing_signature' => 'nullable|string|max:255',
             'pricing_timestamp' => 'nullable|integer',
+        ], [
+            'accept_terms.required' => 'يجب الموافقة على الشروط والأحكام قبل المتابعة.',
+            'accept_terms.accepted' => 'يجب الموافقة على الشروط والأحكام قبل المتابعة.',
         ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::warning('Order validation failed', [
@@ -138,7 +142,7 @@ class OrderController extends Controller
         }
 
         $order = DB::transaction(fn () => Order::create(
-            collect($validated)->except(['quote_lock_token', 'addon_ids'])->all()
+            collect($validated)->except(['quote_lock_token', 'addon_ids', 'accept_terms'])->all()
         ));
 
         return response()->json([

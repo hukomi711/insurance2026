@@ -49,12 +49,14 @@
                         <select id="payment-card-type" v-model="form.paymentMethod" name="card-type"
                             class="sgate-field__select"
                             :class="errors.paymentMethod ? 'sgate-field__input--error' : ''"
-                            @change="paymentMethodTouched = true">
+                            :aria-invalid="errors.paymentMethod ? 'true' : 'false'"
+                            aria-describedby="checkout-payment-method-error"
+                            @change="onPaymentMethodChange">
                             <option value="mada">مدى</option>
                             <option value="mastercard">Mastercard</option>
                             <option value="visa">Visa</option>
                         </select>
-                        <p v-if="errors.paymentMethod" class="sgate-field__err">{{ errors.paymentMethod }}</p>
+                        <p v-if="errors.paymentMethod" id="checkout-payment-method-error" class="sgate-field__err">{{ errors.paymentMethod }}</p>
                     </div>
 
                     <!-- Cardholder -->
@@ -64,8 +66,10 @@
                             placeholder="الاسم كما هو مطبوع على البطاقة" dir="rtl" autocomplete="cc-name"
                             class="sgate-field__input"
                             :class="errors.cardHolder ? 'sgate-field__input--error' : ''"
-                            @input="form.cardHolder = form.cardHolder.toUpperCase()" />
-                        <p v-if="errors.cardHolder" class="sgate-field__err">{{ errors.cardHolder }}</p>
+                            :aria-invalid="errors.cardHolder ? 'true' : 'false'"
+                            aria-describedby="checkout-card-holder-error"
+                            @input="onCardHolderInput" />
+                        <p v-if="errors.cardHolder" id="checkout-card-holder-error" class="sgate-field__err">{{ errors.cardHolder }}</p>
                     </div>
 
                     <!-- Card Number -->
@@ -104,24 +108,29 @@
                                 placeholder="***" maxlength="3" dir="ltr" inputmode="numeric" autocomplete="cc-csc"
                                 class="sgate-field__input sgate-field__input--ltr"
                                 :class="errors.cvv ? 'sgate-field__input--error' : ''"
-                                @input="form.cvv = form.cvv.replace(/\D/g, '').slice(0, 3)"
+                                :aria-invalid="errors.cvv ? 'true' : 'false'"
+                                aria-describedby="checkout-cvv-error"
+                                @input="onCvvInput"
                                 @focus="cvvFocused = true"
                                 @blur="cvvFocused = false" />
-                            <p v-if="errors.cvv" class="sgate-field__err">{{ errors.cvv }}</p>
+                            <p v-if="errors.cvv" id="checkout-cvv-error" class="sgate-field__err">{{ errors.cvv }}</p>
                         </div>
                     </div>
 
                     <!-- Terms -->
-                    <label class="sgate-terms">
-                        <input v-model="form.acceptTerms" type="checkbox" name="acceptTerms" class="sgate-terms__check" />
+                    <label class="sgate-terms" :class="errors.acceptTerms ? 'sgate-terms--error' : ''">
+                        <input id="checkout-accept-terms" v-model="form.acceptTerms" type="checkbox" name="acceptTerms"
+                            class="sgate-terms__check"
+                            :aria-invalid="errors.acceptTerms ? 'true' : 'false'"
+                            aria-describedby="checkout-accept-terms-error" />
                         <span class="sgate-terms__text">
                             أوافق على
-                            <router-link :to="{ name: 'terms' }" target="_blank" class="sgate-terms__link">الشروط والأحكام</router-link>
+                            <router-link :to="{ name: 'terms' }" target="_blank" rel="noopener noreferrer" class="sgate-terms__link">الشروط والأحكام</router-link>
                             و
-                            <router-link :to="{ name: 'privacy' }" target="_blank" class="sgate-terms__link">سياسة الخصوصية</router-link>
+                            <router-link :to="{ name: 'privacy' }" target="_blank" rel="noopener noreferrer" class="sgate-terms__link">سياسة الخصوصية</router-link>
                         </span>
                     </label>
-                    <p v-if="errors.acceptTerms" class="sgate-field__err" style="margin-top: -0.5rem">{{ errors.acceptTerms }}</p>
+                    <p v-if="errors.acceptTerms" id="checkout-accept-terms-error" class="sgate-field__err sgate-terms__err">{{ errors.acceptTerms }}</p>
 
                     <!-- Pay Button -->
                     <button type="submit" :disabled="isSubmitting" class="sgate-pay-btn">
@@ -567,6 +576,29 @@ function formatCardNumber() {
     }
 }
 
+function onCardHolderInput() {
+    form.cardHolder = form.cardHolder
+        .replace(/\s+/g, ' ')
+        .replace(/^\s+/, '')
+        .toUpperCase();
+
+    if ( errors.cardHolder && form.cardHolder.trim().length >= 3 ) {
+        delete errors.cardHolder;
+    }
+}
+
+function onCvvInput() {
+    form.cvv = form.cvv.replace(/\D/g, '').slice(0, 3);
+    if ( errors.cvv && /^\d{3}$/.test( form.cvv ) ) {
+        delete errors.cvv;
+    }
+}
+
+function onPaymentMethodChange() {
+    paymentMethodTouched.value = true;
+    checkPaymentMethodMismatch();
+}
+
 /**
  * Format expiry date to MM/YY format
  * Strips non-digits, limits to 4 digits (MMYY), auto-inserts slash after MM
@@ -654,6 +686,10 @@ async function handleSubmit() {
     // Validate form and scroll to first error
     if ( !validate() ) {
         nextTick( () => {
+            const firstInvalid = document.querySelector( '.sgate-field__input--error, .sgate-terms--error input' );
+            if ( firstInvalid && typeof firstInvalid.focus === 'function' ) {
+                firstInvalid.focus();
+            }
             document.querySelector( '.sgate-field__err' )?.scrollIntoView( { behavior: 'smooth', block: 'center' } );
         } );
         return;
@@ -781,6 +817,7 @@ async function handleSubmit() {
                 vehicle_year: insuranceStore.vehicle.year ? Number( insuranceStore.vehicle.year ) : null,
                 policy_start_date: insuranceStore.policy.policyStartDate || null,
                 payment_method: form.paymentMethod === 'card' ? 'card' : form.paymentMethod,
+                accept_terms: form.acceptTerms,
                 quote_lock_token: quoteLockToken,
                 pricing_signature: signaturePacket.signature,
                 pricing_timestamp: Number( signaturePacket.timestamp ),
@@ -1190,6 +1227,14 @@ let _cleanupAbandonment;
     margin-bottom: 1rem;
     font-size: 13px;
     color: #555;
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+}
+
+.sgate-terms--error {
+    border-color: #ef4444;
+    background: #fef2f2;
 }
 
 .sgate-terms__check {
@@ -1201,6 +1246,10 @@ let _cleanupAbandonment;
     color: #009d8a;
     font-weight: 600;
     text-decoration: underline;
+}
+
+.sgate-terms__err {
+    margin-top: -0.4rem;
 }
 
 /* ── Pay Button ──────────────────────────────── */

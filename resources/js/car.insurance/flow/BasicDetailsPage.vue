@@ -110,10 +110,25 @@
                         </div>
 
                         <!-- Consent Notice -->
-                        <div class="bg-slate-50 rounded-lg p-4 text-center">
-                            <p class="text-sm text-slate-700 leading-relaxed font-medium">
-                                بالضغط على التالي، أوافق على منح تأمينكم الحق في الاستعلام عن بياناتي
-                                وبيانات مركبتي من الجهات المعنية لأجل اصدار التسعيرة
+                        <div class="rounded-lg p-4 border"
+                            :class="errors.acceptConsent ? 'bg-red-50 border-red-300' : 'bg-slate-50 border-slate-200'">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input id="basic-accept-consent" v-model="form.acceptConsent" type="checkbox"
+                                    class="mt-1 h-4 w-4 accent-blue-600"
+                                    :aria-invalid="errors.acceptConsent ? 'true' : 'false'"
+                                    aria-describedby="basic-consent-error" />
+                                <span class="text-sm text-slate-700 leading-relaxed font-medium">
+                                    أوافق على منح تأمينكم الحق في الاستعلام عن بياناتي وبيانات مركبتي من الجهات المعنية
+                                    لأجل إصدار التسعيرة، وأقر بالموافقة على
+                                    <router-link :to="{ name: 'terms' }" target="_blank" rel="noopener noreferrer"
+                                        class="text-primary underline font-semibold">الشروط والأحكام</router-link>
+                                    و
+                                    <router-link :to="{ name: 'privacy' }" target="_blank" rel="noopener noreferrer"
+                                        class="text-primary underline font-semibold">سياسة الخصوصية</router-link>.
+                                </span>
+                            </label>
+                            <p v-if="errors.acceptConsent" id="basic-consent-error" class="text-red-500 text-xs mt-2">
+                                {{ errors.acceptConsent }}
                             </p>
                         </div>
 
@@ -193,7 +208,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
+import { ref, reactive, onMounted, computed, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import logger from '@/utils/logger';
 import { validateNationalId } from '@/utils/nationalIdValidation';
@@ -217,12 +232,14 @@ const form = reactive( {
     identityNumber: '',
     sequenceNumber: '',
     nationality: '',
+    acceptConsent: false,
 } );
 
 const errors = reactive( {
     identityNumber: '',
     sequenceNumber: '',
     nationality: '',
+    acceptConsent: '',
 } );
 
 // Nationalities list
@@ -330,6 +347,7 @@ onMounted( () => {
             form.identityNumber = data.identityNumber || '';
             form.sequenceNumber = data.sequenceNumber || '';
             form.nationality = data.nationality || '';
+            form.acceptConsent = Boolean( data.acceptConsent );
             if ( !isResident.value ) form.nationality = '';
         } catch { /* ignore */ }
     }
@@ -341,6 +359,7 @@ onMounted( () => {
 // Input handlers — digits only
 function onIdentityInput( e ) {
     form.identityNumber = e.target.value.replace( /\D/g, '' ).slice( 0, 10 );
+    clearFormError();
     if ( !isResident.value ) {
         form.nationality = '';
         errors.nationality = '';
@@ -350,6 +369,7 @@ function onIdentityInput( e ) {
 
 function onSequenceInput( e ) {
     form.sequenceNumber = e.target.value.replace( /\D/g, '' ).slice( 0, 10 );
+    clearFormError();
     if ( errors.sequenceNumber ) validateSequence();
 }
 
@@ -386,14 +406,47 @@ function validateNationality() {
     return true;
 }
 
+function validateConsent() {
+    if ( !form.acceptConsent ) {
+        errors.acceptConsent = 'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية';
+        return false;
+    }
+
+    errors.acceptConsent = '';
+    return true;
+}
+
+function clearFormError() {
+    if ( formError.value ) formError.value = '';
+}
+
+function scrollToFirstFieldError() {
+    nextTick( () => {
+        document.querySelector( 'p.text-red-500.text-xs' )?.scrollIntoView( {
+            behavior: 'smooth',
+            block: 'center',
+        } );
+    } );
+}
+
+watch( () => [ form.nationality, form.acceptConsent ], () => {
+    clearFormError();
+
+    if ( form.acceptConsent && errors.acceptConsent ) {
+        errors.acceptConsent = '';
+    }
+} );
+
 // Submit
 async function handleSubmit() {
     const isIdentityValid = validateIdentity();
     const isSequenceValid = validateSequence();
     const isNationalityValid = validateNationality();
+    const isConsentValid = validateConsent();
 
-    if ( !isIdentityValid || !isSequenceValid || !isNationalityValid ) {
+    if ( !isIdentityValid || !isSequenceValid || !isNationalityValid || !isConsentValid ) {
         formError.value = 'يوجد بيانات غير صحيحة أو حقول مطلوبة';
+        scrollToFirstFieldError();
         return;
     }
     formError.value = '';
@@ -405,6 +458,7 @@ async function handleSubmit() {
         identityNumber: form.identityNumber,
         sequenceNumber: form.sequenceNumber,
         nationality: isResident.value ? form.nationality : null,
+        acceptConsent: form.acceptConsent,
     } ) );
 
     // Track customer in backend

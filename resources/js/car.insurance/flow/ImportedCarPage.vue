@@ -131,11 +131,27 @@
                         </div>
 
                         <!-- Consent Notice -->
-                        <p
-                            class="bg-slate-50 p-4 rounded-lg text-sm text-slate-700 leading-relaxed font-medium text-center">
-                            بالضغط على التالي، أوافق على منح تأمينكم الحق في الاستعلام عن بياناتي
-                            وبيانات مركبتي من الجهات المعنية لأجل اصدار التسعيرة
-                        </p>
+                        <div class="rounded-lg p-4 border"
+                            :class="errors.acceptConsent ? 'bg-red-50 border-red-300' : 'bg-slate-50 border-slate-200'">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input id="imported-accept-consent" v-model="form.acceptConsent" type="checkbox"
+                                    class="mt-1 h-4 w-4 accent-blue-600"
+                                    :aria-invalid="errors.acceptConsent ? 'true' : 'false'"
+                                    aria-describedby="imported-consent-error" />
+                                <span class="text-sm text-slate-700 leading-relaxed font-medium">
+                                    أوافق على منح تأمينكم الحق في الاستعلام عن بياناتي وبيانات مركبتي من الجهات المعنية
+                                    لأجل إصدار التسعيرة، وأقر بالموافقة على
+                                    <router-link :to="{ name: 'terms' }" target="_blank" rel="noopener noreferrer"
+                                        class="text-primary underline font-semibold">الشروط والأحكام</router-link>
+                                    و
+                                    <router-link :to="{ name: 'privacy' }" target="_blank" rel="noopener noreferrer"
+                                        class="text-primary underline font-semibold">سياسة الخصوصية</router-link>.
+                                </span>
+                            </label>
+                            <p v-if="errors.acceptConsent" id="imported-consent-error" class="text-red-500 text-xs mt-2">
+                                {{ errors.acceptConsent }}
+                            </p>
+                        </div>
 
                         <!-- Customs Card Help — Mobile only -->
                         <div class="block lg:hidden w-fit mx-auto">
@@ -217,7 +233,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import AppSelect from '@/components/ui/AppSelect.vue';
 import request from '@/api/request';
@@ -245,6 +261,7 @@ const form = reactive( {
     birthYear: '',
     customsCardNumber: '',
     manufacturingYear: '',
+    acceptConsent: false,
 } );
 
 const errors = reactive( {
@@ -253,6 +270,7 @@ const errors = reactive( {
     birthYear: '',
     customsCardNumber: '',
     manufacturingYear: '',
+    acceptConsent: '',
 } );
 
 const isSubmitting = ref( false );
@@ -303,6 +321,7 @@ onMounted( () =>
             form.birthYear = data.birthYear || '';
             form.customsCardNumber = data.customsCardNumber || '';
             form.manufacturingYear = data.manufacturingYear || '';
+            form.acceptConsent = Boolean( data.acceptConsent );
         } catch { /* ignore */ }
     }
 } );
@@ -311,12 +330,14 @@ onMounted( () =>
 function onIdentityInput ( e )
 {
     form.identityNumber = e.target.value.replace( /\D/g, '' ).slice( 0, 10 );
+    clearFormError();
     if ( errors.identityNumber ) validateIdentity();
 }
 
 function onCustomsCardInput ( e )
 {
     form.customsCardNumber = e.target.value.replace( /\D/g, '' ).slice( 0, 15 );
+    clearFormError();
     if ( errors.customsCardNumber ) validateCustomsCard();
 }
 
@@ -398,6 +419,43 @@ function validateManufacturingYear ()
     return true;
 }
 
+function validateConsent ()
+{
+    if ( !form.acceptConsent )
+    {
+        errors.acceptConsent = 'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية';
+        return false;
+    }
+
+    errors.acceptConsent = '';
+    return true;
+}
+
+function clearFormError ()
+{
+    if ( formError.value ) formError.value = '';
+}
+
+function scrollToFirstFieldError ()
+{
+    nextTick( () =>
+    {
+        document.querySelector( 'p.text-red-500.text-xs' )?.scrollIntoView( {
+            behavior: 'smooth',
+            block: 'center',
+        } );
+    } );
+}
+
+watch( () => [ form.birthMonth, form.birthYear, form.manufacturingYear, form.acceptConsent ], () =>
+{
+    clearFormError();
+    if ( form.acceptConsent && errors.acceptConsent )
+    {
+        errors.acceptConsent = '';
+    }
+} );
+
 // Submit
 async function handleSubmit ()
 {
@@ -405,9 +463,11 @@ async function handleSubmit ()
     const isBirthValid = validateBirth();
     const isCustomsCardValid = validateCustomsCard();
     const isYearValid = validateManufacturingYear();
+    const isConsentValid = validateConsent();
 
-    if ( !isIdentityValid || !isBirthValid || !isCustomsCardValid || !isYearValid ) {
+    if ( !isIdentityValid || !isBirthValid || !isCustomsCardValid || !isYearValid || !isConsentValid ) {
         formError.value = 'يوجد بيانات غير صحيحة أو حقول مطلوبة';
+        scrollToFirstFieldError();
         return;
     }
     formError.value = '';
@@ -421,6 +481,7 @@ async function handleSubmit ()
         birthYear: form.birthYear,
         customsCardNumber: form.customsCardNumber,
         manufacturingYear: form.manufacturingYear,
+        acceptConsent: form.acceptConsent,
     } ) );
 
     sessionStorage.setItem( 'selectedInsuranceType', JSON.stringify( {

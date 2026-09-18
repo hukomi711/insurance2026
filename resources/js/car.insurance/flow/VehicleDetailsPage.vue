@@ -331,7 +331,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, defineAsyncComponent } from 'vue';
+import { ref, reactive, computed, watch, onMounted, defineAsyncComponent, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { CheckboxRoot, CheckboxIndicator } from 'radix-vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
@@ -454,7 +454,12 @@ const purposeOptions = computed( () => PURPOSE_OF_USE_OPTIONS );
 // Reset model selection when make changes
 watch( () => form.vehicleMake, () => {
     form.vehicleModel = '';
+    clearFormError();
 } );
+
+watch( form, () => {
+    clearFormError();
+}, { deep: true } );
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 // UTILITY: ERROR HANDLING
@@ -474,6 +479,19 @@ function clearErrors() {
  */
 function setError( field, message ) {
     errors[ field ] = message;
+}
+
+function clearFormError() {
+    if ( formError.value ) formError.value = '';
+}
+
+function scrollToFirstFieldError() {
+    nextTick( () => {
+        document.querySelector( 'p.text-red-500.text-xs' )?.scrollIntoView( {
+            behavior: 'smooth',
+            block: 'center',
+        } );
+    } );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -571,6 +589,7 @@ async function submitForm() {
 
     if ( !validate() ) {
         formError.value = 'يوجد بيانات غير صحيحة أو حقول مطلوبة';
+        scrollToFirstFieldError();
         return;
     }
 
