@@ -89,6 +89,8 @@ class QuoteLockOrderTamperingTest extends TestCase
     public function test_quote_lock_uses_server_addon_prices_and_ignores_client_tampering(): void
     {
         $lock = $this->issueQuoteLock([
+            'plan_sub_type' => 'comprehensive',
+            'insurance_type' => 'comprehensive',
             'addon_ids' => [0, 1],
             'addons' => [
                 ['id' => 0, 'name' => $this->addonName(0), 'price' => 1],
@@ -96,10 +98,10 @@ class QuoteLockOrderTamperingTest extends TestCase
             ],
         ]);
 
-        // company 1 (499) + deductible 1000 (0) + addons (85 + 510)
-        $this->assertEqualsWithDelta(1094.0, (float) $lock['subtotal'], 0.001);
-        $this->assertEqualsWithDelta(164.1, (float) $lock['vat_amount'], 0.001);
-        $this->assertEqualsWithDelta(1258.1, (float) $lock['total'], 0.001);
+        // company 1 (499) + comprehensive gap (250) + deductible 1000 (0) + addons (85 + 510)
+        $this->assertEqualsWithDelta(1344.0, (float) $lock['subtotal'], 0.001);
+        $this->assertEqualsWithDelta(201.6, (float) $lock['vat_amount'], 0.001);
+        $this->assertEqualsWithDelta(1545.6, (float) $lock['total'], 0.001);
 
         $snapshot = Cache::get('quote_lock:' . $lock['quote_lock_token']);
         $this->assertIsArray($snapshot);

@@ -2,7 +2,8 @@
  * Active fixed-pricing constants.
  *
  * Final formula (pre-VAT):
- * company base price + deductible increase + selected addons total
+ * company base price + comprehensive fixed gap (if applicable)
+ * + deductible increase + selected addons total
  */
 
 /** VAT rate */
@@ -27,6 +28,9 @@ export const FIXED_COMPANY_PRICES = {
     21: 3249,
     17: 3499,
 };
+
+/** Fixed surcharge for comprehensive plans (SAR) */
+export const COMPREHENSIVE_FIXED_GAP = 250;
 
 /** Deductible increase table (SAR) */
 export const DEDUCTIBLE_INCREASE = {

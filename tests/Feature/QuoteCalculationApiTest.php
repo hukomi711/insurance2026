@@ -77,7 +77,7 @@ class QuoteCalculationApiTest extends TestCase
         // First quote: comprehensive — fixed price, no dynamic factors
         $this->assertEquals(2, $data['quotes'][0]['companyId']);
         $this->assertEquals('comprehensive', $data['quotes'][0]['subType']);
-        $this->assertEquals(2149, $data['quotes'][0]['annualPrice']);
+        $this->assertEquals(2399, $data['quotes'][0]['annualPrice']);
 
         // Second quote: third party — fixed price, no dynamic factors
         $this->assertEquals(1, $data['quotes'][1]['companyId']);
@@ -169,8 +169,8 @@ class QuoteCalculationApiTest extends TestCase
         $response2 = $this->postJson('/api/quotes/calculate', $payload);
         $price2 = $response2->json('quotes.0.annualPrice');
 
-        $this->assertEquals(749, $price1);
-        $this->assertEquals(999, $price2);
+        $this->assertEquals(999, $price1);
+        $this->assertEquals(1249, $price2);
         $this->assertGreaterThan($price1, $price2);
     }
 

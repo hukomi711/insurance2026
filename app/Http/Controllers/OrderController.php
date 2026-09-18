@@ -260,7 +260,9 @@ class OrderController extends Controller
             $recalculated = $this->pricingService->calculateLockedTotals(
                 (int) $companyId,
                 $deductible,
-                $addonIds
+                $addonIds,
+                $planSubType,
+                $type === 'comprehensive' ? 'comprehensive' : null
             );
 
             foreach (['subtotal', 'vatAmount', 'totalWithVAT'] as $recalculatedField) {

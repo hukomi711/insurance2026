@@ -2,6 +2,7 @@
 import request from './request';
 import { vehiclePlans, companies, getCompany } from '@/data';
 import {
+    COMPREHENSIVE_FIXED_GAP,
     DEDUCTIBLE_INCREASE,
     DEDUCTIBLE_OPTIONS,
     FIXED_COMPANY_PRICES,
@@ -62,11 +63,11 @@ function applyRepairLocation ( plans, repairMethod )
 function clearSignatureFields ( plan )
 {
     const {
-        signature,
-        timestamp,
-        expiresAt,
-        totalWithVATHalalas,
-        priceUnit,
+        signature: _signature,
+        timestamp: _timestamp,
+        expiresAt: _expiresAt,
+        totalWithVATHalalas: _totalWithVATHalalas,
+        priceUnit: _priceUnit,
         ...rest
     } = plan;
     return rest;
@@ -100,11 +101,13 @@ function localPricedPlans ( plans )
     const VAT_RATE = 0.15;
     return plans.map( clearSignatureFields ).map( plan =>
     {
+        const subType = String( plan.subType || '' );
+        const comprehensiveSurcharge = subType === 'comprehensive' ? Number( COMPREHENSIVE_FIXED_GAP ) : 0;
         const companyId = Number( plan.companyId );
         const basePrice = Number( FIXED_COMPANY_PRICES[ companyId ] ?? plan.basePrice ?? 0 );
         const deductible = normalizeDeductible( plan.deductible );
         const deductibleIncrease = Number( DEDUCTIBLE_INCREASE[ deductible ] ?? 0 );
-        const annualPrice = basePrice + deductibleIncrease;
+        const annualPrice = basePrice + comprehensiveSurcharge + deductibleIncrease;
         const vatAmount = Math.round( annualPrice * VAT_RATE * 100 ) / 100;
 
         return unsignedPlan( {

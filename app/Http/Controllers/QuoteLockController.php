@@ -32,7 +32,9 @@ class QuoteLockController extends Controller
         $totals = $this->pricingService->calculateLockedTotals(
             (int) $validated['company_id'],
             $deductible,
-            $addonIds
+            $addonIds,
+            $validated['plan_sub_type'] ?? null,
+            $validated['insurance_type'] ?? null
         );
 
         $subtotal = $totals['subtotal'];

@@ -4,7 +4,8 @@
  * Fixed pricing configuration (single source of truth).
  *
  * Active formula (pre-VAT):
- * base company price + deductible increase + selected addons total
+ * base company price + comprehensive fixed gap (if applicable)
+ * + deductible increase + selected addons total
  */
 
 return [
@@ -31,6 +32,9 @@ return [
         21 => 3249,
         17 => 3499,
     ],
+
+    // Fixed surcharge for comprehensive plans (SAR).
+    'comprehensive_fixed_gap' => 250,
 
     // Deductible increase amounts (SAR).
     'deductible_increase' => [

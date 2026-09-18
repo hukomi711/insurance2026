@@ -8,7 +8,8 @@ use App\Models\Plan;
  * Simple Pricing Service - Fixed company pricing contract.
  *
  * Final formula (pre-VAT):
- * base company price + deductible increase + selected addons total
+ * base company price + comprehensive fixed gap (if applicable)
+ * + deductible increase + selected addons total
  *
  * Vehicle value and risk factors must not affect price.
  */
@@ -90,20 +91,28 @@ class SimplePricingService
      *
      * This method is used by checkout locking/verification paths.
      */
-    public function calculateLockedTotals(int $companyId, int $deductible = self::DEFAULT_DEDUCTIBLE, array $addonIds = []): array
+    public function calculateLockedTotals(
+        int $companyId,
+        int $deductible = self::DEFAULT_DEDUCTIBLE,
+        array $addonIds = [],
+        ?string $planSubType = null,
+        ?string $insuranceType = null
+    ): array
     {
         $basePrice = $this->resolveCompanyBasePrice($companyId);
+        $comprehensiveSurcharge = $this->resolveComprehensiveSurcharge($planSubType, $insuranceType);
         $normalizedDeductible = $this->normalizeDeductible($deductible);
         $deductibleIncrease = $this->resolveDeductibleIncrease($normalizedDeductible);
         $normalizedAddonIds = $this->normalizeAddonIds($addonIds);
         $addonsBreakdown = $this->resolveAddonsBreakdown($normalizedAddonIds);
 
-        $subtotal = round($basePrice + $deductibleIncrease + $addonsBreakdown['addonsTotal'], 2);
+        $subtotal = round($basePrice + $comprehensiveSurcharge + $deductibleIncrease + $addonsBreakdown['addonsTotal'], 2);
         $vatAmount = round($subtotal * self::VAT_RATE, 2);
         $totalWithVAT = round($subtotal + $vatAmount, 2);
 
         return [
             'basePrice' => $basePrice,
+            'comprehensiveSurcharge' => $comprehensiveSurcharge,
             'deductible' => $normalizedDeductible,
             'deductibleIncrease' => $deductibleIncrease,
             'addonIds' => $normalizedAddonIds,
@@ -123,13 +132,20 @@ class SimplePricingService
         $companyId = (int) ($plan['companyId'] ?? 0);
         $subType = (string) ($plan['subType'] ?? '');
 
-        $totals = $this->calculateLockedTotals($companyId, $effectiveDeductible, $addonIds);
+        $totals = $this->calculateLockedTotals(
+            $companyId,
+            $effectiveDeductible,
+            $addonIds,
+            $subType,
+            null
+        );
 
         $annualPrice = round($totals['subtotal'], 2);
         $monthlyPrice = round($annualPrice / 12, 2);
 
         $priceComponents = [
             'basePrice' => $totals['basePrice'],
+            'comprehensiveSurcharge' => $totals['comprehensiveSurcharge'],
             'deductibleIncrease' => $totals['deductibleIncrease'],
             'addonsTotal' => $totals['addonsTotal'],
         ];
@@ -158,6 +174,18 @@ class SimplePricingService
             ],
             'notes' => 'Fixed pricing contract: company base + deductible increase + addons; vehicle value ignored.',
         ];
+    }
+
+    private function resolveComprehensiveSurcharge(?string $planSubType, ?string $insuranceType): float
+    {
+        $isComprehensive = strcasecmp((string) $planSubType, 'comprehensive') === 0
+            || strcasecmp((string) $insuranceType, 'comprehensive') === 0;
+
+        if (! $isComprehensive) {
+            return 0.0;
+        }
+
+        return (float) ($this->config['comprehensive_fixed_gap'] ?? 0);
     }
 
     private function resolveEffectiveDeductible(array $plan, array $policy): int

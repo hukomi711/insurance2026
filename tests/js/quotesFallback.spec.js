@@ -77,7 +77,7 @@ describe( 'quotes API fallback policy', () =>
         const result = await getQuotes( formData, sourcePlans );
 
         expect( result.plans ).toHaveLength( 1 );
-        expect( result.plans[ 0 ].annualPrice ).toBe( 499 );
+        expect( result.plans[ 0 ].annualPrice ).toBe( 749 );
         expect( result.plans[ 0 ].signature ).toBeNull();
     } );
 
@@ -90,9 +90,23 @@ describe( 'quotes API fallback policy', () =>
             const result = await getQuotes( formData, sourcePlans );
 
             expect( result.plans ).toHaveLength( 1 );
-            expect( result.plans[ 0 ].annualPrice ).toBe( 499 );
+            expect( result.plans[ 0 ].annualPrice ).toBe( 749 );
         }
     );
+
+    it( 'applies no comprehensive surcharge for third-party plans in fallback mode', async () =>
+    {
+        mocks.post.mockRejectedValue( httpError( 503 ) );
+
+        const thirdPartyPlans = [
+            { id: 2, companyId: 1, subType: 'thirdParty', deductible: 1000 },
+        ];
+
+        const result = await getQuotes( formData, thirdPartyPlans );
+
+        expect( result.plans ).toHaveLength( 1 );
+        expect( result.plans[ 0 ].annualPrice ).toBe( 499 );
+    } );
 
     it( 'does not hide an unrelated programming error', async () =>
     {
