@@ -260,3 +260,4 @@ To reduce abuse risk, copyright disputes, and domain suspension exposure, the pr
 ## License
 
 Proprietary — All rights reserved.
+# insurance2026
