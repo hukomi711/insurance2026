@@ -12,9 +12,10 @@ import logger from '@/utils/logger';
 const STORAGE_KEY = 'admin-notification-sounds-enabled';
 const SOUND_COOLDOWN_MS = 1_000;
 const SOUND_SOURCES = {
-    newData: '/sounds/new-data.wav',
-    payment: '/sounds/payment.wav',
-    otp: '/sounds/otp.wav',
+    newData: '/sounds/new-data.mp3',
+    payment: '/sounds/payment.mp3',
+    otp: '/sounds/otp.mp3',
+    quietNotification: '/sounds/quiet-notification-sound.mp3',
 };
 
 function loadPreference ()
@@ -179,6 +180,7 @@ async function play ( type )
 export function playNewData () { return play( 'newData' ); }
 export function playPayment () { return play( 'payment' ); }
 export function playOtp ()     { return play( 'otp' ); }
+export function playQuietNotification () { return play( 'quietNotification' ); }
 
 export function useAdminSounds ()
 {
@@ -192,5 +194,6 @@ export function useAdminSounds ()
         playNewData,
         playPayment,
         playOtp,
+        playQuietNotification,
     };
 }

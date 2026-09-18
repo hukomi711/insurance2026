@@ -15,7 +15,7 @@
                     </svg>
                 </div>
                 <div class="flex flex-col justify-center">
-                    <span class="text-xs">اشتر وثيقتك واستمتع بخصومات تصل الى 30% على تأمينك</span>
+                    <span class="text-xs">اشتر وثيقتك واستمتع بأسعار تبدأ من 499 ر.س على تأمينك</span>
                 </div>
             </div>
 

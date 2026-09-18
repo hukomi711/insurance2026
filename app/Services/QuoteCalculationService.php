@@ -1,42 +1,31 @@
 <?php
-
 namespace App\Services;
 
 use App\Models\PricingLog;
 use Carbon\Carbon;
 
 /**
- * Quote Calculation Service
+ * Quote Calculation Service — SIMPLIFIED PRICING MODEL
  *
- * 1:1 PHP port of resources/js/utils/pricingEngine.js
- * Uses config/pricing.php for all factor constants.
+ * NEW (2026-09-18): Fixed pricing model
+ * Formula: finalPrice = FIXED_COMPANY_PRICES[companyId] + DEDUCTIBLE_INCREASE[deductible] + sum(addonsPrice)
  *
- * Same formula: rawPrice = basePrice × vehicle × driver × lifestyle × policy × company × ncd
- * Then clamp to PRICE_LIMITS, round to nearest 10.
+ * No dynamic factors. All prices are fixed per company.
+ * vehicleValue, driverAge, accidents, etc. do NOT affect final price.
  *
- * NEW: Includes digital signatures + audit logging
+ * Still includes digital signatures + audit logging for compliance
  */
 class QuoteCalculationService
 {
     private array $config;
     private PricingSignatureService $signatureService;
 
-    public function __construct(
-        PricingSignatureService $signatureService
-    ) {
+    public function __construct(PricingSignatureService $signatureService)
+    {
         $this->config = config('pricing');
         $this->signatureService = $signatureService;
     }
 
-    /**
-     * Calculate pricing for multiple plans (batch).
-     *
-        * @param  array  $plans    [{ id?, companyId, subType, deductible }, ...]
-     * @param  array  $vehicle  { year, make, estimatedValue, purposeOfUse, carModification, hasTrailer, transmissionType }
-     * @param  array  $driver   { dateOfBirth, drivingExperience, accidentCounts, trafficViolations, education, foreignLicense, healthConditions, ncdYears, city, nightParking, expectedKM, additionalDrivers }
-     * @param  array  $policy   { repairMethod, deductible? }
-        * @return array  [ { id?, companyId, subType, annualPrice, monthlyPrice, vatAmount, totalWithVAT, basePrice, pricingFactors, notes, signature, timestamp }, ... ]
-     */
     public function calculateForPlans(array $plans, array $vehicle, array $driver, array $policy): array
     {
         return array_map(
@@ -45,64 +34,30 @@ class QuoteCalculationService
         );
     }
 
-    /**
-     * Calculate pricing for multiple plans WITH digital signatures (for checkout).
-     *
-     * @param  array  $plans
-     * @param  array  $vehicle
-     * @param  array  $driver
-     * @param  array  $policy
-     * @param  bool   $logCalculation - If true, logs to PricingLog table
-     * @return array  [ { ...quote, signature, timestamp }, ... ]
-     */
     public function calculateForPlansWithSignature(array $plans, array $vehicle, array $driver, array $policy, bool $logCalculation = false): array
     {
         $quotes = $this->calculateForPlans($plans, $vehicle, $driver, $policy);
 
         return array_map(function (array $quote) use ($logCalculation) {
-            // Generate signature for this quote.
-            // NOTE: planId is kept as string to avoid (int) cast collapsing slug ids
-            // like "tawuniya_basic" or "quote_abc123" to 0. PricingSignatureService
-            // canonicalises to string internally so numeric ids still match.
-            // NOTE: totalWithVAT is currently signed in SAR integer units (not halalas)
-            // because OrderController::validatePricing() also passes (int) $total in SAR.
-            // Switching to halalas requires a coordinated change across frontend +
-            // OrderController + this service in the same release.
-            $planId = ! empty($quote['id'])
-                ? (string) $quote['id']
-                : "{$quote['companyId']}_{$quote['subType']}";
+            $planId = !empty($quote['id']) ? (string) $quote['id'] : "{$quote['companyId']}_{$quote['subType']}";
+            $totalWithVATSar = (int) $quote['totalWithVAT'];
 
-            $totalWithVATSar     = (int) $quote['totalWithVAT'];
-            $totalWithVATHalalas = $totalWithVATSar * 100;
+            $sigPacket = $this->signatureService->generateSignature($planId, $totalWithVATSar);
 
-            $sigPacket = $this->signatureService->generateSignature(
-                $planId,
-                $totalWithVATSar
-            );
-
-            // Log this calculation only when explicitly requested by the caller.
-            // Default is off to avoid bloating pricing_logs on every quote-listing view;
-            // checkout / payment submission should opt-in.
             if ($logCalculation) {
                 $this->logCalculation($quote, $planId, 'quote_calculation');
             }
 
             return array_merge($quote, [
-                // Informational halalas field for clients ready to migrate.
-                // The signature itself still covers the SAR value above; switching the
-                // signed unit is a separate coordinated release (see comment above).
-                'totalWithVATHalalas' => $totalWithVATHalalas,
-                'priceUnit'           => 'SAR',
-                'signature'           => $sigPacket['signature'],
-                'timestamp'           => $sigPacket['timestamp'],
-                'expiresAt'           => $sigPacket['expiresAt'],
+                'totalWithVATHalalas' => $totalWithVATSar * 100,
+                'priceUnit' => 'SAR',
+                'signature' => $sigPacket['signature'],
+                'timestamp' => $sigPacket['timestamp'],
+                'expiresAt' => $sigPacket['expiresAt'],
             ]);
         }, $quotes);
     }
 
-    /**
-     * Log a pricing calculation for audit trail.
-     */
     private function logCalculation(array $quote, string|int $planId, string $context): void
     {
         try {
@@ -128,364 +83,83 @@ class QuoteCalculationService
                 ],
             ]);
         } catch (\Exception $e) {
-            // Log error but don't break pricing calculation
             logger()->warning('Failed to log pricing calculation', ['error' => $e->getMessage()]);
         }
     }
 
-    /**
-     * Calculate pricing for a single plan.
-     */
     public function calculateSinglePlan(array $plan, array $vehicle, array $driver, array $policy): array
     {
-        $basePremiums = $this->config['base_premiums'];
-        $basePrice = $basePremiums[$plan['subType']] ?? 800;
-
-        // Risk factors
-        $vehicleFactor   = $this->getVehicleRiskFactor($vehicle);
-        $driverFactor    = $this->getDriverRiskFactor($driver);
-        $lifestyleFactor = $this->getLifestyleRiskFactor($driver);
-
-        // Policy factor — policy.deductible overrides plan.deductible
-        $effectiveDeductible = $policy['deductible'] ?? ($plan['deductible'] ?? null);
-        $policyFactor = $this->getPolicyFactor($policy, $effectiveDeductible);
-
-        // Company factor
-        $companyFactor = $this->getCompanyFactor($plan);
-
-        // NCD factor
-        $ncdFactor = $this->getNcdFactor($driver['ncdYears'] ?? null);
-
-        // Coverage limit factor (comprehensive, vehicleDamagePlus, thirdPartyPlus)
-        $coverageFactor = $this->getCoverageLimitFactor(
-            $policy['coverageLimit'] ?? null,
-            $plan['subType'] ?? null
-        );
-
-        // Raw price
-        $rawPrice = $basePrice * $vehicleFactor * $driverFactor * $lifestyleFactor
-                    * $policyFactor * $companyFactor * $ncdFactor * $coverageFactor;
-
-        // Clamp to limits
-        $limits = $this->config['price_limits'][$plan['subType']] ?? ['min' => 500, 'max' => 8000];
-        $clampedPrice = max($limits['min'], min($limits['max'], $rawPrice));
-
-        // Round to nearest 10
-        $annualBeforeDiscount = (int) (round($clampedPrice / 10) * 10);
-
-        // Promotional discount (configurable via PRICING_PROMO_FACTOR / config('pricing.promotional_discount_factor'))
-        $discountFactor = (float) ($this->config['promotional_discount_factor'] ?? 1.0);
-        $annualPrice    = (int) (round(($annualBeforeDiscount * $discountFactor) / 10) * 10);
-        $originalPrice  = $annualBeforeDiscount;
-
-        $monthlyPrice = (int) ceil($annualPrice / 12);
-        $vatRate      = $this->config['vat_rate'];
-        $vatAmount    = (int) round($annualPrice * $vatRate);
-        $totalWithVAT = $annualPrice + $vatAmount;
-
-        // Notes for nullable fields
-        $notes = [];
-        if (empty($driver['drivingExperience'])) {
-            $notes['drivingExperience'] = 'neutral (missing)';
-        }
-        if (empty($driver['ncdYears']) && ($driver['ncdYears'] ?? null) !== '0') {
-            $notes['ncdYears'] = 'neutral (missing)';
-        } else {
-            $notes['ncdYears'] = 'applied';
-        }
-
-        return [
-            'id'             => $plan['id'] ?? null,
-            'companyId'      => $plan['companyId'],
-            'subType'        => $plan['subType'],
-            'annualPrice'    => $annualPrice,
-            'originalPrice'  => $originalPrice,
-            'monthlyPrice'   => $monthlyPrice,
-            'vatAmount'      => $vatAmount,
-            'totalWithVAT'   => $totalWithVAT,
-            'basePrice'      => $basePrice,
-            'pricingFactors' => [
-                'vehicle'   => round($vehicleFactor, 3),
-                'driver'    => round($driverFactor, 3),
-                'lifestyle' => round($lifestyleFactor, 3),
-                'policy'    => round($policyFactor, 3),
-                'company'   => $companyFactor,
-                'ncd'       => $ncdFactor,
-                'coverage'  => round($coverageFactor, 3),
-                'promo'     => $discountFactor,
-                'total'     => round(
-                    $vehicleFactor * $driverFactor * $lifestyleFactor
-                    * $policyFactor * $companyFactor * $ncdFactor * $coverageFactor,
-                    3
-                ),
-            ],
-            'notes' => $notes,
-        ];
-    }
-
-    // ═══════════════════════════════════════════════
-    //  Vehicle Risk Factors
-    // ═══════════════════════════════════════════════
-
-    private function getVehicleRiskFactor(array $v): float
-    {
-        return $this->getVehicleAgeFactor($v['year'] ?? null)
-             * $this->getManufacturerFactor($v['make'] ?? null)
-             * $this->getVehicleValueFactor($v['estimatedValue'] ?? null)
-             * $this->getPurposeFactor($v['purposeOfUse'] ?? null)
-             * $this->getModificationFactor($v['carModification'] ?? 'no')
-             * $this->getTrailerFactor($v['hasTrailer'] ?? 'no')
-             * $this->getTransmissionFactor($v['transmissionType'] ?? null);
-    }
-
-    private function getVehicleAgeFactor(mixed $year): float
-    {
-        if (!$year) return 1.0;
-        $currentYear = Carbon::now()->year;
-        $age = $currentYear - (int) $year;
-        foreach ($this->config['vehicle_age_factors'] as $entry) {
-            if ($age <= $entry['maxAge']) {
-                return $entry['factor'];
-            }
-        }
-        return 1.0;
-    }
-
-    private function getManufacturerFactor(mixed $makeId): float
-    {
-        $manufacturerFactors = $this->config['manufacturer_factors'] ?? [];
-        if (empty($manufacturerFactors) || !$makeId) {
-            return 1.0;
-        }
-        return $manufacturerFactors[(string) $makeId] ?? 1.0;
-    }
-
-    private function getVehicleValueFactor(mixed $value): float
-    {
-        if (!$value) return 1.0;
-        $val = (int) $value;
-        foreach ($this->config['vehicle_value_factors'] as $entry) {
-            if ($val <= $entry['maxValue']) {
-                return $entry['factor'];
-            }
-        }
-        return 1.0;
-    }
-
-    private function getPurposeFactor(mixed $purpose): float
-    {
-        return $this->config['purpose_factors'][$purpose] ?? 1.0;
-    }
-
-    private function getModificationFactor(string $hasModification): float
-    {
-        return $hasModification === 'yes' ? $this->config['modification_factor'] : 1.0;
-    }
-
-    private function getTrailerFactor(string $hasTrailer): float
-    {
-        return $hasTrailer === 'yes' ? $this->config['trailer_factor'] : 1.0;
-    }
-
-    private function getTransmissionFactor(mixed $type): float
-    {
-        $transmissionFactors = $this->config['transmission_factors'] ?? [];
-        if (empty($transmissionFactors) || !$type) {
-            return 1.0;
-        }
-        return $transmissionFactors[(string) $type] ?? 1.0;
-    }
-
-    // ═══════════════════════════════════════════════
-    //  Driver Risk Factors
-    // ═══════════════════════════════════════════════
-
-    private function getDriverRiskFactor(array $d): float
-    {
-        return $this->getDriverAgeFactor($d['dateOfBirth'] ?? null)
-             * $this->getExperienceFactor($d['drivingExperience'] ?? null)
-             * $this->getAccidentFactor($d['accidentCounts'] ?? '0')
-             * $this->getViolationFactor($d['trafficViolations'] ?? 'no')
-             * $this->getEducationFactor($d['education'] ?? null)
-             * $this->getForeignLicenseFactor($d['foreignLicense'] ?? 'no')
-             * $this->getHealthConditionFactor($d['healthConditions'] ?? 'no')
-             * $this->getAdditionalDriversFactor($d['additionalDrivers'] ?? []);
-    }
-
-    private function getDriverAgeFactor(mixed $dateOfBirth): float
-    {
-        if (!$dateOfBirth) return 1.0;
-
         try {
-            $dob = Carbon::parse($dateOfBirth);
-            $age = $dob->age;
-        } catch (\Exception) {
-            return 1.0;
-        }
+            // 1. COMPANY BASE PRICE (fixed, no factors)
+            $companyId = $plan['companyId'] ?? 1;
+            $fixedPrices = config('pricing.fixed_company_prices', []);
+            $basePrice = $fixedPrices[$companyId] ?? 499;
 
-        foreach ($this->config['driver_age_factors'] as $entry) {
-            if ($age <= $entry['maxAge']) {
-                return $entry['factor'];
+            // 2. DEDUCTIBLE INCREASE
+            $deductible = $policy['deductible'] ?? $plan['deductible'] ?? 1000;
+            $deductibleTable = config('pricing.deductible_increase', []);
+            $deductibleIncrease = $deductibleTable[$deductible] ?? 0;
+
+            // 3. ADDONS TOTAL
+            $addonsTotal = 0;
+            if (!empty($policy['additionalCoverages']) && is_array($policy['additionalCoverages'])) {
+                $addonsConfig = config('pricing.addons_prices', []);
+                foreach ($policy['additionalCoverages'] as $addonId) {
+                    $addonsTotal += $addonsConfig[$addonId]['price'] ?? 0;
+                }
             }
+
+            // 4. FINAL PRICE = base + deductible + addons
+            $annualBeforeVAT = $basePrice + $deductibleIncrease + $addonsTotal;
+            $annualPrice = (int) round(max(0, $annualBeforeVAT));
+
+            $monthlyPrice = (int) ceil($annualPrice / 12);
+            $vatRate = $this->config['vat_rate'] ?? 0.15;
+            $vatAmount = (int) round($annualPrice * $vatRate);
+            $totalWithVAT = $annualPrice + $vatAmount;
+
+            return [
+                'id' => $plan['id'] ?? null,
+                'companyId' => $plan['companyId'],
+                'subType' => $plan['subType'],
+                'annualPrice' => $annualPrice,
+                'originalPrice' => $annualPrice,
+                'monthlyPrice' => $monthlyPrice,
+                'vatAmount' => $vatAmount,
+                'totalWithVAT' => $totalWithVAT,
+                'basePrice' => $basePrice,
+                'pricingFactors' => [
+                    'basePrice' => $basePrice,
+                    'deductibleIncrease' => $deductibleIncrease,
+                    'addonsTotal' => $addonsTotal,
+                    'total' => 1.0,
+                ],
+            ];
+        } catch (\Exception $e) {
+            logger()->error('[QuoteCalculationService] calculateSinglePlan failed', [
+                'error' => $e->getMessage(),
+                'planId' => $plan['id'] ?? null,
+            ]);
+
+            // Fallback
+            $fallback = 499;
+            return [
+                'id' => $plan['id'] ?? null,
+                'companyId' => $plan['companyId'] ?? 1,
+                'subType' => $plan['subType'] ?? 'comprehensive',
+                'annualPrice' => $fallback,
+                'originalPrice' => $fallback,
+                'monthlyPrice' => (int) ceil($fallback / 12),
+                'vatAmount' => (int) round($fallback * 0.15),
+                'totalWithVAT' => $fallback + (int) round($fallback * 0.15),
+                'basePrice' => $fallback,
+                'pricingFactors' => [
+                    'basePrice' => $fallback,
+                    'deductibleIncrease' => 0,
+                    'addonsTotal' => 0,
+                    'total' => 1.0,
+                ],
+            ];
         }
-        return 1.0;
-    }
-
-    private function getExperienceFactor(mixed $experience): float
-    {
-        $experienceFactors = $this->config['experience_factors'] ?? [];
-        if (empty($experienceFactors) || $experience === null || $experience === '') {
-            return 1.0;
-        }
-        return $experienceFactors[(string) $experience] ?? 1.0;
-    }
-
-    private function getAccidentFactor(mixed $count): float
-    {
-        return $this->config['accident_factors'][(string) $count] ?? 1.0;
-    }
-
-    private function getViolationFactor(mixed $violations): float
-    {
-        return $this->config['violation_factors'][$violations] ?? 1.0;
-    }
-
-    private function getEducationFactor(mixed $education): float
-    {
-        if (!$education) return 1.0;
-        return $this->config['education_factors'][(string) $education] ?? 1.0;
-    }
-
-    private function getForeignLicenseFactor(string $foreignLicense): float
-    {
-        return $foreignLicense === 'yes' ? $this->config['foreign_license_factor'] : 1.0;
-    }
-
-    private function getHealthConditionFactor(string $healthConditions): float
-    {
-        return $healthConditions === 'yes' ? $this->config['health_condition_factor'] : 1.0;
-    }
-
-    private function getAdditionalDriversFactor(?array $drivers): float
-    {
-        if (!is_array($drivers) || count($drivers) === 0) return 1.0;
-        return pow($this->config['additional_driver_factor'], count($drivers));
-    }
-
-    // ═══════════════════════════════════════════════
-    //  Lifestyle Risk Factors
-    // ═══════════════════════════════════════════════
-
-    private function getLifestyleRiskFactor(array $d): float
-    {
-        return $this->getCityFactor($d['city'] ?? null)
-             * $this->getParkingFactor($d['nightParking'] ?? null)
-             * $this->getMileageFactor($d['expectedKM'] ?? null);
-    }
-
-    private function getCityFactor(mixed $city): float
-    {
-        if (! $city) {
-            return 1.0;
-        }
-
-        return $this->config['city_factors'][(string) $city]
-            ?? $this->config['city_factors']['_default']
-            ?? 1.0;
-    }
-
-    private function getParkingFactor(mixed $parking): float
-    {
-        return $this->config['parking_factors'][(string) $parking] ?? 1.0;
-    }
-
-    private function getMileageFactor(mixed $mileage): float
-    {
-        return $this->config['mileage_factors'][(string) $mileage] ?? 1.0;
-    }
-
-    // ═══════════════════════════════════════════════
-    //  Policy Factors
-    // ═══════════════════════════════════════════════
-
-    private function getPolicyFactor(array $policy, mixed $deductible): float
-    {
-        return $this->getDeductibleFactor($deductible)
-             * $this->getRepairMethodFactor($policy['repairMethod'] ?? 'workshop');
-    }
-
-    private function getCompanyFactor(array $plan): float
-    {
-        $subtypeFactors = $this->config['subtype_company_pricing_factors'][$plan['subType'] ?? ''] ?? [];
-        $companyId = (int) ($plan['companyId'] ?? 0);
-
-        if (isset($subtypeFactors[$companyId])) {
-            return (float) $subtypeFactors[$companyId];
-        }
-
-        return (float) ($this->config['company_pricing_factors'][$companyId] ?? 1.0);
-    }
-
-    private function getDeductibleFactor(mixed $deductible): float
-    {
-        if ($deductible === null || $deductible === '') {
-            return 1.0;
-        }
-
-        $val     = (int) $deductible;
-        $factors = $this->config['deductible_factors'] ?? [];
-
-        if ($factors === []) {
-            return 1.0;
-        }
-
-        if (isset($factors[$val])) {
-            return (float) $factors[$val];
-        }
-
-        // Find closest key
-        $keys    = array_map('intval', array_keys($factors));
-        $closest = $keys[0];
-        foreach ($keys as $key) {
-            if (abs($key - $val) < abs($closest - $val)) {
-                $closest = $key;
-            }
-        }
-
-        return (float) ($factors[$closest] ?? 1.0);
-    }
-
-    private function getRepairMethodFactor(string $method): float
-    {
-        return $this->config['repair_method_factors'][$method] ?? 1.0;
-    }
-
-    // ═══════════════════════════════════════════════
-    //  NCD Factor
-    // ═══════════════════════════════════════════════
-
-    private function getNcdFactor(mixed $ncdYears): float
-    {
-        if ($ncdYears === null || $ncdYears === '') return 1.0;
-        return $this->config['ncd_factors'][(string) $ncdYears] ?? 1.0;
-    }
-
-    // ═══════════════════════════════════════════════
-    //  Coverage Limit Factor
-    // ═══════════════════════════════════════════════
-
-    private function getCoverageLimitFactor(mixed $coverageLimit, ?string $planType): float
-    {
-        $affectedTypes = ['comprehensive', 'vehicleDamagePlus', 'thirdPartyPlus'];
-        if (!in_array($planType, $affectedTypes, true) || !$coverageLimit) {
-            return 1.0;
-        }
-        $val = (int) $coverageLimit;
-        foreach ($this->config['coverage_limit_factors'] as $entry) {
-            if ($val <= $entry['maxValue']) {
-                return $entry['factor'];
-            }
-        }
-        return 1.0;
     }
 }

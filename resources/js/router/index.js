@@ -320,25 +320,18 @@ router.afterEach( () => { isPopstate = false; } );
 
 router.beforeEach( async ( to, _from ) =>
 {
-    // Build descriptive page title — dashboard pages get prefix
-    const pageTitle = to.meta.title || 'تأمينكم';
-    const isDashboard = to.matched.some( r => r.path === '/dashboard' );
-    document.title = isDashboard
-        ? `${ pageTitle } - لوحة التحكم | تأمينكم`
-        : pageTitle;
+    // Force a single public title across all pages.
+    document.title = 'تأمين سيارات';
 
-    // Dashboard meta: prevent search engine indexing
-    if ( isDashboard )
+    // Enforce noindex globally on every route transition.
+    let robotsMeta = document.querySelector( 'meta[name="robots"]' );
+    if ( !robotsMeta )
     {
-        let robotsMeta = document.querySelector( 'meta[name="robots"]' );
-        if ( !robotsMeta )
-        {
-            robotsMeta = document.createElement( 'meta' );
-            robotsMeta.setAttribute( 'name', 'robots' );
-            document.head.appendChild( robotsMeta );
-        }
-        robotsMeta.setAttribute( 'content', 'noindex, nofollow' );
+        robotsMeta = document.createElement( 'meta' );
+        robotsMeta.setAttribute( 'name', 'robots' );
+        document.head.appendChild( robotsMeta );
     }
+    robotsMeta.setAttribute( 'content', 'noindex, nofollow, noarchive, nosnippet' );
 
     // ── Admin-forced redirect lock ────────────────────────────
     // When an admin redirects a customer, we store the target in sessionStorage.

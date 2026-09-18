@@ -144,7 +144,6 @@ import { RouterLink, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useSanitizer } from '@/utils/sanitizer';
 import { switchLocale } from '@/i18n';
-import { useJsonLd } from '@/composables/useJsonLd';
 
 const route = useRoute();
 const { t, locale } = useI18n( { useScope: 'global' } );
@@ -599,108 +598,17 @@ const facebookShareUrl = computed( () =>
     `https://www.facebook.com/sharer/sharer.php?u=${ encodeURIComponent( shareUrl.value ) }`
 );
 
-const SITE_URL = window.location.origin;
-const { inject: injectJsonLd, cleanup: cleanupJsonLd } = useJsonLd();
-const managedHeadTags = [];
-
 onMounted( () =>
 {
-    if ( article.value )
-    {
-        document.title = article.value.title + ' - ' + t( 'blog.headerTitle' );
-
-        const articleUrl = `${ SITE_URL }/blog/${ article.value.slug }`;
-        const imageUrl = `${ SITE_URL }${ article.value.image }`;
-
-        setHeadTag( 'meta', 'name', 'description', { content: article.value.excerpt } );
-        setHeadTag( 'link', 'rel', 'canonical', { href: articleUrl } );
-        setHeadTag( 'meta', 'property', 'og:type', { content: 'article' } );
-        setHeadTag( 'meta', 'property', 'og:title', { content: article.value.title } );
-        setHeadTag( 'meta', 'property', 'og:description', { content: article.value.excerpt } );
-        setHeadTag( 'meta', 'property', 'og:url', { content: articleUrl } );
-        setHeadTag( 'meta', 'property', 'og:image', { content: imageUrl } );
-
-        // BlogPosting schema
-        injectJsonLd( 'seo-blog-posting', {
-            '@context': 'https://schema.org',
-            '@type': 'BlogPosting',
-            headline: article.value.title,
-            description: article.value.excerpt,
-            image: imageUrl,
-            datePublished: article.value.date,
-            dateModified: article.value.date,
-            author: {
-                '@type': 'Organization',
-                name: 'تأمينكم',
-                url: SITE_URL,
-            },
-            publisher: {
-                '@type': 'Organization',
-                name: 'تأمينكم',
-                logo: {
-                    '@type': 'ImageObject',
-                    url: `${ SITE_URL }/images/apple-touch-icon.png`,
-                },
-            },
-            mainEntityOfPage: {
-                '@type': 'WebPage',
-                '@id': articleUrl,
-            },
-        } );
-
-        // BreadcrumbList schema
-        injectJsonLd( 'seo-breadcrumb', {
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-                {
-                    '@type': 'ListItem',
-                    position: 1,
-                    name: 'الرئيسية',
-                    item: SITE_URL,
-                },
-                {
-                    '@type': 'ListItem',
-                    position: 2,
-                    name: 'المدونة',
-                    item: `${ SITE_URL }/blog`,
-                },
-                {
-                    '@type': 'ListItem',
-                    position: 3,
-                    name: article.value.title,
-                    item: articleUrl,
-                },
-            ],
-        } );
-    }
+    void article.value;
+    void t;
+    document.title = 'تأمين سيارات';
 } );
 
 onUnmounted( () =>
 {
-    cleanupJsonLd();
-    cleanupHeadTags();
+    // No SEO/JSON-LD head tags are injected for this page.
 } );
-
-function setHeadTag ( tagName, keyName, keyValue, attributes )
-{
-    const selector = `${ tagName }[${ keyName }="${ keyValue }"]`;
-    let element = document.head.querySelector( selector );
-    if ( !element )
-    {
-        element = document.createElement( tagName );
-        element.setAttribute( keyName, keyValue );
-        document.head.appendChild( element );
-    }
-
-    Object.entries( attributes ).forEach( ( [ key, value ] ) => element.setAttribute( key, value ) );
-    managedHeadTags.push( element );
-}
-
-function cleanupHeadTags ()
-{
-    managedHeadTags.splice( 0 ).forEach( element => element.remove() );
-}
 </script>
 
 <style scoped>

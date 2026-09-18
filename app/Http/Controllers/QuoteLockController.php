@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreQuoteLockRequest;
+use App\Models\Plan;
 use App\Services\PricingSignatureService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
@@ -11,6 +12,8 @@ use Illuminate\Support\Str;
 class QuoteLockController extends Controller
 {
     private const LOCK_TTL_MINUTES = 60;
+    private const VAT_RATE = 0.15;
+    private const MAX_ADDONS = 4000; // sanity cap; addons aren't part of the fixed-plan price
 
     public function __construct(
         private PricingSignatureService $signatureService
@@ -26,11 +29,27 @@ class QuoteLockController extends Controller
         $validated = $request->validated();
 
         $addons = $validated['addons'] ?? [];
-        $addonsTotal = collect($addons)->sum(fn ($a) => (float) ($a['price'] ?? 0));
+        $addonsTotal = min(
+            self::MAX_ADDONS,
+            collect($addons)->sum(fn ($a) => (float) ($a['price'] ?? 0))
+        );
+
+        // Never trust client-submitted subtotal/vat/total — recompute from the
+        // authoritative fixed price (Plan model, falling back to config).
+        $dbPlan = Plan::where('company_id', $validated['company_id'])
+            ->where('sub_type', $validated['plan_sub_type'])
+            ->first();
+        $basePrice = $dbPlan
+            ? (float) $dbPlan->base_price
+            : (float) (config('pricing.base_premiums')[$validated['plan_sub_type']] ?? 1000);
+
+        $subtotal = round($basePrice + $addonsTotal, 2);
+        $vatAmount = round($subtotal * self::VAT_RATE, 2);
+        $total = round($subtotal + $vatAmount, 2);
 
         $token = (string) Str::ulid();
         $expiresAt = now()->addMinutes(self::LOCK_TTL_MINUTES);
-        $signedTotal = (int) round((float) $validated['total']);
+        $signedTotal = (int) round($total);
         $signaturePacket = $this->signatureService->generateSignature(
             (int) $validated['plan_id'],
             $signedTotal
@@ -38,15 +57,17 @@ class QuoteLockController extends Controller
 
         Cache::put('quote_lock:' . $token, [
             'plan_id'           => (int) $validated['plan_id'],
+            'company_id'        => (int) $validated['company_id'],
+            'plan_sub_type'     => $validated['plan_sub_type'],
             'plan_name'         => $validated['plan_name'],
             'insurance_company' => $validated['insurance_company'],
             'insurance_type'    => $validated['insurance_type'],
             'plan_type'         => $validated['plan_type'] ?? null,
-            'subtotal'          => round((float) $validated['subtotal'], 2),
-            'vat_amount'        => round((float) $validated['vat_amount'], 2),
-            'total'             => round((float) $validated['total'], 2),
+            'subtotal'          => $subtotal,
+            'vat_amount'        => $vatAmount,
+            'total'             => $total,
             'deductible'        => isset($validated['deductible']) ? (int) $validated['deductible'] : null,
-            'addons_total'      => round((float) $addonsTotal, 2),
+            'addons_total'      => round($addonsTotal, 2),
             'session_id'        => $validated['session_id'] ?? null,
             'issued_ip'         => $request->ip(),
             'expires_at'        => $expiresAt->toIso8601String(),
@@ -60,6 +81,10 @@ class QuoteLockController extends Controller
             'pricing_signature' => $signaturePacket['signature'],
             'pricing_timestamp' => $signaturePacket['timestamp'],
             'pricing_expires_at' => $signaturePacket['expiresAt'],
+            // Authoritative amounts — the client must display these, not its own computation.
+            'subtotal' => $subtotal,
+            'vat_amount' => $vatAmount,
+            'total' => $total,
         ]);
     }
 }

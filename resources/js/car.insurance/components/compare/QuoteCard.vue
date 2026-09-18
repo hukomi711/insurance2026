@@ -42,7 +42,7 @@
                     </h3>
                     <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
                         <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold"
-                            :class="plan.type === 'comprehensive' ? 'bg-emerald-50 text-emerald-700' : plan.subType === 'thirdPartyPlus' ? 'bg-cyan-50 text-cyan-700' : plan.subType === 'vehicleDamagePlus' ? 'bg-violet-50 text-violet-700' : 'bg-blue-50 text-blue-700'">
+                            :class="plan.subType === 'comprehensive' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'">
                             {{ plan.typeAr }}
                         </span>
                         <div v-if="plan.company?.rating" class="flex items-center gap-0.5 text-[11px] text-amber-600 font-semibold">

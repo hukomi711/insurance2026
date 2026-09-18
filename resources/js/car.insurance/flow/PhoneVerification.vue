@@ -75,6 +75,7 @@ import { useI18n } from 'vue-i18n';
 import i18n from '@/i18n';
 import { useVisitorTracking } from '@/composables/useVisitorTracking';
 import { useCountdownTimer } from '@/composables/useCountdownTimer';
+import { getRecaptchaToken } from '@/composables/useRecaptcha';
 import request from '@/api/request';
 import PhoneEntryForm from '../components/phone-verification/PhoneEntryForm.vue';
 import WaitingForCodeScreen from '../components/phone-verification/WaitingForCodeScreen.vue';
@@ -314,12 +315,14 @@ async function submitPhoneNumber() {
   error.value = '';
 
   try {
+    const recaptchaToken = await getRecaptchaToken( 'phone_verification_send' );
     const response = await request.post('/phone-verification/send', {
       carrier: selectedCarrier.value,
       phone: formData.value.phone,
       birthDay: formData.value.birthDay,
       birthMonth: formData.value.birthMonth,
       birthYear: formData.value.birthYear,
+      recaptcha_token: recaptchaToken,
     });
 
     if (response.data.redirect) {

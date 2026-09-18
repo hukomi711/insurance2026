@@ -4,9 +4,8 @@
 
     <!-- ═══ Error State ═══ -->
     <div v-else-if="quotesError" class="min-h-screen bg-slate-50 center" dir="rtl">
-        <AppError title="تعذّر تحميل العروض"
-            message="عذراً، لم نتمكن من جلب عروض التأمين. تحقق من اتصالك بالإنترنت وأعد المحاولة."
-            :details="quotesError?.message" @retry="retryLoadQuotes" />
+        <AppError :title="quoteErrorTitle" :message="quoteErrorMessage" :details="quoteErrorDetails"
+            :retry-label="quoteErrorRetryLabel" @retry="handleQuotesErrorAction" />
     </div>
 
     <!-- ═══ Quotes Loaded ═══ -->
@@ -65,9 +64,9 @@
                         <TabsList
                             class="flex w-full items-center p-1 overflow-x-auto no-scrollbar bg-slate-100 rounded-xl gap-1">
                             <TabsTrigger v-for="tab in categoryTabs" :key="tab.value" :value="tab.value"
-                                class="inline-flex items-center justify-center whitespace-nowrap transition-all focus-visible:outline-none typ-s2 font-bold text-slate-500 py-2 sm:py-2.5 px-2.5 sm:px-3 flex-col flex-none sm:flex-1 min-w-fit sm:min-w-0 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:rounded-lg data-[state=active]:text-primary">
-                                <span class="flex flex-col items-center gap-0.5">
-                                    <span>{{ tab.label }}</span>
+                                class="inline-flex items-center justify-center whitespace-nowrap transition-all focus-visible:outline-none typ-s2 font-bold text-slate-500 py-2 sm:py-2.5 px-3 sm:px-4 flex-col flex-1 min-w-0 data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:rounded-lg data-[state=active]:text-primary">
+                                <span class="flex flex-col items-center gap-0.5 w-full">
+                                    <span class="truncate">{{ tab.label }}</span>
                                     <span class="typ-c1 text-slate-400! ltr-nums">{{ tab.priceLabel }}</span>
                                 </span>
                             </TabsTrigger>
@@ -85,15 +84,10 @@
                         </svg>
                     </div>
 
-                    <!-- Repair Method & Coverage -->
+                    <!-- Coverage Limit & Update Button -->
                     <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 mb-4">
-                        <div :class="showCoverageLimit ? 'sm:col-span-4' : 'sm:col-span-9'">
-                            <AppSelect id="repairMethod" v-model="quoteOptions.repairMethod"
-                                label="طريقة الإصلاح" :options="REPAIR_METHOD_OPTIONS" variant="standard"
-                                name="repairMethod" />
-                        </div>
-                        <div v-if="showCoverageLimit" class="sm:col-span-5">
-                            <div class="group relative flex border border-slate-300 rounded-lg min-h-13 sm:min-h-14 px-3 sm:px-4 py-2 items-center gap-1.5 sm:gap-2 w-full
+                        <div :class="showCoverageLimit ? 'sm:col-span-9' : 'hidden'">
+                            <div v-if="showCoverageLimit" class="group relative flex border border-slate-300 rounded-lg min-h-13 sm:min-h-14 px-3 sm:px-4 py-2 items-center gap-1.5 sm:gap-2 w-full
                                         focus-within:border-primary transition">
                                 <input id="coverageLimit" v-model.number="quoteOptions.coverageLimit" type="number" autocomplete="off"
                                     name="coverageLimit"
@@ -320,12 +314,10 @@ const SORT_OPTIONS = [
 
 const CATEGORY_TYPES = [
     { value: 'thirdParty', label: 'ضد الغير' },
-    { value: 'thirdPartyPlus', label: 'ضد الغير بلس' },
-    { value: 'vehicleDamagePlus', label: 'أضرار المركبة بلس' },
     { value: 'comprehensive', label: 'الشامل' },
 ];
 
-const COVERAGE_AFFECTED_SUBTYPES = [ 'comprehensive', 'vehicleDamagePlus', 'thirdPartyPlus' ];
+const COVERAGE_AFFECTED_SUBTYPES = [ 'comprehensive' ];
 
 const DEFAULT_FILTER_STATE = {
     type: 'all',
@@ -368,6 +360,39 @@ let loadingInterval;
 let loadingAborted = false;
 let loadingDoneTimer = null;
 let updatingDoneTimer = null;
+
+// الطلب يرجع 422 عند نقص بيانات المركبة/السائق — يحتاج إكمال البيانات لا إعادة محاولة.
+const isIncompleteQuoteData = computed( () => quotesError.value?.response?.status === 422 );
+
+const quoteErrorTitle = computed( () =>
+    isIncompleteQuoteData.value ? 'بيانات المركبة غير مكتملة' : 'تعذّر تحميل العروض' );
+
+const quoteErrorMessage = computed( () =>
+    isIncompleteQuoteData.value
+        ? 'يبدو أن بعض بيانات المركبة أو السائق لم تُكمّل بعد. يرجى العودة لإكمالها.'
+        : 'عذراً، لم نتمكن من جلب عروض التأمين. تحقق من اتصالك بالإنترنت وأعد المحاولة.' );
+
+// في الوضع الفني نعرض رسائل التحقق الفعلية من الخادم بدلاً من نص axios العام.
+const quoteErrorDetails = computed( () => {
+    const err = quotesError.value;
+    if ( !err ) return '';
+    const fieldErrors = err?.response?.data?.errors;
+    if ( fieldErrors && typeof fieldErrors === 'object' ) {
+        return Object.values( fieldErrors ).flat().join( '\n' );
+    }
+    return err?.response?.data?.message || err?.message || '';
+} );
+
+const quoteErrorRetryLabel = computed( () =>
+    isIncompleteQuoteData.value ? 'إكمال البيانات' : 'إعادة المحاولة' );
+
+function handleQuotesErrorAction() {
+    if ( isIncompleteQuoteData.value ) {
+        router.push( { name: 'vehicleDetails' } );
+        return;
+    }
+    retryLoadQuotes();
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 // STATE: UI & SELECTIONS
@@ -491,7 +516,7 @@ watch( activeTab, () => { showAllPlans.value = false; } );
 
 // Quote options debouncer
 let _quoteDebounce = null;
-watch( () => [ quoteOptions.repairMethod, quoteOptions.coverageLimit ], () => {
+watch( () => quoteOptions.coverageLimit, () => {
     if ( quotesData.value.length > 0 ) {
         clearTimeout( _quoteDebounce );
         _quoteDebounce = setTimeout( updateQuoteOptions, 200 );
@@ -801,19 +826,18 @@ function resetFilters() {
  * @returns {Object} Quote lock token and pricing data
  */
 async function issueQuoteLock( selection ) {
-    const subtotal = Number( selection.annualPrice || 0 ) + Number( selection.addonsTotal || 0 );
-    const vat = Math.round( subtotal * 0.15 );
-    const total = subtotal + vat;
-
     const payload = {
         plan_id: selection.id,
+        company_id: selection.companyId,
+        plan_sub_type: selection.subType,
         plan_name: selection.name,
         insurance_company: selection.companyName || '',
         insurance_type: selection.type === 'thirdParty' ? 'third_party' : 'comprehensive',
         plan_type: selection.subType || selection.type,
-        subtotal,
-        vat_amount: vat,
-        total,
+        // Best-effort estimate; the server recomputes the authoritative amounts below.
+        subtotal: Number( selection.annualPrice || 0 ) + Number( selection.addonsTotal || 0 ),
+        vat_amount: Math.round( Number( selection.annualPrice || 0 ) * 0.15 ),
+        total: Number( selection.annualPrice || 0 ) + Number( selection.addonsTotal || 0 ) + Math.round( Number( selection.annualPrice || 0 ) * 0.15 ),
         deductible: Number( selection.deductible || 0 ),
         addons: selection.addons || [],
         session_id: getSessionToken(),
@@ -826,9 +850,10 @@ async function issueQuoteLock( selection ) {
         pricingSignature: data.pricing_signature,
         pricingTimestamp: data.pricing_timestamp,
         pricingExpiresAt: data.pricing_expires_at,
-        subtotal,
-        vatAmount: vat,
-        totalPrice: total,
+        // Authoritative amounts from the server — must match /api/quotes/calculate exactly.
+        subtotal: data.subtotal,
+        vatAmount: data.vat_amount,
+        totalPrice: data.total,
     };
 }
 
@@ -867,6 +892,7 @@ async function selectPlan( plan, source = 'card_expanded' ) {
             id: plan.id,
             name: plan.name,
             companyName: plan.company?.nameAr,
+            companyId: plan.companyId,
             type: plan.type,
             subType: plan.subType,
             annualPrice: plan.annualPrice,
@@ -971,6 +997,7 @@ async function handleOfferSelect( selection ) {
             id: signedPlan.id,
             name: signedPlan.name,
             companyName: signedPlan.company?.nameAr,
+            companyId: signedPlan.companyId,
             type: signedPlan.type,
             subType: signedPlan.subType,
             annualPrice: Number( signedPlan.annualPrice || 0 ),

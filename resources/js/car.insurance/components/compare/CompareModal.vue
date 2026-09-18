@@ -104,10 +104,8 @@ const open = defineModel( 'open', { type: Boolean, default: false } );
 
 function getCoverageClass( subType ) {
     const map = {
-        thirdParty: 'bg-green-100 text-green-700',
-        thirdPartyPlus: 'bg-emerald-100 text-emerald-700',
-        vehicleDamagePlus: 'bg-blue-100 text-blue-700',
-        comprehensive: 'bg-purple-100 text-purple-700',
+        thirdParty: 'bg-blue-100 text-blue-700',
+        comprehensive: 'bg-emerald-100 text-emerald-700',
     };
     return map[ subType ] || 'bg-slate-100 text-slate-600';
 }

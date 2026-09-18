@@ -28,6 +28,10 @@ class SiteConfigController extends Controller
             ],
             'support_phone' => (string) SiteSetting::value('support_phone', ''),
             'contact_email' => (string) SiteSetting::value('contact_email', ''),
+            'recaptcha' => [
+                'enabled' => (bool) config('services.recaptcha.enabled', false),
+                'site_key' => (string) config('services.recaptcha.site_key', ''),
+            ],
             'features' => [
                 'livechat_enabled' => (bool) SiteSetting::value('livechat_enabled', true),
                 'bank_transfer_enabled' => (bool) SiteSetting::value('bank_transfer_enabled', false),

@@ -220,6 +220,7 @@
 import { ref, reactive } from 'vue';
 import { submitContact } from '@/api/contactApi';
 import { supportEmail } from '@/constants/contact';
+import { getRecaptchaToken } from '@/composables/useRecaptcha';
 
 const submitted = ref( false );
 const submitting = ref( false );
@@ -241,7 +242,8 @@ async function submitForm() {
     if ( valid ) {
         try {
             submitting.value = true;
-            await submitContact( { ...form } );
+            const recaptchaToken = await getRecaptchaToken( 'contact_submit' );
+            await submitContact( { ...form, recaptcha_token: recaptchaToken } );
             submitted.value = true;
         } catch ( error ) {
             submitError.value = error?.response?.data?.message || 'حدث خطأ أثناء الإرسال. يرجى المحاولة مرة أخرى.';

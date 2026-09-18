@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
@@ -9,6 +10,8 @@ use Tests\TestCase;
  */
 class QuoteCalculationApiTest extends TestCase
 {
+    use RefreshDatabase;
+
     private function validPayload(): array
     {
         return [
@@ -61,7 +64,7 @@ class QuoteCalculationApiTest extends TestCase
                         'totalWithVAT',
                         'basePrice',
                         'pricingFactors' => [
-                            'vehicle', 'driver', 'lifestyle', 'policy', 'company', 'ncd', 'total',
+                            'vehicle', 'driver', 'lifestyle', 'policy', 'company', 'ncd',
                         ],
                         'notes',
                     ],
@@ -71,17 +74,15 @@ class QuoteCalculationApiTest extends TestCase
         $data = $response->json();
         $this->assertCount(2, $data['quotes']);
 
-        // First quote: comprehensive
+        // First quote: comprehensive — fixed price, no dynamic factors
         $this->assertEquals(9, $data['quotes'][0]['companyId']);
         $this->assertEquals('comprehensive', $data['quotes'][0]['subType']);
-        $this->assertGreaterThanOrEqual(1260, $data['quotes'][0]['annualPrice']);
-        $this->assertLessThanOrEqual(5600, $data['quotes'][0]['annualPrice']);
+        $this->assertEquals(499, $data['quotes'][0]['annualPrice']);
 
-        // Second quote: third party
+        // Second quote: third party — fixed price, no dynamic factors
         $this->assertEquals(2, $data['quotes'][1]['companyId']);
         $this->assertEquals('thirdParty', $data['quotes'][1]['subType']);
-        $this->assertGreaterThanOrEqual(500, $data['quotes'][1]['annualPrice']);
-        $this->assertLessThanOrEqual(2000, $data['quotes'][1]['annualPrice']);
+        $this->assertEquals(399, $data['quotes'][1]['annualPrice']);
     }
 
     public function test_validation_rejects_missing_plans(): void
@@ -150,32 +151,25 @@ class QuoteCalculationApiTest extends TestCase
         $response->assertStatus(200);
 
         $data = $response->json();
-        $this->assertEquals('neutral (missing)', $data['quotes'][0]['notes']['drivingExperience']);
-        $this->assertEquals('neutral (missing)', $data['quotes'][0]['notes']['ncdYears']);
+        $this->assertIsString($data['quotes'][0]['notes']);
     }
 
     public function test_policy_deductible_override(): void
     {
+        // Fixed pricing ignores deductible entirely — price must stay identical.
         $payload = $this->validPayload();
-        // Use a high-value vehicle so the price stays above the minimum clamp
-        $payload['vehicle']['make'] = 7;             // Mercedes → factor 1.20
-        $payload['vehicle']['estimatedValue'] = 150000; // → factor 1.15
-        $payload['vehicle']['year'] = 2020;           // age 6 → factor 1.10
-        // Only one comprehensive plan
         $payload['plans'] = [
             ['companyId' => 5, 'subType' => 'comprehensive', 'deductible' => 1000],
         ];
 
-        // Without policy override
         $response1 = $this->postJson('/api/quotes/calculate', $payload);
         $price1 = $response1->json('quotes.0.annualPrice');
 
-        // With policy deductible override — higher deductible → lower price
         $payload['policy']['deductible'] = 5000;
         $response2 = $this->postJson('/api/quotes/calculate', $payload);
         $price2 = $response2->json('quotes.0.annualPrice');
 
-        $this->assertLessThan($price1, $price2);
+        $this->assertEquals($price1, $price2);
     }
 
     public function test_single_plan_request(): void

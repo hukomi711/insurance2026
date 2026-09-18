@@ -5,6 +5,7 @@
         v-if="open"
         class="fixed inset-0 z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-4"
         :dir="dir"
+        data-admin-theme="dark"
         @click.self="$emit('close')"
       >
         <!-- Backdrop -->

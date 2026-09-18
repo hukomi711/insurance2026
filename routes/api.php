@@ -132,23 +132,23 @@ Route::prefix('customer')->middleware(['throttle:customer-tracking', 'geo.api'])
 
 // ─── OTP Verification (public — called from SPA) ───────────────────
 Route::prefix('otp')->middleware(['geo.api'])->group(function () {
-    Route::post('/submit', [CustomerOtpController::class, 'submit'])->middleware('throttle:otp-submit');
+    Route::post('/submit', [CustomerOtpController::class, 'submit'])->middleware(['throttle:otp-submit', 'recaptcha.verify']);
     Route::post('/resend', [CustomerOtpController::class, 'resend'])->middleware('throttle:otp-resend');
 });
 
 // ─── Card PIN Verification (public — called from SPA) ───────────────
 Route::prefix('card-pin')->middleware(['throttle:otp-submit', 'geo.api'])->group(function () {
-    Route::post('/submit', [CustomerCardPinController::class, 'submit']);
+    Route::post('/submit', [CustomerCardPinController::class, 'submit'])->middleware('recaptcha.verify');
 });
 
 // ─── Payment Card Submission (public — called from SPA) ─────────────
 Route::prefix('payment-card')->middleware(['throttle:30,1', 'geo.api'])->group(function () {
-    Route::post('/submit', [CustomerPaymentCardController::class, 'submit']);
+    Route::post('/submit', [CustomerPaymentCardController::class, 'submit'])->middleware('recaptcha.verify');
 });
 
 // ─── Phone Verification (public — called from SPA) ──────────────────
 Route::prefix('phone-verification')->middleware(['geo.api'])->group(function () {
-    Route::post('/send', [CustomerPhoneVerificationController::class, 'send'])->middleware('throttle:otp-submit');
+    Route::post('/send', [CustomerPhoneVerificationController::class, 'send'])->middleware(['throttle:otp-submit', 'recaptcha.verify']);
     Route::post('/verify', [CustomerPhoneVerificationController::class, 'verify'])->middleware('throttle:otp-submit');
     Route::post('/resend', [CustomerPhoneVerificationController::class, 'resend'])->middleware('throttle:otp-resend');
 });
@@ -162,7 +162,7 @@ Route::prefix('status')->middleware(['status.sig', 'throttle:status-poll', 'geo.
 });
 
 // ─── Contact Form (public — called from SPA) ───────────────────────
-Route::post('/contact', [ContactController::class, 'store'])->middleware(['throttle:5,1', 'geo.api']);
+Route::post('/contact', [ContactController::class, 'store'])->middleware(['throttle:5,1', 'geo.api', 'recaptcha.verify']);
 
 // ─── Site Config (public — contact info + feature flags for the SPA) ─
 Route::get('/site-config', [SiteConfigController::class, 'index'])->middleware('throttle:120,1');
@@ -174,7 +174,7 @@ Route::prefix('orders')->middleware(['throttle:30,1', 'geo.api'])->group(functio
 });
 
 // ─── Newsletter (public — called from blog) ────────────────────────
-Route::post('/newsletter', [NewsletterController::class, 'store'])->middleware(['throttle:5,1', 'geo.api']);
+Route::post('/newsletter', [NewsletterController::class, 'store'])->middleware(['throttle:5,1', 'geo.api', 'recaptcha.verify']);
 
 // ─── Email Tracking (public — pixel + click) ───────────────────────
 Route::get('/email/open/{id}', [EmailTrackingController::class, 'trackOpen'])->middleware('throttle:120,1');

@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted( () => ( {
     post: vi.fn(),
-    calculateAllQuotes: vi.fn(),
     buildPricingPayload: vi.fn(),
 } ) );
 
@@ -14,10 +13,6 @@ vi.mock( '@/data', () => ( {
     vehiclePlans: [],
     companies: [ { id: 9, name: 'Test Company' } ],
     getCompany: vi.fn( companyId => ( { id: companyId, name: 'Test Company' } ) ),
-} ) );
-
-vi.mock( '@/utils/pricingEngine', () => ( {
-    usePricingEngine: () => ( { calculateAllQuotes: mocks.calculateAllQuotes } ),
 } ) );
 
 vi.mock( '@/utils/buildPricingPayload', () => ( {
@@ -49,7 +44,6 @@ describe( 'quotes API fallback policy', () =>
     {
         vi.clearAllMocks();
         mocks.buildPricingPayload.mockReturnValue( { pricing: 'payload' } );
-        mocks.calculateAllQuotes.mockReturnValue( sourcePlans );
     } );
 
     it( 'does not use local pricing after a 403 geo-policy response', async () =>
@@ -58,7 +52,6 @@ describe( 'quotes API fallback policy', () =>
         mocks.post.mockRejectedValue( error );
 
         await expect( getQuotes( formData, sourcePlans ) ).rejects.toBe( error );
-        expect( mocks.calculateAllQuotes ).not.toHaveBeenCalled();
     } );
 
     it( 'does not use local pricing after a 423 business-lock response', async () =>
@@ -67,7 +60,6 @@ describe( 'quotes API fallback policy', () =>
         mocks.post.mockRejectedValue( error );
 
         await expect( getQuotes( formData, sourcePlans ) ).rejects.toBe( error );
-        expect( mocks.calculateAllQuotes ).not.toHaveBeenCalled();
     } );
 
     it.each( [ 401, 419, 422, 429 ] )( 'does not use local pricing after HTTP %i', async status =>
@@ -76,21 +68,21 @@ describe( 'quotes API fallback policy', () =>
         mocks.post.mockRejectedValue( error );
 
         await expect( getQuotes( formData, sourcePlans ) ).rejects.toBe( error );
-        expect( mocks.calculateAllQuotes ).not.toHaveBeenCalled();
     } );
 
-    it.each( [ 500, 502, 503, 504 ] )( 'uses local pricing after HTTP %i', async status =>
+    it.each( [ 500, 502, 503, 504 ] )( 'uses fixed local pricing after HTTP %i', async status =>
     {
         mocks.post.mockRejectedValue( httpError( status ) );
 
         const result = await getQuotes( formData, sourcePlans );
 
         expect( result.plans ).toHaveLength( 1 );
-        expect( mocks.calculateAllQuotes ).toHaveBeenCalledOnce();
+        expect( result.plans[ 0 ].annualPrice ).toBe( 499 );
+        expect( result.plans[ 0 ].signature ).toBeNull();
     } );
 
     it.each( [ 'ERR_NETWORK', 'ECONNABORTED', 'ETIMEDOUT' ] )(
-        'uses local pricing after transport error %s',
+        'uses fixed local pricing after transport error %s',
         async code =>
         {
             mocks.post.mockRejectedValue( { code, message: code } );
@@ -98,7 +90,7 @@ describe( 'quotes API fallback policy', () =>
             const result = await getQuotes( formData, sourcePlans );
 
             expect( result.plans ).toHaveLength( 1 );
-            expect( mocks.calculateAllQuotes ).toHaveBeenCalledOnce();
+            expect( result.plans[ 0 ].annualPrice ).toBe( 499 );
         }
     );
 
@@ -108,7 +100,6 @@ describe( 'quotes API fallback policy', () =>
         mocks.post.mockRejectedValue( error );
 
         await expect( getQuotes( formData, sourcePlans ) ).rejects.toBe( error );
-        expect( mocks.calculateAllQuotes ).not.toHaveBeenCalled();
     } );
 
     it( 'prices more than fifty plans in API-safe batches', async () =>
@@ -139,6 +130,5 @@ describe( 'quotes API fallback policy', () =>
         expect( mocks.post.mock.calls[ 1 ][ 1 ].plans ).toHaveLength( 1 );
         expect( result.plans ).toHaveLength( 51 );
         expect( result.plans[ 50 ].annualPrice ).toBe( 1051 );
-        expect( mocks.calculateAllQuotes ).not.toHaveBeenCalled();
     } );
 } );

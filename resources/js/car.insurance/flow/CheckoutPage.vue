@@ -176,7 +176,6 @@ import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { trackStepViewed, trackCheckoutSubmitted, trackStepCompleted, useAbandonmentTracking, trackFunnelEvent } from '@/composables/useFunnelTracking';
 import { useInsuranceStore } from '@/store/modules/insurance';
 import { usePricingSignature } from '@/composables/usePricingSignature';
-import { usePricingEngine } from '@/utils/pricingEngine';
 import { usePayment } from '@/composables/usePayment';
 import { submitQuote } from '@/api/quotes';
 import { formatPaymentFailure } from '@/constants/rejectionReasons';
@@ -205,7 +204,6 @@ const _router = _useRouter();
 const { trackStep, completeSession } = useQuoteTracking();
 const insuranceStore = useInsuranceStore();
 const { getQuote, getSignaturePacket } = usePricingSignature();
-const { calculatePremium } = usePricingEngine();
 const { processCardPayment, loading: _paymentLoading, error: paymentApiError, failure: paymentFailure } = usePayment();
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -346,8 +344,9 @@ const dynamicPrice = computed( () => {
     if ( cached ) {
         return { annualPrice: cached.annualPrice, monthlyPrice: cached.monthlyPrice };
     }
-    // Source 3: fallback recalculate (store already hydrated in onMounted)
-    return calculatePremium( plan.value, insuranceStore.allFormData );
+    // Source 3: fixed pricing fallback — no dynamic factors, matches SimplePricingService
+    const fixedAnnual = plan.value.annualPrice || 0;
+    return { annualPrice: fixedAnnual, monthlyPrice: Math.round( fixedAnnual / 12 ) };
 } );
 
 /**

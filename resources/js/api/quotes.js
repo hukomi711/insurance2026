@@ -1,20 +1,19 @@
 // import request from './request';
 import request from './request';
 import { vehiclePlans, companies, getCompany } from '@/data';
-import { usePricingEngine } from '@/utils/pricingEngine';
+import { BASE_PREMIUMS } from '@/data/pricingConstants';
 import { buildPricingPayload } from '@/utils/buildPricingPayload';
 import { isCustomerBlocked, isCustomerBlockedError } from '@/utils/customerBlock';
 
 /**
  * Quotes API service
  *
- * Primary flow: POST /api/quotes/calculate (server-side pricing).
- * Fallback: local pricing engine if API fails.
+ * Primary flow: POST /api/quotes/calculate (server-side fixed pricing).
+ * Fallback: local fixed pricing (same 399/499 SAR + 15% VAT) if API fails.
  * Selection-sensitive recalc should use this service so signatures stay in
  * sync with the displayed server price.
  */
 
-const { calculateAllQuotes } = usePricingEngine();
 const PRICING_API_BATCH_SIZE = 50;
 
 const LOCAL_FALLBACK_ERROR_CODES = new Set( [
@@ -76,10 +75,24 @@ function unsignedPlan ( plan )
     };
 }
 
-function localPricedPlans ( plans, formData )
+function localPricedPlans ( plans )
 {
-    return calculateAllQuotes( plans.map( clearSignatureFields ), formData )
-        .map( unsignedPlan );
+    const VAT_RATE = 0.15;
+    return plans.map( clearSignatureFields ).map( plan =>
+    {
+        const basePrice = BASE_PREMIUMS[ plan.subType ] ?? 1000;
+        const vatAmount = Math.round( basePrice * VAT_RATE * 100 ) / 100;
+        return unsignedPlan( {
+            ...plan,
+            annualPrice: basePrice,
+            originalPrice: basePrice,
+            monthlyPrice: Math.round( basePrice / 12 ),
+            vatAmount,
+            basePrice,
+            totalWithVAT: Math.round( ( basePrice + vatAmount ) * 100 ) / 100,
+            pricingFactors: null,
+        } );
+    } );
 }
 
 /**
@@ -107,8 +120,8 @@ export async function getQuotes ( formData = {}, sourcePlans = vehiclePlans )
     const hasRequiredData = v.year && v.make && v.estimatedValue;
     if ( !hasRequiredData )
     {
-        // Not enough data for server pricing — use local engine
-        const plans = applyRepairLocation( localPricedPlans( basePlans, formData ), repairMethod );
+        // Not enough data for server validation — use fixed local pricing (same values as the server)
+        const plans = applyRepairLocation( localPricedPlans( basePlans ), repairMethod );
         return { plans, companies };
     }
 
@@ -168,9 +181,9 @@ export async function getQuotes ( formData = {}, sourcePlans = vehiclePlans )
 
         if ( !shouldUseLocalPricingFallback( error ) ) throw error;
 
-        // Fallback: local pricing engine
-        console.warn( '[Quotes] API failed, falling back to local engine:', error.message );
-        const plans = applyRepairLocation( localPricedPlans( basePlans, formData ), repairMethod );
+        // Fallback: fixed local pricing (same values as the server)
+        console.warn( '[Quotes] API failed, falling back to fixed local pricing:', error.message );
+        const plans = applyRepairLocation( localPricedPlans( basePlans ), repairMethod );
         return { plans, companies };
     }
 }

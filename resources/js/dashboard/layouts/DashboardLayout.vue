@@ -1,7 +1,7 @@
 <template>
     <div ref="dashboardRoot" class="min-h-screen flex overflow-x-hidden transition-colors duration-200"
         :style="{ backgroundColor: 'var(--admin-bg)' }"
-        dir="rtl" data-admin-theme="light">
+        dir="rtl">
         <!-- Sidebar -->
         <Sidebar />
 

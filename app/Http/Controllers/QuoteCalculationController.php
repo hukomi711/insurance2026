@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CalculateQuoteRequest;
-use App\Services\QuoteCalculationService;
+use App\Services\SimplePricingService;
 use Illuminate\Http\JsonResponse;
 
 class QuoteCalculationController extends Controller
 {
     public function __construct(
-        private QuoteCalculationService $service
+        private SimplePricingService $service
     ) {}
 
     /**

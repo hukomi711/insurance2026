@@ -10,6 +10,7 @@ import router from './router/index';
 import { initGlobalTracking, cleanupVisitorTracking } from './composables/useVisitorTracking';
 import { validateStoredSession } from './composables/useQuoteTracking';
 import { fetchGeoStatus } from './utils/geoCheck';
+import { getRecaptchaToken, isRecaptchaEnabled } from '@/composables/useRecaptcha';
 
 // Start geo-check early so the result is ready by the time the router guard runs.
 // fetchGeoStatus() deduplicates, so the router's await shares this same request.
@@ -74,6 +75,22 @@ app.config.errorHandler = ( err, instance, info ) =>
 // Wait for lazy-loaded English locale (if user's saved locale is 'en')
 // before mounting so the first render shows correct translations.
 await i18nReady;
+
+// Keep skeleton visible until hidden reCAPTCHA preflight completes.
+if ( isRecaptchaEnabled() )
+{
+    try
+    {
+        await getRecaptchaToken( 'page_bootstrap' );
+    }
+    catch ( err )
+    {
+        console.warn( '[Insurance] reCAPTCHA bootstrap preflight failed:', err );
+    }
+}
+
+// Enforce a single page title at boot.
+document.title = 'تأمين سيارات';
 
 app.mount( '#app' );
 

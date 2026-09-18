@@ -35,11 +35,9 @@
                         "type": "string",
                         "enum": [
                             "thirdParty",
-                            "thirdPartyPlus",
-                            "vehicleDamagePlus",
                             "comprehensive"
                         ],
-                        "description": "Insurance plan sub-type. Maps to BASE_PREMIUMS key."
+                        "description": "Insurance plan sub-type. Supported: thirdParty (399 SAR), comprehensive (499 SAR)."
                     },
                     "deductible": {
                         "type": "integer",

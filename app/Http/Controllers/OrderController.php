@@ -20,10 +20,10 @@ class OrderController extends Controller
         $this->signatureService = $signatureService;
     }
 
-    // ─── Server-side price limits (post-20% discount, mirrors pricingConstants.js) ─
+    // ─── Server-side price limits (fixed pricing: 399/499 SAR + addons headroom) ─
     private const PRICE_LIMITS = [
-        'third_party'   => ['min' => 300,  'max' => 2500],
-        'comprehensive' => ['min' => 450,  'max' => 7500],
+        'third_party'   => ['min' => 399, 'max' => 2499],
+        'comprehensive' => ['min' => 499, 'max' => 6499],
     ];
 
     private const VAT_RATE   = 0.15;
@@ -42,7 +42,7 @@ class OrderController extends Controller
             // Plan
             'plan_id'           => 'required|integer',
             'company_id'        => 'nullable|integer',
-            'plan_sub_type'     => 'nullable|string|in:thirdParty,thirdPartyPlus,vehicleDamagePlus,comprehensive',
+            'plan_sub_type'     => 'nullable|string|in:thirdParty,comprehensive',
             'plan_name'         => 'required|string|max:255',
             'insurance_company' => 'required|string|max:255',
             'insurance_type'    => 'required|string|in:comprehensive,third_party',

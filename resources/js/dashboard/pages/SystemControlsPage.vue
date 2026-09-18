@@ -1,26 +1,26 @@
 <template>
     <div class="mx-auto max-w-6xl space-y-6" dir="rtl">
-        <header class="rounded-2xl border border-gray-200 bg-white px-5 py-5 shadow-sm sm:px-7">
+        <header class="rounded-2xl px-5 py-5 shadow-sm sm:px-7 admin-header-card">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <p class="mb-1 text-xs font-bold tracking-wider text-blue-600">إدارة النظام</p>
-                    <h1 class="text-2xl font-black text-gray-900">ضوابط الموقع والتشغيل</h1>
-                    <p class="mt-2 max-w-2xl text-sm leading-6 text-gray-500">إعدادات الوصول والدفع والمحادثة. تُطبّق القيم المحفوظة مباشرة من الخادم.</p>
+                    <p class="mb-1 text-xs font-bold tracking-wider admin-text-accent">إدارة النظام</p>
+                    <h1 class="text-2xl font-black admin-heading-text">ضوابط الموقع والتشغيل</h1>
+                    <p class="mt-2 max-w-2xl text-sm leading-6 admin-text-muted">إعدادات الوصول والدفع والمحادثة. تُطبّق القيم المحفوظة مباشرة من الخادم.</p>
                 </div>
-                <span class="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
-                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+                <span class="inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold admin-status-success">
+                    <span class="h-2 w-2 rounded-full admin-status-success-dot"></span>
                     إعدادات فعّالة
                 </span>
             </div>
         </header>
 
-        <nav class="grid gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm sm:grid-cols-3" aria-label="أقسام ضوابط النظام">
+        <nav class="grid gap-2 rounded-2xl p-2 shadow-sm sm:grid-cols-3 admin-nav-card" aria-label="أقسام ضوابط النظام">
             <button
                 v-for="section in sections"
                 :key="section.key"
                 type="button"
-                class="flex items-center gap-3 rounded-xl px-4 py-3 text-right transition"
-                :class="activeSection === section.key ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-50'"
+                class="flex items-center gap-3 rounded-xl px-4 py-3 text-right transition control-section-btn"
+                :class="{ 'control-section-btn--active': activeSection === section.key }"
                 @click="selectSection(section.key)"
             >
                 <i class="w-5 text-center" :class="section.icon" aria-hidden="true"></i>
@@ -31,7 +31,7 @@
             </button>
         </nav>
 
-        <div v-if="loading" class="rounded-2xl border border-gray-200 bg-white p-10 text-center text-sm text-gray-500 shadow-sm" role="status">
+        <div v-if="loading" class="rounded-2xl p-10 text-center text-sm shadow-sm admin-loading-card" role="status">
             <i class="fa-solid fa-spinner fa-spin ml-2" aria-hidden="true"></i>
             جاري تحميل الإعدادات…
         </div>
@@ -39,24 +39,17 @@
         <section v-else-if="activeSection === 'access'" id="controls-access" class="grid gap-5 lg:grid-cols-2">
             <article id="allowed-countries" class="control-card scroll-mt-24">
                 <div class="control-heading">
-                    <span class="control-icon bg-emerald-50 text-emerald-600"><i class="fa-solid fa-earth-asia"></i></span>
+                    <span class="control-icon" :style="{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--admin-accent-emerald)' }"><i class="fa-solid fa-earth-asia"></i></span>
                     <div><h2>الدول المسموحة</h2><p>نطاق الخدمة الجغرافي</p></div>
                 </div>
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <span class="text-2xl" aria-hidden="true">🇸🇦</span>
-                            <div><p class="font-bold text-gray-900">المملكة العربية السعودية</p><p class="text-xs text-gray-500">SA — النطاق الأساسي</p></div>
-                        </div>
-                        <span class="rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200">مسموح</span>
-                    </div>
-                </div>
-                <p class="mt-3 text-xs leading-5 text-gray-500">تم تثبيت السعودية كدولة مسموحة حفاظًا على شرط عرض وخدمة العملاء داخل المملكة فقط.</p>
+                <label for="allowedCountries" class="control-label">أكواد الدول (ISO 3166-1 alpha-2)</label>
+                <input id="allowedCountries" v-model="form.allowedCountries" type="text" class="control-input" placeholder="SA, AE, KW (فاصل: فاصلة أو مسافة)">
+                <p class="mt-2 text-xs" :style="{ color: 'var(--admin-text-muted)' }">أدخل أكواد الدول مفصولة بفاصلة أو مسافة (مثال: SA, AE, KW). تُطبّق التغييرات مباشرة عند الحفظ.</p>
             </article>
 
             <article id="blocked-ips" class="control-card scroll-mt-24">
                 <div class="control-heading">
-                    <span class="control-icon bg-rose-50 text-rose-600"><i class="fa-solid fa-ban"></i></span>
+                    <span class="control-icon" :style="{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: 'var(--admin-accent-red)' }"><i class="fa-solid fa-ban"></i></span>
                     <div><h2>عناوين IP المحظورة</h2><p>عنوان واحد صحيح في كل سطر</p></div>
                 </div>
                 <label for="blockedIps" class="sr-only">عناوين IP المحظورة</label>
@@ -68,7 +61,7 @@
         <section v-else-if="activeSection === 'payments'" id="controls-payments" class="grid gap-5 lg:grid-cols-2">
             <article id="blocked-cards" class="control-card scroll-mt-24">
                 <div class="control-heading">
-                    <span class="control-icon bg-amber-50 text-amber-600"><i class="fa-solid fa-shield-card"></i></span>
+                    <span class="control-icon" :style="{ backgroundColor: 'rgba(217, 119, 6, 0.1)', color: 'var(--admin-accent-amber)' }"><i class="fa-solid fa-shield-card"></i></span>
                     <div><h2>الرفض الذكي للبطاقات</h2><p>قواعد BIN دفاعية فقط</p></div>
                     <SwitchControl v-model="form.smart_rejection_enabled" label="تفعيل الرفض الذكي" />
                 </div>
@@ -79,7 +72,7 @@
 
             <article id="bank-transfer" class="control-card scroll-mt-24">
                 <div class="control-heading">
-                    <span class="control-icon bg-sky-50 text-sky-600"><i class="fa-solid fa-building-columns"></i></span>
+                    <span class="control-icon" :style="{ backgroundColor: 'rgba(2, 132, 199, 0.1)', color: 'var(--admin-accent-sky)' }"><i class="fa-solid fa-building-columns"></i></span>
                     <div><h2>التحويل البنكي</h2><p>بيانات المستفيد العامة</p></div>
                     <SwitchControl v-model="form.bank_transfer_enabled" label="تفعيل التحويل البنكي" />
                 </div>
@@ -99,7 +92,7 @@
         <section v-else id="controls-communication" class="grid gap-5 lg:grid-cols-2">
             <article id="livechat" class="control-card scroll-mt-24">
                 <div class="control-heading">
-                    <span class="control-icon bg-cyan-50 text-cyan-600"><i class="fa-regular fa-comments"></i></span>
+                    <span class="control-icon" :style="{ backgroundColor: 'rgba(8, 145, 178, 0.1)', color: 'var(--admin-accent-cyan)' }"><i class="fa-regular fa-comments"></i></span>
                     <div><h2>الدردشة المباشرة</h2><p>إيقاف أو تشغيل استقبال الرسائل</p></div>
                     <SwitchControl v-model="form.livechat_enabled" label="تشغيل الدردشة" />
                 </div>
@@ -111,7 +104,7 @@
 
             <article id="profanity-filter" class="control-card scroll-mt-24">
                 <div class="control-heading">
-                    <span class="control-icon bg-violet-50 text-violet-600"><i class="fa-solid fa-shield-halved"></i></span>
+                    <span class="control-icon" :style="{ backgroundColor: 'rgba(124, 58, 237, 0.1)', color: 'var(--admin-accent-purple)' }"><i class="fa-solid fa-shield-halved"></i></span>
                     <div><h2>فلتر الكلمات غير اللائقة</h2><p>رفض الرسالة قبل تخزينها</p></div>
                     <SwitchControl v-model="form.profanity_filter_enabled" label="تفعيل فلتر الكلمات" />
                 </div>
@@ -121,9 +114,9 @@
             </article>
         </section>
 
-        <footer class="sticky bottom-4 z-10 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white/95 p-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-            <p class="min-h-5 text-sm" :class="saveError ? 'text-rose-600' : 'text-emerald-600'" role="status" aria-live="polite">{{ saveMessage }}</p>
-            <button type="button" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-500 disabled:cursor-wait disabled:opacity-60" :disabled="saving" @click="save">
+        <footer class="sticky bottom-4 z-10 flex flex-col gap-3 rounded-2xl p-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between admin-footer-card">
+            <p class="min-h-5 text-sm admin-save-message" :class="{ 'admin-save-error': saveError }">{{ saveMessage }}</p>
+            <button type="button" class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-white transition admin-save-btn" :disabled="saving" @click="save">
                 <i class="fa-solid" :class="saving ? 'fa-spinner fa-spin' : 'fa-floppy-disk'" aria-hidden="true"></i>
                 {{ saving ? 'جاري الحفظ…' : 'حفظ وتطبيق الإعدادات' }}
             </button>
@@ -164,6 +157,7 @@ const saving = ref( false );
 const saveMessage = ref( '' );
 const saveError = ref( false );
 const form = reactive( {
+    allowedCountries: 'SA',
     blockedIps: '', blockedBins: '', profanityWords: '',
     smart_rejection_enabled: false, bank_transfer_enabled: false,
     bank_transfer_beneficiary: '', bank_transfer_iban: '',
@@ -211,6 +205,7 @@ function selectSection ( section ) {
 }
 
 function applyData ( data ) {
+    form.allowedCountries = ( data.allowed_countries || [ 'SA' ] ).join( ', ' );
     form.blockedIps = ( data.blocked_ip_addresses || [] ).join( '\n' );
     form.blockedBins = ( data.blocked_card_bins || [] ).join( '\n' );
     form.profanityWords = ( data.profanity_words || [] ).join( '\n' );
@@ -241,7 +236,7 @@ async function save () {
     saveError.value = false;
     try {
         const payload = {
-            allowed_countries: [ 'SA' ],
+            allowed_countries: lines( form.allowedCountries ),
             blocked_ip_addresses: lines( form.blockedIps ),
             blocked_card_bins: lines( form.blockedBins ),
             smart_rejection_enabled: form.smart_rejection_enabled,
@@ -285,11 +280,134 @@ onMounted( load );
 
 <style scoped>
 @reference "../../../css/app.css";
-.control-card { @apply rounded-2xl border border-gray-200 bg-white p-5 shadow-sm; }
-.control-heading { @apply mb-5 flex items-center gap-3; }
-.control-heading h2 { @apply text-base font-black text-gray-900; }
-.control-heading p { @apply mt-0.5 text-xs text-gray-500; }
-.control-icon { @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl; }
-.control-label { @apply mb-2 block text-xs font-bold text-gray-700; }
-.control-input { @apply w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20; }
+
+/* Header and Navigation */
+.admin-header-card {
+    background: var(--admin-card-bg, #ffffff);
+    border: 1px solid var(--admin-card-border, #e5e7eb);
+}
+
+.admin-text-accent {
+    color: var(--admin-accent-blue);
+}
+
+.admin-heading-text {
+    color: var(--admin-text, #111827);
+}
+
+.admin-text-muted {
+    color: var(--admin-text-muted, #6b7280);
+}
+
+.admin-status-success {
+    background: var(--admin-status-success-bg, #ecfdf5);
+    border: 1px solid var(--admin-status-success-text, #059669);
+    color: var(--admin-status-success-text, #059669);
+}
+
+.admin-status-success-dot {
+    background: var(--admin-status-success-text, #059669);
+}
+
+.admin-nav-card {
+    background: var(--admin-card-bg, #ffffff);
+    border: 1px solid var(--admin-card-border, #e5e7eb);
+}
+
+.control-section-btn {
+    color: var(--admin-text-muted, #6b7280);
+    background: transparent;
+    transition: all 200ms ease;
+}
+
+.control-section-btn:hover {
+    background: var(--admin-surface-2, #f3f4f6);
+}
+
+.control-section-btn--active {
+    background: var(--admin-accent-blue);
+    color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.admin-loading-card {
+    background: var(--admin-card-bg, #ffffff);
+    border: 1px solid var(--admin-card-border, #e5e7eb);
+    color: var(--admin-text-muted, #6b7280);
+}
+
+/* Footer */
+.admin-footer-card {
+    background: color-mix(in srgb, var(--admin-surface) 95%, transparent);
+    border: 1px solid var(--admin-border);
+}
+
+.admin-save-message {
+    color: var(--admin-accent-emerald, #059669);
+}
+
+.admin-save-error {
+    color: var(--admin-accent-red, #dc2626) !important;
+}
+
+.admin-save-btn {
+    background: var(--admin-accent-blue);
+    transition: opacity 200ms ease;
+}
+
+.admin-save-btn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.admin-save-btn:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
+/* Control Cards */
+.control-card {
+    @apply rounded-2xl p-5;
+    background: var(--admin-surface, #1a1f2e);
+    border: 1px solid var(--admin-border, #374151);
+    box-shadow: var(--admin-card-shadow, 0 1px 3px rgba(0,0,0,0.1));
+}
+
+.control-heading {
+    @apply mb-5 flex items-center gap-3;
+}
+
+.control-heading h2 {
+    @apply text-base font-black;
+    color: var(--admin-text, #111827);
+}
+
+.control-heading p {
+    @apply mt-0.5 text-xs;
+    color: var(--admin-text-muted, #6b7280);
+}
+
+.control-icon {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl;
+}
+
+.control-label {
+    @apply mb-2 block text-xs font-bold;
+    color: var(--admin-text-secondary, #374151);
+}
+
+.control-input {
+    @apply w-full rounded-xl px-4 py-3 text-sm outline-none transition;
+    background: var(--admin-input-bg, #ffffff);
+    border: 1px solid var(--admin-input-border, #d1d5db);
+    color: var(--admin-input-text, #111827);
+}
+
+.control-input:focus {
+    border-color: var(--admin-accent-blue, #2563eb);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.control-input::placeholder {
+    color: var(--admin-text-dim, #9ca3af);
+}
 </style>

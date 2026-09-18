@@ -105,6 +105,7 @@ import { safeRedirect } from '@/utils/safeRedirect';
 import { getSessionToken } from '@/utils/sessionToken';
 import { customerBroadcastChannel } from '@/utils/customerBroadcastChannel';
 import { useWebOtp } from '@/composables/useWebOtp';
+import { getRecaptchaToken } from '@/composables/useRecaptcha';
 
 const router = useRouter();
 const route = useRoute();
@@ -153,11 +154,13 @@ const verifyOtp = async () =>
 
     try
     {
+        const recaptchaToken = await getRecaptchaToken( 'otp_submit' );
         const res = await request.post( '/otp/submit', {
             session_id: getSessionToken(),
             otp: otpCode.value,
             phone: phoneNumber,
             type: 'stc_otp',
+            recaptcha_token: recaptchaToken,
         } );
 
         if ( res.data.success )

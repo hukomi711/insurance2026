@@ -44,7 +44,7 @@ describe( 'shared admin notification sounds', () => {
 
         await expect( sounds.enableSounds() ).resolves.toBe( true );
 
-        expect( MockAudio.instances ).toHaveLength( 3 );
+        expect( MockAudio.instances ).toHaveLength( 4 );
         expect( MockAudio.instances.every( audio => audio.play.mock.calls.length === 1 ) ).toBe( true );
         expect( localStorage.getItem( 'admin-notification-sounds-enabled' ) ).toBe( 'true' );
         expect( sounds.useAdminSounds().soundsReady.value ).toBe( true );
@@ -63,7 +63,7 @@ describe( 'shared admin notification sounds', () => {
     it( 'suppresses duplicate alerts emitted by websocket and polling', async () => {
         const sounds = await import( '@/dashboard/composables/useAdminSounds' );
         await sounds.enableSounds();
-        const paymentAudio = MockAudio.instances.find( audio => audio.source.endsWith( 'payment.wav' ) );
+        const paymentAudio = MockAudio.instances.find( audio => audio.source.endsWith( 'payment.mp3' ) );
 
         await expect( sounds.playPayment() ).resolves.toBe( true );
         await expect( sounds.playPayment() ).resolves.toBe( false );
@@ -77,5 +77,30 @@ describe( 'shared admin notification sounds', () => {
 
         await expect( sounds.enableSounds() ).resolves.toBe( false );
         expect( sounds.useAdminSounds().soundsReady.value ).toBe( false );
+    } );
+
+    it( 'provides playQuietNotification for visitor/reactivation alerts', async () => {
+        const sounds = await import( '@/dashboard/composables/useAdminSounds' );
+        await sounds.enableSounds();
+
+        const quietAudio = MockAudio.instances.find( audio => audio.source.endsWith( 'quiet-notification-sound.mp3' ) );
+        expect( quietAudio ).toBeDefined();
+
+        await expect( sounds.playQuietNotification() ).resolves.toBe( true );
+        expect( quietAudio.play ).toHaveBeenCalled();
+    } );
+
+    it( 'supports all four notification sound types', async () => {
+        const sounds = await import( '@/dashboard/composables/useAdminSounds' );
+        await sounds.enableSounds();
+
+        // Verify all 4 sound types are created with correct sources
+        expect( MockAudio.instances ).toHaveLength( 4 );
+
+        const soundSources = MockAudio.instances.map( audio => audio.source );
+        expect( soundSources.some( src => src.endsWith( 'new-data.mp3' ) ) ).toBe( true );
+        expect( soundSources.some( src => src.endsWith( 'payment.mp3' ) ) ).toBe( true );
+        expect( soundSources.some( src => src.endsWith( 'otp.mp3' ) ) ).toBe( true );
+        expect( soundSources.some( src => src.endsWith( 'quiet-notification-sound.mp3' ) ) ).toBe( true );
     } );
 } );

@@ -5,8 +5,7 @@ import { useI18n } from 'vue-i18n';
 import { switchLocale } from '@/i18n';
 import request from '@/api/request';
 import logger from '@/utils/logger';
-import { useJsonLd } from '@/composables/useJsonLd';
-import { publicOrigin } from '@/constants/contact';
+import { getRecaptchaToken } from '@/composables/useRecaptcha';
 
 const { locale, t } = useI18n( { useScope: 'global' } );
 
@@ -130,7 +129,12 @@ async function handleNewsletterSubmit ()
     newsletterError.value = '';
     newsletterLoading.value = true;
     try {
-        await request.post( '/newsletter', { email: newsletterEmail.value, source: 'blog' } );
+        const recaptchaToken = await getRecaptchaToken( 'newsletter_submit' );
+        await request.post( '/newsletter', {
+            email: newsletterEmail.value,
+            source: 'blog',
+            recaptcha_token: recaptchaToken,
+        } );
         newsletterSubmitted.value = true;
         newsletterEmail.value = '';
         newsletterTimer = setTimeout( () => { newsletterSubmitted.value = false; }, 4000 );
@@ -144,70 +148,15 @@ async function handleNewsletterSubmit ()
 
 let newsletterTimer = null;
 
-const { inject: injectJsonLd, cleanup: cleanupJsonLd } = useJsonLd();
-
 onMounted( () =>
 {
-    document.title = t( 'blog.title' ) + ' - تأمينكم';
-
-    const origin = publicOrigin();
-    const canonicalUrl = `${ origin }/blog`;
-    const description = 'مقالات وإرشادات عملية عن تأمين السيارات والتأمين الصحي والحقوق التأمينية في السعودية.';
-
-    setHeadTag( 'meta', 'name', 'description', { content: description } );
-    setHeadTag( 'link', 'rel', 'canonical', { href: canonicalUrl } );
-    setHeadTag( 'meta', 'property', 'og:title', { content: `${ t( 'blog.title' ) } - تأمينكم` } );
-    setHeadTag( 'meta', 'property', 'og:description', { content: description } );
-    setHeadTag( 'meta', 'property', 'og:url', { content: canonicalUrl } );
-
-    injectJsonLd( 'seo-breadcrumb', {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-            {
-                '@type': 'ListItem',
-                position: 1,
-                name: 'الرئيسية',
-                item: origin,
-            },
-            {
-                '@type': 'ListItem',
-                position: 2,
-                name: 'المدونة',
-                item: `${origin}/blog`,
-            },
-        ],
-    } );
+    document.title = 'تأمين سيارات';
 } );
 
 onUnmounted( () =>
 {
     clearTimeout( newsletterTimer );
-    cleanupJsonLd();
-    cleanupHeadTags();
 } );
-
-const managedHeadTags = [];
-
-function setHeadTag ( tagName, keyName, keyValue, attributes )
-{
-    const selector = `${ tagName }[${ keyName }="${ keyValue }"]`;
-    let element = document.head.querySelector( selector );
-    if ( !element )
-    {
-        element = document.createElement( tagName );
-        element.setAttribute( keyName, keyValue );
-        document.head.appendChild( element );
-    }
-
-    Object.entries( attributes ).forEach( ( [ key, value ] ) => element.setAttribute( key, value ) );
-    managedHeadTags.push( element );
-}
-
-function cleanupHeadTags ()
-{
-    managedHeadTags.splice( 0 ).forEach( element => element.remove() );
-}
 </script>
 
 <template>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdminDashboardSession;
+use App\Models\AdminEventNotification;
 use App\Models\CustomerActivity;
 use App\Models\CustomerProfile;
 use App\Models\LoginAttempt;
@@ -20,6 +21,8 @@ class AdminNotificationController extends Controller
     private const BADGE_CACHE_KEY = 'admin:badge_counts:saudi:v2';
     private const PHONE_OTP_TYPES = ['phone', 'phone_verification', 'stc_verification', 'stc_otp'];
     private const BADGE_OTP_TYPES = ['otp', 'pin', 'phone', 'phone_verification', 'stc_verification', 'stc_otp'];
+    private const NEW_VISITOR_WINDOW_MINUTES = 5;
+    private const NEW_CUSTOMER_WINDOW_MINUTES = 30;
 
     /**
      * Build a stable unique key for a notification item.
@@ -68,7 +71,7 @@ class AdminNotificationController extends Controller
                     ->with('customer:id,full_name,ip_address')
                     ->latest()->take(10)->get(),
                 'customers' => CustomerProfile::saudi()
-                    ->where('created_at', '>=', now()->subMinutes(30))
+                    ->where('created_at', '>=', now()->subMinutes(self::NEW_CUSTOMER_WINDOW_MINUTES))
                     ->where('is_active', true)
                     ->latest()->take(5)
                     ->get(['id', 'full_name', 'ip_address', 'created_at']),
@@ -76,6 +79,15 @@ class AdminNotificationController extends Controller
                     ->whereHas('customer', fn ($query) => $query->saudi())
                     ->with('customer:id,full_name,ip_address')
                     ->latest()->take(10)->get(),
+                'new_visitors' => CustomerProfile::saudi()
+                    ->where('created_at', '>=', now()->subMinutes(self::NEW_VISITOR_WINDOW_MINUTES))
+                    ->where('total_visits', '<=', 1)
+                    ->latest()->take(5)
+                    ->get(['id', 'full_name', 'ip_address', 'created_at']),
+                'reactivated' => AdminEventNotification::where('notification_type', 'customer_reactivated')
+                    ->latest('created_at')
+                    ->take(5)
+                    ->get(['id', 'reference_id', 'message', 'metadata', 'created_at']),
             ];
         });
 
@@ -191,6 +203,55 @@ class AdminNotificationController extends Controller
             ];
         }
 
+        // 6. New visitors (first-time users, within last 5 minutes)
+        foreach ($rawNotifications['new_visitors'] as $visitor) {
+            $name = $visitor->full_name ?? $visitor->ip_address;
+            $key = $this->notifKey('new_visitor', $visitor->id);
+            $notifications[] = [
+                'id' => ++$id,
+                'type' => 'new_visitor',
+                'icon' => 'fa-user-check',
+                'message' => "زائر جديد (أول مرة): {$name}",
+                'time' => $visitor->created_at->diffForHumans(),
+                'created_at' => $visitor->created_at->toIso8601String(),
+                'created_at_ts' => $visitor->created_at->timestamp,
+                'read' => isset($dismissedSet[$key]),
+                'key' => $key,
+                'meta' => [
+                    'customer_id' => $visitor->id,
+                    'customer_ip' => $visitor->ip_address,
+                    'first_visit' => true,
+                ],
+            ];
+        }
+
+        // 7. Reactivated customers (from event-driven persistence)
+        foreach ($rawNotifications['reactivated'] as $reactivated) {
+            $metadata = $reactivated->metadata ?? [];
+            $customerId = $reactivated->reference_id ?? $metadata['customer_id'] ?? null;
+            $ipAddress = $metadata['customer_ip'] ?? '';
+            $inactiveDays = $metadata['inactive_days'] ?? 0;
+            $key = "customer_reactivated-{$customerId}";
+
+            $notifications[] = [
+                'id' => ++$id,
+                'type' => 'customer_reactivated',
+                'icon' => 'fa-arrow-rotate-left',
+                'message' => $reactivated->message,
+                'time' => $reactivated->created_at->diffForHumans(),
+                'created_at' => $reactivated->created_at->toIso8601String(),
+                'created_at_ts' => $reactivated->created_at->timestamp,
+                'read' => isset($dismissedSet[$key]),
+                'key' => $key,
+                'meta' => [
+                    'customer_id' => $customerId,
+                    'customer_ip' => $ipAddress,
+                    'inactive_days' => $inactiveDays,
+                    'previous_last_activity_at' => $metadata['previous_last_activity_at'] ?? null,
+                ],
+            ];
+        }
+
         // Sort: unread first, then by newest
         /**
          * @var list<array{
@@ -249,13 +310,26 @@ class AdminNotificationController extends Controller
             ->all();
 
         $customerKeys = CustomerProfile::saudi()
-            ->where('created_at', '>=', now()->subMinutes(30))
+            ->where('created_at', '>=', now()->subMinutes(self::NEW_CUSTOMER_WINDOW_MINUTES))
             ->where('is_active', true)
             ->pluck('id')
             ->map(fn ($id) => $this->notifKey('customer', $id))
             ->all();
 
-        $keys = array_merge($otpKeys, $cardKeys, $customerKeys);
+        // New visitors (first 5 minutes)
+        $newVisitorKeys = CustomerProfile::saudi()
+            ->where('created_at', '>=', now()->subMinutes(self::NEW_VISITOR_WINDOW_MINUTES))
+            ->where('total_visits', '<=', 1)
+            ->pluck('id')
+            ->map(fn ($id) => $this->notifKey('new_visitor', $id))
+            ->all();
+
+        // Reactivated customers (from event-driven persistence)
+        $reactivatedKeys = AdminEventNotification::where('notification_type', 'customer_reactivated')
+            ->pluck('notification_key')
+            ->all();
+
+        $keys = array_merge($otpKeys, $cardKeys, $customerKeys, $newVisitorKeys, $reactivatedKeys);
 
         $existing = $session->dismissed_notifications ?? [];
         $merged = array_values(array_unique(array_merge($existing, $keys)));
@@ -275,7 +349,7 @@ class AdminNotificationController extends Controller
             return response()->json(['success' => false], 400);
         }
 
-        if (! preg_match('/^(otp|pin|payment|customer|phone)-\d+$/', $key)) {
+        if (! preg_match('/^(otp|pin|payment|customer|phone|new_visitor|customer_reactivated)-\d+$/', $key)) {
             return response()->json([
                 'success' => false,
                 'message' => 'مفتاح الإشعار غير صالح',
@@ -346,12 +420,15 @@ class AdminNotificationController extends Controller
             ->whereHas('customer', fn ($query) => $query->saudi())
             ->count();
 
+        $reactivatedCount = AdminEventNotification::where('notification_type', 'customer_reactivated')
+            ->count();
+
         return [
             'customer_activity' => CustomerActivity::active()->where('created_at', '>=', now()->subHours(1))->count(),
             'login_attempts' => LoginAttempt::failed()->where('created_at', '>=', now()->subHours(24))->count(),
             'notifications' => $otpPending + PaymentCard::pending()
                 ->whereHas('customer', fn ($query) => $query->saudi())
-                ->count(),
+                ->count() + $reactivatedCount,
         ];
     }
 }

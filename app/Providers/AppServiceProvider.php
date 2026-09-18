@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -32,6 +33,15 @@ class AppServiceProvider extends ServiceProvider
 
         // ── Auto-populate BIN/bank metadata when payment_cards rows are saved
         \App\Models\PaymentCard::observe(\App\Observers\PaymentCardObserver::class);
+
+        // ── Detect customer reactivation (is_active: false -> true)
+        \App\Models\CustomerProfile::observe(\App\Observers\CustomerProfileObserver::class);
+
+        // ── Event listeners for domain events ──────────────────────────
+        Event::listen(
+            \App\Events\CustomerReactivatedEvent::class,
+            \App\Listeners\StoreCustomerReactivationNotification::class,
+        );
 
         // ── Eloquent strict mode (dev/testing only) ──────────────────
         // Catches lazy loading (N+1), silently discarded attributes,

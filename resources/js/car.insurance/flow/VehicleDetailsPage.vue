@@ -108,6 +108,52 @@
                             {{ errors.insuranceType }}
                         </p>
 
+                        <!-- Section: البيانات الشخصية -->
+                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">البيانات الشخصية</h3>
+
+                        <!-- الاسم الكامل -->
+                        <div class="flex flex-wrap -mx-1">
+                            <div class="w-full md:w-6/12 px-1 mb-4">
+                                <label for="fullName"
+                                    class="block text-sm font-bold text-slate-700 mb-1.5">الاسم الكامل</label>
+                                <input id="fullName" v-model="form.fullName" type="text" name="fullName"
+                                    placeholder="أدخل الاسم الكامل" autocomplete="name"
+                                    class="transition bg-white duration-300 block cursor-text w-full border border-slate-300 rounded-lg px-4 py-3 caret-blue-600 typ-b2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed appearance-none"
+                                    :class="errors.fullName ? 'border-red-500 focus:ring-red-600' : ''" />
+                                <p v-if="errors.fullName" class="text-red-500 text-xs mt-1">
+                                    {{ errors.fullName }}
+                                </p>
+                            </div>
+
+                            <!-- رقم الهاتف (أبشر) -->
+                            <div class="w-full md:w-6/12 px-1 mb-4">
+                                <label for="phoneNumber"
+                                    class="block text-sm font-bold text-slate-700 mb-1.5">رقم الهاتف (أبشر)</label>
+                                <input id="phoneNumber" v-model="form.phoneNumber" type="tel" name="phoneNumber"
+                                    placeholder="05xxxxxxxxx" inputmode="tel" autocomplete="tel"
+                                    class="transition bg-white duration-300 block cursor-text w-full border border-slate-300 rounded-lg px-4 py-3 caret-blue-600 typ-b2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed appearance-none ltr-nums"
+                                    :class="errors.phoneNumber ? 'border-red-500 focus:ring-red-600' : '' " />
+                                <p v-if="errors.phoneNumber" class="text-red-500 text-xs mt-1">
+                                    {{ errors.phoneNumber }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- البريد الإلكتروني (اختيار) -->
+                        <div class="flex flex-wrap -mx-1">
+                            <div class="w-full md:w-6/12 px-1 mb-4">
+                                <label for="email"
+                                    class="block text-sm font-bold text-slate-700 mb-1.5">البريد الإلكتروني <span class="text-xs text-slate-500 font-normal">(اختياري)</span></label>
+                                <input id="email" v-model="form.email" type="email" name="email"
+                                    placeholder="example@domain.com" autocomplete="email"
+                                    class="transition bg-white duration-300 block cursor-text w-full border border-slate-300 rounded-lg px-4 py-3 caret-blue-600 typ-b2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed appearance-none"
+                                    :class="errors.email ? 'border-red-500 focus:ring-red-600' : ''" />
+                                <p v-if="errors.email" class="text-red-500 text-xs mt-1">
+                                    {{ errors.email }}
+                                </p>
+                            </div>
+                        </div>
+
                         <div class="flex gap-2 items-center overflow-hidden" dir="rtl">
                             <span class="flex items-center text-sm text-slate-500 gap-1">
                                 اختر مركز الإصلاح
@@ -343,6 +389,9 @@ const FORM_DEFAULTS = {
     vehicleModel: '',
     vehicleYear: '',
     entityDiscount: false,
+    fullName: '',
+    phoneNumber: '',
+    email: '',
     taminkomRecommendation: true,
 };
 
@@ -478,6 +527,33 @@ function validate() {
     } else if ( estimatedVal > ESTIMATED_VALUE_LIMITS.MAX ) {
         setError( 'estimatedValue', `القيمة التقديرية لا يمكن أن تتجاوز ${ESTIMATED_VALUE_LIMITS.MAX.toLocaleString( 'ar-SA' )} ر.س` );
         valid = false;
+    }
+
+    // Full name
+    if ( !form.fullName || form.fullName.trim().length === 0 ) {
+        setError( 'fullName', 'يرجى إدخال الاسم الكامل' );
+        valid = false;
+    } else if ( form.fullName.trim().length < 3 ) {
+        setError( 'fullName', 'يجب أن يكون الاسم 3 أحرف على الأقل' );
+        valid = false;
+    }
+
+    // Phone number
+    if ( !form.phoneNumber || form.phoneNumber.trim().length === 0 ) {
+        setError( 'phoneNumber', 'يرجى إدخال رقم الهاتف' );
+        valid = false;
+    } else if ( !/^(\+966|0)?5[0-9]{8}$/.test( form.phoneNumber.replace( /\D/g, '' ).replace( /^966/, '0' ) ) ) {
+        setError( 'phoneNumber', 'يرجى إدخال رقم هاتف صحيح' );
+        valid = false;
+    }
+
+    // Email (optional, but validate if provided)
+    if ( form.email && form.email.trim().length > 0 ) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if ( !emailRegex.test( form.email ) ) {
+            setError( 'email', 'يرجى إدخال بريد إلكتروني صحيح' );
+            valid = false;
+        }
     }
 
     return valid;

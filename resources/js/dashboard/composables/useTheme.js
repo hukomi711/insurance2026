@@ -21,8 +21,10 @@ function loadSaved ()
 
 function applyTheme ( theme )
 {
-    const el = document.querySelector( '[data-admin-theme]' );
-    if ( el ) el.setAttribute( 'data-admin-theme', theme );
+    // Must live on <html>, not a descendant div: modals use Teleport to
+    // <body>, which escapes any scoped element and would otherwise fall
+    // back to hardcoded dark colors regardless of the selected theme.
+    document.documentElement.setAttribute( 'data-admin-theme', theme );
 }
 
 watch( currentTheme, ( val ) =>

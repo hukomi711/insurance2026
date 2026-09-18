@@ -14,19 +14,16 @@
 return [
 
     // ─── Base premiums per insurance sub-type (SAR) ───
+    // Fixed pricing: each company-type combination has a fixed base price
     'base_premiums' => [
-        'thirdParty'       => 700,
-        'thirdPartyPlus'   => 1100,
-        'vehicleDamagePlus'=> 1300,
-        'comprehensive'    => 2000,
+        'thirdParty'    => 399,
+        'comprehensive' => 499,
     ],
 
     // ─── Price limits (min/max per sub-type) ───
     'price_limits' => [
-        'thirdParty'        => ['min' => 400,  'max' => 3000],
-        'thirdPartyPlus'    => ['min' => 600,  'max' => 5000],
-        'vehicleDamagePlus' => ['min' => 700,  'max' => 6000],
-        'comprehensive'     => ['min' => 900,  'max' => 9000],
+        'thirdParty'    => ['min' => 300,  'max' => 1000],
+        'comprehensive' => ['min' => 400,  'max' => 1500],
     ],
 
     // ─── Vehicle risk factors ───
@@ -150,7 +147,7 @@ return [
         'agency'     => 1.35,  // 35% premium for agency repair
     ],
 
-    // ─── Coverage limit factors (comprehensive, vehicleDamagePlus, thirdPartyPlus) ───
+    // ─── Coverage limit factors (comprehensive only) ───
 
     'coverage_limit_factors' => [
         ['maxValue' => 30000,          'factor' => 0.90],
@@ -190,6 +187,8 @@ return [
     // ─── Company × insurance subtype pricing factors ───
     // Wider spread than the generic company factor so offers do not collapse
     // into near-identical prices inside one quote category.
+    // ─── Subtype company pricing factors (unused by SimplePricingService) ───
+    // SimplePricingService uses fixed prices from the database instead.
     'subtype_company_pricing_factors' => [
         'thirdParty' => [
             1 => 1.18, 2 => 0.94, 3 => 1.11, 4 => 1.08, 5 => 0.97,
@@ -197,20 +196,6 @@ return [
             11 => 1.07, 12 => 0.90, 13 => 1.22, 14 => 0.95, 15 => 1.03,
             16 => 1.16, 17 => 1.05, 18 => 0.93, 19 => 1.12, 20 => 1.09,
             21 => 0.98,
-        ],
-        'thirdPartyPlus' => [
-            1 => 1.08, 2 => 0.96, 3 => 1.10, 4 => 1.04, 5 => 0.94,
-            6 => 0.98, 7 => 1.06, 8 => 1.15, 9 => 0.92, 10 => 0.98,
-            11 => 1.03, 12 => 0.95, 13 => 1.18, 14 => 0.97, 15 => 1.01,
-            16 => 1.14, 17 => 1.04, 18 => 0.96, 19 => 1.07, 20 => 1.02,
-            21 => 0.99,
-        ],
-        'vehicleDamagePlus' => [
-            1 => 1.06, 2 => 0.97, 3 => 1.02, 4 => 0.98, 5 => 0.95,
-            6 => 1.00, 7 => 1.04, 8 => 1.10, 9 => 0.94, 10 => 0.99,
-            11 => 1.05, 12 => 0.93, 13 => 1.22, 14 => 0.96, 15 => 1.02,
-            16 => 1.12, 17 => 1.03, 18 => 0.98, 19 => 1.08, 20 => 1.06,
-            21 => 0.97,
         ],
         'comprehensive' => [
             1 => 1.10, 2 => 0.97, 3 => 1.12, 4 => 1.24, 5 => 0.95,
@@ -272,8 +257,52 @@ return [
     // Cross-runtime parity tests fail if either side changes independently.
     'promotional_discount_factor' => 0.80,
 
+    // ─── NEW (2026-09-18): SIMPLIFIED PRICING MODEL ───
+    // Fixed prices per company (no factors, no vehicle value, no driver age)
+    // Formula: finalPrice = basePrice + deductibleIncrease + addonsSum
+    'fixed_company_prices' => [
+        1  => 499,      // تري للتأمين
+        5  => 749,      // ملاذ للتأمين
+        8  => 999,      // العناية السعودية
+        6  => 1249,     // سايكو للتأمين
+        13 => 1499,     // التعاونية
+        16 => 1749,     // الراجحي
+        2  => 1999,     // العربية (AICC)
+        19 => 2249,     // GIG
+        20 => 2499,     // الإنماء طوكيو
+        3  => 2749,     // ولاء
+        4  => 2999,     // ميدغلف
+        21 => 3249,     // ليفا
+        17 => 3499,     // الوطنية
+    ],
+
+    // Deductible increase table (added to base price)
+    // Key: deductible amount in SAR, Value: price increase in SAR
+    'deductible_increase' => [
+        0    => 100,     // No deductible => +100 SAR
+        500  => 50,      // 500 deductible => +50 SAR
+        1000 => 0,       // 1000 deductible => base (no change)
+        1500 => -50,     // 1500 deductible => -50 SAR
+        2000 => -100,    // 2000 deductible => -100 SAR
+        2500 => -150,    // 2500 deductible => -150 SAR
+        3000 => -200,    // 3000 deductible => -200 SAR
+        5000 => -300,    // 5000 deductible => -300 SAR (max discount)
+    ],
+
+    // Add-ons pricing (personal accident coverage)
+    'addons_prices' => [
+        0 => [
+            'name' => 'تغطية الحوادث الشخصية للسائق',
+            'price' => 85,
+        ],
+        1 => [
+            'name' => 'تغطية الحوادث الشخصية للراكب',
+            'price' => 510,
+        ],
+    ],
+
     // ─── Pricing version (for audit trail and sync) ───
-    'version' => '1.1.0',
-    'last_updated' => '2026-05-09',
+    'version' => '2.0.0',
+    'last_updated' => '2026-09-18',
 
 ];

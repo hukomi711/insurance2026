@@ -5,12 +5,15 @@
 								<meta charset="UTF-8">
 								<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 								<meta name="csrf-token" content="{{ csrf_token() }}">
+								<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+								<meta name="recaptcha-enabled" content="{{ config("services.recaptcha.enabled") ? "true" : "false" }}">
+								<meta name="recaptcha-site-key" content="{{ config("services.recaptcha.site_key") }}">
 								<meta name="theme-color" content="#1a1a2e">
 								<meta name="mobile-web-app-capable" content="yes">
 								<meta name="apple-mobile-web-app-status-bar-style" content="default">
 								<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
 								<link rel="manifest" href="/manifest.json">
-								<title>تأمينكم</title>
+								<title>تأمين مركبات</title>
 								<link rel="icon" href="/favicon.ico" type="image/x-icon">
 								{{-- Note: previously preloaded noto-kufi + roboto woff2 here. Removed because
 								     the preload href (from $viteFonts) did not exactly match the URL that

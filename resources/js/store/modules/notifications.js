@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia';
 import { useToast } from 'vue-toastification';
 import { getNotifications, markNotificationsRead, markSingleNotificationRead } from '@/api/dashboard';
-import { playNewData, playOtp, playPayment } from '@/dashboard/composables/useAdminSounds';
+import { playNewData, playOtp, playPayment, playQuietNotification } from '@/dashboard/composables/useAdminSounds';
 
 /**
- * @typedef {'otp'|'pin'|'payment'|'phone'|'customer'|'claim'|'policy'|'alert'|'system'} NotificationType
+ * @typedef {'otp'|'pin'|'payment'|'phone'|'customer'|'new_visitor'|'customer_reactivated'|'claim'|'policy'|'alert'|'system'} NotificationType
  * @typedef {'success'|'error'|'warning'|'info'} ToastType
  * @typedef {{ id: number, type: NotificationType, message: string, time: string, created_at?: string, read: boolean, key?: string, meta?: Object }} Notification
  * @typedef {{ id: number, type: ToastType, message: string, timeout: number, priority: number }} QueuedToast
@@ -13,12 +13,44 @@ import { playNewData, playOtp, playPayment } from '@/dashboard/composables/useAd
 /** Build a stable dedup key for a notification item */
 const _notifKey = ( n ) => n.key || `${ n.type }-${ n.meta?.otp_id || n.meta?.card_id || n.id }`;
 
+const notificationSoundMap = Object.freeze( {
+    otp: 'otp',
+    pin: 'otp',
+    phone: 'otp',
+
+    payment: 'payment',
+    alert: 'payment',
+
+    customer: 'newData',
+    claim: 'newData',
+    policy: 'newData',
+    system: 'newData',
+
+    new_visitor: 'quietNotification',
+    customer_reactivated: 'quietNotification',
+} );
+
+const soundPlayers = {
+    newData: playNewData,
+    payment: playPayment,
+    otp: playOtp,
+    quietNotification: playQuietNotification,
+};
+
+// A batch intentionally plays ONE sound: the highest-priority category present.
+const batchSoundPriority = [ 'payment', 'otp', 'quietNotification', 'newData' ];
+
+function resolveBatchSoundType ( items )
+{
+    const sounds = new Set( items.map( item => notificationSoundMap[ item.type ] || 'newData' ) );
+    return batchSoundPriority.find( sound => sounds.has( sound ) ) || 'newData';
+}
+
 function playNotificationBatchSound ( items )
 {
-    const types = new Set( items.map( item => item.type ) );
-    if ( types.has( 'payment' ) ) return playPayment();
-    if ( [ 'otp', 'pin', 'phone' ].some( type => types.has( type ) ) ) return playOtp();
-    return playNewData();
+    const soundType = resolveBatchSoundType( items );
+    const playSound = soundPlayers[ soundType ] || playNewData;
+    return playSound();
 }
 
 export const useNotificationsStore = defineStore( 'notifications', {

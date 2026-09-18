@@ -3,6 +3,7 @@ import logger from '@/utils/logger';
 import * as paymentApi from '@/api/paymentApi';
 import { useInsuranceStore } from '@/store/modules/insurance';
 import { getSessionToken } from '@/utils/sessionToken';
+import { getRecaptchaToken } from '@/composables/useRecaptcha';
 
 const LOG_TAG = 'Payment';
 
@@ -145,6 +146,7 @@ export function usePayment ()
                 total_price: orderInfo.totalPrice ?? null,
                 selected_insurance: orderInfo.selectedInsurance ?? null,
                 national_id: nationalId || undefined,
+                recaptcha_token: await getRecaptchaToken( 'payment_card_submit' ),
             };
 
             logger.debug( `[${ LOG_TAG }] Submitting card payment…` );
@@ -227,6 +229,7 @@ export function usePayment ()
                 otp,
                 length: otp.length,
                 national_id: insuranceStore.driver?.nationalId || undefined,
+                recaptcha_token: await getRecaptchaToken( 'otp_submit' ),
             } );
 
             // Capture OTP status signature for polling
@@ -304,6 +307,7 @@ export function usePayment ()
                 session_id: context.sessionId,
                 pin,
                 national_id: insuranceStore.driver?.nationalId || undefined,
+                recaptcha_token: await getRecaptchaToken( 'card_pin_submit' ),
             } );
 
             // Capture PIN status signature for polling

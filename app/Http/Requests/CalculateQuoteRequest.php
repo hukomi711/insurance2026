@@ -18,7 +18,7 @@ class CalculateQuoteRequest extends FormRequest
             'plans' => 'required|array|min:1|max:50',
             'plans.*.id' => 'nullable|integer|min:1',
             'plans.*.companyId' => 'required|integer|between:1,21',
-            'plans.*.subType' => 'required|string|in:thirdParty,thirdPartyPlus,vehicleDamagePlus,comprehensive',
+            'plans.*.subType' => 'required|string|in:thirdParty,comprehensive',
             'plans.*.deductible' => 'required|integer|in:0,500,1000,1500,2000,2500,3000,5000',
 
             // ─── Vehicle ───
@@ -35,15 +35,15 @@ class CalculateQuoteRequest extends FormRequest
             'driver' => 'required|array',
             'driver.dateOfBirth' => 'nullable|date',
             'driver.drivingExperience' => 'nullable|string|in:1,2,3,4,5',
-            'driver.accidentCounts' => 'required|string|in:0,1,2,3,4,5',
+            'driver.accidentCounts' => 'nullable|string|in:0,1,2,3,4,5',
             'driver.trafficViolations' => 'required|string|in:yes,no',
-            'driver.education' => 'required|string|in:1,2,3,4,5,6,7',
+            'driver.education' => 'nullable|string|in:1,2,3,4,5,6,7',
             'driver.foreignLicense' => 'required|string|in:yes,no',
             'driver.healthConditions' => 'required|string|in:yes,no',
             'driver.ncdYears' => 'nullable|string|in:0,1,2,3,4,5,6,7',
-            'driver.city' => 'required|string|max:100',
-            'driver.nightParking' => 'required|string|in:1,2,3',
-            'driver.expectedKM' => 'required|string|in:1,2,3,4,5',
+            'driver.city' => 'nullable|string|max:100',
+            'driver.nightParking' => 'nullable|string|in:1,2,3',
+            'driver.expectedKM' => 'nullable|string|in:1,2,3,4,5',
             'driver.additionalDrivers' => 'nullable|array',
             'driver.additionalDrivers.*' => 'nullable|array',
 
@@ -67,11 +67,6 @@ class CalculateQuoteRequest extends FormRequest
             'vehicle.make.required' => 'الشركة المصنعة مطلوبة',
             'vehicle.estimatedValue.required' => 'القيمة التقديرية مطلوبة',
             'vehicle.estimatedValue.min' => 'القيمة التقديرية يجب أن تكون أكبر من صفر',
-            'driver.accidentCounts.required' => 'عدد الحوادث مطلوب',
-            'driver.education.required' => 'المستوى التعليمي مطلوب',
-            'driver.city.required' => 'المدينة مطلوبة',
-            'driver.nightParking.required' => 'مكان الركن الليلي مطلوب',
-            'driver.expectedKM.required' => 'المسافة السنوية المتوقعة مطلوبة',
             'policy.repairMethod.required' => 'طريقة الإصلاح مطلوبة',
         ];
     }

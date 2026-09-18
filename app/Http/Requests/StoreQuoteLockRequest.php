@@ -15,6 +15,8 @@ class StoreQuoteLockRequest extends FormRequest
     {
         return [
             'plan_id'           => 'required|integer',
+            'company_id'        => 'required|integer|between:1,21',
+            'plan_sub_type'     => 'required|string|in:thirdParty,comprehensive',
             'plan_name'         => 'required|string|max:255',
             'insurance_company' => 'required|string|max:255',
             'insurance_type'    => 'required|string|in:comprehensive,third_party',

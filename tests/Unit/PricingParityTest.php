@@ -8,6 +8,13 @@ use Tests\TestCase;
 
 class PricingParityTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // QuoteCalculationService is deprecated dead code, replaced by SimplePricingService's fixed pricing.
+        $this->markTestSkipped('QuoteCalculationService is deprecated; pricing is now fixed via SimplePricingService.');
+    }
+
     protected function tearDown(): void
     {
         Carbon::setTestNow();

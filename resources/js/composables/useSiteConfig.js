@@ -33,7 +33,7 @@ async function load() {
     state.error = null;
 
     inflight = request
-        .get('/api/site-config')
+        .get('/site-config')
         .then((res) => {
             const data = res?.data || {};
             if (data.whatsapp) {

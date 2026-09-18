@@ -277,12 +277,10 @@ import {
 import { getCompany } from '@/data';
 import { formatNumber } from '@/utils/formatters';
 import { calculateTotalWithVAT } from '@/utils/pricing';
-import { usePricingEngine } from '@/utils/pricingEngine';
 import { useInsuranceStore } from '@/store/modules/insurance';
 import SarIcon from '@/components/SarIcon.vue';
 
 const insuranceStore = useInsuranceStore();
-const { recalculateSinglePlan } = usePricingEngine();
 
 const props = defineProps( {
     open: { type: Boolean, default: false },
@@ -310,19 +308,8 @@ watch( () => props.plan.id, () => {
     showExclusions.value = false;
 } );
 
-// Recalculate price when deductible changes
-const currentPrice = computed( () => {
-    // If deductible changed from plan default, recalculate via pricing engine
-    if ( selectedDeductible.value !== props.plan.deductible ) {
-        const recalculated = recalculateSinglePlan(
-            props.plan,
-            insuranceStore.allFormData,
-            Number( selectedDeductible.value )
-        );
-        return recalculated.annualPrice;
-    }
-    return props.plan.annualPrice;
-} );
+// Fixed pricing — deductible no longer affects price, only annualPrice matters
+const currentPrice = computed( () => props.plan.annualPrice );
 
 const addonsTotal = computed( () => {
     if ( !props.plan.additionalCoverages ) return 0;

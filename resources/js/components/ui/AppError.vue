@@ -35,7 +35,7 @@
                 <polyline points="23 4 23 10 17 10" />
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
             </svg>
-            إعادة المحاولة
+            {{ retryLabel }}
         </button>
     </div>
 </template>
@@ -63,6 +63,8 @@ defineProps( {
     details: { type: String, default: '' },
     /** Whether to show retry button */
     showRetry: { type: Boolean, default: true },
+    /** Retry button label — override when the action isn't a literal retry */
+    retryLabel: { type: String, default: 'إعادة المحاولة' },
 } );
 
 defineEmits( [ 'retry' ] );
