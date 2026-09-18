@@ -52,7 +52,7 @@ jobs:
           extensions: mbstring, intl, pdo_sqlite, sqlite3, redis, fileinfo
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
