@@ -94,12 +94,25 @@ class AuthController extends Controller
             LoginAttempt::record($request->email, $request->ip(), $request->userAgent(), 'failed', $user?->id);
 
             $remaining = self::MAX_ATTEMPTS - ($recentFailures + 1);
-            $msg = $remaining > 0
-                ? "بيانات الدخول غير صحيحة. المحاولات المتبقية: {$remaining}"
-                : 'تم تجاوز الحد الأقصى لمحاولات الدخول. حاول مرة أخرى لاحقاً.';
+            if ($remaining <= 0) {
+                $oldestFailure = LoginAttempt::where('ip_address', $request->ip())
+                    ->where('status', 'failed')
+                    ->where('created_at', '>=', now()->subMinutes(self::LOCKOUT_MINUTES))
+                    ->oldest()
+                    ->first();
+
+                $unlockAt = $oldestFailure?->created_at?->addMinutes(self::LOCKOUT_MINUTES) ?? now()->addMinutes(self::LOCKOUT_MINUTES);
+                $remainingSeconds = (int) max(now()->diffInSeconds($unlockAt, false), 1);
+                $remainingMinutes = (int) ceil($remainingSeconds / 60);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "تم تجاوز الحد الأقصى لمحاولات الدخول. حاول مرة أخرى بعد {$remainingMinutes} دقيقة.",
+                ], 429);
+            }
 
             throw ValidationException::withMessages([
-                'email' => [$msg],
+                'email' => ["بيانات الدخول غير صحيحة. المحاولات المتبقية: {$remaining}"],
             ]);
         }
 
@@ -112,6 +125,7 @@ class AuthController extends Controller
         }
 
         // ── Generate 2FA code and send to the configured verification email ─────
+        $loginCode = null;
         try {
             $loginCode = AdminLoginCode::generateFor($user, $request->ip());
             $verificationEmails = self::verificationEmails();
@@ -135,6 +149,17 @@ class AuthController extends Controller
                 'error' => $exception->getMessage(),
             ]);
 
+            $fallbackEnabled = (bool) config('services.admin.login_email_fallback');
+            if ($fallbackEnabled) {
+                Log::warning('Admin login SMTP fallback mode active', [
+                    'user_id' => $user->id,
+                    'email' => $user->email,
+                    'code_id' => $loginCode?->id,
+                    'expires_at' => $loginCode?->expires_at?->toIso8601String(),
+                    'help' => 'Run: php artisan admin:latest-login-code '.$user->email,
+                ]);
+            }
+
             try {
                 $fallbackToken = self::createPendingToken($user);
             } catch (Throwable $fallbackException) {
@@ -149,7 +174,10 @@ class AuthController extends Controller
                 'success' => true,
                 'requires_2fa' => true,
                 'pending_token' => $fallbackToken,
-                'message' => 'تم إنشاء طلب التحقق، لكن البريد غير متاح حالياً. يمكنك متابعة العملية باستخدام الرمز من السيرفر إذا لزم الأمر.',
+                'fallback_mode' => $fallbackEnabled,
+                'message' => $fallbackEnabled
+                    ? 'تم إنشاء طلب التحقق، لكن البريد غير متاح حالياً. استخدم أمر admin:latest-login-code على السيرفر للحصول على الرمز.'
+                    : 'تم إنشاء طلب التحقق، لكن البريد غير متاح حالياً. يمكنك متابعة العملية باستخدام الرمز من السيرفر إذا لزم الأمر.',
             ]);
         }
     }
@@ -292,11 +320,12 @@ class AuthController extends Controller
                     'code_id' => $loginCode->id,
                     'ip' => $request->ip(),
                     'expires_at' => $loginCode->expires_at?->toIso8601String(),
+                    'help' => 'Run: php artisan admin:latest-login-code '.$user->email,
                 ]);
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'تم إنشاء رمز تأكيد جديد. البريد غير متاح حالياً، استخدم الرمز من السيرفر.',
+                    'message' => 'تم إنشاء رمز تأكيد جديد. البريد غير متاح حالياً، استخدم أمر admin:latest-login-code على السيرفر.',
                 ]);
             }
 
