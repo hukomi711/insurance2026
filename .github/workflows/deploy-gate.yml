@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout target ref
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
 
@@ -69,7 +69,7 @@ jobs:
       url: ${{ inputs.base_url }}
     steps:
       - name: Checkout target ref
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
 
@@ -89,7 +89,7 @@ jobs:
     if: ${{ !inputs.dry_run }}
     steps:
       - name: Checkout repo (for smoke script)
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Smoke check (post-deploy)
         run: |
@@ -105,7 +105,7 @@ jobs:
       url: ${{ inputs.base_url }}
     steps:
       - name: Checkout rollback ref
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.rollback_ref }}
 
