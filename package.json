@@ -43,7 +43,7 @@
         "@intlify/unplugin-vue-i18n": "^11.0.7",
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-vue": "^6.0.4",
-        "eslint": "^10.0.2",
+        "eslint": "^10.10.0",
         "eslint-plugin-vue": "^10.8.0",
         "happy-dom": "^20.7.0",
         "laravel-vite-plugin": "^3.0.1",
