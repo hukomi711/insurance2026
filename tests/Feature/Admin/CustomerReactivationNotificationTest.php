@@ -61,7 +61,7 @@ class CustomerReactivationNotificationTest extends TestCase
         $customer = CustomerProfile::factory()->create([
             'is_active' => false,
             'location_country' => 'السعودية',
-            'ip_address' => '203.161.38.43',
+            'ip_address' => '192.0.2.1', // Test IP (documentation range)
         ]);
 
         $previousLastActivity = $customer->last_activity_at?->toIso8601String();

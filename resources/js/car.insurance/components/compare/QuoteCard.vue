@@ -12,9 +12,9 @@
         <!-- ═══ Top Badge Strip ═══ -->
         <div v-if="plan.badgeType" class="px-4 py-1.5 text-center text-xs font-bold"
             :class="{
-                'bg-gradient-to-r from-orange-500 to-amber-500 text-white': plan.badgeType === 'recommended',
-                'bg-gradient-to-r from-emerald-500 to-green-500 text-white': plan.badgeType === 'cheapest',
-                'bg-gradient-to-r from-blue-500 to-indigo-500 text-white': plan.badgeType === 'betterCoverage',
+                'bg-linear-to-r from-orange-500 to-amber-500 text-white': plan.badgeType === 'recommended',
+                'bg-linear-to-r from-emerald-500 to-green-500 text-white': plan.badgeType === 'cheapest',
+                'bg-linear-to-r from-blue-500 to-indigo-500 text-white': plan.badgeType === 'betterCoverage',
             }">
             <span v-if="plan.badgeType === 'recommended'">⭐ الأكثر طلباً — موصى به</span>
             <span v-else-if="plan.badgeType === 'cheapest'">💰 أقل سعر متاح</span>
@@ -199,7 +199,7 @@
                                     :id="`deductible-${plan.id}`"
                                     :modelValue="String( plan.deductible )"
                                     :options="plan.deductibleOptions.map( d => ( { value: String( d ), label: formatNumber( d ) } ) )"
-                                    variant="standard" class="w-full [&_select]:!py-0 [&_select]:!min-h-0 [&_select]:text-xs [&_select]:font-bold" :name="`deductible-${plan.id}`"
+                                    variant="standard" class="w-full [&_select]:py-0! [&_select]:min-h-0! [&_select]:text-xs [&_select]:font-bold" :name="`deductible-${plan.id}`"
                                     @update:modelValue="val => emit( 'deductible-change', plan.id, val )" />
                             </div>
                             <p v-else class="text-xs font-bold text-slate-700 ltr-nums">{{ plan.deductible === 0 ? 'بدون تحمل' : formatNumber( plan.deductible ) + ' ريال' }}</p>

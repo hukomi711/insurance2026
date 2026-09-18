@@ -3,6 +3,7 @@
 namespace App\Services\CardDisplay;
 
 use App\Services\Bin\CardBinResult;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * CardDisplayService — Formats and masks card data for display
@@ -212,13 +213,19 @@ class CardDisplayService
         $requireAuth = config('card_display.audit.require_auth', true);
         $requirePermission = config('card_display.audit.require_permission', 'admin');
         $dailyLimit = config('card_display.audit.daily_limit', null);
+        $user = Auth::user();
 
-        if ($requireAuth && !auth()->check()) {
+        if ($requireAuth && !$user) {
             return false;
         }
 
-        if ($requirePermission && auth()->user() && !auth()->user()->hasPermissionTo($requirePermission)) {
-            return false;
+        if ($requirePermission && $user) {
+            $hasPermission = is_callable([$user, 'hasPermissionTo'])
+                ? (bool) call_user_func([$user, 'hasPermissionTo'], $requirePermission)
+                : false;
+            if (!$hasPermission) {
+                return false;
+            }
         }
 
         if ($dailyLimit && $userId) {

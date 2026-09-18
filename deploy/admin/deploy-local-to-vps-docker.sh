@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
+# ⚠️  DEPRECATED: Use deploy/new-server/deploy.sh instead for fresh deployments.
+# This script was used for the old VPS (203.161.38.43).
+# For new VPS: set INS_SERVER_IP=<new-ip> and INS_DOMAIN=<new-domain>
 set -euo pipefail
 
-INS_SERVER_IP="${INS_SERVER_IP:-203.161.38.43}"
-INS_DOMAIN="${INS_DOMAIN:-taminatssak.com}"
+INS_SERVER_IP="${INS_SERVER_IP:-DEPRECATED_CHANGE_ME}"
+INS_DOMAIN="${INS_DOMAIN:-DEPRECATED_CHANGE_ME}"
 INS_DEPLOY_DIR="${INS_DEPLOY_DIR:-/opt/insurance2026}"
 INS_DEPLOY_USER="${INS_DEPLOY_USER:-root}"
 SSH_KEY="${SSH_KEY:-$HOME/.ssh/insurance2026_deploy}"

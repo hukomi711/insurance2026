@@ -17,7 +17,7 @@
 
         <!-- Panel -->
         <div
-          class="admin-modal-panel relative flex h-[100dvh] w-full flex-col overflow-hidden rounded-none transition-all duration-200 sm:h-auto sm:max-h-[90dvh] sm:w-[96vw] sm:rounded-2xl"
+          class="admin-modal-panel relative flex h-dvh w-full flex-col overflow-hidden rounded-none transition-all duration-200 sm:h-auto sm:max-h-[90dvh] sm:w-[96vw] sm:rounded-2xl"
           :class="modalSizeClasses"
         >
           <!-- Header -->

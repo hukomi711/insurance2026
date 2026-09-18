@@ -13,7 +13,7 @@
             <header class="text-center mb-6">
                 <!-- Shield Icon -->
                 <div class="flex justify-center mb-3">
-                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-sky-400 to-teal-400 flex items-center justify-center shadow-lg">
+                    <div class="w-16 h-16 rounded-full bg-linear-to-br from-sky-400 to-teal-400 flex items-center justify-center shadow-lg">
                         <i class="fa-solid fa-shield-halved text-4xl text-white"></i>
                     </div>
                 </div>

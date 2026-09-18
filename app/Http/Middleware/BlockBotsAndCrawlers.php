@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class BlockBotsAndCrawlers
@@ -23,6 +24,7 @@ class BlockBotsAndCrawlers
      */
     public function handle(Request $request, Closure $next): Response
     {
+        Log::info("BlockBotsAndCrawlers invoked", ["ua" => $request->userAgent(), "path" => $request->path()]);
         $config = config('bot_handling');
 
         // Early exit if blocking is disabled globally
@@ -38,6 +40,8 @@ class BlockBotsAndCrawlers
         $ua = strtolower(trim((string) $request->userAgent()));
         $clientIp = $request->ip();
 
+        Log::info("BlockBots decision", ["ua" => $ua, "ip" => $clientIp]);
+
         // Check IP allowlist first
         if ($this->isIpAllowed($clientIp, $config)) {
             return $next($request);
@@ -50,6 +54,7 @@ class BlockBotsAndCrawlers
 
         // Apply general bot blocking rules
         if ($ua !== '' && $this->shouldBlockUserAgent($ua, $config)) {
+            Log::warning("Blocking bot", ["ua" => $ua, "ip" => $clientIp]);
             $this->logBlockedBot($request, $ua, $config);
 
             $response = $config['response'] ?? [];

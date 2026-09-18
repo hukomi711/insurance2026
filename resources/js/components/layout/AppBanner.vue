@@ -21,7 +21,7 @@
 
             <!-- Right: Close -->
             <div class="flex gap-2 items-center shrink-0">
-                <button class="flex cursor-pointer items-center justify-center min-w-[44px] min-h-[44px] rounded-lg hover:bg-black/10 active:bg-black/20 transition-all" aria-label="إغلاق"
+                <button class="flex cursor-pointer items-center justify-center min-w-11 min-h-11 rounded-lg hover:bg-black/10 active:bg-black/20 transition-all" aria-label="إغلاق"
                     @click="dismiss">
                     <span class="font-bold text-2xl leading-none">&times;</span>
                 </button>

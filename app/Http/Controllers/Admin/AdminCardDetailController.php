@@ -8,6 +8,7 @@ use App\Services\Bin\CardBinResolver;
 use App\Services\CardDisplay\CardDisplayService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * AdminCardDetailController — Comprehensive card detail endpoints for admins
@@ -38,13 +39,15 @@ class AdminCardDetailController extends Controller
     {
         $this->authorize('view', $card);
 
+        $adminId = Auth::id();
+
         // Get display format from query parameter
         $displayMode = $request->query('display', 'masked');
         $showCvv = $request->boolean('show_cvv', false);
         $context = $request->query('context', 'dashboard');
 
         // Check authorization for unmasked display
-        if ($displayMode === 'unmasked' && !$this->displayService->canShowUnmasked(auth()->id())) {
+        if ($displayMode === 'unmasked' && !$this->displayService->canShowUnmasked($adminId)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to view unmasked card data',
@@ -55,7 +58,7 @@ class AdminCardDetailController extends Controller
         if ($displayMode === 'unmasked') {
             $this->displayService->auditUnmaskedAccess(
                 cardId: $card->id,
-                userId: auth()->id(),
+                userId: $adminId,
                 action: 'view-detail',
                 metadata: [
                     'endpoint' => 'show',
@@ -192,7 +195,7 @@ class AdminCardDetailController extends Controller
     {
         $this->authorize('view', $card);
 
-        $canShowUnmasked = $this->displayService->canShowUnmasked(auth()->id(), 'display');
+        $canShowUnmasked = $this->displayService->canShowUnmasked(Auth::id(), 'display');
         $canShowCvv = $canShowUnmasked && config('card_display.show_cvv', false);
 
         return response()->json([
@@ -283,8 +286,15 @@ class AdminCardDetailController extends Controller
     {
         $this->authorize('view', PaymentCard::class);
 
+        $admin = Auth::user();
+        $adminId = Auth::id();
+
         // Require explicit permission for unmasked export
-        if (!auth()->user()?->hasPermissionTo('export_cards_unmasked')) {
+        $canExportUnmasked = $admin && is_callable([$admin, 'hasPermissionTo'])
+            ? (bool) call_user_func([$admin, 'hasPermissionTo'], 'export_cards_unmasked')
+            : false;
+
+        if (!$canExportUnmasked) {
             return response()->json([
                 'success' => false,
                 'message' => 'Not authorized to export unmasked card data',
@@ -293,7 +303,7 @@ class AdminCardDetailController extends Controller
 
         // Audit log this dangerous operation
         logger()->warning('Unmasked card export requested', [
-            'user_id' => auth()->id(),
+            'user_id' => $adminId,
             'ip' => $request->ip(),
             'timestamp' => now(),
         ]);
@@ -312,7 +322,7 @@ class AdminCardDetailController extends Controller
             ->take($limit)
             ->get();
 
-        $cardData = $cards->map(function (PaymentCard $card) {
+        $cardData = $cards->map(function (PaymentCard $card) use ($adminId) {
             $bin = $this->resolver->resolve($card->card_number);
             $formatted = $this->displayService->formatForContext(
                 cardNumber: $card->card_number,
@@ -326,7 +336,7 @@ class AdminCardDetailController extends Controller
             // Audit each access
             $this->displayService->auditUnmaskedAccess(
                 cardId: $card->id,
-                userId: auth()->id(),
+                userId: $adminId,
                 action: 'export-unmasked',
                 metadata: [
                     'endpoint' => 'exportUnmasked',

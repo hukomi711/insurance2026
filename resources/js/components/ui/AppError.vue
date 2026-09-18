@@ -23,7 +23,7 @@
             <summary class="typ-s2 text-muted cursor-pointer hover:text-foreground transition-colors">
                 التفاصيل التقنية
             </summary>
-            <pre class="mt-2 p-3 bg-slate-100 rounded-lg text-xs text-slate-700 overflow-x-auto whitespace-pre-wrap break-words ltr-nums"
+            <pre class="mt-2 p-3 bg-slate-100 rounded-lg text-xs text-slate-700 overflow-x-auto whitespace-pre-wrap wrap-break-word ltr-nums"
                 dir="ltr">{{ details }}</pre>
         </details>
 

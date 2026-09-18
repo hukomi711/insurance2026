@@ -162,7 +162,7 @@ onUnmounted( () =>
 <template>
     <div class="py-8">
         <!-- Hero Section -->
-        <section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 rounded-2xl mx-4 sm:mx-6 lg:mx-8 mb-8">
+        <section class="bg-linear-to-r from-blue-600 to-blue-800 text-white py-16 rounded-2xl mx-4 sm:mx-6 lg:mx-8 mb-8">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <h1 class="text-3xl md:text-5xl font-bold mb-4">
                     {{ t( 'blog.heroTitle' ) }}
@@ -211,7 +211,7 @@ onUnmounted( () =>
                         <input id="blog-search" v-model="searchQuery" name="blog-search" type="text"
                             :placeholder="t( 'blog.searchPlaceholder' )"
                             class="w-full ps-12 pe-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                        <svg class="absolute start-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none"
+                        <svg class="absolute inset-s-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none"
                             stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -278,15 +278,15 @@ onUnmounted( () =>
                     <article v-for="(article, index) in filteredArticles" :key="article.id"
                         class="bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden group">
                         <!-- Image -->
-                        <div class="aspect-video bg-gradient-to-br from-blue-400 to-blue-600 relative overflow-hidden">
+                        <div class="aspect-video bg-linear-to-br from-blue-400 to-blue-600 relative overflow-hidden">
                             <img v-if="article.image" :src="article.image" :alt="article.title"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                 :loading="index === 0 ? 'eager' : 'lazy'" decoding="async" width="800" height="450"
                                 :fetchpriority="index === 0 ? 'high' : undefined"
                                 @error="$event.target.style.display = 'none'" />
-                            <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                            <div class="absolute inset-0 bg-linear-to-t from-black/50 to-transparent"></div>
                             <span
-                                class="absolute bottom-3 end-3 bg-white/90 text-blue-600 px-3 py-1 rounded-full text-xs font-medium">
+                                class="absolute bottom-3 inset-e-3 bg-white/90 text-blue-600 px-3 py-1 rounded-full text-xs font-medium">
                                 {{ article.category }}
                             </span>
                         </div>
