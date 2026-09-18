@@ -37,7 +37,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="w-full md:max-w-[80rem] px-0 md:px-4 mx-auto my-5 relative">
+        <div class="w-full md:max-w-7xl px-0 md:px-4 mx-auto my-5 relative">
             <div class="flex flex-col lg:flex-row w-full">
 
                 <!-- Mobile sidebar placeholder -->
@@ -55,17 +55,17 @@
                         <div class="flex flex-col md:flex-row gap-4 justify-between">
                             <!-- Identity Number — رقم الهوية -->
                             <div class="w-full md:w-1/2">
-                                <div class="group transition duration-300 relative flex border rounded-lg min-h-[3.5rem] px-4 py-2 items-center gap-2 w-full"
+                                <div class="group transition duration-300 relative flex border rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
                                     :class="errors.identityNumber
                                         ? 'border-red-500'
-                                        : 'border-slate-300 has-[:focus]:border-blue-600'
+                                        : 'border-slate-300 has-focus:border-blue-600'
                                         ">
                                     <input id="identityNumber" v-model="form.identityNumber" type="text" name="identityNumber"
                                         inputmode="numeric" autocomplete="off" maxlength="10" dir="ltr"
                                         class="transition bg-transparent duration-300 block cursor-text resize-none caret-blue-600 pb-2.5 size-full text-sm text-slate-900 appearance-none focus:outline-none focus:ring-0 peer z-10 pt-6"
                                         placeholder=" " @input="onIdentityInput" @blur="validateIdentity" />
                                     <label for="identityNumber"
-                                        class="transition z-10 absolute text-sm text-slate-500 duration-300 transform -translate-y-4 top-5 peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-[0] start-4 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
+                                        class="transition z-10 absolute text-sm text-slate-500 duration-300 transform -translate-y-4 top-5 peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-left inset-s-4 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
                                         رقم الهوية
                                     </label>
                                 </div>
@@ -99,17 +99,17 @@
                         <div class="flex flex-col md:flex-row gap-4 justify-between">
                             <!-- Customs Card Number — بطاقة جمركية -->
                             <div class="w-full md:w-1/2">
-                                <div class="group transition duration-300 relative flex border rounded-lg min-h-[3.5rem] px-4 py-2 items-center gap-2 w-full"
+                                <div class="group transition duration-300 relative flex border rounded-lg min-h-14 px-4 py-2 items-center gap-2 w-full"
                                     :class="errors.customsCardNumber
                                         ? 'border-red-500'
-                                        : 'border-slate-300 has-[:focus]:border-blue-600'
+                                        : 'border-slate-300 has-focus:border-blue-600'
                                         ">
                                     <input id="customsCardNumber" v-model="form.customsCardNumber" type="text"
                                         name="customsCardNumber" autocomplete="off" inputmode="numeric" maxlength="15" dir="ltr"
                                         class="transition bg-transparent duration-300 block cursor-text resize-none caret-blue-600 pb-2.5 size-full text-sm text-slate-900 appearance-none focus:outline-none focus:ring-0 peer z-10 pt-6"
                                         placeholder=" " @input="onCustomsCardInput" @blur="validateCustomsCard" />
                                     <label for="customsCardNumber"
-                                        class="transition z-10 absolute text-sm text-slate-500 duration-300 transform -translate-y-4 top-5 peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-[0] start-4 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
+                                        class="transition z-10 absolute text-sm text-slate-500 duration-300 transform -translate-y-4 top-5 peer-placeholder-shown:cursor-text peer-focus:pointer-events-none peer-placeholder-shown:top-4 peer-focus:top-5 origin-left inset-s-4 peer-placeholder-shown:translate-y-0 peer-focus:-translate-y-4">
                                         بطاقة جمركية
                                     </label>
                                 </div>
@@ -187,12 +187,12 @@
                             </router-link>
 
                             <button type="submit" :disabled="isSubmitting"
-                                class="cursor-pointer whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-center min-h-14 min-w-[10.625rem] px-6 text-base font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-slate-400 disabled:cursor-not-allowed w-full md:w-auto inline-flex items-center justify-center">
+                                class="cursor-pointer whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-center min-h-14 min-w-42.5 px-6 text-base font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 disabled:bg-slate-400 disabled:cursor-not-allowed w-full md:w-auto inline-flex items-center justify-center">
                                 <div class="flex items-center w-full gap-2 justify-center">
                                     <div class="w-full overflow-hidden self-center">
                                         <div>{{ isSubmitting ? 'جاري التحقق...' : 'التالي' }}</div>
                                     </div>
-                                    <span class="flex-shrink-0" aria-hidden="true">
+                                    <span class="shrink-0" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
                                             width="18" height="18" class="shrink-0 text-white">
                                             <path d="M5 12H19" stroke="currentColor" stroke-width="1.5"
