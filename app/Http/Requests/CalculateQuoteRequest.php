@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CalculateQuoteRequest extends FormRequest
 {
@@ -13,18 +14,21 @@ class CalculateQuoteRequest extends FormRequest
 
     public function rules(): array
     {
+        $supportedCompanies = array_map('intval', array_keys(config('pricing.fixed_company_prices', [])));
+        $supportedDeductibles = array_map('intval', array_keys(config('pricing.deductible_increase', [])));
+
         return [
             // ─── Plans (batch) ───
             'plans' => 'required|array|min:1|max:50',
             'plans.*.id' => 'nullable|integer|min:1',
-            'plans.*.companyId' => 'required|integer|between:1,21',
-            'plans.*.subType' => 'required|string|in:thirdParty,comprehensive',
-            'plans.*.deductible' => 'required|integer|in:0,500,1000,1500,2000,2500,3000,5000',
+            'plans.*.companyId' => ['required', 'integer', Rule::in($supportedCompanies)],
+            'plans.*.subType' => 'required|string|in:thirdParty,thirdPartyPlus,vehicleDamagePlus,comprehensive',
+            'plans.*.deductible' => ['required', 'integer', Rule::in($supportedDeductibles)],
 
             // ─── Vehicle ───
             'vehicle' => 'required|array',
             'vehicle.year' => 'required|integer|between:2000,2027',
-            'vehicle.make' => 'required|integer|between:1,20',
+            'vehicle.make' => 'required|integer|between:1,95',
             'vehicle.estimatedValue' => 'required|integer|min:1',
             'vehicle.purposeOfUse' => 'required|string|in:personal,commercial,rental,rideshare,cargo,petroleum',
             'vehicle.carModification' => 'required|string|in:yes,no',
@@ -51,7 +55,7 @@ class CalculateQuoteRequest extends FormRequest
             'policy' => 'required|array',
             'policy.repairMethod' => 'required|string|in:workshop,authorized,agency',
             'policy.coverageLimit' => 'nullable|integer|min:1',
-            'policy.deductible' => 'nullable|integer|in:0,500,1000,1500,2000,2500,3000,5000',
+            'policy.deductible' => ['nullable', 'integer', Rule::in($supportedDeductibles)],
         ];
     }
 

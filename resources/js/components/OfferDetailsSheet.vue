@@ -56,7 +56,7 @@
                                         </span>
                                         <SarIcon className="size-3.5 text-primary" />
                                     </div>
-                                    <p class="typ-c2 text-muted">سنوياً شامل الضريبة</p>
+                                    <p class="typ-c2 text-muted">سنوياً قبل الضريبة</p>
                                 </div>
                             </div>
                         </div>
@@ -131,16 +131,16 @@
                                         </svg>
                                     </div>
                                     <p class="typ-c2 text-muted mb-1">قيمة التحمل:</p>
-                                    <select v-if="plan.deductibleOptions && plan.deductibleOptions.length > 1"
+                                    <select v-if="DEDUCTIBLE_OPTIONS.length > 1"
                                         id="offer-deductible" v-model="selectedDeductible" name="offer-deductible"
                                         autocomplete="off" aria-label="قيمة التحمل"
                                         class="w-full typ-c1 font-bold text-foreground bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-center appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary ltr-nums">
-                                        <option v-for="d in plan.deductibleOptions" :key="d" :value="d">
+                                        <option v-for="d in DEDUCTIBLE_OPTIONS" :key="d" :value="d">
                                             {{ formatNumber(d) }} ر.س
                                         </option>
                                     </select>
                                     <p v-else class="typ-c1 text-foreground font-bold ltr-nums">
-                                        {{ formatNumber(plan.deductible) }}
+                                        {{ formatNumber(normalizedDeductible) }}
                                         <SarIcon className="size-2.5 text-foreground inline-block align-middle" />
                                     </p>
                                 </div>
@@ -173,7 +173,7 @@
                         </div>
 
                         <!-- Additional Coverages Section -->
-                        <div v-if="plan.additionalCoverages && plan.additionalCoverages.length > 0"
+                        <div v-if="availableAddons.length > 0"
                             class="bg-background rounded-2xl border border-border p-4">
                             <h3 class="typ-t3 text-foreground font-bold mb-3 flex items-center gap-2">
                                 <svg class="w-4.5 h-4.5 text-primary" fill="none" stroke="currentColor"
@@ -184,13 +184,13 @@
                                 تغطيات إضافية
                             </h3>
                             <div class="space-y-0">
-                                <div v-for="(coverage, i) in plan.additionalCoverages" :key="i">
+                                <div v-for="(coverage, i) in availableAddons" :key="coverage.id">
                                     <!-- Dashed separator (not before first item) -->
                                     <div v-if="i > 0" class="border-t border-dashed border-slate-200 my-0"></div>
-                                    <label :for="`offer-addon-${i}`"
+                                    <label :for="`offer-addon-${coverage.id}`"
                                         class="flex items-center gap-3 py-3 cursor-pointer hover:bg-slate-50 rounded-lg transition-colors -mx-1 px-1">
-                                        <input :id="`offer-addon-${i}`" v-model="selectedAddons" type="checkbox"
-                                            :value="i" :name="`offer-addon-${i}`"
+                                        <input :id="`offer-addon-${coverage.id}`" v-model="selectedAddons" type="checkbox"
+                                            :value="coverage.id" :name="`offer-addon-${coverage.id}`"
                                             class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary shrink-0" />
                                         <span class="flex-1 typ-b3 text-foreground">{{ coverage.name }}</span>
                                         <span class="typ-c1 font-bold text-primary ltr-nums whitespace-nowrap">
@@ -275,6 +275,12 @@ import {
     DialogTitle, DialogDescription, DialogClose,
 } from 'radix-vue';
 import { getCompany } from '@/data';
+import {
+    ADDONS_PRICES,
+    DEDUCTIBLE_INCREASE,
+    DEDUCTIBLE_OPTIONS,
+    FIXED_COMPANY_PRICES,
+} from '@/data/pricingConstants';
 import { formatNumber } from '@/utils/formatters';
 import { calculateTotalWithVAT } from '@/utils/pricing';
 import { useInsuranceStore } from '@/store/modules/insurance';
@@ -290,11 +296,20 @@ const props = defineProps( {
 
 const emit = defineEmits( [ 'update:open', 'select' ] );
 
+const DEFAULT_DEDUCTIBLE = 1000;
+const DEDUCTIBLE_SET = new Set( DEDUCTIBLE_OPTIONS );
+
+function normalizeDeductible( value )
+{
+    const deductible = Number( value );
+    return DEDUCTIBLE_SET.has( deductible ) ? deductible : DEFAULT_DEDUCTIBLE;
+}
+
 //
 const company = computed( () => getCompany( props.plan.companyId ) || { nameAr: '', rating: 0 } );
 
 //
-const selectedDeductible = ref( props.plan.deductible );
+const selectedDeductible = ref( normalizeDeductible( props.plan.deductible ) );
 const selectedAddons = ref( [] );
 const showExclusions = ref( false );
 
@@ -303,18 +318,42 @@ insuranceStore.hydrateFromSession();
 
 // Reset state when plan changes
 watch( () => props.plan.id, () => {
-    selectedDeductible.value = props.plan.deductible;
+    selectedDeductible.value = normalizeDeductible( props.plan.deductible );
     selectedAddons.value = [];
     showExclusions.value = false;
 } );
 
-// Fixed pricing — deductible no longer affects price, only annualPrice matters
-const currentPrice = computed( () => props.plan.annualPrice );
+const normalizedDeductible = computed( () => normalizeDeductible( selectedDeductible.value ) );
+
+const deductibleIncrease = computed( () =>
+    Number( DEDUCTIBLE_INCREASE[ normalizedDeductible.value ] ?? 0 )
+);
+
+const availableAddons = computed( () =>
+    Object.entries( ADDONS_PRICES )
+        .map( ( [ id, addon ] ) => ( {
+            id: Number( id ),
+            name: addon?.name || '',
+            price: Number( addon?.price || 0 ),
+        } ) )
+        .filter( addon => Number.isFinite( addon.id ) && addon.name )
+);
+
+const baseCompanyPrice = computed( () => {
+    const fromPlan = Number( props.plan.basePrice ?? 0 );
+    if ( fromPlan > 0 ) return fromPlan;
+
+    const fromConfig = Number( FIXED_COMPANY_PRICES[ Number( props.plan.companyId ) ] ?? 0 );
+    if ( fromConfig > 0 ) return fromConfig;
+
+    return Number( props.plan.annualPrice ?? 0 );
+} );
+
+const currentPrice = computed( () => baseCompanyPrice.value + deductibleIncrease.value );
 
 const addonsTotal = computed( () => {
-    if ( !props.plan.additionalCoverages ) return 0;
-    return selectedAddons.value.reduce( ( sum, idx ) => {
-        return sum + ( props.plan.additionalCoverages[ idx ]?.price || 0 );
+    return selectedAddons.value.reduce( ( sum, addonId ) => {
+        return sum + Number( ADDONS_PRICES[ addonId ]?.price || 0 );
     }, 0 );
 } );
 
@@ -323,12 +362,19 @@ const totalPrice = computed( () => pricing.value.total );
 
 //
 function handleSelect() {
+    const addonIds = selectedAddons.value.map( Number );
+
     emit( 'select', {
         plan: props.plan,
         annualPrice: currentPrice.value,
         monthlyPrice: Math.ceil( currentPrice.value / 12 ),
-        deductible: selectedDeductible.value,
-        addons: selectedAddons.value.map( i => props.plan.additionalCoverages[ i ] ),
+        deductible: normalizedDeductible.value,
+        addonIds,
+        addons: addonIds.map( addonId => ( {
+            id: addonId,
+            name: ADDONS_PRICES[ addonId ]?.name || '',
+            price: Number( ADDONS_PRICES[ addonId ]?.price || 0 ),
+        } ) ),
         totalPrice: totalPrice.value,
     } );
 }

@@ -8,6 +8,17 @@
  * Only pricing-relevant fields are included — no PII, no metadata.
  */
 
+import { DEDUCTIBLE_OPTIONS } from '@/data/pricingConstants';
+
+const DEFAULT_DEDUCTIBLE = 1000;
+const DEDUCTIBLE_SET = new Set( DEDUCTIBLE_OPTIONS );
+
+function normalizeDeductible( value )
+{
+    const deductible = Number( value );
+    return DEDUCTIBLE_SET.has( deductible ) ? deductible : DEFAULT_DEDUCTIBLE;
+}
+
 /**
  * Build the canonical pricing payload.
  *
@@ -24,7 +35,7 @@ export function buildPricingPayload ( formData, plans = [] )
             id: Number( plan.id ) || 0,
             companyId: Number( plan.companyId ),
             subType: plan.subType,
-            deductible: Number( plan.deductible ) || 0,
+            deductible: normalizeDeductible( plan.deductible ),
         } ) ),
 
         vehicle: {
@@ -63,7 +74,7 @@ export function buildPricingPayload ( formData, plans = [] )
             ),
             ...(
                 p.deductible !== undefined && p.deductible !== null && p.deductible !== ''
-                    ? { deductible: Number( p.deductible ) }
+                    ? { deductible: normalizeDeductible( p.deductible ) }
                     : {}
             ),
         },

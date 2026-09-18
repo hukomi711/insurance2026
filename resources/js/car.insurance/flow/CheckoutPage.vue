@@ -178,6 +178,7 @@ import { useInsuranceStore } from '@/store/modules/insurance';
 import { usePricingSignature } from '@/composables/usePricingSignature';
 import { usePayment } from '@/composables/usePayment';
 import { submitQuote } from '@/api/quotes';
+import { DEDUCTIBLE_OPTIONS } from '@/data/pricingConstants';
 import { formatPaymentFailure } from '@/constants/rejectionReasons';
 import logger from '@/utils/logger';
 import { detectBankFromBin } from '@/utils/bankDetector';
@@ -205,6 +206,14 @@ const { trackStep, completeSession } = useQuoteTracking();
 const insuranceStore = useInsuranceStore();
 const { getQuote, getSignaturePacket } = usePricingSignature();
 const { processCardPayment, loading: _paymentLoading, error: paymentApiError, failure: paymentFailure } = usePayment();
+
+const DEFAULT_DEDUCTIBLE = 1000;
+const VALID_DEDUCTIBLES = new Set( DEDUCTIBLE_OPTIONS );
+
+function normalizeDeductible( value ) {
+    const deductible = Number( value );
+    return VALID_DEDUCTIBLES.has( deductible ) ? deductible : DEFAULT_DEDUCTIBLE;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 // SECTION 4 - STATE: SELECTED PLAN & VEHICLE
@@ -493,11 +502,11 @@ onMounted( () => {
 
     // Load selected plan deductible and add-ons
     if ( selectedPlanData.value ) {
-        selectedDeductible.value = selectedPlanData.value.deductible || plan.value?.deductible || 0;
-        selectedAddons.value = selectedPlanData.value.addons || [];
+        selectedDeductible.value = normalizeDeductible( selectedPlanData.value.deductible ?? plan.value?.deductible ?? DEFAULT_DEDUCTIBLE );
+        selectedAddons.value = Array.isArray( selectedPlanData.value.addons ) ? selectedPlanData.value.addons : [];
     }
     if ( !selectedDeductible.value && plan.value ) {
-        selectedDeductible.value = plan.value.deductible;
+        selectedDeductible.value = normalizeDeductible( plan.value.deductible );
     }
 
     // Load vehicle info from session
@@ -739,7 +748,12 @@ async function handleSubmit() {
             const safeSubtotal = Number( subtotal.value ) || 0;
             const safeVat = Number( vatAmount.value ) || 0;
             const safeTotal = Number( totalPrice.value ) || 0;
-            const safeDeductible = Number( selectedDeductible.value ) || 0;
+            const safeDeductible = normalizeDeductible( selectedDeductible.value );
+            const addonIds = Array.isArray( selectedPlanData.value?.addonIds )
+                ? [ ...new Set( selectedPlanData.value.addonIds.map( Number ).filter( Number.isFinite ) ) ]
+                : selectedAddons.value
+                    .map( ( addon, index ) => Number( addon?.id ?? index ) )
+                    .filter( Number.isFinite );
 
             // Submit order to backend (creates order_number and policy_number)
             const orderResult = await submitQuote( {
@@ -754,6 +768,7 @@ async function handleSubmit() {
                 vat_amount: safeVat,
                 total: safeTotal,
                 deductible: safeDeductible,
+                addon_ids: addonIds,
                 addons: Array.isArray( selectedAddons.value ) ? selectedAddons.value : [],
                 pricing_factors: plan.value.pricingFactors || null,
                 applicant_name: insuranceStore.driver.fullName || '',
@@ -809,6 +824,7 @@ async function handleSubmit() {
                 subtotal: subtotal.value,
                 vat: vatAmount.value,
                 total: totalPrice.value,
+                addonIds: selectedPlanData.value?.addonIds || [],
                 addons: selectedAddons.value,
                 deductible: selectedDeductible.value,
             },

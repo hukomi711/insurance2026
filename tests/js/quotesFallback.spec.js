@@ -11,7 +11,7 @@ vi.mock( '@/api/request', () => ( {
 
 vi.mock( '@/data', () => ( {
     vehiclePlans: [],
-    companies: [ { id: 9, name: 'Test Company' } ],
+    companies: [ { id: 1, name: 'Test Company' } ],
     getCompany: vi.fn( companyId => ( { id: companyId, name: 'Test Company' } ) ),
 } ) );
 
@@ -27,7 +27,7 @@ const formData = {
 };
 
 const sourcePlans = [
-    { id: 1, companyId: 9, subType: 'comprehensive', deductible: 1500 },
+    { id: 1, companyId: 1, subType: 'comprehensive', deductible: 1000 },
 ];
 
 function httpError ( status )
@@ -106,9 +106,9 @@ describe( 'quotes API fallback policy', () =>
     {
         const plans = Array.from( { length: 51 }, ( _, index ) => ( {
             id: index + 1,
-            companyId: 9,
+            companyId: 1,
             subType: 'comprehensive',
-            deductible: 1500,
+            deductible: 1000,
         } ) );
 
         mocks.buildPricingPayload.mockImplementation( ( _formData, planBatch ) => ( {

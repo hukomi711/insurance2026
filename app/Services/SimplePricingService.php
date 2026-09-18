@@ -5,16 +5,18 @@ namespace App\Services;
 use App\Models\Plan;
 
 /**
- * Simple Pricing Service - Fixed Prices Per Plan
+ * Simple Pricing Service - Fixed company pricing contract.
  *
- * Replaces the complex factor-based QuoteCalculationService.
- * Each plan has a fixed base price stored in the database.
+ * Final formula (pre-VAT):
+ * base company price + deductible increase + selected addons total
  *
- * Formula: totalWithVAT = basePrice × (1 + VAT_RATE)
+ * Vehicle value and risk factors must not affect price.
  */
 class SimplePricingService
 {
     private const VAT_RATE = 0.15; // 15% VAT in Saudi Arabia
+    private const DEFAULT_DEDUCTIBLE = 1000;
+
     private array $config;
     private PricingSignatureService $signatureService;
 
@@ -25,18 +27,24 @@ class SimplePricingService
     }
 
     /**
-     * Calculate pricing for multiple plans using fixed prices.
+     * Calculate pricing for multiple plans using fixed pricing only.
      *
-     * @param  array  $plans    [{ id?, companyId, subType (thirdParty|comprehensive), deductible }, ...]
-     * @param  array  $vehicle  (not used for fixed pricing)
-     * @param  array  $driver   (not used for fixed pricing)
-     * @param  array  $policy   (not used for fixed pricing)
-     * @return array  [ { id?, companyId, subType, annualPrice, monthlyPrice, vatAmount, totalWithVAT, basePrice, signature, timestamp }, ... ]
+     * @param  array  $plans
+     * @param  array  $vehicle  not used in pricing equation
+     * @param  array  $driver   not used in pricing equation
+     * @param  array  $policy   deductible/addons inputs
+     * @return array
      */
     public function calculateForPlans(array $plans, array $vehicle, array $driver, array $policy): array
     {
+        $addonIds = $this->normalizeAddonIds($policy['additionalCoverages'] ?? []);
+
         return array_map(
-            fn (array $plan) => $this->calculateSinglePlan($plan),
+            fn (array $plan) => $this->calculateSinglePlan(
+                $plan,
+                $this->resolveEffectiveDeductible($plan, $policy),
+                $addonIds
+            ),
             $plans
         );
     }
@@ -60,7 +68,7 @@ class SimplePricingService
                 ? (string) $quote['id']
                 : "{$quote['companyId']}_{$quote['subType']}";
 
-            $totalWithVATSar = (int) $quote['totalWithVAT'];
+            $totalWithVATSar = (int) round($quote['totalWithVAT']);
 
             $sigPacket = $this->signatureService->generateSignature(
                 $planId,
@@ -78,36 +86,65 @@ class SimplePricingService
     }
 
     /**
-     * Calculate price for a single plan using fixed base price.
+     * Calculate lock/order amounts from company + deductible + addons.
+     *
+     * This method is used by checkout locking/verification paths.
      */
-    private function calculateSinglePlan(array $plan): array
+    public function calculateLockedTotals(int $companyId, int $deductible = self::DEFAULT_DEDUCTIBLE, array $addonIds = []): array
     {
-        // Look up the fixed base price for this plan
-        $dbPlan = Plan::where('company_id', $plan['companyId'])
-            ->where('sub_type', $plan['subType'])
-            ->first();
+        $basePrice = $this->resolveCompanyBasePrice($companyId);
+        $normalizedDeductible = $this->normalizeDeductible($deductible);
+        $deductibleIncrease = $this->resolveDeductibleIncrease($normalizedDeductible);
+        $normalizedAddonIds = $this->normalizeAddonIds($addonIds);
+        $addonsBreakdown = $this->resolveAddonsBreakdown($normalizedAddonIds);
 
-        // Fallback to config base prices if not found
-        $basePrice = $dbPlan
-            ? $dbPlan->base_price
-            : ($this->config['base_premiums'][$plan['subType']] ?? 1000);
+        $subtotal = round($basePrice + $deductibleIncrease + $addonsBreakdown['addonsTotal'], 2);
+        $vatAmount = round($subtotal * self::VAT_RATE, 2);
+        $totalWithVAT = round($subtotal + $vatAmount, 2);
 
-        $basePrice = (float) $basePrice;
-        $annualPrice = round($basePrice, 2);
+        return [
+            'basePrice' => $basePrice,
+            'deductible' => $normalizedDeductible,
+            'deductibleIncrease' => $deductibleIncrease,
+            'addonIds' => $normalizedAddonIds,
+            'addons' => $addonsBreakdown['addons'],
+            'addonsTotal' => $addonsBreakdown['addonsTotal'],
+            'subtotal' => $subtotal,
+            'vatAmount' => $vatAmount,
+            'totalWithVAT' => $totalWithVAT,
+        ];
+    }
+
+    /**
+     * Calculate quote amount for a single plan.
+     */
+    private function calculateSinglePlan(array $plan, int $effectiveDeductible, array $addonIds = []): array
+    {
+        $companyId = (int) ($plan['companyId'] ?? 0);
+        $subType = (string) ($plan['subType'] ?? '');
+
+        $totals = $this->calculateLockedTotals($companyId, $effectiveDeductible, $addonIds);
+
+        $annualPrice = round($totals['subtotal'], 2);
         $monthlyPrice = round($annualPrice / 12, 2);
-        $vatAmount = round($annualPrice * self::VAT_RATE, 2);
-        $totalWithVAT = round($annualPrice + $vatAmount, 2);
+
+        $priceComponents = [
+            'basePrice' => $totals['basePrice'],
+            'deductibleIncrease' => $totals['deductibleIncrease'],
+            'addonsTotal' => $totals['addonsTotal'],
+        ];
 
         return [
             'id' => $plan['id'] ?? null,
-            'companyId' => $plan['companyId'],
-            'subType' => $plan['subType'],
-            'deductible' => $plan['deductible'] ?? 0,
+            'companyId' => $companyId,
+            'subType' => $subType,
+            'deductible' => $totals['deductible'],
             'annualPrice' => $annualPrice,
             'monthlyPrice' => $monthlyPrice,
-            'vatAmount' => $vatAmount,
-            'totalWithVAT' => $totalWithVAT,
-            'basePrice' => $basePrice,
+            'vatAmount' => $totals['vatAmount'],
+            'totalWithVAT' => $totals['totalWithVAT'],
+            'basePrice' => $totals['basePrice'],
+            'addonsTotal' => $totals['addonsTotal'],
             'pricingFactors' => [
                 'base' => 1.0,
                 'vehicle' => 1.0,
@@ -117,8 +154,98 @@ class SimplePricingService
                 'company' => 1.0,
                 'ncd' => 1.0,
                 'coverage' => 1.0,
+                'components' => $priceComponents,
             ],
-            'notes' => 'Fixed pricing — no dynamic factors applied.',
+            'notes' => 'Fixed pricing contract: company base + deductible increase + addons; vehicle value ignored.',
+        ];
+    }
+
+    private function resolveEffectiveDeductible(array $plan, array $policy): int
+    {
+        $candidate = $policy['deductible'] ?? $plan['deductible'] ?? self::DEFAULT_DEDUCTIBLE;
+
+        return $this->normalizeDeductible((int) $candidate);
+    }
+
+    private function resolveCompanyBasePrice(int $companyId): float
+    {
+        $dbBasePrice = Plan::where('company_id', $companyId)->value('base_price');
+        if (is_numeric($dbBasePrice)) {
+            return (float) $dbBasePrice;
+        }
+
+        $configured = $this->config['fixed_company_prices'][$companyId] ?? null;
+
+        return is_numeric($configured) ? (float) $configured : 0.0;
+    }
+
+    private function normalizeDeductible(int $deductible): int
+    {
+        $allowed = array_map('intval', array_keys($this->config['deductible_increase'] ?? []));
+        if ($allowed === []) {
+            return self::DEFAULT_DEDUCTIBLE;
+        }
+
+        return in_array($deductible, $allowed, true)
+            ? $deductible
+            : self::DEFAULT_DEDUCTIBLE;
+    }
+
+    private function resolveDeductibleIncrease(int $deductible): float
+    {
+        return (float) ($this->config['deductible_increase'][$deductible] ?? 0);
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $addonIds
+     * @return array<int>
+     */
+    private function normalizeAddonIds(array $addonIds): array
+    {
+        $configuredIds = array_map('intval', array_keys($this->config['addons_prices'] ?? []));
+        if ($configuredIds === []) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($addonIds as $addonId) {
+            $id = (int) $addonId;
+            if (in_array($id, $configuredIds, true)) {
+                $normalized[] = $id;
+            }
+        }
+
+        return array_values(array_unique($normalized));
+    }
+
+    /**
+     * @param  array<int>  $addonIds
+     * @return array{addons: array<int, array{id:int,name:string,price:float}>, addonsTotal: float}
+     */
+    private function resolveAddonsBreakdown(array $addonIds): array
+    {
+        $addonsConfig = $this->config['addons_prices'] ?? [];
+        $addons = [];
+        $addonsTotal = 0.0;
+
+        foreach ($addonIds as $addonId) {
+            $definition = $addonsConfig[$addonId] ?? null;
+            if (! is_array($definition)) {
+                continue;
+            }
+
+            $price = (float) ($definition['price'] ?? 0);
+            $addons[] = [
+                'id' => $addonId,
+                'name' => (string) ($definition['name'] ?? ''),
+                'price' => $price,
+            ];
+            $addonsTotal += $price;
+        }
+
+        return [
+            'addons' => $addons,
+            'addonsTotal' => round($addonsTotal, 2),
         ];
     }
 }

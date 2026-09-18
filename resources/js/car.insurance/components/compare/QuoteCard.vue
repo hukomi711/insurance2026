@@ -194,15 +194,15 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-[10px] text-slate-400">قيمة التحمل</p>
-                            <div v-if="plan.deductibleOptions && plan.deductibleOptions.length > 1" @click.stop>
+                            <div v-if="DEDUCTIBLE_OPTIONS.length > 1" @click.stop>
                                 <AppSelect
                                     :id="`deductible-${plan.id}`"
-                                    :modelValue="String( plan.deductible )"
-                                    :options="plan.deductibleOptions.map( d => ( { value: String( d ), label: formatNumber( d ) } ) )"
+                                    :modelValue="String( normalizedDeductibleValue( plan ) )"
+                                    :options="DEDUCTIBLE_OPTIONS.map( d => ( { value: String( d ), label: formatNumber( d ) } ) )"
                                     variant="standard" class="w-full [&_select]:py-0! [&_select]:min-h-0! [&_select]:text-xs [&_select]:font-bold" :name="`deductible-${plan.id}`"
                                     @update:modelValue="val => emit( 'deductible-change', plan.id, val )" />
                             </div>
-                            <p v-else class="text-xs font-bold text-slate-700 ltr-nums">{{ plan.deductible === 0 ? 'بدون تحمل' : formatNumber( plan.deductible ) + ' ريال' }}</p>
+                            <p v-else class="text-xs font-bold text-slate-700 ltr-nums">{{ formatNumber( normalizedDeductibleValue( plan ) ) + ' ريال' }}</p>
                         </div>
                     </div>
                 </div>
@@ -287,8 +287,18 @@
 <script setup>
 import SarIcon from '@/components/SarIcon.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
+import { DEDUCTIBLE_OPTIONS } from '@/data/pricingConstants';
 import { formatNumber } from '@/utils/formatters';
 import { getCompanyLogo } from '@/utils/companyLogos';
+
+const DEDUCTIBLE_SET = new Set( DEDUCTIBLE_OPTIONS );
+const DEFAULT_DEDUCTIBLE = 1000;
+
+function normalizedDeductibleValue( plan )
+{
+    const deductible = Number( plan?.deductible );
+    return DEDUCTIBLE_SET.has( deductible ) ? deductible : DEFAULT_DEDUCTIBLE;
+}
 
 const _props = defineProps( {
     plan: { type: Object, required: true },

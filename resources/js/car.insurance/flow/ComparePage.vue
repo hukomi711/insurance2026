@@ -251,6 +251,7 @@ import { SwitchRoot, SwitchThumb } from 'radix-vue';
 import { companies, getCompany } from '@/data';
 import { getQuotes } from '@/api/quotes';
 import request from '@/api/request';
+import { DEDUCTIBLE_OPTIONS } from '@/data/pricingConstants';
 import { useQuoteTracking } from '@/composables/useQuoteTracking';
 import { trackStepViewed, trackQuoteSelected, trackStepCompleted } from '@/composables/useFunnelTracking';
 import { usePricingSignature } from '@/composables/usePricingSignature';
@@ -347,6 +348,13 @@ const DEFAULT_VEHICLE_INFO = {
 
 const COMPARE_LIMIT = 3; // Maximum number of plans for comparison
 const DISPLAY_LIMIT = 5; // Default number of plans to display
+const DEFAULT_DEDUCTIBLE = 1000;
+const VALID_DEDUCTIBLES = new Set( DEDUCTIBLE_OPTIONS );
+
+function normalizeDeductible( value ) {
+    const deductible = Number( value );
+    return VALID_DEDUCTIBLES.has( deductible ) ? deductible : DEFAULT_DEDUCTIBLE;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 // STATE: QUOTES & LOADING
@@ -742,7 +750,7 @@ async function onPlanDeductibleChange( planId, newDeductible ) {
     const idx = quotesData.value.findIndex( p => p.id === planId );
     if ( idx === -1 ) return;
 
-    const deductible = Number( newDeductible );
+    const deductible = normalizeDeductible( newDeductible );
     isUpdatingQuotes.value = true;
     selectionError.value = '';
 
@@ -826,6 +834,11 @@ function resetFilters() {
  * @returns {Object} Quote lock token and pricing data
  */
 async function issueQuoteLock( selection ) {
+    const deductible = normalizeDeductible( selection.deductible );
+    const addonIds = Array.isArray( selection.addonIds )
+        ? [ ...new Set( selection.addonIds.map( Number ).filter( Number.isFinite ) ) ]
+        : [];
+
     const payload = {
         plan_id: selection.id,
         company_id: selection.companyId,
@@ -838,7 +851,8 @@ async function issueQuoteLock( selection ) {
         subtotal: Number( selection.annualPrice || 0 ) + Number( selection.addonsTotal || 0 ),
         vat_amount: Math.round( Number( selection.annualPrice || 0 ) * 0.15 ),
         total: Number( selection.annualPrice || 0 ) + Number( selection.addonsTotal || 0 ) + Math.round( Number( selection.annualPrice || 0 ) * 0.15 ),
-        deductible: Number( selection.deductible || 0 ),
+        deductible,
+        addon_ids: addonIds,
         addons: selection.addons || [],
         session_id: getSessionToken(),
     };
@@ -896,7 +910,8 @@ async function selectPlan( plan, source = 'card_expanded' ) {
             type: plan.type,
             subType: plan.subType,
             annualPrice: plan.annualPrice,
-            deductible: plan.deductible,
+            deductible: normalizeDeductible( plan.deductible ),
+            addonIds: [],
             addons: [],
             addonsTotal: 0,
         } );
@@ -972,9 +987,14 @@ async function handleOfferSelect( selection ) {
     showOfferSheet.value = false;
     const p = selection.plan;
     const source = offerSheetEntrySource.value || 'offer_sheet';
-    const addons = selection.addons || [];
+    const addonIds = Array.isArray( selection.addonIds )
+        ? [ ...new Set( selection.addonIds.map( Number ).filter( Number.isFinite ) ) ]
+        : [];
+    const addons = Array.isArray( selection.addons )
+        ? selection.addons.filter( addon => addonIds.includes( Number( addon?.id ) ) )
+        : [];
     const addonsTotal = addons.reduce( ( sum, a ) => sum + Number( a?.price || 0 ), 0 );
-    const selectedDeductible = Number( selection.deductible ?? p.deductible ?? 0 );
+    const selectedDeductible = normalizeDeductible( selection.deductible ?? p.deductible ?? DEFAULT_DEDUCTIBLE );
 
     let signedPlan;
     try {
@@ -1002,6 +1022,7 @@ async function handleOfferSelect( selection ) {
             subType: signedPlan.subType,
             annualPrice: Number( signedPlan.annualPrice || 0 ),
             deductible: selectedDeductible,
+            addonIds,
             addons,
             addonsTotal,
         } );
@@ -1039,6 +1060,7 @@ async function handleOfferSelect( selection ) {
         monthlyPrice: signedPlan.monthlyPrice || Math.ceil( Number( signedPlan.annualPrice || 0 ) / 12 ),
         type: signedPlan.type,
         deductible: selectedDeductible,
+        addonIds,
         addons,
         totalPrice: lock.totalPrice,
         subtotal: lock.subtotal,

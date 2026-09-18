@@ -14,7 +14,7 @@ import { isCustomerBlocked, isCustomerBlockedError } from '@/utils/customerBlock
  * Usage:
  *   const { constants, version, isLoading, load } = usePricingConstants();
  *   await load();
- *   const basePrice = constants.value.base_premiums[subType];
+ *   const basePrice = constants.value.fixed_company_prices[companyId];
  */
 
 const state = reactive({
@@ -100,7 +100,7 @@ export function usePricingConstants() {
 
   /**
    * Get specific constant by path
-   * Example: getConstant('base_premiums.comprehensive')
+    * Example: getConstant('fixed_company_prices.1')
    */
   function getConstant(path) {
     if (!state.constants) return null;

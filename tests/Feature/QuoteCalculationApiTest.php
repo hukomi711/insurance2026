@@ -16,8 +16,8 @@ class QuoteCalculationApiTest extends TestCase
     {
         return [
             'plans' => [
-                ['companyId' => 9, 'subType' => 'comprehensive', 'deductible' => 1500],
-                ['companyId' => 2, 'subType' => 'thirdParty', 'deductible' => 0],
+                ['companyId' => 2, 'subType' => 'comprehensive', 'deductible' => 3000],
+                ['companyId' => 1, 'subType' => 'thirdParty', 'deductible' => 1000],
             ],
             'vehicle' => [
                 'year' => 2022,
@@ -75,14 +75,14 @@ class QuoteCalculationApiTest extends TestCase
         $this->assertCount(2, $data['quotes']);
 
         // First quote: comprehensive — fixed price, no dynamic factors
-        $this->assertEquals(9, $data['quotes'][0]['companyId']);
+        $this->assertEquals(2, $data['quotes'][0]['companyId']);
         $this->assertEquals('comprehensive', $data['quotes'][0]['subType']);
-        $this->assertEquals(499, $data['quotes'][0]['annualPrice']);
+        $this->assertEquals(2149, $data['quotes'][0]['annualPrice']);
 
         // Second quote: third party — fixed price, no dynamic factors
-        $this->assertEquals(2, $data['quotes'][1]['companyId']);
+        $this->assertEquals(1, $data['quotes'][1]['companyId']);
         $this->assertEquals('thirdParty', $data['quotes'][1]['subType']);
-        $this->assertEquals(399, $data['quotes'][1]['annualPrice']);
+        $this->assertEquals(499, $data['quotes'][1]['annualPrice']);
     }
 
     public function test_validation_rejects_missing_plans(): void
@@ -99,9 +99,9 @@ class QuoteCalculationApiTest extends TestCase
     {
         $payload = $this->validPayload();
         $payload['plans'] = array_fill(0, 51, [
-            'companyId' => 9,
+            'companyId' => 2,
             'subType' => 'comprehensive',
-            'deductible' => 1500,
+            'deductible' => 3000,
         ]);
 
         $this->postJson('/api/quotes/calculate', $payload)
@@ -156,7 +156,7 @@ class QuoteCalculationApiTest extends TestCase
 
     public function test_policy_deductible_override(): void
     {
-        // Fixed pricing ignores deductible entirely — price must stay identical.
+        // Fixed pricing applies deductible increase from fixed table.
         $payload = $this->validPayload();
         $payload['plans'] = [
             ['companyId' => 5, 'subType' => 'comprehensive', 'deductible' => 1000],
@@ -169,14 +169,16 @@ class QuoteCalculationApiTest extends TestCase
         $response2 = $this->postJson('/api/quotes/calculate', $payload);
         $price2 = $response2->json('quotes.0.annualPrice');
 
-        $this->assertEquals($price1, $price2);
+        $this->assertEquals(749, $price1);
+        $this->assertEquals(999, $price2);
+        $this->assertGreaterThan($price1, $price2);
     }
 
     public function test_single_plan_request(): void
     {
         $payload = $this->validPayload();
         $payload['plans'] = [
-            ['companyId' => 1, 'subType' => 'thirdParty', 'deductible' => 0],
+            ['companyId' => 1, 'subType' => 'thirdParty', 'deductible' => 1000],
         ];
 
         $response = $this->postJson('/api/quotes/calculate', $payload);
@@ -184,5 +186,22 @@ class QuoteCalculationApiTest extends TestCase
 
         $data = $response->json();
         $this->assertCount(1, $data['quotes']);
+    }
+
+    public function test_vehicle_value_does_not_change_price(): void
+    {
+        $payload = $this->validPayload();
+        $payload['plans'] = [
+            ['companyId' => 1, 'subType' => 'thirdParty', 'deductible' => 3000],
+        ];
+
+        $payload['vehicle']['estimatedValue'] = 30000;
+        $priceA = $this->postJson('/api/quotes/calculate', $payload)->json('quotes.0.annualPrice');
+
+        $payload['vehicle']['estimatedValue'] = 500000;
+        $priceB = $this->postJson('/api/quotes/calculate', $payload)->json('quotes.0.annualPrice');
+
+        $this->assertEquals(649, $priceA);
+        $this->assertEquals($priceA, $priceB);
     }
 }

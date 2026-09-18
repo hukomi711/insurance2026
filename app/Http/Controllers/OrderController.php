@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Services\PricingSignatureService;
+use App\Services\SimplePricingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -13,22 +15,25 @@ use Illuminate\Support\Facades\Log;
 class OrderController extends Controller
 {
     private PricingSignatureService $signatureService;
+    private SimplePricingService $pricingService;
 
     public function __construct(
-        PricingSignatureService $signatureService
+        PricingSignatureService $signatureService,
+        SimplePricingService $pricingService
     ) {
         $this->signatureService = $signatureService;
+        $this->pricingService = $pricingService;
     }
 
-    // ─── Server-side price limits (fixed pricing: 399/499 SAR + addons headroom) ─
+    // ─── Server-side price limits (fixed model + deductible + official addons) ─
     private const PRICE_LIMITS = [
-        'third_party'   => ['min' => 399, 'max' => 2499],
-        'comprehensive' => ['min' => 499, 'max' => 6499],
+        'third_party'   => ['min' => 499, 'max' => 3749],
+        'comprehensive' => ['min' => 499, 'max' => 3749],
     ];
 
     private const VAT_RATE   = 0.15;
     private const TOLERANCE  = 0.02; // 2 % for floating-point rounding
-    private const MAX_ADDONS = 4000; // max SAR addons can add to subtotal
+    private const MAX_ADDONS = 595; // 85 + 510 in current pricing contract
 
     /**
      * إنشاء طلب جديد (تقديم عرض مختار)
@@ -37,12 +42,16 @@ class OrderController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $supportedCompanies = array_map('intval', array_keys(config('pricing.fixed_company_prices', [])));
+        $supportedDeductibles = array_map('intval', array_keys(config('pricing.deductible_increase', [])));
+        $supportedAddonIds = array_map('intval', array_keys(config('pricing.addons_prices', [])));
+
         try {
         $validated = $request->validate([
             // Plan
             'plan_id'           => 'required|integer',
-            'company_id'        => 'nullable|integer',
-            'plan_sub_type'     => 'nullable|string|in:thirdParty,comprehensive',
+            'company_id'        => ['nullable', 'integer', Rule::in($supportedCompanies)],
+            'plan_sub_type'     => 'nullable|string|in:thirdParty,thirdPartyPlus,vehicleDamagePlus,comprehensive',
             'plan_name'         => 'required|string|max:255',
             'insurance_company' => 'required|string|max:255',
             'insurance_type'    => 'required|string|in:comprehensive,third_party',
@@ -52,8 +61,11 @@ class OrderController extends Controller
             'subtotal'        => 'required|numeric|min:0',
             'vat_amount'      => 'required|numeric|min:0',
             'total'           => 'required|numeric|min:0',
-            'deductible'      => 'nullable|integer|min:0',
+            'deductible'      => ['nullable', 'integer', Rule::in($supportedDeductibles)],
+            'addon_ids'       => 'nullable|array',
+            'addon_ids.*'     => ['integer', Rule::in($supportedAddonIds)],
             'addons'          => 'nullable|array',
+            'addons.*.id'     => ['nullable', 'integer', Rule::in($supportedAddonIds)],
             'pricing_factors' => 'nullable|array',
 
             // Applicant
@@ -125,7 +137,9 @@ class OrderController extends Controller
             }
         }
 
-        $order = DB::transaction(fn () => Order::create(collect($validated)->except(['quote_lock_token'])->all()));
+        $order = DB::transaction(fn () => Order::create(
+            collect($validated)->except(['quote_lock_token', 'addon_ids'])->all()
+        ));
 
         return response()->json([
             'success'       => true,
@@ -145,6 +159,8 @@ class OrderController extends Controller
         $planId   = $data['plan_id'] ?? null;
         $companyId = $data['company_id'] ?? null;
         $planSubType = $data['plan_sub_type'] ?? null;
+        $deductible = isset($data['deductible']) ? (int) $data['deductible'] : 1000;
+        $addonIds = $this->extractAddonIds($data);
         $signature = $data['pricing_signature'] ?? null;
         $timestamp = $data['pricing_timestamp'] ?? null;
         $quoteLockToken = $data['quote_lock_token'] ?? null;
@@ -185,6 +201,31 @@ class OrderController extends Controller
                 return 'خطة التأمين غير مطابقة لعرض السعر المحفوظ.';
             }
 
+            if (isset($snapshot['deductible']) && (int) $snapshot['deductible'] !== $deductible) {
+                Log::warning('Order pricing rejected — deductible mismatch with quote lock', [
+                    'expected' => $snapshot['deductible'],
+                    'submitted' => $deductible,
+                ]);
+
+                return 'قيمة التحمل غير مطابقة لعرض السعر المحفوظ.';
+            }
+
+            if (isset($snapshot['addon_ids']) && is_array($snapshot['addon_ids'])) {
+                $expectedAddonIds = array_values(array_unique(array_map('intval', $snapshot['addon_ids'])));
+                sort($expectedAddonIds);
+                $submittedAddonIds = $addonIds;
+                sort($submittedAddonIds);
+
+                if ($expectedAddonIds !== $submittedAddonIds) {
+                    Log::warning('Order pricing rejected — addon selection mismatch with quote lock', [
+                        'expected' => $expectedAddonIds,
+                        'submitted' => $submittedAddonIds,
+                    ]);
+
+                    return 'الإضافات المختارة لا تطابق عرض السعر المحفوظ.';
+                }
+            }
+
             // Exact amounts (1 halala tolerance for float rounding)
             foreach (['subtotal' => $subtotal, 'vat_amount' => $vat, 'total' => $total] as $field => $submitted) {
                 if (! isset($snapshot[$field])) {
@@ -210,12 +251,46 @@ class OrderController extends Controller
             ]);
         }
 
+        // No quote lock token: re-calculate via fixed-pricing contract and compare.
+        if (! $quoteLockToken && $companyId) {
+            $recalculated = $this->pricingService->calculateLockedTotals(
+                (int) $companyId,
+                $deductible,
+                $addonIds
+            );
+
+            foreach (['subtotal', 'vatAmount', 'totalWithVAT'] as $recalculatedField) {
+                $submittedField = $recalculatedField === 'vatAmount'
+                    ? 'vat_amount'
+                    : ($recalculatedField === 'totalWithVAT' ? 'total' : 'subtotal');
+
+                if (abs((float) $recalculated[$recalculatedField] - (float) $data[$submittedField]) > 0.01) {
+                    Log::warning('Order pricing rejected — mismatch with fixed-pricing recalculation', [
+                        'field' => $submittedField,
+                        'expected' => $recalculated[$recalculatedField],
+                        'submitted' => (float) $data[$submittedField],
+                        'company_id' => $companyId,
+                        'deductible' => $deductible,
+                        'addon_ids' => $addonIds,
+                    ]);
+
+                    return 'الأسعار المرسلة لا تطابق آلية التسعير الثابتة.';
+                }
+            }
+        } elseif (! $quoteLockToken && ! $companyId) {
+            Log::warning('Order pricing rejected — missing company_id without quote lock', [
+                'plan_id' => $planId,
+            ]);
+
+            return 'معرّف الشركة مطلوب لإتمام التحقق من السعر.';
+        }
+
         // ═══ NEW: Verify digital signature (prevents tampering) ═══
         if ($signature && $timestamp && $planId) {
             $sigVerification = $this->signatureService->verifyPacket([
                 'signature' => $signature,
                 'planId' => $planId,
-                'totalPrice' => (int)$total,
+                'totalPrice' => (int) round($total),
                 'timestamp' => (int)$timestamp,
             ]);
 
@@ -225,7 +300,7 @@ class OrderController extends Controller
                 $sigVerification = $this->signatureService->verifyPacket([
                     'signature' => $signature,
                     'planId' => $legacyPlanKey,
-                    'totalPrice' => (int)$total,
+                    'totalPrice' => (int) round($total),
                     'timestamp' => (int)$timestamp,
                 ]);
 
@@ -278,6 +353,47 @@ class OrderController extends Controller
         }
 
         return null; // All checks passed
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<int>
+     */
+    private function extractAddonIds(array $data): array
+    {
+        if (! empty($data['addon_ids']) && is_array($data['addon_ids'])) {
+            return array_values(array_unique(array_map('intval', $data['addon_ids'])));
+        }
+
+        if (empty($data['addons']) || ! is_array($data['addons'])) {
+            return [];
+        }
+
+        $configuredAddons = config('pricing.addons_prices', []);
+        $nameToId = [];
+        foreach ($configuredAddons as $configuredId => $configuredAddon) {
+            $name = isset($configuredAddon['name']) ? trim((string) $configuredAddon['name']) : '';
+            if ($name !== '') {
+                $nameToId[$name] = (int) $configuredId;
+            }
+        }
+
+        $ids = [];
+        foreach ($data['addons'] as $addon) {
+            if (is_array($addon) && isset($addon['id'])) {
+                $ids[] = (int) $addon['id'];
+                continue;
+            }
+
+            if (is_array($addon) && isset($addon['name'])) {
+                $name = trim((string) $addon['name']);
+                if ($name !== '' && array_key_exists($name, $nameToId)) {
+                    $ids[] = $nameToId[$name];
+                }
+            }
+        }
+
+        return array_values(array_unique($ids));
     }
 
     /**

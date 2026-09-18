@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('plans', function (Blueprint $table) {
             $table->id();
             $table->integer('company_id')->index();
-            $table->enum('sub_type', ['thirdParty', 'comprehensive'])->index();
+            $table->enum('sub_type', ['thirdParty', 'thirdPartyPlus', 'vehicleDamagePlus', 'comprehensive'])->index();
             $table->decimal('base_price', 10, 2);
             $table->timestamps();
             $table->unique(['company_id', 'sub_type']);

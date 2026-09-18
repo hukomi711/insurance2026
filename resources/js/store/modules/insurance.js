@@ -1,5 +1,15 @@
 import { defineStore } from 'pinia';
 import { ref, reactive, computed } from 'vue';
+import { DEDUCTIBLE_OPTIONS } from '@/data/pricingConstants';
+
+const DEFAULT_DEDUCTIBLE = '1000';
+const VALID_DEDUCTIBLE_SET = new Set( DEDUCTIBLE_OPTIONS.map( String ) );
+
+function normalizeDeductible( value )
+{
+    const normalized = String( value ?? '' );
+    return VALID_DEDUCTIBLE_SET.has( normalized ) ? normalized : DEFAULT_DEDUCTIBLE;
+}
 
 /**
  * متجر بيانات التأمين المركزي
@@ -66,7 +76,7 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
         insuranceType: 'tpl',      // نوع التأمين: tpl / comp
         repairMethod: 'workshop', // طريقة الإصلاح: workshop / authorized / agency
         coverageType: '',         // نوع التغطية: thirdParty / comprehensive
-        deductible: '1000',     // قيمة التحمل
+        deductible: DEFAULT_DEDUCTIBLE,     // قيمة التحمل
         addons: [],         // الإضافات المختارة
         coverageLimit: 55667,      // حد التغطية
     } );
@@ -154,7 +164,11 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
     {
         Object.keys( data ).forEach( key =>
         {
-            if ( key in policy ) policy[ key ] = data[ key ];
+            if ( key in policy ) {
+                policy[ key ] = key === 'deductible'
+                    ? normalizeDeductible( data[ key ] )
+                    : data[ key ];
+            }
         } );
         persistToSession();
     }
@@ -212,7 +226,7 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
         // وثيقة
         Object.assign( policy, {
             policyStartDate: '', insuranceType: 'tpl', repairMethod: 'workshop',
-            coverageType: '', deductible: '1000', addons: [], coverageLimit: 55667,
+            coverageType: '', deductible: DEFAULT_DEDUCTIBLE, addons: [], coverageLimit: 55667,
         } );
         calculatedQuotes.value = [];
         selectedPlan.value = null;
@@ -296,7 +310,7 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
                 if ( p.phone ) driver.phone = p.phone;
                 if ( p.drivingExperience ) driver.drivingExperience = p.drivingExperience;
                 if ( p.coverageType ) policy.coverageType = p.coverageType;
-                if ( p.deductible ) policy.deductible = p.deductible;
+                if ( p.deductible !== undefined ) policy.deductible = normalizeDeductible( p.deductible );
                 if ( p.addons ) policy.addons = p.addons;
             } catch { /* ignore */ }
         }
@@ -378,9 +392,14 @@ export const useInsuranceStore = defineStore( 'insurance', () =>
                     Object.assign( driver, driverFields );
                     if ( Array.isArray( ad ) ) additionalDrivers.value = ad;
                 }
-                if ( p.policy ) Object.assign( policy, p.policy );
+                if ( p.policy ) {
+                    Object.assign( policy, p.policy );
+                    policy.deductible = normalizeDeductible( p.policy.deductible ?? policy.deductible );
+                }
             } catch { /* ignore */ }
         }
+
+        policy.deductible = normalizeDeductible( policy.deductible );
     }
 
     /**

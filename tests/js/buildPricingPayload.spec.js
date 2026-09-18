@@ -4,8 +4,8 @@ import { buildPricingPayload } from '@/utils/buildPricingPayload';
 describe( 'buildPricingPayload', () =>
 {
     const basePlans = [
-        { companyId: 9, subType: 'comprehensive', deductible: 1500 },
-        { companyId: 2, subType: 'thirdParty', deductible: 0 },
+        { companyId: 1, subType: 'comprehensive', deductible: 3000 },
+        { companyId: 2, subType: 'thirdParty', deductible: 1000 },
     ];
 
     const baseFormData = {
@@ -50,11 +50,19 @@ describe( 'buildPricingPayload', () =>
 
     it( 'coerces plan values to numbers', () =>
     {
-        const plans = [ { companyId: '9', subType: 'thirdParty', deductible: '1500' } ];
+        const plans = [ { companyId: '1', subType: 'thirdParty', deductible: '3000' } ];
         const payload = buildPricingPayload( baseFormData, plans );
 
-        expect( payload.plans[ 0 ].companyId ).toBe( 9 );
-        expect( payload.plans[ 0 ].deductible ).toBe( 1500 );
+        expect( payload.plans[ 0 ].companyId ).toBe( 1 );
+        expect( payload.plans[ 0 ].deductible ).toBe( 3000 );
+    } );
+
+    it( 'normalizes unsupported deductible values to 1000', () =>
+    {
+        const plans = [ { companyId: 1, subType: 'thirdParty', deductible: 1500 } ];
+        const payload = buildPricingPayload( baseFormData, plans );
+
+        expect( payload.plans[ 0 ].deductible ).toBe( 1000 );
     } );
 
     it( 'coerces vehicle values to numbers', () =>

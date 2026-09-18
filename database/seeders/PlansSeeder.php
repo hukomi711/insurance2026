@@ -14,13 +14,24 @@ class PlansSeeder extends Seeder
     public function run(): void
     {
         $subTypes = ['thirdParty', 'comprehensive'];
-        $basePrices = [
-            'thirdParty'    => 399,
-            'comprehensive' => 499,
+        $fixedCompanyPrices = [
+            1  => 499,
+            2  => 1999,
+            3  => 2749,
+            4  => 2999,
+            5  => 749,
+            6  => 1249,
+            8  => 999,
+            13 => 1499,
+            16 => 1749,
+            17 => 3499,
+            19 => 2249,
+            20 => 2499,
+            21 => 3249,
         ];
 
-        // Create plans for companies 1-21
-        for ($companyId = 1; $companyId <= 21; $companyId++) {
+        // Seed only the fixed-pricing companies in the current contract.
+        foreach ($fixedCompanyPrices as $companyId => $basePrice) {
             foreach ($subTypes as $subType) {
                 Plan::firstOrCreate(
                     [
@@ -28,7 +39,7 @@ class PlansSeeder extends Seeder
                         'sub_type'   => $subType,
                     ],
                     [
-                        'base_price' => $basePrices[$subType],
+                        'base_price' => $basePrice,
                     ]
                 );
             }
