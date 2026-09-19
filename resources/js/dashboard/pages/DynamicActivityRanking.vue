@@ -110,7 +110,7 @@
           ]"
         >
           <!-- Rank badge -->
-          <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+          <div class="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
             :style="index < 3
               ? { backgroundColor: 'var(--admin-status-info-bg)', color: 'var(--admin-accent-blue)' }
               : { backgroundColor: 'var(--admin-surface-2)', color: 'var(--admin-text-muted)' }">
@@ -118,7 +118,7 @@
           </div>
 
           <!-- Activity icon -->
-          <div class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
+          <div class="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center"
             :style="{ backgroundColor: getActivityIconBg(activity) }">
             <i :class="getActivityIcon(activity)" class="text-sm" :style="{ color: getActivityIconColor(activity) }" aria-hidden="true"></i>
           </div>
@@ -140,21 +140,21 @@
           </div>
 
           <!-- Stage badge -->
-          <div class="flex-shrink-0">
+          <div class="shrink-0">
             <span :class="getStageColor(activity.stage)" class="text-[10px] font-medium px-2 py-1 rounded-full">
               {{ getStageBadge(activity.stage) }}
             </span>
           </div>
 
           <!-- Status badge -->
-          <div class="flex-shrink-0">
+          <div class="shrink-0">
             <span :class="getStatusBadgeColor(activity.status)" class="text-[10px] font-medium px-2 py-1 rounded-full">
               {{ getStatusBadgeLabel(activity.status) }}
             </span>
           </div>
 
           <!-- Relative time -->
-          <div class="flex-shrink-0 text-left w-20">
+          <div class="shrink-0 text-left w-20">
             <span class="text-xs ltr-nums" :style="{ color: 'var(--admin-text-dim)' }">
               {{ getRelativeTime(activity.created_at) }}
             </span>
