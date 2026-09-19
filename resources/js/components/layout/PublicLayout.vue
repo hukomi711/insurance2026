@@ -22,7 +22,6 @@
         </main>
         <AppFooter v-if="!hideLayout" />
         <BackToTop v-if="!hideLayout" />
-        <FloatingWhatsAppButton v-if="!hideLayout" />
     </div>
 </template>
 
@@ -40,10 +39,6 @@ const AppFooter = defineAsyncComponent( {
 } );
 const BackToTop = defineAsyncComponent( {
     loader: () => import( '@/components/layout/BackToTop.vue' ),
-    timeout: 10000,
-} );
-const FloatingWhatsAppButton = defineAsyncComponent( {
-    loader: () => import( '@/components/layout/FloatingWhatsAppButton.vue' ),
     timeout: 10000,
 } );
 

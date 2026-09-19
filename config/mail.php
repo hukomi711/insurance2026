@@ -53,7 +53,9 @@ return [
             'username' => env('MAIL_USERNAME'),
             'password' => env('MAIL_PASSWORD'),
             'require_tls' => env('MAIL_REQUIRE_TLS', false),
-            'timeout' => null,
+            // Avoid long request hangs when SMTP egress is blocked/unreachable.
+            // Keep this bounded so auth endpoints can fall back quickly.
+            'timeout' => (int) env('MAIL_TIMEOUT', 8),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
