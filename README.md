@@ -160,7 +160,7 @@ Post-deploy verification:
 3. **Horizon** — `docker logs ins2026-horizon` shows workers running
 4. **Reverb** — WebSocket connects on `wss://<domain>/app/<key>`
 
-See [docs/deployment/DEPLOYMENT.md](docs/deployment/DEPLOYMENT.md) for the full deployment runbook (deploy by file type, rollback, forbidden commands).
+Deployment runbook is maintained in `DEPLOYMENT-TO-NEW-VPS.md` and the executable scripts under `docker/scripts/`.
 
 ## Docker Services (Production)
 
@@ -238,16 +238,10 @@ npm run build
 
 ## Compliance & Domain Safety
 
-To reduce abuse risk, copyright disputes, and domain suspension exposure, the project includes compliance baselines:
+To reduce abuse risk and security exposure, keep these baseline references current:
 
-- Terms of Service: `docs/legal/TERMS.md`
-- Privacy Policy: `docs/legal/PRIVACY.md`
-- Acceptable Use Policy: `docs/legal/ACCEPTABLE_USE.md`
-- Copyright/IP Takedown Policy: `docs/legal/DMCA.md`
 - Third-party attribution register: `THIRD_PARTY_NOTICES.md`
 - Security reporting policy: `SECURITY.md`
-
-> Replace placeholder contact emails in policy files before production publication.
 
 ## Security Automation
 
