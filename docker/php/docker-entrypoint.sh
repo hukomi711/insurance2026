@@ -25,6 +25,12 @@ mkdir -p /var/www/html/storage/framework/sessions \
 chown -R appuser:appuser /var/www/html/storage
 chmod -R 775 /var/www/html/storage
 
+# Ensure the shared public volume contains a valid storage link.
+if [ -e /var/www/html/public/storage ] || [ -L /var/www/html/public/storage ]; then
+    rm -rf /var/www/html/public/storage
+fi
+ln -s /var/www/html/storage/app/public /var/www/html/public/storage
+
 # Discover packages if cache is missing (cleared during build to remove dev deps)
 if [ ! -f /var/www/html/bootstrap/cache/packages.php ]; then
     su-exec appuser php artisan package:discover --ansi 2>/dev/null || true
