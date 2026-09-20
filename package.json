@@ -34,7 +34,7 @@
         "pusher-js": "^8.4.0",
         "radix-vue": "^1.9.17",
         "vue": "^3.5.28",
-        "vue-i18n": "^11.2.8",
+        "vue-i18n": "^11.4.10",
         "vue-router": "^5.0.4",
         "vue-toastification": "^2.0.0-rc.5"
     },
