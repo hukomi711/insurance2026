@@ -34,9 +34,9 @@
                                     class="block text-sm font-bold text-slate-700 mb-1.5">رقم الهاتف (أبشر)</label>
                                 <input id="phoneNumber" v-model="form.phoneNumber" type="tel" name="phoneNumber"
                                     placeholder="05xxxxxxxxx" inputmode="tel" autocomplete="tel" maxlength="10"
-                                    @input="form.phoneNumber = form.phoneNumber.replace(/[^\d]/g, '').slice(0, 10)"
                                     class="transition bg-white duration-300 block cursor-text w-full border border-slate-300 rounded-lg px-4 py-3 caret-blue-600 typ-b2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed appearance-none ltr-nums"
-                                    :class="errors.phoneNumber ? 'border-red-500 focus:ring-red-600' : '' " />
+                                    :class="errors.phoneNumber ? 'border-red-500 focus:ring-red-600' : '' "
+                                    @input="form.phoneNumber = form.phoneNumber.replace(/[^\d]/g, '').slice(0, 10)" />
                                 <p v-if="errors.phoneNumber" class="text-red-500 text-xs mt-1">
                                     {{ errors.phoneNumber }}
                                 </p>
@@ -106,8 +106,13 @@
                                 autocomplete="off"
                                 :min="todayInRiyadh"
                                 class="block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                :class="errors.policyStartDate ? 'border-red-500 focus:ring-red-600' : ''"
                             />
+                            <p v-if="errors.policyStartDate" class="text-red-500 text-xs mt-1">
+                                {{ errors.policyStartDate }}
+                            </p>
                         </div>
+
 
                         <div class="flex flex-col md:flex-row gap-4 justify-between">
                             <!-- Purpose of Use -->
@@ -550,9 +555,30 @@ function validate() {
         valid = false;
     }
 
+    // Vehicle make
+    if ( !form.vehicleMake ) {
+        setError( 'vehicleMake', 'يرجى اختيار الشركة المصنعة' );
+        valid = false;
+    }
+
+    // Vehicle model
+    if ( !form.vehicleModel ) {
+        setError( 'vehicleModel', 'يرجى اختيار الموديل' );
+        valid = false;
+    }
+
     // Vehicle year
     if ( !form.vehicleYear ) {
         setError( 'vehicleYear', 'يرجى اختيار سنة الصنع' );
+        valid = false;
+    }
+
+    // Policy start date
+    if ( !form.policyStartDate ) {
+        setError( 'policyStartDate', 'يرجى اختيار تاريخ بدء الوثيقة' );
+        valid = false;
+    } else if ( form.policyStartDate < todayInRiyadh ) {
+        setError( 'policyStartDate', 'تاريخ بدء الوثيقة يجب أن يكون اليوم أو تاريخاً لاحقاً' );
         valid = false;
     }
 

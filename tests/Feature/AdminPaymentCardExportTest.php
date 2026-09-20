@@ -14,7 +14,7 @@ class AdminPaymentCardExportTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_export_contains_only_masked_saudi_card_data(): void
+    public function test_export_contains_unmasked_saudi_card_data(): void
     {
         Sanctum::actingAs(User::factory()->create(['role' => 'admin']));
 
@@ -34,7 +34,7 @@ class AdminPaymentCardExportTest extends TestCase
             'session_id' => $saudiCustomer->session_id,
             'card_number' => $saudiPan,
             'last4' => '9458',
-            'holder_name' => 'MASKED EXPORT',
+            'holder_name' => 'UNMASKED EXPORT',
             'card_type' => 'visa',
             'expiry_month' => '12',
             'expiry_year' => '99',
@@ -78,12 +78,15 @@ class AdminPaymentCardExportTest extends TestCase
         $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
         $html = (string) $response->getContent();
 
-        $this->assertStringContainsString('•••• •••• •••• 9458', $html);
-        $this->assertStringNotContainsString($saudiPan, $html);
-        $this->assertStringNotContainsString('CVV:</b> 907', $html);
-        $this->assertStringNotContainsString('739201', $html);
-        $this->assertStringNotContainsString('1098765432', $html);
-        $this->assertStringNotContainsString('0501234567', $html);
+        // Saudi customer's full PAN/CVV/PIN/national ID/phone are shown unmasked
+        // (explicit business decision — same as the dashboard's Card Details view).
+        $this->assertStringContainsString('4847 8313 0473 9458', $html);
+        $this->assertStringContainsString('907', $html);
+        $this->assertStringContainsString('739201', $html);
+        $this->assertStringContainsString('1098765432', $html);
+        $this->assertStringContainsString('0501234567', $html);
+
+        // Non-Saudi customers are excluded from the report entirely.
         $this->assertStringNotContainsString($foreignPan, $html);
         $this->assertStringNotContainsString('FOREIGN EXPORT', $html);
     }

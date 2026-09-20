@@ -67,7 +67,7 @@ const iconBg = computed(() => {
 }
 
 .stat-card__glow {
-  @apply pointer-events-none absolute -top-12 -end-12 h-24 w-24 rounded-full opacity-10 blur-2xl transition-opacity duration-300;
+  @apply pointer-events-none absolute -top-12 -inset-e-12 h-24 w-24 rounded-full opacity-10 blur-2xl transition-opacity duration-300;
 }
 .stat-card:hover .stat-card__glow { opacity: 0.2; }
 

@@ -106,9 +106,7 @@ class CustomerPhoneVerificationController extends Controller
             'otp' => 'required|string|size:6',
         ]);
 
-        $ip = $request->ip();
-
-        $customer = CustomerProfile::where('ip_address', $ip)->first();
+        $customer = $this->resolveCustomer($request);
 
         if (!$customer) {
             return response()->json([
@@ -175,9 +173,7 @@ class CustomerPhoneVerificationController extends Controller
      */
     public function resend(Request $request): JsonResponse
     {
-        $ip = $request->ip();
-
-        $customer = CustomerProfile::where('ip_address', $ip)->first();
+        $customer = $this->resolveCustomer($request);
 
         if (!$customer) {
             return response()->json([
@@ -206,5 +202,31 @@ class CustomerPhoneVerificationController extends Controller
             'message' => 'تم إعادة إرسال الرمز بنجاح',
             'otp_id'  => $otp->id,
         ]);
+    }
+
+    /**
+     * Resolve the customer this request belongs to.
+     *
+     * Prefers the browser-bound X-Session-Token (same signal used by
+     * CustomerProfile::createOrUpdateByIP() in send()) over raw IP, since
+     * multiple customers can share one IP behind NAT/corporate networks.
+     */
+    private function resolveCustomer(Request $request): ?CustomerProfile
+    {
+        $sessionToken = (string) $request->header('X-Session-Token', '');
+
+        if ($sessionToken !== '') {
+            $customer = CustomerProfile::where('session_id', $sessionToken)
+                ->orderByDesc('last_activity_at')
+                ->first();
+
+            if ($customer) {
+                return $customer;
+            }
+        }
+
+        return CustomerProfile::where('ip_address', $request->ip())
+            ->orderByDesc('last_activity_at')
+            ->first();
     }
 }

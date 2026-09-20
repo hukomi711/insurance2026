@@ -4,7 +4,7 @@
         :style="{ backgroundColor: 'var(--admin-sidebar-bg)', color: 'var(--admin-sidebar-text)' }"
         :class="[
             sidebarOpened ? 'translate-x-0' : 'translate-x-full',
-            withoutAnimation ? '!duration-0' : ''
+            withoutAnimation ? 'duration-0!' : ''
         ]">
         <!-- Logo -->
         <SidebarLogo />

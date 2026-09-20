@@ -383,7 +383,6 @@ const searchablePages = [
     { label: 'المطالبات', route: 'dashboard-claims', keywords: ['مطالبات', 'مطالبة', 'claims', 'claim'] },
     { label: 'الشركات', route: 'dashboard-companies', keywords: ['شركات', 'شركة', 'companies', 'company', 'أداء'] },
     { label: 'أنشطة العملاء', route: 'dashboard-customer-activity', keywords: ['عملاء', 'أنشطة', 'activity', 'customer', 'نشاط'] },
-    { label: 'ترتيب النشاطات', route: 'dashboard-activity-ranking', keywords: ['ترتيب', 'ranking', 'أخطاء', 'errors', '422', 'ديناميكي'] },
     { label: 'إحصائيات البريد', route: 'dashboard-email-stats', keywords: ['بريد', 'إيميل', 'email', 'stats', 'فتح', 'نقر'] },
     { label: 'تتبع العروض', route: 'dashboard-quote-monitor', keywords: ['عروض', 'تتبع', 'quotes', 'monitor', 'عرض سعر'] },
     { label: 'محاولات الدخول', route: 'dashboard-login-attempts', keywords: ['دخول', 'محاولات', 'login', 'attempts', 'تسجيل'] },

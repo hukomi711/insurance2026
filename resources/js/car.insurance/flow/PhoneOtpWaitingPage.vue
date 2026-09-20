@@ -135,10 +135,10 @@ const phoneStatusSig = phoneOtpContext.statusSig || '';
 const status = ref( 'pending' ); // pending | approved | rejected
 const rejectReason = ref( '' );
 
-// ─── Retry — go back to phone OTP entry ─────────────────────────────
+// ─── Retry — go back to phone verification entry ────────────────────
 function retryOtp ()
 {
-    router.push( { name: 'otp' } );
+    router.push( { name: 'phoneVerification' } );
 }
 
 // ─── WebSocket — listen for admin approval / rejection ──────────────

