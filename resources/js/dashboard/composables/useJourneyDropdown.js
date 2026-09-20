@@ -75,17 +75,23 @@ export function useJourneyDropdown ( customers, emit )
         if ( el ) buttonRefs[ ip ] = el;
     };
 
-    const getActiveCustomerPage = () =>
+    const activeCustomerPage = computed( () =>
     {
         if ( !activeJourneyDropdown.value ) return null;
         const customer = customers.value.find( ( c ) => c.id === activeJourneyDropdown.value );
         return customer?.current_page || null;
-    };
+    } );
+
+    const getActiveCustomerPage = () => activeCustomerPage.value;
 
     // Close rather than reposition on scroll/resize — simpler and avoids
     // extra layout work while the user is actively scrolling.
-    const closeOnScrollOrResize = () =>
+    const closeOnScrollOrResize = ( event ) =>
     {
+        // The menu is scrollable on small screens. Its own scrolling must not
+        // be mistaken for scrolling the page that owns the trigger.
+        if ( event?.type === 'scroll' && event.target?.closest?.( '[data-journey-dropdown]' ) ) return;
+
         if ( activeJourneyDropdown.value ) closeJourneyDropdown();
     };
 
@@ -155,8 +161,9 @@ export function useJourneyDropdown ( customers, emit )
         }
     };
 
-    const closeJourneyDropdown = () =>
+    const closeJourneyDropdown = ( { restoreFocus = false } = {} ) =>
     {
+        const activeCustomerId = activeJourneyDropdown.value;
         if ( positionRafId )
         {
             cancelAnimationFrame( positionRafId );
@@ -166,6 +173,8 @@ export function useJourneyDropdown ( customers, emit )
         dropdownPosition.value = null;
         window.removeEventListener( 'scroll', closeOnScrollOrResize, true );
         window.removeEventListener( 'resize', closeOnScrollOrResize );
+
+        if ( restoreFocus ) buttonRefs[ activeCustomerId ]?.focus( { preventScroll: true } );
     };
 
     const redirectCustomerToPage = async ( customerId, pageValue ) =>
@@ -289,7 +298,7 @@ export function useJourneyDropdown ( customers, emit )
 
     return {
         // State
-        activeJourneyDropdown, dropdownPosition, buttonRefs, isRedirecting,
+        activeJourneyDropdown, activeCustomerPage, dropdownPosition, buttonRefs, isRedirecting,
         // Computed
         pageCategories,
         // Methods

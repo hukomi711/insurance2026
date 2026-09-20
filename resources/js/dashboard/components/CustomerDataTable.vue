@@ -1,6 +1,11 @@
 <template>
   <div class="customer-data-table" dir="rtl">
-    <div class="customer-table-scroll admin-table-surface overflow-x-auto overscroll-x-contain rounded-xl shadow-sm">
+    <div
+      class="customer-table-scroll admin-table-surface overflow-x-auto overscroll-x-contain rounded-xl shadow-sm"
+      role="region"
+      aria-label="جدول العملاء"
+      tabindex="0"
+    >
       <table class="min-w-280 w-full table-fixed text-sm md:min-w-345 xl:min-w-405">
         <thead class="admin-table-head border-b">
           <tr>
@@ -18,9 +23,6 @@
             </th>
             <th class="w-22.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
               الموقع
-            </th>
-            <th class="w-22.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
-              المنطقة
             </th>
             <th class="w-30 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
               IP
@@ -96,6 +98,9 @@
                 <button
                   :ref="(el) => setButtonRef(customer.id, el)"
                   data-journey-trigger
+                  :aria-controls="`journey-menu-${customer.id}`"
+                  :aria-expanded="String(activeJourneyDropdown === customer.id)"
+                  aria-haspopup="dialog"
                   class="admin-icon-btn inline-flex w-40 items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                   @click="toggleJourneyDropdown(customer.id, $event)"
                 >
@@ -229,13 +234,6 @@
               <span v-else class="text-gray-400 text-xs">—</span>
             </td>
 
-            <!-- المنطقة -->
-            <td class="px-2 py-2 text-center text-xs text-gray-600 whitespace-nowrap">
-              <span class="max-w-20 truncate inline-block" :title="customer._ui.displayRegion || ''">
-                {{ customer._ui.displayRegion || '—' }}
-              </span>
-            </td>
-
             <!-- IP -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <img
@@ -293,22 +291,27 @@
     <Teleport to="body">
       <div
         v-if="activeJourneyDropdown && dropdownPosition"
+        :id="`journey-menu-${activeJourneyDropdown}`"
         data-journey-dropdown
-        class="fixed z-9999 w-64 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl"
+        role="dialog"
+        aria-modal="false"
+        :aria-labelledby="`journey-menu-title-${activeJourneyDropdown}`"
+        class="fixed z-9999 w-[min(16rem,calc(100vw-1rem))] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl"
         :style="{ top: dropdownPosition.top + 'px', left: dropdownPosition.left + 'px' }"
         @click.stop
+        @keydown.esc.stop="closeJourneyDropdown({ restoreFocus: true })"
       >
         <div
           class="flex items-center justify-between border-b border-gray-100 bg-gray-50 px-3 py-2"
         >
-          <span class="text-sm font-semibold text-gray-800">
+          <span :id="`journey-menu-title-${activeJourneyDropdown}`" class="text-sm font-semibold text-gray-800">
             <i class="fa-solid fa-route me-1.5 text-blue-600" aria-hidden="true"></i>تغيير المسار
           </span>
-          <button class="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label="إغلاق" @click="closeJourneyDropdown">
+          <button type="button" class="rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label="إغلاق" @click="closeJourneyDropdown({ restoreFocus: true })">
             <i class="fa-solid fa-xmark w-4 h-4" aria-hidden="true"></i>
           </button>
         </div>
-        <div class="max-h-80 overflow-y-auto py-1">
+        <div class="journey-dropdown-scroll max-h-[min(20rem,calc(100dvh-7rem))] overflow-y-auto overscroll-contain py-1 touch-pan-y" tabindex="0" aria-label="خيارات تغيير المسار">
           <template v-for="(pages, category) in pageCategories" :key="category">
             <div class="sticky top-0 border-b border-gray-100 bg-gray-50/95 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500 backdrop-blur-sm">
               {{ category }}
@@ -788,6 +791,11 @@ onUnmounted(() => {
   scrollbar-gutter: stable;
   background: var(--admin-card-bg, #ffffff);
   border-color: var(--admin-card-border, #e5e7eb);
+}
+
+.journey-dropdown-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
 }
 
 .admin-table-surface {

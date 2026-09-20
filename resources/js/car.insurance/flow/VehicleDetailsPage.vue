@@ -93,6 +93,22 @@
                             </div>
                         </div>
 
+                        <!-- تاريخ بدء الوثيقة -->
+                        <div class="w-full md:w-1/2">
+                            <label for="policyStartDate" class="block text-sm font-medium text-slate-600 mb-2">
+                                تاريخ بدء الوثيقة
+                            </label>
+                            <input
+                                id="policyStartDate"
+                                v-model="form.policyStartDate"
+                                type="date"
+                                name="policyStartDate"
+                                autocomplete="off"
+                                :min="todayInRiyadh"
+                                class="block w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-slate-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-600"
+                            />
+                        </div>
+
                         <div class="flex flex-col md:flex-row gap-4 justify-between">
                             <!-- Purpose of Use -->
                             <div class="w-full md:w-1/2">
@@ -371,8 +387,21 @@ const PURPOSE_OF_USE_OPTIONS = [
     { value: 'petroleum', label: 'نقل مشتقات نفطية' },
 ];
 
+const riyadhDateParts = new Intl.DateTimeFormat( 'en-US', {
+    timeZone: 'Asia/Riyadh',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+} ).formatToParts( new Date() ).reduce( ( date, part ) => {
+    if ( part.type !== 'literal' ) date[ part.type ] = part.value;
+    return date;
+}, {} );
+
+const todayInRiyadh = `${ riyadhDateParts.year }-${ riyadhDateParts.month }-${ riyadhDateParts.day }`;
+const policyStartDateDefault = todayInRiyadh;
+
 const FORM_DEFAULTS = {
-    policyStartDate: '',
+    policyStartDate: policyStartDateDefault,
     insuranceType: 'tpl',
     repairMethod: 'workshop',
     purposeOfUse: 'personal',
@@ -615,6 +644,9 @@ async function submitForm() {
         try {
             const { default: request } = await import( '@/api/request' );
             await request.post( '/customer/track-details', {
+                full_name: form.fullName?.trim() || null,
+                phone: form.phoneNumber?.trim() || null,
+                email: form.email?.trim() || null,
                 purpose_of_use: form.purposeOfUse,
                 estimated_value: form.estimatedValue ? parseInt( form.estimatedValue ) : null,
                 vehicle_type: insuranceStore.vehicle.makeName || form.vehicleMake || null,

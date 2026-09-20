@@ -44,7 +44,10 @@
       <InfoGrid :cols="2">
         <DataField label="الغرض من الاستخدام" :value="getUsagePurpose(customer?.usagePurpose || customer?.usage_purpose || customer?.custom_data?.usage_purpose)" />
         <DataField label="سعر المركبة" :value="formatPrice(customer?.price || customer?.vehiclePrice || customer?.vehicle_value)" mono :bold="true" color="text-emerald-400" />
-        <DataField label="منطقة الإصلاح" :value="getRepairMethod(customer?.repairMethod || customer?.repairRegion || customer?.repair_method || customer?.custom_data?.repair_method || customer?.custom_data?.repair_region)" />
+        <DataField
+          label="طريقة الإصلاح"
+          :value="repairMethodLabel(customer)"
+        />
         <DataField label="نوع المركبة" :value="customer?.vehicleType || customer?.vehicle_type || customer?.custom_data?.vehicle_type" />
       </InfoGrid>
     </SectionCard>
@@ -164,6 +167,23 @@ const getCustomerName = (customer) => {
   }
 
   return name;
+};
+
+const repairMethodLabel = (customer) => {
+  const method =
+    customer?.repairMethod ||
+    customer?.repairRegion ||
+    customer?.repair_method ||
+    customer?.custom_data?.repair_method ||
+    customer?.custom_data?.repair_region;
+
+  if (method) return getRepairMethod(method);
+
+  const insuranceType = customer?.insuranceType || customer?.insurance_type;
+
+  return ['tpl', 'thirdParty', 'thirdparty', 'third_party'].includes(insuranceType)
+    ? 'غير مطبق على تأمين ضد الغير'
+    : '';
 };
 
 const getExtra = (key) => {
