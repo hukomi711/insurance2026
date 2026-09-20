@@ -7,7 +7,6 @@
     accent="#34d399"
     icon="fa-solid fa-credit-card"
     dir="ltr"
-    theme="dark"
     :heavy-backdrop="true"
     @close="$emit('close')"
   >

@@ -12,11 +12,21 @@ import { DEDUCTIBLE_OPTIONS } from '@/data/pricingConstants';
 
 const DEFAULT_DEDUCTIBLE = 1000;
 const DEDUCTIBLE_SET = new Set( DEDUCTIBLE_OPTIONS );
+// The pricing API accepts manufacturer identifiers from 1 through 95.
+// Keep the UI-only "other" selection compatible with that contract.
+const OTHER_VEHICLE_MAKE_ID = 95;
 
 function normalizeDeductible( value )
 {
     const deductible = Number( value );
     return DEDUCTIBLE_SET.has( deductible ) ? deductible : DEFAULT_DEDUCTIBLE;
+}
+
+function normalizeVehicleMake( value )
+{
+    if ( value === 'other' ) return OTHER_VEHICLE_MAKE_ID;
+
+    return Number( value ) || 0;
 }
 
 /**
@@ -40,7 +50,7 @@ export function buildPricingPayload ( formData, plans = [] )
 
         vehicle: {
             year: Number( v.year ) || 0,
-            make: Number( v.make ) || 0,
+            make: normalizeVehicleMake( v.make ),
             estimatedValue: Number( v.estimatedValue ) || 0,
             purposeOfUse: v.purposeOfUse || 'personal',
             carModification: v.carModification || 'no',

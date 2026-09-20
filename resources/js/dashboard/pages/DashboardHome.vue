@@ -2,18 +2,36 @@
     <div>
         <!-- Connected Customers Section -->
         <section class="mb-8" dir="rtl" aria-labelledby="connected-customers-title">
-            <nav class="mb-4 flex items-end gap-6 overflow-x-auto border-b border-gray-200 bg-white px-4" aria-label="قوائم العملاء">
+            <nav
+                class="admin-customer-tabs mb-4 flex items-end gap-6 overflow-x-auto border-b px-4"
+                aria-label="قوائم العملاء"
+            >
                 <button
                     v-for="view in dashboardViews"
                     :key="view.key"
                     type="button"
                     class="relative min-h-12 shrink-0 px-2 text-sm font-semibold transition-colors"
-                    :class="activeDashboardView === view.key ? 'text-blue-600' : 'text-gray-500 hover:text-gray-800'"
+                    :style="{
+                        color: activeDashboardView === view.key
+                            ? 'var(--admin-accent-blue)'
+                            : 'var(--admin-text-muted)',
+                    }"
                     :aria-current="activeDashboardView === view.key ? 'page' : undefined"
                     @click="selectDashboardView(view.key)"
                 >
-                    {{ view.label }} ({{ view.count }})
-                    <span v-if="activeDashboardView === view.key" class="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-blue-600"></span>
+                    {{ view.label }}
+                    <span
+                        class="tab-count"
+                        :class="{ 'tab-count--active': activeDashboardView === view.key }"
+                    >
+                        {{ view.count }}
+                    </span>
+
+                    <span
+                        v-if="activeDashboardView === view.key"
+                        class="absolute inset-x-0 bottom-0 h-0.5 rounded-full"
+                        style="background-color: var(--admin-accent-blue)"
+                    />
                 </button>
             </nav>
 
@@ -72,10 +90,10 @@
                 />
 
                 <!-- Customer count (single page) -->
-                <div v-if="totalCustomers > 0 && lastPage <= 1" class="flex items-center justify-between mt-4 rounded-xl px-4 py-3"
+                <div v-if="currentViewTotal > 0 && lastPage <= 1" class="flex items-center justify-between mt-4 rounded-xl px-4 py-3"
                     :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)' }">
                     <div class="text-xs" style="color: var(--admin-text-dim);">
-                        إجمالي العملاء الذين دخلوا الموقع: <span class="font-bold" style="color: var(--admin-text);">{{ totalCustomers }}</span>
+                        {{ currentViewTotalLabel }}: <span class="font-bold" style="color: var(--admin-text);">{{ currentViewTotal }}</span>
                     </div>
                 </div>
 
@@ -83,7 +101,7 @@
                 <div v-if="lastPage > 1" class="flex items-center justify-between mt-4 rounded-xl px-4 py-3"
                     :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)' }">
                     <div class="text-xs" style="color: var(--admin-text-dim);">
-                        عرض {{ (currentPage - 1) * perPage + 1 }}–{{ Math.min(currentPage * perPage, totalCustomers) }} من {{ totalCustomers }} عميل دخلوا الموقع
+                        عرض {{ (currentPage - 1) * perPage + 1 }}–{{ Math.min(currentPage * perPage, totalCustomers) }} من {{ totalCustomers }} {{ currentViewPluralLabel }}
                     </div>
                     <div class="flex items-center gap-1">
                         <button
@@ -1187,6 +1205,7 @@ const customers = shallowRef( [] );
 const activeDashboardView = ref( 'visitors' );
 const visitorsTotal = ref( 0 );
 const cardsTotal = ref( 0 );
+const archiveTotal = ref( 0 );
 const displayedCustomers = computed( () => {
     if ( activeDashboardView.value === 'archive' ) return [];
     return customers.value;
@@ -1194,8 +1213,29 @@ const displayedCustomers = computed( () => {
 const dashboardViews = computed( () => [
     { key: 'visitors', label: 'الزوار', count: visitorsTotal.value },
     { key: 'cards', label: 'البطاقات', count: cardsTotal.value },
-    { key: 'archive', label: 'الأرشيف', count: 0 },
+    { key: 'archive', label: 'الأرشيف', count: archiveTotal.value },
 ] );
+const currentViewTotalLabel = computed( () =>
+    activeDashboardView.value === 'cards'
+        ? 'إجمالي المستخدمين مع البطاقات'
+        : activeDashboardView.value === 'archive'
+            ? 'إجمالي عناصر الأرشيف'
+            : 'إجمالي العملاء الذين دخلوا الموقع'
+);
+const currentViewPluralLabel = computed( () =>
+    activeDashboardView.value === 'cards'
+        ? 'مستخدم مع بطاقات'
+        : activeDashboardView.value === 'archive'
+            ? 'عنصر أرشيف'
+            : 'عميل دخلوا الموقع'
+);
+const currentViewTotal = computed( () =>
+    activeDashboardView.value === 'cards'
+        ? cardsTotal.value
+        : activeDashboardView.value === 'archive'
+            ? archiveTotal.value
+            : visitorsTotal.value
+);
 const emptyViewMessage = computed( () => {
     if ( hasActiveFilters.value ) return 'لا توجد نتائج مطابقة للفلاتر الحالية';
     if ( activeDashboardView.value === 'cards' ) return 'لا يوجد مستخدمون لديهم بيانات دفع مقنّعة حتى الآن';
@@ -1560,8 +1600,13 @@ const refreshCustomers = async () => {
             return true;
         }
         const rows = ( data.data || [] ).filter( shouldDisplayCustomer );
+        const counts = data.meta?.counts || {};
+        visitorsTotal.value = Number( counts.visitors ?? visitorsTotal.value );
+        cardsTotal.value = Number( counts.cards ?? cardsTotal.value );
+        archiveTotal.value = Number( counts.archive ?? archiveTotal.value );
+        activeCustomersCount.value = Number( counts.active ?? data.active_count ?? 0 );
         // ── Smart refresh: skip re-render when data hasn't changed ──
-        const fingerprint = `${ activeDashboardView.value }:${ data.total }:${ data.active_count }:` +
+        const fingerprint = `${ activeDashboardView.value }:${ data.total }:${ visitorsTotal.value }:${ cardsTotal.value }:${ archiveTotal.value }:${ activeCustomersCount.value }:` +
             rows.map( r => `${ r.id }|${ r.updated_at }|${ r.last_activity_at }|${ r.is_online ? 1 : 0 }|${ r.is_blocked ? 1 : 0 }|${ r.is_active ? 1 : 0 }|${ r.current_page }|${ r.has_new_vehicle ? 1 : 0 }|${ r.has_new_insurance ? 1 : 0 }|${ r.has_new_payment ? 1 : 0 }` ).join( ';' );
         if ( fingerprint === _lastDataHash && !initialLoading.value ) {
             logger.debug( `[Dashboard] refreshCustomers — no changes, skip render (${ rows.length } rows)` );
@@ -1577,10 +1622,7 @@ const refreshCustomers = async () => {
         currentPage.value = data.current_page ?? 1;
         lastPage.value = data.last_page ?? 1;
         totalCustomers.value = data.total ?? customers.value.length;
-        if ( activeDashboardView.value === 'cards' ) cardsTotal.value = totalCustomers.value;
-        if ( activeDashboardView.value === 'visitors' ) visitorsTotal.value = totalCustomers.value;
         perPage.value = data.per_page ?? 50;
-        activeCustomersCount.value = data.active_count ?? 0;
         // ✅ Clear error/loading states on success
         loadError.value = false;
         initialLoading.value = false;
@@ -1650,6 +1692,10 @@ const patchSingleCustomer = async ( customerId ) => {
             // New customer — prepend and deduplicate to be safe
             customers.value = deduplicateByIp( applyOrdering( [ guarded, ...customers.value ] ) );
         }
+        // The row payload does not carry the dashboard-wide aggregate. Queue
+        // one coalesced refresh so WebSocket updates keep the server summary
+        // (visitors/cards/archive/active) in lockstep with the patched row.
+        scheduleDeferredRefresh( 'summary-after-customer-patch', 250 );
     } catch ( error ) {
         if ( error?.response?.status === 404 ) {
             customers.value = customers.value.filter( c => c.id !== customerId );

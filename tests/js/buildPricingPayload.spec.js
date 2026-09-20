@@ -78,6 +78,18 @@ describe( 'buildPricingPayload', () =>
         expect( payload.vehicle.estimatedValue ).toBe( 85000 );
     } );
 
+    it( 'maps the UI-only other make to a valid pricing API identifier', () =>
+    {
+        const formData = {
+            ...baseFormData,
+            vehicle: { ...baseFormData.vehicle, make: 'other' },
+        };
+
+        const payload = buildPricingPayload( formData, basePlans );
+
+        expect( payload.vehicle.make ).toBe( 95 );
+    } );
+
     it( 'defaults missing vehicle fields', () =>
     {
         const payload = buildPricingPayload( { vehicle: {}, driver: {}, policy: {} }, basePlans );

@@ -1,32 +1,32 @@
 <template>
-    <div class="min-h-screen bg-slate-50" dir="rtl">
+    <div class="min-h-screen bg-slate-50 pb-24 md:pb-0" dir="rtl">
 
         <!-- Header -->
-        <div class="bg-white border-b border-slate-200 sticky top-0 z-30">
-            <div class="box py-3 flex items-center justify-between">
+        <div class="bg-white border-b border-slate-200 sticky top-16 z-30">
+            <div class="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-3 sm:px-4">
                 <router-link :to="{ name: 'compare' }"
-                    class="flex items-center gap-1.5 text-primary typ-s2 hover:text-primary-dark transition-colors">
+                    class="justify-self-start inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary-dark transition-colors">
                     <svg class="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                         aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
-                    العودة للعروض
+                    <span class="sm:hidden">العودة</span><span class="hidden sm:inline">العودة للعروض</span>
                 </router-link>
-                <h1 class="text-sm sm:text-base font-bold text-foreground">مراجعة الطلب</h1>
-                <div class="w-20"></div>
+                <h1 class="justify-self-center whitespace-nowrap text-sm sm:text-base font-bold text-foreground">مراجعة الطلب</h1>
+                <div></div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="box py-4 sm:py-6 md:py-8">
-            <div class="max-w-2xl mx-auto space-y-4 sm:space-y-5 md:space-y-6">
+        <div class="mx-auto w-full max-w-2xl px-3 py-3 sm:px-4 sm:py-6 md:py-8">
+            <div class="space-y-4 sm:space-y-5 md:space-y-6">
 
                 <!-- Signature Status - Interactive Button -->
                 <button v-if="signatureStatus"
                     :disabled="!canProceedToPayment"
                     :aria-label="signatureStatus.valid ? 'تم التحقق من السعر - انقر للمتابعة للدفع' : 'تعذّر التحقق من السعر'"
                     @click="proceedToPayment"
-                    class="w-full rounded-xl border px-4 py-4 sm:py-5 text-sm sm:text-base transition-all hover:shadow-lg active:scale-98"
+                    class="w-full rounded-xl border px-3.5 py-3.5 text-sm transition-all hover:shadow-lg active:scale-[0.99] sm:px-4 sm:py-5 sm:text-base"
                     :class="signatureStatus.valid
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 active:bg-emerald-150 cursor-pointer'
                         : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300 opacity-50 cursor-not-allowed'">
@@ -40,11 +40,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                         </svg>
                     </div>
-                    <p class="mt-2 text-xs sm:text-sm opacity-90">{{ signatureStatusMessage }}</p>
+                    <p class="mt-1.5 text-[11px] leading-5 opacity-90 sm:text-sm">{{ signatureStatusMessage }}</p>
                 </button>
 
                 <!-- ═══ Policy Data Card ═══ -->
-                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow sm:rounded-2xl">
                     <div class="bg-primary/5 px-4 sm:px-5 py-3 sm:py-4 border-b border-primary/10">
                         <h2 class="text-sm sm:text-base font-bold text-primary flex items-center gap-2">
                             <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -55,7 +55,7 @@
                             بيانات وثيقة التأمين
                         </h2>
                     </div>
-                    <div class="p-4 sm:p-5 space-y-3 sm:space-y-4">
+                    <div class="space-y-3 p-3.5 sm:p-5">
                         <!-- Company + Plan -->
                         <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
                             <div v-if="companyLogo"
@@ -75,9 +75,9 @@
                         <!-- Policy details rows -->
                         <div v-if="policyRows.length" class="space-y-2.5">
                             <div v-for="item in policyRows" :key="item.label"
-                                class="flex items-center justify-between text-sm">
+                                class="checkout-detail-row text-sm">
                                 <span class="text-slate-500">{{ item.label }}</span>
-                                <span class="font-semibold text-foreground ltr-nums">{{ item.value }}</span>
+                                <span class="checkout-detail-value font-semibold text-foreground ltr-nums">{{ item.value }}</span>
                             </div>
                         </div>
                         <p v-else class="text-sm text-slate-500">لا توجد تفاصيل وثيقة إضافية متاحة حالياً.</p>
@@ -85,7 +85,7 @@
                 </div>
 
                 <!-- ═══ Vehicle Info Card ═══ -->
-                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow sm:rounded-2xl">
                     <div class="bg-slate-50 px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100">
                         <h2 class="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
                             <svg class="size-5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -96,11 +96,11 @@
                             بيانات المركبة
                         </h2>
                     </div>
-                    <div v-if="vehicleRows.length" class="p-4 sm:p-5 space-y-3 sm:space-y-4">
+                    <div v-if="vehicleRows.length" class="space-y-3 p-3.5 sm:p-5">
                         <div v-for="item in vehicleRows" :key="item.label"
-                            class="flex items-center justify-between text-sm">
+                            class="checkout-detail-row text-sm">
                             <span class="text-slate-500">{{ item.label }}</span>
-                            <span class="font-semibold text-foreground">{{ item.value }}</span>
+                            <span class="checkout-detail-value font-semibold text-foreground">{{ item.value }}</span>
                         </div>
                     </div>
                     <div v-else class="p-4 sm:p-5">
@@ -198,10 +198,10 @@
                         <hr class="border-slate-200">
 
                         <!-- Total -->
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-end justify-between gap-3">
                             <span class="text-base font-bold text-foreground">المبلغ الإجمالي</span>
                             <span
-                                class="text-xl sm:text-2xl font-extrabold text-primary ltr-nums inline-flex items-center gap-1.5">
+                                class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-xl font-extrabold text-primary ltr-nums sm:text-2xl">
                                 {{ formatDecimal( totalPrice ) }}
                                 <SarIcon className="size-4 text-primary" />
                             </span>
@@ -227,7 +227,7 @@
                     :disabled="!canProceedToPayment || isProcessingPayment"
                     :aria-label="`الانتقال للدفع - ${formatDecimal(totalPrice)} ريال سعودي`"
                     :aria-busy="isProcessingPayment"
-                    class="w-full h-14 sm:h-16 rounded-2xl bg-primary text-white font-bold text-base sm:text-lg transition-all inline-flex items-center justify-center gap-2.5 shadow-lg shadow-primary/20 active:scale-98"
+                    class="hidden md:inline-flex w-full h-16 rounded-2xl bg-primary text-white font-bold text-lg transition-all items-center justify-center gap-2.5 shadow-lg shadow-primary/20 active:scale-98"
                     :class="(canProceedToPayment && !isProcessingPayment) ? 'hover:bg-primary-dark active:bg-primary-darker cursor-pointer' : 'opacity-50 cursor-not-allowed'"
                     @click="proceedToPayment">
                     <svg v-if="!isProcessingPayment" class="size-5 sm:size-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -251,10 +251,22 @@
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                     </svg>
-                    الأسعار مثبتة لمدة 15 دقيقة — الدفع مشفر وآمن بنسبة 100%
+                    {{ quoteExpiryMessage }} — الدفع مشفر وآمن بنسبة 100%
                 </p>
 
             </div>
+        </div>
+
+        <div class="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 px-3 pt-2 backdrop-blur-md md:hidden" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
+            <button
+                :disabled="!canProceedToPayment || isProcessingPayment"
+                :aria-label="`الانتقال للدفع - ${formatDecimal(totalPrice)} ريال سعودي`"
+                class="flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 font-bold text-white shadow-lg active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                @click="proceedToPayment"
+            >
+                <span class="flex-1 text-center">{{ isProcessingPayment ? 'جاري معالجة الطلب...' : 'الانتقال للدفع' }}</span>
+                <span v-if="!isProcessingPayment" class="inline-flex shrink-0 items-center gap-1 whitespace-nowrap font-extrabold ltr-nums">{{ formatDecimal(totalPrice) }} <SarIcon className="size-4" /></span>
+            </button>
         </div>
     </div>
 </template>
@@ -466,6 +478,12 @@ const signatureStatusMessage = computed( () => {
     return 'انتهت صلاحية التوقيع أو تغيّر السعر. الرجاء العودة للعروض وإعادة الاختيار.';
 } );
 
+const quoteExpiryMessage = computed( () => {
+    const seconds = signatureStatus.value?.remainingSeconds;
+    if ( !Number.isFinite( seconds ) || seconds <= 0 ) return 'تحقق من السعر قبل الدفع';
+    return `السعر محمي ومثبت — صالح لمدة ${ Math.max( 1, Math.ceil( seconds / 60 ) ) } دقيقة`;
+} );
+
 // ═══════════════════════════════════════════════════════════════════════════════════
 // SECTION 8 - COMPUTED: POLICY DETAILS ROWS
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -632,3 +650,22 @@ async function proceedToPayment() {
     }
 }
 </script>
+
+<style scoped>
+.checkout-detail-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 0.75rem;
+}
+
+.checkout-detail-row > :first-child {
+    min-width: 0;
+}
+
+.checkout-detail-value {
+    max-width: 58vw;
+    overflow-wrap: anywhere;
+    text-align: left;
+}
+</style>

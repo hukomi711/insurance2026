@@ -1,6 +1,15 @@
 <template>
   <footer class="bg-slate-50 p-6 md:p-8">
-    <div class="max-w-7xl mx-auto">
+    <div v-if="isOrderReview" class="md:hidden text-center">
+      <p class="text-xs text-slate-500">🔒 الدفع آمن ومشفر</p>
+      <div class="mt-3 flex justify-center gap-4 text-xs text-slate-600">
+        <router-link to="/privacy">سياسة الخصوصية</router-link>
+        <router-link to="/terms">الشروط والأحكام</router-link>
+      </div>
+      <p class="mt-3 text-[11px] text-slate-500">© تأمينكم 2026</p>
+    </div>
+
+    <div class="max-w-7xl mx-auto" :class="isOrderReview ? 'hidden md:block' : ''">
       <section class="flex flex-col xl:flex-row xl:gap-16 border-b-0 xl:border-slate-300 xl:border-b pb-4 md:pb-8">
         <!-- Social & Copyright (Right Column on Desktop) -->
         <section class="w-full xl:w-60 flex flex-col gap-8 pb-4 border-b border-slate-300 xl:border-b-0">
@@ -126,6 +135,11 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from 'radix-vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const isOrderReview = computed(() => route.name === 'orderReview')
 
 const footerSections = [
   {

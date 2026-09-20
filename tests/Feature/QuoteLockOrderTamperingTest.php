@@ -115,6 +115,24 @@ class QuoteLockOrderTamperingTest extends TestCase
         $this->assertEqualsWithDelta(510.0, (float) $snapshot['addons'][1]['price'], 0.001);
     }
 
+    public function test_order_accepts_the_lowest_server_issued_price(): void
+    {
+        $lock = $this->issueQuoteLock([
+            'addon_ids' => [],
+            'addons' => [],
+        ]);
+
+        $this->assertEqualsWithDelta(399.0, (float) $lock['subtotal'], 0.001);
+
+        $response = $this->withoutMiddleware($this->middlewareBypass())
+            ->postJson('/api/orders', $this->orderPayloadFromLock($lock, [
+                'addon_ids' => [],
+                'addons' => [],
+            ]));
+
+        $response->assertStatus(201)->assertJson(['success' => true]);
+    }
+
     public function test_order_rejects_when_addon_ids_do_not_match_quote_lock_snapshot(): void
     {
         $lock = $this->issueQuoteLock([

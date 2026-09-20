@@ -14,10 +14,14 @@
     --admin-surface-4: #f9fafb; /* gray-50  */
 
     /* Sidebar / Navbar */
-    --admin-sidebar-bg: #111827; /* gray-900 — keep dark sidebar in light mode */
-    --admin-sidebar-text: #d1d5db;
-    --admin-sidebar-hover: #1f2937;
-    --admin-sidebar-border: #374151;
+    --admin-sidebar-bg: #ffffff;
+    --admin-sidebar-text: #475569;
+    --admin-sidebar-text-muted: #64748b;
+    --admin-sidebar-heading: #0f172a;
+    --admin-sidebar-hover: #f1f5f9;
+    --admin-sidebar-active-bg: #2563eb;
+    --admin-sidebar-active-text: #ffffff;
+    --admin-sidebar-border: #e2e8f0;
     --admin-navbar-bg: #ffffff;
     --admin-navbar-border: #e5e7eb;
     --admin-navbar-text: #374151;
@@ -31,6 +35,9 @@
     --admin-text-secondary: #374151; /* gray-700 */
     --admin-text-muted: #6b7280; /* gray-500 */
     --admin-text-dim: #9ca3af; /* gray-400 */
+    --admin-overlay: rgb(15 23 42 / 0.42);
+    --admin-hover: #f1f5f9;
+    --admin-hover-accent: #eff6ff;
 
     /* Accent Colors */
     --admin-accent-emerald: #059669;
@@ -63,6 +70,7 @@
     --admin-card-border: #e5e7eb;
     --admin-card-shadow:
         0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --admin-card-shadow-soft: 0 4px 12px rgb(15 23 42 / 0.05);
 
     /* Input */
     --admin-input-bg: #ffffff;
@@ -89,9 +97,13 @@
     --admin-surface-4: #1f2937;
 
     /* Sidebar / Navbar */
-    --admin-sidebar-bg: #0d1017;
-    --admin-sidebar-text: #d1d5db;
+    --admin-sidebar-bg: #0f172a;
+    --admin-sidebar-text: #cbd5e1;
+    --admin-sidebar-text-muted: #94a3b8;
+    --admin-sidebar-heading: #f8fafc;
     --admin-sidebar-hover: #1f2937;
+    --admin-sidebar-active-bg: #2563eb;
+    --admin-sidebar-active-text: #ffffff;
     --admin-sidebar-border: #1f2937;
     --admin-navbar-bg: #1a1f2e;
     --admin-navbar-border: #2d3548;
@@ -106,6 +118,9 @@
     --admin-text-secondary: #d1d5db;
     --admin-text-muted: #9ca3af;
     --admin-text-dim: #8b95a5;
+    --admin-overlay: rgb(0 0 0 / 0.72);
+    --admin-hover: #1e293b;
+    --admin-hover-accent: #172554;
 
     /* Accent Colors */
     --admin-accent-emerald: #34d399;
@@ -138,6 +153,7 @@
     --admin-card-border: rgba(55, 65, 81, 0.5);
     --admin-card-shadow:
         0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+    --admin-card-shadow-soft: 0 8px 18px rgb(2 6 23 / 0.22);
 
     /* Input */
     --admin-input-bg: #232936;
@@ -220,16 +236,17 @@
     transition: opacity var(--admin-transition);
 }
 .admin-modal-overlay--heavy {
-    background: rgba(0, 0, 0, 0.88);
+    background: var(--admin-overlay);
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
 }
 
 /* ── Modal Panel ── */
 .admin-modal-panel {
-    background: var(--admin-surface-3, #111827);
-    border: 1px solid var(--admin-border, rgba(55, 65, 81, 0.5));
-    border-radius: var(--admin-radius-lg, 1rem);
+    background: var(--admin-surface);
+    color: var(--admin-text);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-lg);
     display: flex;
     flex-direction: column;
     max-height: 90dvh;
@@ -248,8 +265,8 @@
     gap: 0.75rem;
     min-width: 0;
     padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--admin-border, rgba(55, 65, 81, 0.5));
-    background: var(--admin-surface, #1a1f2e);
+    border-bottom: 1px solid var(--admin-border);
+    background: var(--admin-surface);
 }
 .admin-modal-heading {
     display: flex;
@@ -290,8 +307,8 @@
 .admin-modal-footer {
     flex-shrink: 0;
     padding: 1rem 1.25rem;
-    border-top: 1px solid var(--admin-border, rgba(55, 65, 81, 0.5));
-    background: var(--admin-surface, #1a1f2e);
+    border-top: 1px solid var(--admin-border);
+    background: var(--admin-surface);
 }
 
 @media (max-width: 640px) {
@@ -337,13 +354,13 @@
     justify-content: center;
     width: 2rem;
     height: 2rem;
-    border-radius: var(--admin-radius-sm, 0.5rem);
-    color: var(--admin-text-dim, #8b95a5);
+    border-radius: var(--admin-radius-sm);
+    color: var(--admin-text-muted);
     transition: all var(--admin-transition);
 }
 .admin-modal-close:hover {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--admin-text, #ffffff);
+    background: var(--admin-surface-2);
+    color: var(--admin-text);
 }
 
 /* ── Customer row focus highlight (deep-link from notification) ── */
@@ -359,12 +376,12 @@
 
 /* ── Glass Section (shared panel for inner content) ── */
 .admin-glass {
-    border-radius: var(--admin-radius-lg, 1rem);
+    border-radius: var(--admin-radius-lg);
     padding: 1.25rem;
-    background: rgba(17, 24, 39, 0.55);
+    background: var(--admin-surface-2);
     -webkit-backdrop-filter: blur(16px);
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--admin-border);
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.18),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -418,10 +435,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: var(--admin-radius-md, 0.75rem);
+    border-radius: var(--admin-radius-md);
     padding: 0.75rem;
-    background: rgba(17, 24, 39, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: var(--admin-surface-3);
+    border: 1px solid var(--admin-border);
 }
 .admin-code-box--amber { border-color: rgba(251, 191, 36, 0.15); background: rgba(251, 191, 36, 0.05); }
 .admin-code-box--pink  { border-color: rgba(244, 114, 182, 0.15); background: rgba(244, 114, 182, 0.05); }
@@ -430,10 +447,16 @@
 
 /* ── Data Cell (for grids inside notification/info modals) ── */
 .admin-data-cell {
-    border-radius: var(--admin-radius-sm, 0.5rem);
+    border-radius: var(--admin-radius-sm);
     padding: 0.75rem;
-    background: rgba(31, 41, 55, 0.6);
-    border: 1px solid rgba(55, 65, 81, 0.4);
+    background: var(--admin-surface-2);
+    border: 1px solid var(--admin-border);
+}
+
+.admin-info-field {
+    background: var(--admin-surface-3);
+    border: 1px solid var(--admin-card-border);
+    color: var(--admin-text);
 }
 
 /* ── Panel Header Row ── */
@@ -472,7 +495,7 @@
     padding: 2rem 0;
     text-align: center;
     font-size: 0.75rem;
-    color: rgba(156, 163, 175, 0.7);
+    color: var(--admin-text-dim);
 }
 .admin-empty-icon {
     margin-bottom: 0.5rem;
@@ -483,14 +506,14 @@
 /* ── Nafath Input ── */
 .admin-nafath-input {
     width: 100%;
-    border-radius: var(--admin-radius-md, 0.75rem);
-    border: 1px solid rgba(75, 85, 99, 0.5);
+    border-radius: var(--admin-radius-md);
+    border: 1px solid var(--admin-input-border);
     padding: 0.625rem 0.75rem;
     text-align: center;
     font-family: ui-monospace, monospace;
     font-size: 1rem;
-    color: var(--admin-text, #ffffff);
-    background: rgba(17, 24, 39, 0.6);
+    color: var(--admin-input-text);
+    background: var(--admin-input-bg);
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
     transition: all var(--admin-transition);
@@ -526,17 +549,17 @@
     display: flex;
     align-items: center;
     gap: 0.375rem;
-    border-radius: var(--admin-radius-md, 0.75rem);
+    border-radius: var(--admin-radius-md);
     padding: 0.375rem 0.625rem;
-    background: rgba(31, 41, 55, 0.6);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    background: var(--admin-surface-2);
+    box-shadow: inset 0 0 0 1px var(--admin-border);
 }
 .admin-card-nav-btn {
     padding: 0.125rem 0.375rem;
     font-size: 0.75rem;
-    color: var(--admin-text-dim, #8b95a5);
+    color: var(--admin-text-muted);
     border-radius: 0.25rem;
     transition: color var(--admin-transition);
 }
-.admin-card-nav-btn:hover { color: var(--admin-text, #ffffff); }
+.admin-card-nav-btn:hover { color: var(--admin-text); background: var(--admin-surface-3); }
 .admin-card-nav-btn:disabled { opacity: 0.3; }

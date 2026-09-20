@@ -43,10 +43,28 @@ const computedSizeClass = computed(() =>
 const variantMap = {
   accept:    'bg-green-600 text-white hover:bg-green-700',
   reject:    'bg-red-600 text-white hover:bg-red-700',
-  secondary: 'bg-slate-700 text-slate-200 hover:bg-slate-600',
-  ghost:     'text-gray-400 hover:text-white hover:bg-gray-700/50',
+  secondary: 'admin-button--secondary',
+  ghost:     'admin-button--ghost',
   purple:    'bg-purple-600 text-white hover:bg-purple-500',
 };
 
 const computedVariantClass = computed(() => variantMap[props.variant] || variantMap.secondary);
 </script>
+
+<style scoped>
+.admin-button--secondary {
+  color: var(--admin-text);
+  background: var(--admin-surface-3);
+  border: 1px solid var(--admin-card-border);
+}
+
+.admin-button--secondary:hover,
+.admin-button--ghost:hover {
+  background: var(--admin-hover-accent);
+  color: var(--admin-text);
+}
+
+.admin-button--ghost {
+  color: var(--admin-text-muted);
+}
+</style>

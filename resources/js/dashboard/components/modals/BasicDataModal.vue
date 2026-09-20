@@ -7,7 +7,6 @@
     size="md"
     accent="#facc15"
     dir="rtl"
-    theme="dark"
     @close="$emit('close')"
   >
     <template #header-bottom>
@@ -15,7 +14,6 @@
         v-model="activeTab"
         :tabs="tabs"
         dir="rtl"
-        theme="dark"
         aria-label="أنواع البيانات الأساسية"
       />
     </template>

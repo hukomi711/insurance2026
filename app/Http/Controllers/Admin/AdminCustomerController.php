@@ -135,6 +135,12 @@ class AdminCustomerController extends Controller
         // this server-side prevents query-string or client-state bypasses.
         $baseFiltered = CustomerProfile::query()->excludeBots()->saudi();
 
+        // Dashboard-tab counters deliberately use an unfiltered source. A
+        // paginated response (or the active "cards" filter) must never make
+        // the visitors/cards totals change just because the admin switched
+        // tabs or searched the table.
+        $summaryBase = CustomerProfile::query()->excludeBots()->saudi();
+
         if ($activeOnly === '1') {
             $baseFiltered->where('last_activity_at', '>=', $onlineThreshold);
         }
@@ -173,14 +179,38 @@ class AdminCustomerController extends Controller
             ? "COALESCE(session_id, 'row-' || id)"
             : "IFNULL(session_id, CONCAT('row-', id))";
 
-        $rankedDedupedRows = (clone $baseFiltered)
-            ->select('id')
-            ->selectRaw("ROW_NUMBER() OVER (PARTITION BY {$partitionExpr} ORDER BY COALESCE(last_activity_at, created_at) DESC, id DESC) as rn");
+        $deduplicatedIds = static function ($baseQuery) use ($partitionExpr) {
+            $rankedRows = (clone $baseQuery)
+                ->select('id')
+                ->selectRaw("ROW_NUMBER() OVER (PARTITION BY {$partitionExpr} ORDER BY COALESCE(last_activity_at, created_at) DESC, id DESC) as rn");
 
-        $dedupedIdsQuery = DB::query()
-            ->fromSub($rankedDedupedRows, 'deduped_customers')
-            ->select('id')
-            ->where('rn', 1);
+            return DB::query()
+                ->fromSub($rankedRows, 'deduped_customers')
+                ->select('id')
+                ->where('rn', 1);
+        };
+
+        // `active_count` describes the filtered records, not the de-duplicated
+        // table rows. Keep every matching active profile in this count.
+        $activeCount = (clone $baseFiltered)
+            ->where('last_activity_at', '>=', $onlineThreshold)
+            ->count();
+
+        $dedupedIdsQuery = $deduplicatedIds($baseFiltered);
+        $summaryVisitorIds = $deduplicatedIds($summaryBase);
+        $summaryCardIds = $deduplicatedIds((clone $summaryBase)->whereHas('paymentCards'));
+
+        $summaryCounts = [
+            'visitors' => CustomerProfile::query()->whereIn('id', $summaryVisitorIds)->count(),
+            'cards' => CustomerProfile::query()->whereIn('id', $summaryCardIds)->count(),
+            // Customer profiles do not currently have an archive state. Keep
+            // the contract explicit until an actual archive workflow exists.
+            'archive' => 0,
+            'active' => CustomerProfile::query()
+                ->whereIn('id', $summaryVisitorIds)
+                ->where('last_activity_at', '>=', $onlineThreshold)
+                ->count(),
+        ];
 
         $query = CustomerProfile::query()
             ->whereIn('id', $dedupedIdsQuery)
@@ -245,11 +275,6 @@ class AdminCustomerController extends Controller
             // would demote that customer from the top. The SQL ORDER BY last_activity_at
             // above is the single source of truth for ordering.
 
-        $activeCount = CustomerProfile::query()
-            ->whereIn('id', $dedupedIdsQuery)
-            ->where('last_activity_at', '>=', $onlineThreshold)
-            ->count();
-
         return [
             'success' => true,
             'data' => $customers->values(),
@@ -257,6 +282,9 @@ class AdminCustomerController extends Controller
             'count' => $paginated->total(),
             'total' => $paginated->total(),
             'active_count' => $activeCount,
+            'meta' => [
+                'counts' => $summaryCounts,
+            ],
             'current_page' => $paginated->currentPage(),
             'last_page' => $paginated->lastPage(),
             'per_page' => $paginated->perPage(),

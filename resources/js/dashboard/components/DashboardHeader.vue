@@ -223,6 +223,7 @@ function resetFilters ()
                     id="customer-search"
                     type="text"
                     name="customer-search"
+                    autocomplete="off"
                     dir="rtl"
                     :value="searchQuery"
                     placeholder="بحث IP، اسم، هاتف، هوية..."

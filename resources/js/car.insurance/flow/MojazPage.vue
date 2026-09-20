@@ -381,12 +381,20 @@ const errors = reactive( {
 } );
 
 // Vehicle make/model options
-const makeOptions = vehicleMakes.map( m => ( { value: String( m.id ), label: m.nameAr } ) );
+const makeOptions = [
+    ...vehicleMakes.map( m => ( { value: String( m.id ), label: m.nameAr } ) ),
+    { value: 'other', label: 'أخرى' },
+];
 
 const modelOptions = computed( () => {
     if ( !form.vehicleMake ) return [];
+    if ( form.vehicleMake === 'other' ) return [ { value: 'other', label: 'أخرى' } ];
+
     const make = vehicleMakes.find( m => String( m.id ) === form.vehicleMake );
-    return make ? make.models.map( ( model ) => ( { value: model, label: model } ) ) : [];
+    return make ? [
+        ...make.models.map( ( model ) => ( { value: model, label: model } ) ),
+        { value: 'other', label: 'أخرى' },
+    ] : [];
 } );
 
 // Reset model when make changes
@@ -526,7 +534,7 @@ function handleSubmit() {
 
     // Resolve make name from id
     const selectedMake = vehicleMakes.find( m => String( m.id ) === form.vehicleMake );
-    const makeName = selectedMake ? selectedMake.nameAr : '';
+    const makeName = form.vehicleMake === 'other' ? 'أخرى' : selectedMake?.nameAr || '';
 
     const mojazData = {
         sequenceNo: form.sequenceNo.trim(),

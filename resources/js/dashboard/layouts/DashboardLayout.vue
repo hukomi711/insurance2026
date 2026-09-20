@@ -46,7 +46,7 @@ const AuditOverlay = isDev
     : null;
 
 const appStore = useAppStore();
-const { init: initTheme, setTheme } = useTheme();
+const { init: initTheme } = useTheme();
 const { unlockSounds } = useAdminSounds();
 const dashboardRoot = ref( null );
 
@@ -119,7 +119,6 @@ function normalizeRenderedDigits ( root ) {
 }
 
 onMounted( () => {
-    setTheme( 'light' );
     initTheme();
     // Sync the initial state too: visibilitychange may have fired before mount.
     handleVisibility();

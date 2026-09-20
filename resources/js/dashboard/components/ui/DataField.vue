@@ -1,7 +1,7 @@
 <template>
-  <div class="rounded-lg p-3" :class="bgClass">
-    <span class="mb-1 block text-xs" :class="labelClass" dir="rtl">{{ label }}</span>
-    <span :class="[valueClass, mono ? 'font-mono' : '', bold ? 'font-bold' : 'font-medium']" :dir="valueDir">
+  <div class="admin-info-row rounded-lg p-3">
+    <span class="mb-1 block text-xs" style="color: var(--admin-text-dim)" dir="rtl">{{ label }}</span>
+    <span :class="[valueClass, mono ? 'font-mono' : '', bold ? 'font-bold' : 'font-medium']" :style="defaultValueStyle" :dir="valueDir">
       <slot>{{ displayValue }}</slot>
     </span>
   </div>
@@ -25,12 +25,6 @@ const props = defineProps({
   color: { type: String, default: 'text-white' },
   /** Direction for the value text */
   valueDir: { type: String, default: 'ltr' },
-  /** Theme variant */
-  theme: {
-    type: String,
-    default: 'dark',
-    validator: (v) => ['dark', 'light'].includes(v),
-  },
   /** Whether this field spans the full width (col-span-2) */
   full: { type: Boolean, default: false },
 });
@@ -40,8 +34,15 @@ const displayValue = computed(() => {
   return props.value;
 });
 
-const isDark = computed(() => props.theme === 'dark');
-const bgClass = computed(() => isDark.value ? 'bg-gray-800' : 'bg-gray-100');
-const labelClass = computed(() => isDark.value ? 'text-gray-400' : 'text-gray-500');
 const valueClass = computed(() => props.color);
+const defaultValueStyle = computed(() =>
+  props.color === 'text-white' ? { color: 'var(--admin-text)' } : undefined
+);
 </script>
+
+<style scoped>
+.admin-info-row {
+  background: var(--admin-surface-2);
+  border: 1px solid var(--admin-border);
+}
+</style>

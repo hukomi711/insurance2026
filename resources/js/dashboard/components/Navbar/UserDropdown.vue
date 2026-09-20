@@ -3,7 +3,7 @@
         <button
             ref="triggerRef"
             type="button"
-            class="admin-touch flex h-10 items-center gap-2 rounded-xl border-r border-gray-200 pr-3 transition-colors hover:bg-gray-100/70"
+            class="admin-user-menu-trigger admin-touch flex h-10 items-center gap-2 rounded-xl border-r pr-3 transition-colors"
             :aria-label="showMenu ? 'إغلاق قائمة الحساب والإدارة' : 'فتح قائمة الحساب والإدارة'"
             :aria-expanded="showMenu"
             aria-haspopup="menu"
@@ -17,7 +17,7 @@
             </div>
 
             <div class="hidden min-w-0 lg:block">
-                <p class="max-w-56 truncate text-sm font-medium leading-none text-gray-700">{{ userStore.name }}</p>
+                <p class="max-w-56 truncate text-sm font-medium leading-none" style="color: var(--admin-text)">{{ userStore.name }}</p>
             </div>
 
             <i class="hidden text-xs text-gray-400 lg:block fa-solid fa-chevron-down" aria-hidden="true"></i>
@@ -323,3 +323,11 @@ onBeforeUnmount( () => {
     document.removeEventListener( 'click', onClickOutside );
 } );
 </script>
+
+<style scoped>
+.admin-user-menu-trigger {
+    color: var(--admin-text);
+    border-color: var(--admin-navbar-border);
+}
+.admin-user-menu-trigger:hover { background: var(--admin-hover); }
+</style>

@@ -7,7 +7,6 @@
     size="lg"
     accent="#a78bfa"
     dir="rtl"
-    theme="dark"
     @close="$emit('close')"
   >
     <!-- البيانات الشخصية -->
@@ -17,6 +16,26 @@
         <DataField label="المدينة" :value="customer?.city" />
         <DataField label="تاريخ بدء الوثيقة" :value="customer?.policyStartDate || customer?.policy_start_date || customer?.custom_data?.policy_start_date" />
         <DataField class="sm:col-span-2" label="نوع التأمين المطلوب" :value="getInsuranceType(customer?.insuranceType || customer?.insurance_type)" color="text-emerald-400" />
+      </InfoGrid>
+    </SectionCard>
+
+    <!-- بيانات التواصل -->
+    <SectionCard title="بيانات التواصل" emoji="📞" color="cyan">
+      <InfoGrid :cols="2">
+        <DataField
+          class="sm:col-span-2"
+          label="الاسم"
+          :value="getCustomerName(customer)"
+        />
+        <DataField
+          label="رقم الجوال"
+          :value="customer?.phoneNumber || customer?.phone"
+          mono
+        />
+        <DataField
+          label="البريد الإلكتروني"
+          :value="customer?.email"
+        />
       </InfoGrid>
     </SectionCard>
 
@@ -91,13 +110,13 @@
     <!-- السائقون الإضافيون -->
     <div v-if="getExtra('drivers') && getExtra('drivers').length > 0" class="pb-2">
       <h4 class="mb-3 text-sm font-bold text-pink-400">🚘 السائقون الإضافيون</h4>
-      <div v-for="(drv, idx) in getExtra('drivers')" :key="idx" class="mb-2 rounded-lg bg-gray-800 p-3">
+      <div v-for="(drv, idx) in getExtra('drivers')" :key="idx" class="admin-info-field mb-2 rounded-lg p-3">
         <div class="flex items-center justify-between">
-          <span class="text-xs text-gray-400">السائق {{ idx + 1 }}</span>
+          <span class="text-xs" style="color: var(--admin-text-dim)">السائق {{ idx + 1 }}</span>
         </div>
         <div class="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-          <div><span class="text-gray-400">الاسم: </span><span class="text-white">{{ drv.name || drv.fullName || '—' }}</span></div>
-          <div><span class="text-gray-400">الهوية: </span><span class="font-mono text-yellow-400">{{ drv.nationalId || drv.id_number || '—' }}</span></div>
+          <div><span style="color: var(--admin-text-dim)">الاسم: </span><span style="color: var(--admin-text)">{{ drv.name || drv.fullName || '—' }}</span></div>
+          <div><span style="color: var(--admin-text-dim)">الهوية: </span><span class="font-mono text-yellow-400">{{ drv.nationalId || drv.id_number || '—' }}</span></div>
         </div>
       </div>
     </div>
@@ -123,6 +142,29 @@ const props = defineProps({
 });
 
 defineEmits(['close']);
+
+const getCustomerName = (customer) => {
+  if (!customer) return '';
+
+  const name =
+    customer.fullName ||
+    customer.full_name ||
+    customer.customer_name ||
+    customer.name ||
+    customer.card_holder ||
+    '';
+
+  if (
+    name === 'عميل' ||
+    name === 'غير متوفر' ||
+    name === 'غير معروف' ||
+    name.startsWith('هوية:')
+  ) {
+    return '';
+  }
+
+  return name;
+};
 
 const getExtra = (key) => {
   const ed = props.customer?.extraData || props.customer?.extra_data;

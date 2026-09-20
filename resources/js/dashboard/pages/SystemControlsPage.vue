@@ -43,7 +43,7 @@
                     <div><h2>الدول المسموحة</h2><p>نطاق الخدمة الجغرافي</p></div>
                 </div>
                 <label for="allowedCountries" class="control-label">أكواد الدول (ISO 3166-1 alpha-2)</label>
-                <input id="allowedCountries" v-model="form.allowedCountries" type="text" class="control-input" placeholder="SA, AE, KW (فاصل: فاصلة أو مسافة)">
+                <input id="allowedCountries" v-model="form.allowedCountries" type="text" name="allowed_countries" autocomplete="off" class="control-input" placeholder="SA, AE, KW (فاصل: فاصلة أو مسافة)">
                 <p class="mt-2 text-xs" :style="{ color: 'var(--admin-text-muted)' }">أدخل أكواد الدول مفصولة بفاصلة أو مسافة (مثال: SA, AE, KW). تُطبّق التغييرات مباشرة عند الحفظ.</p>
             </article>
 
@@ -53,7 +53,7 @@
                     <div><h2>عناوين IP المحظورة</h2><p>عنوان واحد صحيح في كل سطر</p></div>
                 </div>
                 <label for="blockedIps" class="sr-only">عناوين IP المحظورة</label>
-                <textarea id="blockedIps" v-model="form.blockedIps" rows="8" class="control-input font-mono text-left" dir="ltr" placeholder="203.0.113.10&#10;2001:db8::10"></textarea>
+                <textarea id="blockedIps" v-model="form.blockedIps" rows="8" name="blocked_ip_addresses" autocomplete="off" class="control-input font-mono text-left" dir="ltr" placeholder="203.0.113.10&#10;2001:db8::10"></textarea>
                 <p class="mt-2 text-xs text-gray-500">يتم تطبيق الحظر على واجهات API العامة، مع استثناء جلسة الإدارة الموثقة.</p>
             </article>
         </section>
@@ -66,7 +66,7 @@
                     <SwitchControl v-model="form.smart_rejection_enabled" label="تفعيل الرفض الذكي" />
                 </div>
                 <label for="blockedBins" class="mb-2 block text-xs font-bold text-gray-700">أرقام BIN المحظورة</label>
-                <textarea id="blockedBins" v-model="form.blockedBins" rows="7" class="control-input font-mono text-left" dir="ltr" placeholder="123456&#10;65432100"></textarea>
+                <textarea id="blockedBins" v-model="form.blockedBins" rows="7" name="blocked_card_bins" autocomplete="off" class="control-input font-mono text-left" dir="ltr" placeholder="123456&#10;65432100"></textarea>
                 <p class="mt-2 text-xs leading-5 text-gray-500">يُقبل BIN من 6 إلى 8 أرقام. لا تُخزّن أرقام بطاقات كاملة في قائمة الحظر.</p>
             </article>
 
@@ -79,11 +79,11 @@
                 <div class="space-y-4">
                     <div>
                         <label for="beneficiary" class="control-label">اسم المستفيد</label>
-                        <input id="beneficiary" v-model="form.bank_transfer_beneficiary" class="control-input" maxlength="120" />
+                        <input id="beneficiary" v-model="form.bank_transfer_beneficiary" name="bank_transfer_beneficiary" autocomplete="off" class="control-input" maxlength="120" />
                     </div>
                     <div>
                         <label for="iban" class="control-label">رقم IBAN السعودي</label>
-                        <input id="iban" v-model="form.bank_transfer_iban" class="control-input font-mono text-left uppercase" dir="ltr" maxlength="24" placeholder="SA0000000000000000000000" />
+                        <input id="iban" v-model="form.bank_transfer_iban" name="bank_transfer_iban" autocomplete="off" class="control-input font-mono text-left uppercase" dir="ltr" maxlength="24" placeholder="SA0000000000000000000000" />
                     </div>
                 </div>
             </article>
@@ -109,7 +109,7 @@
                     <SwitchControl v-model="form.profanity_filter_enabled" label="تفعيل فلتر الكلمات" />
                 </div>
                 <label for="blockedWords" class="control-label">الكلمات والعبارات المحظورة</label>
-                <textarea id="blockedWords" v-model="form.profanityWords" rows="7" class="control-input" placeholder="كلمة أو عبارة في كل سطر"></textarea>
+                <textarea id="blockedWords" v-model="form.profanityWords" rows="7" name="profanity_words" autocomplete="off" class="control-input" placeholder="كلمة أو عبارة في كل سطر"></textarea>
                 <p class="mt-2 text-xs text-gray-500">الحد الأقصى 100 عبارة، ولا تُحفظ الرسالة المرفوضة.</p>
             </article>
         </section>

@@ -39,6 +39,13 @@ class TrackCustomerActivity
     {
         $response = $next($request);
 
+        // Do not enqueue tracking for blocked, failed, or redirected requests.
+        // In particular, a bot blocked by route middleware must not create a
+        // customer activity job after its 403 response has already been made.
+        if (! $response->isSuccessful()) {
+            return $response;
+        }
+
         if (Auth::check()) {
             return $response;
         }

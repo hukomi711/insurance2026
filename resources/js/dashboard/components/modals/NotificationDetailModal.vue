@@ -7,7 +7,6 @@
     :accent="accentColor"
     :icon="modalIcon"
     dir="rtl"
-    theme="dark"
     @close="$emit('close')"
   >
     <!-- Loading -->

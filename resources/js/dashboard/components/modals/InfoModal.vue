@@ -7,7 +7,6 @@
     accent="#3b82f6"
     icon="fa-solid fa-circle-info"
     dir="ltr"
-    theme="dark"
     @close="$emit('close')"
   >
     <template #header-right>
@@ -15,7 +14,6 @@
         v-model="activeTab"
         :tabs="infoTabs"
         dir="ltr"
-        theme="dark"
       />
     </template>
 

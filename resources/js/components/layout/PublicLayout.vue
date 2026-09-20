@@ -1,14 +1,11 @@
 <template>
     <div class="min-h-screen flex flex-col">
-        <AppBanner v-if="!hideLayout" />
         <AppHeader v-if="!hideLayout" />
         <main class="flex-1">
             <router-view v-slot="{ Component, route: childRoute }">
-                <Transition name="fade" mode="out-in">
-                    <div :key="childRoute.path">
-                        <component :is="Component" />
-                    </div>
-                </Transition>
+                <div :key="childRoute.path">
+                    <component :is="Component" />
+                </div>
             </router-view>
 
             <!-- Scoped error display for public content area -->
@@ -28,7 +25,6 @@
 <script setup>
 import { ref, computed, defineAsyncComponent, onErrorCaptured } from 'vue';
 import { useRoute } from 'vue-router';
-import AppBanner from '@/components/layout/AppBanner.vue';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import logger from '@/utils/logger';
 

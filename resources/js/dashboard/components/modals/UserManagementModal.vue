@@ -7,7 +7,6 @@
     accent="#60a5fa"
     icon="fa-solid fa-users-gear"
     dir="rtl"
-    theme="dark"
     @close="handleClose"
   >
     <!-- Loading -->

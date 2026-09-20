@@ -18,10 +18,7 @@
         <div class="absolute bottom-0 left-0 right-0 p-4"
             :style="{ borderTopWidth: '1px', borderColor: 'var(--admin-sidebar-border)' }">
             <router-link to="/"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors"
-                :style="{ color: 'var(--admin-sidebar-text)' }"
-                @mouseenter="$event.target.style.backgroundColor = 'var(--admin-sidebar-hover)'"
-                @mouseleave="$event.target.style.backgroundColor = 'transparent'">
+                class="admin-sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-colors">
                 <IconLogout class="w-5 h-5" />
                 العودة للموقع
             </router-link>
@@ -60,3 +57,14 @@ const menuItems = computed( () => {
 
 // ⚠️ Badge auto-refresh removed — now handled centrally by adminPolling.js
 </script>
+
+<style scoped>
+.admin-sidebar-link {
+    color: var(--admin-sidebar-text);
+}
+
+.admin-sidebar-link:hover {
+    color: var(--admin-sidebar-heading);
+    background: var(--admin-sidebar-hover);
+}
+</style>

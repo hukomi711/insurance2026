@@ -1,8 +1,8 @@
 <template>
   <div class="customer-data-table" dir="rtl">
-    <div class="customer-table-scroll overflow-x-auto overscroll-x-contain rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div class="customer-table-scroll admin-table-surface overflow-x-auto overscroll-x-contain rounded-xl shadow-sm">
       <table class="min-w-280 w-full table-fixed text-sm md:min-w-345 xl:min-w-405">
-        <thead class="border-b border-gray-200 bg-slate-50">
+        <thead class="admin-table-head border-b">
           <tr>
             <th class="w-12.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">حذف</th>
             <th class="w-27.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">المزيد</th>
@@ -34,13 +34,13 @@
             <th class="w-22.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">#</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100 bg-white">
+        <tbody class="admin-table-body divide-y">
           <tr
             v-for="(customer, index) in tableRows"
             :id="`customer-row-${customer.id}`"
             :key="customer.id"
             :class="[
-              'transition-colors hover:bg-blue-50/60',
+              'admin-table-row transition-colors',
               { 'admin-row-focus': focusedCustomerId === customer.id },
               { 'bg-red-50 ring-1 ring-inset ring-red-200': customer.is_blocked },
             ]"
@@ -166,7 +166,7 @@
             <!-- الاسم -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <div class="flex flex-col items-center gap-1">
-                <span class="font-semibold text-gray-800">{{ customer._ui.displayName || '\u2014' }}</span>
+                <span class="font-semibold text-gray-800">{{ getCustomerName(customer) || customer?._ui?.displayName || '\u2014' }}</span>
                 <span
                   v-if="customer.is_blocked"
                   class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700 ring-1 ring-inset ring-red-200"
@@ -750,6 +750,31 @@ onUnmounted(() => {
   scrollbar-gutter: stable;
   background: var(--admin-card-bg, #ffffff);
   border-color: var(--admin-card-border, #e5e7eb);
+}
+
+.admin-table-surface {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-card-border);
+}
+
+.admin-table-head {
+  background: var(--admin-surface-2);
+  border-color: var(--admin-card-border);
+  color: var(--admin-text-muted);
+}
+
+.admin-table-body {
+  background: var(--admin-surface);
+  border-color: var(--admin-card-border);
+  color: var(--admin-text);
+}
+
+.admin-table-row {
+  border-color: var(--admin-card-border);
+}
+
+.admin-table-row:hover {
+  background: var(--admin-hover-accent);
 }
 
 .customer-data-table thead {

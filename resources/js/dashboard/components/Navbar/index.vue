@@ -284,7 +284,7 @@
                             <div class="relative flex-1">
                                 <i class="fa-solid fa-magnifying-glass w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2"
                                     :style="{ color: 'var(--admin-text-dim)' }" aria-hidden="true"></i>
-                                <input ref="mobileSearchInput" v-model="searchQuery" type="text" autocomplete="off"
+                                <input id="dashboard-mobile-search" ref="mobileSearchInput" v-model="searchQuery" type="text" name="dashboard-mobile-search" autocomplete="off"
                                     aria-label="بحث في لوحة التحكم"
                                     placeholder="بحث في الوثائق، العملاء..."
                                     class="w-full pr-10 pl-4 py-3 rounded-xl text-sm outline-none transition-colors"

@@ -1,11 +1,12 @@
 <template>
     <router-link :to="item.path"
-        class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
-        :class="isActive ? 'bg-(--color-primary) text-white' : ''"
-        :style="isActive ? {} : { color: 'var(--admin-sidebar-text)' }"
+        active-class="admin-router-link-disabled"
+        exact-active-class="admin-router-link-disabled"
+        class="admin-sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
+        :class="{ 'admin-sidebar-link--active': isActive }"
+        :aria-current="isActive ? 'page' : undefined"
         @click="onNavigate"
-        @mouseenter="!isActive && ($event.currentTarget.style.backgroundColor = 'var(--admin-sidebar-hover)')"
-        @mouseleave="!isActive && ($event.currentTarget.style.backgroundColor = 'transparent')">
+    >
         <component :is="iconComponent" class="text-xl w-5 text-center" />
         {{ item.meta.title }}
         <span v-if="badgeCount > 0"
@@ -40,8 +41,7 @@ const iconComponent = computed( () => ICON_MAP[ props.item.meta.icon ] || null )
 
 const isActive = computed( () => {
     const target = props.item.meta.activeMenu || props.item.path;
-    if ( target === '/dashboard' ) return route.path === '/dashboard';
-    return route.path.startsWith( target );
+    return route.path === target;
 } );
 
 const badgeCount = computed( () => {
@@ -64,3 +64,21 @@ watch( isActive, ( active ) => {
     }
 } );
 </script>
+
+<style scoped>
+.admin-sidebar-link {
+    color: var(--admin-sidebar-text);
+    background: transparent;
+}
+
+.admin-sidebar-link:hover {
+    background: var(--admin-sidebar-hover);
+    color: var(--admin-sidebar-heading);
+}
+
+.admin-sidebar-link--active,
+.admin-sidebar-link--active:hover {
+    background: var(--admin-sidebar-active-bg);
+    color: var(--admin-sidebar-active-text);
+}
+</style>

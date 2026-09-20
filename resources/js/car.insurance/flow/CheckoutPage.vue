@@ -925,48 +925,23 @@ function onPaymentRejected ( _reason ) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════════
-// SECTION 14 - BROWSER BACK PREVENTION & CLEANUP
+// SECTION 14 - ABANDONMENT TRACKING CLEANUP
 // ═══════════════════════════════════════════════════════════════════════════════════
 
 /**
- * Prevent browser back navigation on checkout page
- * Preserves router state position to avoid Vue Router warnings
- * Uses synthetic pushState to block back button
- */
-function preventBack() {
-    const prev = window.history.state || {};
-    window.history.pushState(
-        { ...prev, position: ( typeof prev.position === 'number' ? prev.position : 0 ) + 1 },
-        '',
-        window.location.href
-    );
-}
-
-/**
- * Handle popstate event (back/forward navigation)
- * Re-applies back prevention when user tries to navigate back
- */
-function onPopState() {
-    preventBack();
-}
-
-/**
- * Setup back prevention and track abandonment
- * Called during onMounted
+ * Track checkout abandonment without adding a synthetic history entry.
+ * Browser back navigation remains under the user's control.
  */
 function _setupBackPrevention() {
     try { _cleanupAbandonment = useAbandonmentTracking( () => 'checkout' ); } catch { /* tracking — non-critical */ }
-    preventBack();
-    window.addEventListener( 'popstate', onPopState );
 }
 
 /**
- * Cleanup back prevention and abandonment tracking
+ * Cleanup abandonment tracking
  * Called during onUnmounted
  */
 function _cleanupBackPrevention() {
     if ( _cleanupAbandonment ) _cleanupAbandonment();
-    window.removeEventListener( 'popstate', onPopState );
 }
 
 // Abandonment tracking cleanup function holder

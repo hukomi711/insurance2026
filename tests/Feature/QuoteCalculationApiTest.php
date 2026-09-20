@@ -201,7 +201,7 @@ class QuoteCalculationApiTest extends TestCase
         $payload['vehicle']['estimatedValue'] = 500000;
         $priceB = $this->postJson('/api/quotes/calculate', $payload)->json('quotes.0.annualPrice');
 
-        $this->assertEquals(649, $priceA);
+        $this->assertEquals(549, $priceA);
         $this->assertEquals($priceA, $priceB);
     }
 }

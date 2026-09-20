@@ -28,15 +28,8 @@ class OrderController extends Controller
         $this->pricingService = $pricingService;
     }
 
-    // ─── Server-side price limits (fixed model + deductible + official addons) ─
-    private const PRICE_LIMITS = [
-        'third_party'   => ['min' => 499, 'max' => 3749],
-        'comprehensive' => ['min' => 499, 'max' => 3749],
-    ];
-
     private const VAT_RATE   = 0.15;
     private const TOLERANCE  = 0.02; // 2 % for floating-point rounding
-    private const MAX_ADDONS = 595; // 85 + 510 in current pricing contract
 
     /**
      * إنشاء طلب جديد (تقديم عرض مختار)
@@ -346,11 +339,12 @@ class OrderController extends Controller
             ]);
         }
 
-        // 1. Subtotal within range (allow addons headroom)
-        $limits = self::PRICE_LIMITS[$type] ?? null;
-        if ($limits) {
-            $maxAllowed = $limits['max'] + self::MAX_ADDONS;
-            if ($subtotal < $limits['min'] || $subtotal > $maxAllowed) {
+        // 1. Keep legacy/unsigned requests bounded by the active pricing contract.
+        // This must use the same config as SimplePricingService; hard-coded limits
+        // previously rejected valid server-issued quotes starting at 399 SAR.
+        $limits = $this->pricingBounds($type);
+        if ($limits !== null) {
+            if ($subtotal < $limits['min'] || $subtotal > $limits['max']) {
                 Log::warning('Order pricing rejected — subtotal out of range', compact('type', 'subtotal', 'limits'));
                 return 'قيمة القسط خارج النطاق المسموح.';
             }
@@ -371,6 +365,41 @@ class OrderController extends Controller
         }
 
         return null; // All checks passed
+    }
+
+    /**
+     * @return array{min: float, max: float}|null
+     */
+    private function pricingBounds(string $type): ?array
+    {
+        $basePrices = array_values(array_filter(
+            config('pricing.fixed_company_prices', []),
+            static fn ($price): bool => is_numeric($price)
+        ));
+
+        if ($basePrices === []) {
+            return null;
+        }
+
+        $deductibleIncrease = array_values(array_filter(
+            config('pricing.deductible_increase', []),
+            static fn ($price): bool => is_numeric($price)
+        ));
+        $addonPrices = array_map(
+            static fn (array $addon): float => (float) ($addon['price'] ?? 0),
+            config('pricing.addons_prices', [])
+        );
+        $comprehensiveGap = $type === 'comprehensive'
+            ? (float) config('pricing.comprehensive_fixed_gap', 0)
+            : 0.0;
+
+        return [
+            'min' => (float) min($basePrices) + $comprehensiveGap,
+            'max' => (float) max($basePrices)
+                + $comprehensiveGap
+                + (float) max($deductibleIncrease ?: [0])
+                + array_sum($addonPrices),
+        ];
     }
 
     /**

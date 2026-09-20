@@ -593,13 +593,14 @@ async function submitForm() {
 
         // Step 2: Save to global insurance store
         const selectedMake = vehicleMakes.find( m => String( m.id ) === form.vehicleMake );
+        const makeName = form.vehicleMake === 'other' ? 'أخرى' : selectedMake?.nameAr || '';
 
         insuranceStore.setVehicleData( {
             purposeOfUse: form.purposeOfUse,
             estimatedValue: form.estimatedValue,
             sequenceNumber: form.sequenceNumber,
             make: form.vehicleMake,
-            makeName: selectedMake?.nameAr || '',
+            makeName,
             modelName: form.vehicleModel || '',
             year: form.vehicleYear,
         } );

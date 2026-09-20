@@ -5,24 +5,18 @@
             <p class="text-sm mt-1" :style="{ color: 'var(--admin-text-muted)' }">إدارة إعدادات النظام والتفضيلات</p>
         </div>
 
-        <div class="mb-6 rounded-xl border p-2" :style="{ backgroundColor: '#0b1220', borderColor: '#1f2937', boxShadow: '0 14px 28px rgba(2, 6, 23, 0.35)' }">
+        <div class="admin-settings-tabs mb-6 rounded-xl border p-2">
             <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
                 <button
                     v-for="tab in tabItems"
                     :key="tab.key"
                     type="button"
-                    class="group flex items-center gap-3 rounded-lg border px-4 py-3 text-right transition-all duration-200"
-                    :class="activeTab === tab.key ? 'shadow-sm' : 'border-transparent'"
-                    :style="activeTab === tab.key
-                        ? { borderColor: '#334155', backgroundColor: '#111827', boxShadow: '0 8px 18px rgba(15, 23, 42, 0.22)', color: '#f8fafc' }
-                        : { backgroundColor: 'rgba(15, 23, 42, 0.22)', color: '#94a3b8', borderColor: 'transparent' }"
+                    class="admin-settings-tab group flex items-center gap-3 rounded-lg border px-4 py-3 text-right transition-all duration-200"
+                    :class="{ 'admin-settings-tab--active': activeTab === tab.key }"
                     @click="activeTab = tab.key"
                 >
                     <span
-                        class="flex h-10 w-10 items-center justify-center rounded-lg text-sm transition-all duration-200"
-                        :style="activeTab === tab.key
-                            ? { backgroundColor: 'rgba(148, 163, 184, 0.16)', color: '#f8fafc' }
-                            : { backgroundColor: 'rgba(148, 163, 184, 0.08)', color: '#cbd5e1' }"
+                        class="admin-settings-tab-icon flex h-10 w-10 items-center justify-center rounded-lg text-sm transition-all duration-200"
                     >
                         <i class="fa-solid" :class="tab.icon" aria-hidden="true"></i>
                     </span>
@@ -36,9 +30,8 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div v-if="activeTab === 'general'" class="lg:col-span-2 space-y-6">
-                <div id="general-settings" class="rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md md:p-5"
-                    :style="{ backgroundColor: '#0f172a', borderWidth: '1px', borderColor: '#1f2937', boxShadow: '0 12px 24px rgba(2, 6, 23, 0.28)' }">
-                    <button type="button" class="mb-5 flex w-full items-center justify-between gap-3 rounded-xl border border-transparent bg-transparent px-1 py-2 text-right transition-colors hover:border-slate-200 hover:bg-slate-50/60" @click="generalPanel.base = !generalPanel.base">
+                <div id="general-settings" class="admin-settings-card rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md md:p-5">
+                    <button type="button" class="admin-settings-section-trigger mb-5 flex w-full items-center justify-between gap-3 rounded-xl border border-transparent px-1 py-2 text-right transition-colors" @click="generalPanel.base = !generalPanel.base">
                         <div class="flex items-center gap-3">
                             <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                                 <i class="fa-solid fa-sliders-h" aria-hidden="true"></i>
@@ -58,7 +51,7 @@
                         </div>
                         <div>
                             <label for="siteDescription" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">وصف المنصة</label>
-                            <textarea id="siteDescription" v-model="settings.siteDescription" rows="3" name="siteDescription" class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none" :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }"></textarea>
+                            <textarea id="siteDescription" v-model="settings.siteDescription" rows="3" name="siteDescription" autocomplete="off" class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none" :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }"></textarea>
                         </div>
                         <div>
                             <label for="contactEmail" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">البريد الإلكتروني للتواصل</label>
@@ -71,8 +64,8 @@
                     </div>
                 </div>
 
-                <div class="rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md md:p-5" :style="{ backgroundColor: '#0f172a', borderWidth: '1px', borderColor: '#1f2937', boxShadow: '0 12px 24px rgba(2, 6, 23, 0.28)' }">
-                    <button type="button" class="mb-5 flex w-full items-center justify-between gap-3 rounded-xl border border-transparent bg-transparent px-1 py-2 text-right transition-colors hover:border-slate-700 hover:bg-slate-800/60" @click="generalPanel.contact = !generalPanel.contact">
+                <div class="admin-settings-card rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md md:p-5">
+                    <button type="button" class="admin-settings-section-trigger mb-5 flex w-full items-center justify-between gap-3 rounded-xl border border-transparent px-1 py-2 text-right transition-colors" @click="generalPanel.contact = !generalPanel.contact">
                         <div class="flex items-center gap-3">
                             <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
                                 <i class="fa-solid fa-message" aria-hidden="true"></i>
@@ -100,23 +93,23 @@
 
                         <div>
                             <label for="whatsappNumber" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">رقم واتساب</label>
-                            <input id="whatsappNumber" v-model="siteSettings.whatsapp_number" type="tel" dir="ltr" placeholder="0597777777 أو 966597777777" class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#25D366] focus:border-transparent outline-none text-left" :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
+                            <input id="whatsappNumber" v-model="siteSettings.whatsapp_number" type="tel" name="whatsapp_number" autocomplete="tel" dir="ltr" placeholder="0597777777 أو 966597777777" class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#25D366] focus:border-transparent outline-none text-left" :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
                             <p class="text-xs mt-1" :style="{ color: 'var(--admin-text-muted)' }">يتم تحويل الرقم المحلي (يبدأ بـ 0) تلقائياً إلى الصيغة الدولية (966).</p>
                         </div>
 
                         <div>
                             <label for="whatsappMessage" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">الرسالة الافتراضية</label>
-                            <textarea id="whatsappMessage" v-model="siteSettings.whatsapp_message" rows="2" placeholder="مرحباً، أرغب في الاستفسار..." class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#25D366] focus:border-transparent outline-none resize-none" :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }"></textarea>
+                            <textarea id="whatsappMessage" v-model="siteSettings.whatsapp_message" rows="2" name="whatsapp_message" autocomplete="off" placeholder="مرحباً، أرغب في الاستفسار..." class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#25D366] focus:border-transparent outline-none resize-none" :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }"></textarea>
                         </div>
 
                         <div>
                             <label for="supportPhone" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">هاتف الدعم (اختياري)</label>
-                            <input id="supportPhone" v-model="siteSettings.support_phone" type="tel" dir="ltr" class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-left" :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
+                            <input id="supportPhone" v-model="siteSettings.support_phone" type="tel" name="support_phone" autocomplete="tel" dir="ltr" class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-left" :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
                         </div>
 
                         <div>
                             <label for="contactEmailPublic" class="block text-sm font-medium mb-1" :style="{ color: 'var(--admin-text-secondary)' }">البريد الإلكتروني للتواصل العام (اختياري)</label>
-                            <input id="contactEmailPublic" v-model="siteSettings.contact_email" type="email" dir="ltr" class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-left" :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
+                            <input id="contactEmailPublic" v-model="siteSettings.contact_email" type="email" name="contact_email" autocomplete="email" dir="ltr" class="w-full rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-left" :style="{ backgroundColor: 'var(--admin-input-bg)', borderWidth: '1px', borderColor: 'var(--admin-input-border)', color: 'var(--admin-input-text)' }" />
                         </div>
 
                         <div class="flex items-center justify-between pt-2">
@@ -129,8 +122,8 @@
                     </div>
                 </div>
 
-                <div class="rounded-2xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg md:p-5" :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
-                    <button type="button" class="mb-5 flex w-full items-center justify-between gap-3 rounded-xl border border-transparent bg-transparent px-1 py-2 text-right transition-colors hover:border-slate-200 hover:bg-slate-50/60" @click="generalPanel.notifications = !generalPanel.notifications">
+                <div class="admin-settings-card rounded-2xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg md:p-5">
+                    <button type="button" class="admin-settings-section-trigger mb-5 flex w-full items-center justify-between gap-3 rounded-xl border border-transparent px-1 py-2 text-right transition-colors" @click="generalPanel.notifications = !generalPanel.notifications">
                         <div class="flex items-center gap-3">
                             <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
                                 <i class="fa-solid fa-bell" aria-hidden="true"></i>
@@ -156,7 +149,7 @@
             </div>
 
             <div v-else-if="activeTab === 'account'" class="lg:col-span-2 space-y-6">
-                <div id="account-settings" class="rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md md:p-5" :style="{ backgroundColor: '#0f172a', borderWidth: '1px', borderColor: '#1f2937', boxShadow: '0 12px 24px rgba(2, 6, 23, 0.28)' }">
+                <div id="account-settings" class="admin-settings-card rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md md:p-5">
                     <div class="mb-5 flex items-center gap-3">
                         <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
                             <i class="fa-solid fa-user" aria-hidden="true"></i>
@@ -167,7 +160,7 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3 mb-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4">
+                    <div class="admin-settings-muted-panel flex items-center gap-3 mb-4 rounded-xl border border-dashed p-4">
                         <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg" :style="{ backgroundColor: 'var(--admin-status-info-bg)', color: 'var(--admin-accent-blue)' }">
                             {{ userInfo.name?.charAt(0) || 'م' }}
                         </div>
@@ -177,14 +170,14 @@
                         </div>
                     </div>
 
-                    <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    <div class="admin-settings-muted-panel rounded-xl border border-dashed p-4 text-sm">
                         إدارة بيانات حسابك الحالية من خلال قسم الأمان أو الإعدادات العامة.
                     </div>
                 </div>
             </div>
 
             <div v-else class="lg:col-span-2 space-y-6">
-                <div id="password-settings" class="rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md md:p-5" :style="{ backgroundColor: '#0f172a', borderWidth: '1px', borderColor: '#1f2937', boxShadow: '0 12px 24px rgba(2, 6, 23, 0.28)' }">
+                <div id="password-settings" class="admin-settings-card rounded-xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md md:p-5">
                     <div class="mb-5 flex items-center gap-3">
                         <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
                             <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
@@ -210,13 +203,13 @@
                         </div>
                         <p v-if="passwordError" class="text-red-500 text-sm">{{ passwordError }}</p>
                         <p v-if="passwordSuccess" class="text-green-600 text-sm">{{ passwordSuccess }}</p>
-                        <button type="submit" class="text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors" :style="{ backgroundColor: 'var(--admin-text)', color: 'var(--admin-card-bg)' }">تغيير كلمة المرور</button>
+                        <button type="submit" class="admin-primary-button text-sm font-medium px-5 py-2.5 rounded-xl transition-colors">تغيير كلمة المرور</button>
                     </form>
                 </div>
             </div>
 
             <div class="space-y-6">
-                <div class="rounded-xl p-5 transition-colors duration-200" :style="{ backgroundColor: '#0f172a', borderWidth: '1px', borderColor: '#1f2937', boxShadow: '0 12px 24px rgba(2, 6, 23, 0.28)' }">
+                <div class="admin-settings-card rounded-xl p-5 transition-colors duration-200">
                     <h3 class="text-sm font-bold font-heading mb-4" :style="{ color: 'var(--admin-text)' }">معلومات النظام</h3>
                     <div class="space-y-3 text-sm">
                         <div class="flex justify-between"><span :style="{ color: 'var(--admin-text-muted)' }">إصدار النظام</span><span class="font-medium ltr-nums" :style="{ color: 'var(--admin-text)' }">2.1.0</span></div>
@@ -226,7 +219,7 @@
                     </div>
                 </div>
 
-                <div id="account-settings-sidebar" class="rounded-xl p-5 transition-colors duration-200" :style="{ backgroundColor: '#0f172a', borderWidth: '1px', borderColor: '#1f2937', boxShadow: '0 12px 24px rgba(2, 6, 23, 0.28)' }">
+                <div id="account-settings-sidebar" class="admin-settings-card rounded-xl p-5 transition-colors duration-200">
                     <h3 class="text-sm font-bold font-heading mb-4" :style="{ color: 'var(--admin-text)' }">الحساب</h3>
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg" :style="{ backgroundColor: 'var(--admin-status-info-bg)', color: 'var(--admin-accent-blue)' }">
@@ -240,7 +233,7 @@
                     <button class="w-full text-center text-sm py-2 rounded-xl transition-colors cursor-pointer" :style="{ backgroundColor: 'var(--admin-status-error-bg)', color: 'var(--admin-accent-red)' }" @click="handleLogout">تسجيل الخروج</button>
                 </div>
 
-                <button class="w-full text-white font-medium py-3 rounded-xl transition-colors" :style="{ backgroundColor: '#0f172a', color: '#fff', boxShadow: '0 10px 20px rgba(15, 23, 42, 0.16)' }" @click="saveSettings">
+                <button class="admin-primary-button w-full font-medium py-3 rounded-xl transition-colors" @click="saveSettings">
                     {{ saving ? 'جاري الحفظ...' : 'حفظ الإعدادات' }}
                 </button>
                 <p v-if="saveMessage" class="text-center text-sm mt-2" :class="saveMessage.includes('فشل') ? 'text-red-500' : 'text-green-600'">{{ saveMessage }}</p>
@@ -494,3 +487,65 @@ onUnmounted( () => {
   clearTimeout( siteSaveTimer );
 } );
 </script>
+
+<style scoped>
+.admin-settings-tabs {
+    background: var(--admin-surface);
+    border-color: var(--admin-card-border);
+    box-shadow: var(--admin-card-shadow);
+}
+
+.admin-settings-tab {
+    color: var(--admin-text-muted);
+    background: transparent;
+    border-color: transparent;
+}
+
+.admin-settings-tab:hover {
+    background: var(--admin-hover);
+    color: var(--admin-text);
+}
+
+.admin-settings-tab--active {
+    background: var(--admin-surface-2);
+    color: var(--admin-text);
+    border-color: var(--admin-card-border);
+    box-shadow: var(--admin-card-shadow-soft);
+}
+
+.admin-settings-tab-icon {
+    background: var(--admin-surface-3);
+    color: currentColor;
+}
+
+.admin-settings-card {
+    background: var(--admin-card-bg);
+    border: 1px solid var(--admin-card-border);
+    box-shadow: var(--admin-card-shadow);
+    color: var(--admin-text);
+}
+
+.admin-settings-section-trigger {
+    color: var(--admin-text);
+    background: transparent;
+}
+
+.admin-settings-section-trigger:hover {
+    background: var(--admin-hover);
+    border-color: var(--admin-card-border);
+}
+
+.admin-settings-muted-panel {
+    background: var(--admin-surface-2);
+    border-color: var(--admin-card-border);
+    color: var(--admin-text-secondary);
+}
+
+.admin-primary-button {
+    background: var(--color-primary);
+    color: #fff;
+    box-shadow: var(--admin-card-shadow-soft);
+}
+
+.admin-primary-button:hover { filter: brightness(0.94); }
+</style>

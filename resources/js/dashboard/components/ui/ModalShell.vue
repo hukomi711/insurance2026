@@ -5,7 +5,6 @@
         v-if="open"
         class="fixed inset-0 z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-4"
         :dir="dir"
-        :data-admin-theme="liveTheme"
         @click.self="$emit('close')"
       >
         <!-- Backdrop -->
@@ -33,10 +32,10 @@
                 <i :class="icon" class="h-5 w-5" :style="{ color: accentColor }" />
               </div>
               <div class="min-w-0">
-                <h3 class="truncate text-lg font-semibold tracking-tight sm:text-xl" style="color: var(--admin-text, #fff)">
+                <h3 class="truncate text-lg font-semibold tracking-tight sm:text-xl" style="color: var(--admin-text)">
                   <span v-if="emoji" class="me-1">{{ emoji }}</span>{{ title }}
                 </h3>
-                <p v-if="subtitle" class="truncate text-xs sm:text-sm" style="color: var(--admin-text-dim, #8b95a5)">{{ subtitle }}</p>
+                <p v-if="subtitle" class="truncate text-xs sm:text-sm" style="color: var(--admin-text-dim)">{{ subtitle }}</p>
               </div>
             </div>
             <div class="admin-modal-header-actions shrink-0">
@@ -81,12 +80,6 @@
 
 <script setup>
 import { computed, onBeforeUnmount, watch } from 'vue';
-import { useTheme } from '../../composables/useTheme';
-
-// Modals are teleported to <body>, escaping this component's own theme
-// prop scope — follow the dashboard-wide toggle instead of a fixed value
-// so a modal never looks dark while the rest of the UI is in light mode.
-const { theme: liveTheme } = useTheme();
 
 const props = defineProps({
   /** Controls visibility */
@@ -109,12 +102,6 @@ const props = defineProps({
   emoji: { type: String, default: '' },
   /** Text direction */
   dir: { type: String, default: 'rtl' },
-  /** Theme variant */
-  theme: {
-    type: String,
-    default: 'dark',
-    validator: (v) => ['dark', 'light'].includes(v),
-  },
   /** Whether backdrop is heavy (dark + blur) or standard */
   heavyBackdrop: { type: Boolean, default: false },
 });
@@ -189,7 +176,7 @@ onBeforeUnmount(unlockBodyScroll);
   min-width: 0;
   flex-shrink: 0;
   overflow: hidden;
-  background: var(--admin-surface, #1a1f2e);
+  background: var(--admin-surface);
 }
 
 @media (max-width: 640px) {
