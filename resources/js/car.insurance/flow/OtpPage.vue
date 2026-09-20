@@ -122,7 +122,7 @@
 // SECTION 1 - IMPORTS & DEPENDENCIES
 // ═══════════════════════════════════════════════════════════════════════════════════
 
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import i18n from '@/i18n';
@@ -191,14 +191,11 @@ const _merchantName = computed( () => orderData?.plan?.companyName || 'تأمي�
 const sessionId = computed( () => context.sessionId || '' );
 
 /**
- * Get customer IP address (populated during onMounted)
+ * Cached customer IP used by payment tracking and OTP lifecycle requests
  * @type {import('vue').Ref<string>}
  */
 const customerIpRef = ref( context.customerIp || '' );
 
-// ═══════════════════════════════════════════════════════════════════════════════════
-// SECTION 5 - STATE: CARD & PAYMENT DETAILS
-// ═══════════════════════════════════════════════════════════════════════════════════
 
 /**
  * Get card BIN for branding (network and bank logo detection)
@@ -241,13 +238,11 @@ const formattedAmount = computed( () =>
  * @type {import('vue').Ref<string>}
  */
 const otpCode = ref( '' );
-
 /**
- * Reference to OTP input element for focus/clear operations
- * @type {import('vue').Ref<HTMLElement|null>}
+ * Reference to the native OTP input element
+ * @type {import('vue').Ref<HTMLInputElement|null>}
  */
 const otpInputRef = ref( null );
-
 /**
  * Check if OTP code is valid format (4 or 6 digits)
  * @type {import('vue').ComputedRef<boolean>}
@@ -549,13 +544,14 @@ async function resendOtp() {
 
     if ( success ) {
         otpCode.value = '';
-        otpInputRef.value?.clear();
         isVerifying.value = false;     // unlock input after fresh code is issued
         error.value = '';              // clear any stale error
         codeExpiry.value = CODE_EXPIRY; // immediately reset — don't wait for startExpiryTimer
         startResendTimer();
         startExpiryTimer();
         trackOtpResent();
+        await nextTick();
+        otpInputRef.value?.focus();
         logger.debug( '[OTP] Resend success — codeExpiry reset to', CODE_EXPIRY );
     } else {
         error.value = t( 'verification.otp.resendError' );
@@ -621,7 +617,9 @@ const { setup: setupWs } = usePaymentWebSocket( {
 
         error.value = getReasonLabel( event.reason, t ) || t( 'verification.otp.codeRejected' );
         otpCode.value = '';
-        otpInputRef.value?.clear();
+        nextTick( () => {
+            otpInputRef.value?.focus();
+        } );
     },
 
     /**
@@ -714,7 +712,7 @@ onMounted( async () => {
     customerIpRef.value = ip;
 
     // Focus OTP input and start timers
-    otpInputRef.value?.focusFirstEmpty();
+    otpInputRef.value?.focus();
     startResendTimer();
     startExpiryTimer();
 

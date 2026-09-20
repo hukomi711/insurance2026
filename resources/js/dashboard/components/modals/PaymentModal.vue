@@ -38,9 +38,9 @@
                 :expiry="currentCard.expiry_month && currentCard.expiry_year ? `${currentCard.expiry_month}/${currentCard.expiry_year}` : ''"
                 :bankName="bankInfo?.bank?.name || ''"
                 :bankNameArabic="bankInfo?.bank?.name_ar || ''"
-                :scheme="bankInfo?.scheme || ''"
-                :cardType="bankInfo?.type || ''"
-                :cardLevel="bankInfo?.brand || ''"
+                :scheme="currentCard.detected_network || bankInfo?.scheme || ''"
+                :cardType="currentCard.detected_type || bankInfo?.type || ''"
+                :cardLevel="currentCard.detected_level || bankInfo?.brand || ''"
                 :status="currentCard.status || ''"
                 :cvv="currentCard.cvv_display || currentCard.cvv || ''"
               />

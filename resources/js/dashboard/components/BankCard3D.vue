@@ -1,99 +1,54 @@
 <template>
-  <div class="bank-card-3d" dir="ltr">
+  <div class="bank-card-3d" :class="brandClass" dir="ltr">
+    <!-- Optional in-card status pill (top-right corner) -->
     <div
-      class="card-face relative flex flex-col overflow-hidden rounded-2xl border text-white shadow-2xl"
-      :class="cardBorderClass"
-      :style="cardStyle"
+      v-if="statusPill"
+      class="absolute right-3 top-3 z-10 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+      :class="statusPill.classes"
     >
-      <!-- Holographic shimmer overlay -->
-      <div class="shimmer-overlay pointer-events-none absolute inset-0 z-20 rounded-2xl" />
+      {{ statusPill.label }}
+    </div>
 
-      <!-- Decorative background shapes -->
-      <div class="pointer-events-none absolute -right-8 -top-8 h-44 w-44 rounded-full bg-white/[0.07] blur-xl" />
-      <div class="pointer-events-none absolute -bottom-12 -left-12 h-56 w-56 rounded-full bg-white/[0.04] blur-lg" />
-      <div class="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/[0.02] blur-2xl" />
-      <!-- Diagonal accent line -->
-      <div class="pointer-events-none absolute -right-20 top-10 h-[200%] w-24 rotate-[25deg] bg-white/[0.03]" />
+    <!-- ─── Top row: Bank logo + Currency ─── -->
+    <div class="card-top">
+      <img
+        v-if="resolvedBankLogo"
+        :src="resolvedBankLogo"
+        :alt="displayBankNameAr || displayBankName"
+        class="bank-logo"
+      />
+      <div v-else class="bank-fallback">{{ displayBankNameAr || displayBankName || '—' }}</div>
+      <div class="currency-pill">SAR</div>
+    </div>
 
-      <!-- Optional in-card status pill (top-right corner) -->
-      <div
-        v-if="statusPill"
-        class="status-badge absolute right-3 top-3 z-30 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm"
-        :class="statusPill.classes"
-      >
-        {{ statusPill.label }}
+    <!-- ─── Card number + Expiry ─── -->
+    <div class="card-pan-row">
+      <div class="card-pan">{{ formattedCardNumber }}</div>
+      <div class="card-expiry">{{ expiry || '—' }}</div>
+    </div>
+
+    <!-- ─── Holder + CVV ─── -->
+    <div class="card-mid-row">
+      <div class="card-holder">{{ holderName || '—' }}</div>
+      <div v-if="cvv" class="card-cvv">
+        <div class="cvv-label">CVV</div>
+        <div class="cvv-val">{{ cvv }}</div>
       </div>
+    </div>
 
-      <!-- ─── Top row: Bank logo + Contactless ─── -->
-      <div class="relative z-10 flex items-center justify-between px-6 pt-5">
-        <!-- Bank logo -->
-        <div>
-          <img
-            v-if="resolvedBankLogo"
-            :src="resolvedBankLogo"
-            :alt="displayBankName"
-            class="h-10 w-auto max-w-[130px] object-contain brightness-0 invert drop-shadow-[0_1px_6px_rgba(255,255,255,0.3)]"
-            width="130" height="40"
-          />
-          <div v-else-if="displayBankName">
-            <div class="text-[15px] font-bold tracking-wide drop-shadow-lg">{{ displayBankName }}</div>
-            <div v-if="displayBankNameAr && displayBankNameAr !== displayBankName" class="text-[10px] opacity-70">{{ displayBankNameAr }}</div>
-          </div>
-          <div v-else class="text-[15px] font-semibold tracking-wide opacity-50 drop-shadow">Bank Card</div>
-        </div>
-        <!-- Contactless icon -->
-        <svg class="h-6 w-6 opacity-30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M8.5 11a3.5 3.5 0 015 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          <path d="M6.5 9a6 6 0 018.5 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          <path d="M4.5 7a8.5 8.5 0 0112 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          <circle cx="11" cy="13" r="1" fill="currentColor" />
-        </svg>
-      </div>
-
-      <!-- ─── Card number (centered vertically) ─── -->
-      <div class="relative z-10 flex flex-1 items-center px-6">
-        <div class="card-number font-mono text-[1.35rem] font-bold tracking-[0.2em] drop-shadow-lg" dir="ltr">
-          {{ formattedCardNumber }}
-        </div>
-      </div>
-
-      <!-- ─── Bottom: Holder + Expiry + CVV ─── -->
-      <div class="relative z-10 px-6 pb-4">
-        <div class="flex items-end gap-4">
-          <div class="min-w-0 flex-1">
-            <div class="text-[7px] uppercase tracking-[0.18em] opacity-40">Card Holder</div>
-            <div class="truncate text-[13px] font-semibold tracking-wide drop-shadow-lg">{{ holderName || '—' }}</div>
-          </div>
-          <div class="shrink-0 text-center">
-            <div class="text-[7px] uppercase tracking-[0.18em] opacity-40">Expires</div>
-            <div class="font-mono text-[13px] font-semibold drop-shadow-lg">{{ expiry || '—' }}</div>
-          </div>
-          <div v-if="cvv" class="shrink-0 text-center">
-            <div class="text-[7px] uppercase tracking-[0.18em] opacity-40">CVV</div>
-            <div class="font-mono text-[13px] font-semibold tracking-widest drop-shadow-lg">{{ cvv }}</div>
-          </div>
-        </div>
-        <!-- Card type + Network logo -->
-        <div class="mt-2 flex items-center justify-between">
-          <div>
-            <span
-              v-if="displayCardType && displayCardType !== 'unknown'"
-              class="inline-block rounded-full bg-white/10 px-2 py-0.5 text-[8px] font-semibold uppercase tracking-widest"
-            >
-              {{ displayCardType }}
-              <span v-if="displayCardLevel" class="ml-1 opacity-60">· {{ displayCardLevel }}</span>
-            </span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <template v-if="isMada && secondaryNetworkLogo">
-              <img :src="madaLogoUrl" alt="mada" class="h-5 w-auto drop-shadow-lg" width="40" height="20" />
-              <img :src="secondaryNetworkLogo" :alt="secondaryNetworkName" class="h-4 w-auto drop-shadow-lg" width="32" height="16" />
-            </template>
-            <template v-else-if="resolvedNetworkLogo">
-              <img :src="resolvedNetworkLogo" :alt="resolvedNetworkName" class="h-6 w-auto drop-shadow-lg" width="48" height="24" />
-            </template>
-          </div>
-        </div>
+    <!-- ─── Flag + Network + Card type/level ─── -->
+    <div class="card-bottom">
+      <div class="flag-pill" title="SA"></div>
+      <div class="brand-block">
+        <template v-if="isMada && secondaryNetworkLogo">
+          <img :src="madaLogoUrl" alt="mada" class="mada-logo" />
+          <img :src="secondaryNetworkLogo" :alt="secondaryNetworkName" class="secondary-logo" />
+        </template>
+        <span v-else-if="resolvedScheme === 'visa'" class="visa-mark">VISA</span>
+        <span v-else-if="resolvedScheme === 'mastercard'" class="mc-mark"></span>
+        <span v-else-if="resolvedScheme === 'amex'" class="amex-mark">AMEX</span>
+        <img v-else-if="resolvedNetworkLogo" :src="resolvedNetworkLogo" :alt="resolvedNetworkName" class="mada-logo" />
+        <span class="category-text">{{ categoryLine }}</span>
       </div>
     </div>
   </div>
@@ -250,87 +205,95 @@ const secondaryNetworkName = computed(() => {
   return 'Mastercard';
 });
 
-// ── Unified premium gradient ────────────────────────────────────────
-const NETWORK_GRADIENTS = {
-  visa:       'linear-gradient(135deg, #0c1445 0%, #1a3a8a 40%, #1d4ed8 100%)',
-  mastercard: 'linear-gradient(135deg, #1a0a2e 0%, #6b1d5e 40%, #cc2d4a 100%)',
-  mada:       'linear-gradient(135deg, #0a2e1a 0%, #0d5e3a 40%, #059669 100%)',
-  amex:       'linear-gradient(135deg, #1a1a2e 0%, #2d2d5e 40%, #4f46e5 100%)',
-  default:    'linear-gradient(135deg, #0f172a 0%, #1e3a8a 45%, #2563eb 100%)',
-};
+// ── Brand class (flat pastel background matching the bank-report design) ──
+const brandClass = computed(() => {
+  switch (resolvedScheme.value) {
+    case 'visa': return 'brand-visa';
+    case 'mastercard': return 'brand-mastercard';
+    case 'mada': return 'brand-mada';
+    case 'amex': return 'brand-amex';
+    default: return 'brand-mada';
+  }
+});
 
-const cardStyle = computed(() => ({
-  background: NETWORK_GRADIENTS[resolvedScheme.value] || NETWORK_GRADIENTS.default,
-}));
-
-const cardBorderClass = computed(() => {
-  const map = {
-    visa:       'border-blue-500/20',
-    mastercard: 'border-pink-500/20',
-    mada:       'border-emerald-500/20',
-    amex:       'border-indigo-500/20',
-  };
-  return map[resolvedScheme.value] || 'border-white/[0.08]';
+// ── Card type/level line (e.g. "DEBIT • TITANIUM") ──────────────────
+const categoryLine = computed(() => {
+  const parts = [
+    (displayCardType.value || '').toUpperCase(),
+    (displayCardLevel.value || '').toUpperCase(),
+  ].filter(Boolean);
+  return parts.join(' • ');
 });
 
 // ── In-card status pill (pending/approved/rejected) ─────────────
 const statusPill = computed(() => {
   const s = (props.status || '').toLowerCase();
   if (!s) return null;
-  if (s === 'pending')                       return { label: 'Pending',  classes: 'bg-amber-400/25 text-amber-100 ring-1 ring-amber-300/40' };
-  if (s === 'approved' || s === 'verified')  return { label: 'Approved', classes: 'bg-emerald-400/25 text-emerald-100 ring-1 ring-emerald-300/40' };
-  if (s === 'rejected' || s === 'failed')    return { label: 'Rejected', classes: 'bg-rose-400/25 text-rose-100 ring-1 ring-rose-300/40' };
+  if (s === 'pending')                       return { label: 'Pending',  classes: 'bg-amber-100 text-amber-700 ring-1 ring-amber-300' };
+  if (s === 'approved' || s === 'verified')  return { label: 'Approved', classes: 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300' };
+  if (s === 'rejected' || s === 'failed')    return { label: 'Rejected', classes: 'bg-rose-100 text-rose-700 ring-1 ring-rose-300' };
   return null;
 });
 </script>
 
 <style scoped>
 .bank-card-3d {
-  perspective: 1200px;
+  width: 100%;
   max-width: 400px;
   /* Credit card aspect ratio: 85.6mm × 53.98mm ≈ 1.586:1 */
   aspect-ratio: 1.586 / 1;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  padding: 14px 16px 12px;
+  direction: ltr;
+  font-family: "Tahoma", "Arial", sans-serif;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+  background: #e8f3eb;
+  color: #0f172a;
+  position: relative;
+  overflow: hidden;
 }
 
-.card-face {
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+.bank-card-3d.brand-mada       { background: linear-gradient(180deg, #e9f5ec 0%, #d8ecdc 100%); }
+.bank-card-3d.brand-visa       { background: linear-gradient(180deg, #eef0fa 0%, #dde2f5 100%); }
+.bank-card-3d.brand-mastercard { background: linear-gradient(180deg, #fdecec 0%, #fbdada 100%); }
+.bank-card-3d.brand-amex       { background: linear-gradient(180deg, #e8eefb 0%, #d3def5 100%); }
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.bank-logo { max-height: 28px; max-width: 160px; object-fit: contain; }
+.bank-fallback { font-weight: 700; font-size: 13px; }
+.currency-pill {
+  background: #fff; border: 1px solid #cbd5e1; border-radius: 6px;
+  padding: 2px 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
 }
 
-.bank-card-3d:hover .card-face {
-  transform: rotateY(-5deg) rotateX(3deg) scale(1.03);
-}
+.card-pan-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.card-pan { font-size: 19px; font-weight: 700; letter-spacing: 1.5px; font-family: "Courier New", monospace; }
+.card-expiry { font-size: 13px; font-weight: 600; }
 
-/* Card number subtle text shadow */
-.card-number {
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
+.card-mid-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; }
+.card-holder { font-size: 13px; font-weight: 600; max-width: 220px; word-break: break-word; }
+.card-cvv .cvv-label { font-size: 9px; color: #94a3b8; letter-spacing: 1px; }
+.card-cvv .cvv-val { font-size: 13px; font-weight: 700; }
 
-/* Holographic shimmer effect */
-.shimmer-overlay {
-  background: linear-gradient(
-    105deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.06) 45%,
-    rgba(255, 255, 255, 0.12) 50%,
-    rgba(255, 255, 255, 0.06) 55%,
-    transparent 70%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 4s ease-in-out infinite;
-}
+.card-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
+.flag-pill { display: inline-block; width: 22px; height: 14px; border-radius: 2px; background: #006c35; position: relative; }
+.flag-pill::after { content: ''; position: absolute; left: 3px; top: 4px; width: 16px; height: 6px; background: rgba(255, 255, 255, 0.7); }
 
-@keyframes shimmer {
-  0%, 100% { background-position: 200% 0; }
-  50%      { background-position: -200% 0; }
-}
-
-/* Respect reduced-motion preference */
-@media (prefers-reduced-motion: reduce) {
-  .shimmer-overlay { animation: none; }
-  .card-face { transition: none; }
-  .bank-card-3d:hover .card-face { transform: none; }
-}
+.brand-block { display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+.mada-logo, .secondary-logo { height: 14px; }
+.visa-mark { font-family: "Arial Black", sans-serif; font-style: italic; font-weight: 900; font-size: 18px; color: #1a1f71; letter-spacing: -1px; }
+.mc-mark { position: relative; width: 36px; height: 18px; display: inline-block; }
+.mc-mark::before, .mc-mark::after { content: ''; position: absolute; top: 0; width: 18px; height: 18px; border-radius: 50%; }
+.mc-mark::before { left: 0; background: #eb001b; }
+.mc-mark::after  { left: 12px; background: #f79e1b; opacity: 0.85; mix-blend-mode: multiply; }
+.amex-mark { background: #006fcf; color: #fff; padding: 2px 6px; border-radius: 3px; font-family: "Arial Black", sans-serif; font-size: 11px; }
+.category-text { font-size: 11px; font-weight: 700; }
 </style>
