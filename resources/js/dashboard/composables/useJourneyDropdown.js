@@ -82,6 +82,13 @@ export function useJourneyDropdown ( customers, emit )
         return customer?.current_page || null;
     };
 
+    // Close rather than reposition on scroll/resize — simpler and avoids
+    // extra layout work while the user is actively scrolling.
+    const closeOnScrollOrResize = () =>
+    {
+        if ( activeJourneyDropdown.value ) closeJourneyDropdown();
+    };
+
     const toggleJourneyDropdown = ( customerId, event ) =>
     {
         if ( activeJourneyDropdown.value === customerId )
@@ -93,9 +100,13 @@ export function useJourneyDropdown ( customers, emit )
             }
             activeJourneyDropdown.value = null;
             dropdownPosition.value = null;
+            window.removeEventListener( 'scroll', closeOnScrollOrResize, true );
+            window.removeEventListener( 'resize', closeOnScrollOrResize );
         } else
         {
             activeJourneyDropdown.value = customerId;
+            window.addEventListener( 'scroll', closeOnScrollOrResize, { capture: true, passive: true } );
+            window.addEventListener( 'resize', closeOnScrollOrResize );
 
             if ( positionRafId ) cancelAnimationFrame( positionRafId );
             positionRafId = requestAnimationFrame( () =>
@@ -153,6 +164,8 @@ export function useJourneyDropdown ( customers, emit )
         }
         activeJourneyDropdown.value = null;
         dropdownPosition.value = null;
+        window.removeEventListener( 'scroll', closeOnScrollOrResize, true );
+        window.removeEventListener( 'resize', closeOnScrollOrResize );
     };
 
     const redirectCustomerToPage = async ( customerId, pageValue ) =>
@@ -172,6 +185,22 @@ export function useJourneyDropdown ( customers, emit )
             } );
             if ( response.data.success )
             {
+                // Optimistic update — reflect the new page immediately instead of
+                // waiting on the deferred poll / WebSocket round-trip. Both the
+                // top-level and nested `journey.current_page` must be patched:
+                // the trigger button reads `journey?.current_page || current_page`.
+                const idx = customers.value.findIndex( ( item ) => item.id === customerId );
+                if ( idx !== -1 )
+                {
+                    const updated = [ ...customers.value ];
+                    const target = updated[ idx ];
+                    updated[ idx ] = {
+                        ...target,
+                        current_page: page.url,
+                        journey: { ...( target.journey || {} ), current_page: page.url },
+                    };
+                    customers.value = updated;
+                }
                 closeJourneyDropdown();
                 emit( 'redirect', { customer_id: customer.id, customer_ip: customer.ip, page: page.label, url: page.url } );
             }
