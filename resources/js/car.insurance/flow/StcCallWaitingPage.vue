@@ -173,6 +173,17 @@ function handleRejected ( event )
     rejectReason.value = getReasonLabel( event.reason || 'stc_call_other', t ) || 'تم رفض المكالمة';
     clearInterval( pollTimer );
     clearInterval( countdownInterval );
+
+    setTimeout( () =>
+    {
+        if ( event?.redirect_to )
+        {
+            safeRedirect( event.redirect_to, 'stcOtp', router );
+            return;
+        }
+
+        router.replace( { name: 'stcOtp' } );
+    }, 1500 );
 }
 
 // ─── Polling Fallback ───────────────────────────────────────────────

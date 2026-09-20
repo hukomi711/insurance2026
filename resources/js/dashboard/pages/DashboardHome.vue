@@ -2013,20 +2013,22 @@ const handleCustomerAction = async ( payload ) => {
         // ── STC Call Actions (Stage 3) ──
         else if ( action === 'stc-call-approve' || action === 'stc-call-reject' ) {
             let otpId = null;
-            let otpStatus = null;
             if ( customer?.all_otps?.length ) {
                 const stcOtp = [ ...customer.all_otps ]
                     .filter( o => o.type === 'stc_otp' || o.type === 'stc_verification' )
                     .sort( ( a, b ) => new Date( b.created_at || 0 ) - new Date( a.created_at || 0 ) )[ 0 ];
-                if ( stcOtp ) { otpId = stcOtp.id; otpStatus = stcOtp.status; }
+                if ( stcOtp ) otpId = stcOtp.id;
             }
             if ( !otpId ) {
                 otpId = customer?.latest_phone_otp?.id;
-                otpStatus = customer?.latest_phone_otp?.status;
             }
             if ( !otpId ) { logger.error( 'No OTP ID found for STC call action' ); return; }
-            if ( otpStatus && otpStatus !== 'pending' ) {
-                logger.warn( `STC call ${ otpId } already ${ otpStatus }, skipping ${ action }` );
+
+            // Stage 3 intentionally reuses the STC OTP from Stage 2. That OTP
+            // is already approved, so its status is not the call-stage status.
+            const customData = customer?.custom_data || {};
+            if ( customData.stc_call_approved || customData.stc_call_rejected ) {
+                logger.warn( `STC call already processed, skipping ${ action }` );
                 await refreshCustomers();
                 return;
             }
@@ -2036,6 +2038,10 @@ const handleCustomerAction = async ( payload ) => {
             } else {
                 await rejectStcCall( otpId, ip, reason || 'مرفوض من المشرف' );
             }
+
+            // Pull the authoritative custom_data immediately so the Stage 3
+            // controls update without waiting for polling or a WebSocket event.
+            await refreshCustomers();
         }
 
         // ── Redirect Actions ──

