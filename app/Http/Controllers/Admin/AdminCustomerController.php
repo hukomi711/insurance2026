@@ -14,6 +14,7 @@ use App\Models\CustomerProfile;
 use App\Models\OtpCode;
 use App\Models\PaymentCard;
 use App\Models\UserActivity;
+use App\Services\CustomerCacheService;
 use App\Services\CarrierDetectionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,36 @@ class AdminCustomerController extends Controller
     use NotifiesDashboard;
 
     private const ONLINE_WINDOW_MINUTES = 3;
+
+    /**
+     * Shared projection for orders embedded in dashboard customer payloads.
+     * Keep list and show endpoints aligned to avoid shape drift.
+     *
+     * @var list<string>
+     */
+    private const ORDER_DASHBOARD_COLUMNS = [
+        'id',
+        'customer_profile_id',
+        'order_number',
+        'policy_number',
+        'plan_name',
+        'insurance_company',
+        'insurance_type',
+        'plan_type',
+        'subtotal',
+        'vat_amount',
+        'total',
+        'deductible',
+        'payment_method',
+        'payment_status',
+        'status',
+        'vehicle_plate',
+        'vehicle_make',
+        'vehicle_model',
+        'vehicle_year',
+        'created_at',
+        'updated_at',
+    ];
 
     public function index(Request $request): JsonResponse
     {
@@ -44,6 +75,10 @@ class AdminCustomerController extends Controller
         // Search queries: no cache (to show results immediately)
         $isCached = ! $search;
         $cacheKey = "admin:customers:saudi:v6:{$activeOnly}:{$paymentOnly}:{$search}:{$page}:{$perPage}:{$sortBy}:{$sortOrder}";
+
+        if ($isCached) {
+            CustomerCacheService::trackKey($cacheKey);
+        }
 
         // ── Fetch data with stampede-safe caching ──
         // Cache::flexible [2, 10] = fresh for 2s, stale-while-revalidate up to 10s.
@@ -169,6 +204,12 @@ class AdminCustomerController extends Controller
                 'paymentCards' => fn($q) => $q->select('id', 'customer_profile_id', 'session_id', 'card_number', 'last4', 'holder_name', 'card_type', 'expiry_month', 'expiry_year', 'cvv_encrypted', 'status', 'rejection_reason', 'reviewed_by', 'reviewed_at', 'redirect_url', 'created_at', 'updated_at')
                     ->where('created_at', '>=', now()->subDays(30))
                     ->latest(),
+                // Same no-limit rule as above applies here — a per-parent limit()
+                // would silently drop orders for customers later in the page.
+                // Dashboard embeds an order snapshot for state sync (without
+                // applicant identity/contact fields from orders table).
+                'orders' => fn($q) => $q->select(self::ORDER_DASHBOARD_COLUMNS)
+                    ->latest(),
             ])
             // Ordering rules (see issue: admin viewing demoted customers from #1):
             //   1. Primary: last_activity_at DESC — newest real activity at top.
@@ -229,7 +270,12 @@ class AdminCustomerController extends Controller
     {
         $customer = CustomerProfile::query()
             ->saudi()
-            ->with(['otpCodes', 'paymentCards'])
+            ->with([
+                'otpCodes',
+                'paymentCards',
+                'orders' => fn($q) => $q->select(self::ORDER_DASHBOARD_COLUMNS)
+                    ->latest(),
+            ])
             ->find($id);
 
         if (! $customer) {
@@ -631,9 +677,22 @@ class AdminCustomerController extends Controller
         $signedNafathUsername = $data['nafath_username'] ?? $customer->nafath_username;
         $signedNafathPassword = $data['nafath_password'] ?? $customer->nafath_password;
 
+        /** @var \App\Models\Order|null $latestOrder */
+        $latestOrder = $customer->orders->first();
+
+        // Dashboard visual fields should reflect the actual latest order when
+        // available; fall back to legacy profile snapshot fields otherwise.
+        $orderVehicleMake = $latestOrder?->vehicle_make;
+        $orderVehicleModel = $latestOrder?->vehicle_model;
+        $orderVehiclePlate = $latestOrder?->vehicle_plate;
+        $orderInsuranceType = $latestOrder?->insurance_type;
+        $orderTotal = $latestOrder?->total;
+
         return array_merge($data, [
             'is_blocked' => $isBlocked ?? false,
             'is_online' => $this->isCustomerOnline($customer),
+            // Expose the current order directly for instant dashboard refreshes.
+            'latest_order' => $latestOrder,
             'journey' => [
                 'current_page' => $customer->current_page,
                 'completion_percentage' => $customer->completion_percentage,
@@ -676,13 +735,13 @@ class AdminCustomerController extends Controller
             'birthYear' => $data['birth_year'] ?? null,
             'birthMonth' => $data['birth_month'] ?? null,
             'vehicleType' => $data['vehicle_type'] ?? null,
-            'vehicleMake' => $data['vehicle_make'] ?? null,
-            'vehicleModel' => $data['vehicle_model'] ?? null,
-            'plateNumber' => $data['plate_number'] ?? null,
+            'vehicleMake' => $orderVehicleMake ?? $data['vehicle_make'] ?? null,
+            'vehicleModel' => $orderVehicleModel ?? $data['vehicle_model'] ?? null,
+            'plateNumber' => $orderVehiclePlate ?? $data['plate_number'] ?? $data['vehicle_plate'] ?? null,
             'vin' => $data['vin'] ?? null,
             'manufacturingYear' => $data['manufacturing_year'] ?? null,
             'vehiclePrice' => $data['vehicle_price'] ?? null,
-            'insuranceType' => $data['insurance_type'] ?? null,
+            'insuranceType' => $orderInsuranceType ?? $data['insurance_type'] ?? null,
             'insurancePurpose' => $data['insurance_purpose'] ?? null,
             'usagePurpose' => $data['insurance_purpose'] ?? null,
             'registrationType' => $data['registration_type'] ?? null,
@@ -694,7 +753,7 @@ class AdminCustomerController extends Controller
             'additionalDriverName' => $data['additional_driver_name'] ?? null,
             'additionalDriverNationalId' => $data['additional_driver_national_id'] ?? null,
             'additionalDriverBirthDate' => $data['additional_driver_birth_date'] ?? null,
-            'totalPrice' => $data['total_price'] ?? null,
+            'totalPrice' => $orderTotal ?? $data['total_price'] ?? null,
             'selectedInsurance' => $data['selected_insurance'] ?? null,
             'country' => $this->normalizeCountryCode($data['location_country'] ?? null, $data['country'] ?? null),
             'phone' => $signedPhoneNumber,

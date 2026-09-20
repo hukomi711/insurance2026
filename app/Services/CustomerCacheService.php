@@ -9,6 +9,35 @@ use Illuminate\Support\Facades\Redis;
 
 class CustomerCacheService
 {
+    private const REGISTRY_KEY = 'admin:customers:key_registry';
+
+    /**
+     * Keep track of dynamically generated dashboard list cache keys so they can
+     * be invalidated reliably on stores that do not support prefix scans.
+     */
+    public static function trackKey(string $key): void
+    {
+        try {
+            $keys = Cache::get(self::REGISTRY_KEY, []);
+            if (! is_array($keys)) {
+                $keys = [];
+            }
+
+            if (! in_array($key, $keys, true)) {
+                $keys[] = $key;
+            }
+
+            // Bound growth; newest keys are most relevant.
+            if (count($keys) > 500) {
+                $keys = array_slice($keys, -500);
+            }
+
+            Cache::forever(self::REGISTRY_KEY, $keys);
+        } catch (\Throwable $e) {
+            Log::debug('Customer cache key tracking skipped.', ['message' => $e->getMessage()]);
+        }
+    }
+
     /**
      * Flush all admin customer list caches so the next API call returns fresh data.
      *
@@ -21,6 +50,7 @@ class CustomerCacheService
 
         if ($driver === 'redis') {
             self::flushRedis();
+            self::forgetTrackedKeys();
             self::forgetAdminNotificationKeys();
 
             return;
@@ -28,13 +58,37 @@ class CustomerCacheService
 
         if ($driver === 'database') {
             self::flushDatabase();
+            self::forgetTrackedKeys();
             self::forgetAdminNotificationKeys();
 
             return;
         }
 
+        self::forgetTrackedKeys();
         self::forgetCommonKeys();
         self::forgetAdminNotificationKeys();
+    }
+
+    /**
+     * Forget all cache keys discovered via trackKey().
+     */
+    private static function forgetTrackedKeys(): void
+    {
+        try {
+            $keys = Cache::get(self::REGISTRY_KEY, []);
+
+            if (is_array($keys)) {
+                foreach ($keys as $key) {
+                    if (is_string($key) && $key !== '') {
+                        Cache::forget($key);
+                    }
+                }
+            }
+
+            Cache::forget(self::REGISTRY_KEY);
+        } catch (\Throwable $e) {
+            Log::debug('Tracked customer cache flush skipped.', ['message' => $e->getMessage()]);
+        }
     }
 
     private static function flushRedis(): void
@@ -130,15 +184,15 @@ class CustomerCacheService
     /**
      * Last-resort fallback when SCAN/DB flush is unavailable.
      *
-     * Note: this only covers a small subset of (active × country × perPage)
-     * combinations on page 1 with no search term. It will leave stale entries
-     * for paginated/searched variants — the SCAN path is preferred.
+     * Note: this is a compatibility fallback for legacy key shapes and common
+     * page-1 combinations. Dynamic keys are handled by trackKey()/forgetTrackedKeys().
      */
     private static function forgetCommonKeys(): void
     {
         $countries = ['', 'SA', 'other', 'OTHER'];
-        $perPages = [25, 50, 100];
+        $perPages = [25, 50, 80, 100, 150];
 
+        // Legacy key shape (pre-v6)
         foreach (['0', '1'] as $active) {
             foreach ($countries as $country) {
                 foreach ($perPages as $perPage) {
@@ -146,6 +200,21 @@ class CustomerCacheService
                 }
             }
         }
+
+        // Current key shape: admin:customers:saudi:v6:{active}:{payment}:{search}:{page}:{perPage}:{sortBy}:{sortOrder}
+        foreach (['0', '1'] as $active) {
+            foreach (['0', '1'] as $paymentOnly) {
+                foreach ($perPages as $perPage) {
+                    foreach (['last_activity_at', 'created_at'] as $sortBy) {
+                        foreach (['asc', 'desc'] as $sortOrder) {
+                            Cache::forget("admin:customers:saudi:v6:{$active}:{$paymentOnly}::1:{$perPage}:{$sortBy}:{$sortOrder}");
+                        }
+                    }
+                }
+            }
+        }
+
+        Cache::forget(self::REGISTRY_KEY);
     }
 
     /**

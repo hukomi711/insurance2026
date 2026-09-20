@@ -171,6 +171,7 @@ Route::get('/site-config', [SiteConfigController::class, 'index'])->middleware('
 Route::prefix('orders')->middleware(['throttle:30,1', 'geo.api'])->group(function () {
     Route::post('/', [OrderController::class, 'store']);
     Route::get('/{orderNumber}', [OrderController::class, 'show']);
+    Route::patch('/{orderNumber}', [OrderController::class, 'update']);
 });
 
 // ─── Newsletter (public — called from blog) ────────────────────────
