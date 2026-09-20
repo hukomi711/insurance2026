@@ -27,12 +27,14 @@ function delay ( ms )
 }
 
 /**
- * @typedef {'admin'|'editor'|'viewer'} UserRole
- * @typedef {{ name: string, email: string, role: UserRole, avatar: string }} UserInfo
+ * @typedef {'admin'|'super_admin'|'viewer'} UserRole
+ * @typedef {{ id: number|null, name: string, email: string, role: UserRole, avatar: string }} UserInfo
  */
 
 export const useUserStore = defineStore( 'user', {
     state: () => ( {
+        /** @type {number|null} */
+        id: null,
         /** @type {string} */
         name: '',
         /** @type {string} */
@@ -57,11 +59,16 @@ export const useUserStore = defineStore( 'user', {
         },
         /** @returns {UserInfo} */
         userInfo: ( state ) => ( {
+            id: state.id,
             name: state.name,
             email: state.email,
             role: state.role,
             avatar: state.avatar,
         } ),
+        /** كل الأدمن (admin و super_admin) يملكون كامل صلاحيات الكتابة ما عدا إنشاء/حذف المستخدمين */
+        canManageDashboard: ( state ) => state.role === 'admin' || state.role === 'super_admin',
+        /** صلاحية حصرية: إنشاء وحذف مستخدمي لوحة التحكم */
+        isSuperAdmin: ( state ) => state.role === 'super_admin',
     },
 
     actions: {
@@ -87,6 +94,7 @@ export const useUserStore = defineStore( 'user', {
             }
 
             this.token = data.token;
+            this.id = data.user.id;
             this.name = data.user.name;
             this.email = data.user.email;
             this.role = data.user.role || 'admin';
@@ -106,6 +114,7 @@ export const useUserStore = defineStore( 'user', {
                 code,
             }, { silent: true } );
             this.token = data.token;
+            this.id = data.user.id;
             this.name = data.user.name;
             this.email = data.user.email;
             this.role = data.user.role || 'admin';
@@ -212,6 +221,7 @@ export const useUserStore = defineStore( 'user', {
                 }
 
                 const { data } = response;
+                this.id = data.user.id;
                 this.name = data.user.name;
                 this.email = data.user.email;
                 this.role = data.user.role || 'admin';

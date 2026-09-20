@@ -22,7 +22,7 @@
         </div>
 
         <!-- ═══ Main Content (always visible — clickable to expand) ═══ -->
-        <div class="px-3 sm:px-4 py-3 sm:py-4 cursor-pointer" role="button" tabindex="0"
+        <div class="px-3 sm:px-4 py-3 sm:py-4 cursor-pointer hover:bg-slate-50 transition-colors" role="button" tabindex="0"
             :aria-expanded="expanded"
             @click="emit( 'toggle-expand' )"
             @keydown.enter.prevent="emit( 'toggle-expand' )"
@@ -118,15 +118,18 @@
                         </p>
                     </div>
                     <!-- CTA Buttons -->
-                    <div class="flex items-center gap-2" @click.stop>
-                        <button class="flex-1 sm:flex-none h-10 sm:h-11 px-4 sm:px-6 text-xs sm:text-sm font-bold rounded-xl bg-primary text-white hover:bg-primary-dark transition-colors inline-flex items-center justify-center cursor-pointer gap-1.5 shadow-sm"
+                    <div class="flex items-center gap-2 sm:gap-3" @click.stop>
+                        <button class="flex-1 sm:flex-none h-11 sm:h-10 px-4 sm:px-6 text-xs sm:text-sm font-bold rounded-xl bg-primary text-white hover:bg-primary-dark active:bg-primary-darker transition-colors inline-flex items-center justify-center cursor-pointer gap-1.5 shadow-sm"
+                            :aria-label="`اشترِ الآن - ${plan.company?.nameAr} بسعر ${formatNumber( plan.annualPrice )} ريال`"
                             @click="emit( 'quick-select' )">
                             <svg class="size-4 hidden sm:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
                             اشترِ الآن ⚡
                         </button>
-                        <button class="h-10 sm:h-11 w-10 sm:w-11 rounded-xl border border-slate-200 text-slate-400 inline-flex items-center justify-center shrink-0 cursor-pointer hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                        <button class="h-11 sm:h-10 w-11 sm:w-10 rounded-xl border border-slate-200 text-slate-400 inline-flex items-center justify-center shrink-0 cursor-pointer hover:bg-slate-100 hover:text-slate-600 active:bg-slate-200 active:text-slate-700 transition-colors"
+                            :aria-label="expanded ? 'إخفاء التفاصيل' : 'عرض التفاصيل'"
+                            :aria-expanded="expanded"
                             @click="emit( 'toggle-expand' )">
                             <svg class="size-5 transition-transform duration-200"
                                 :class="{ 'rotate-180': expanded }" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -144,14 +147,14 @@
         <div v-if="expanded && !compactView" class="border-t border-slate-100">
 
             <!-- Compare Checkbox (inside expanded only) -->
-            <div class="px-3 sm:px-4 pt-3 pb-1">
-                <label class="inline-flex items-center gap-2 cursor-pointer text-xs text-slate-500" @click.stop>
+            <div class="px-3 sm:px-4 pt-3 pb-2">
+                <label class="inline-flex items-center gap-3 cursor-pointer text-xs text-slate-600 hover:text-slate-900 transition-colors" @click.stop>
                     <input :id="`compare-${plan.id}`" type="checkbox"
                         :checked="compareSelected"
                         :name="`compare-${plan.id}`" :disabled="!canToggleCompare && !compareSelected"
-                        class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary"
+                        class="w-5 h-5 text-primary rounded border-slate-300 focus:ring-primary focus:ring-2 cursor-pointer"
                         @change="emit( 'update:compareSelected', $event.target.checked )" />
-                    أضف للمقارنة
+                    <span class="font-medium">أضف للمقارنة</span>
                 </label>
             </div>
 
@@ -220,7 +223,8 @@
                     <p class="text-xs font-bold text-slate-500 mb-2">المزايا والتغطيات</p>
                     <!-- Hero included -->
                     <div v-if="plan.heroIncluded"
-                        class="flex items-start gap-2 p-2.5 mb-2 rounded-lg bg-primary/5 border border-primary/10 cursor-pointer"
+                        class="flex items-start gap-2 p-2.5 mb-2 rounded-lg bg-primary/5 border border-primary/10 cursor-pointer hover:bg-primary/10 hover:border-primary/20 transition-colors"
+                        role="button"
                         @click.stop="emit( 'show-hero' )">
                         <div>
                             <p class="text-xs font-bold text-primary">تأمينكم هيرو مشمول</p>

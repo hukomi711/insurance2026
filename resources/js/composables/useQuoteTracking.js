@@ -59,6 +59,46 @@ export function useQuoteTracking ()
 {
     const route = useRoute();
 
+    /**
+     * Validate if a persisted session UUID is still active on the server.
+     * If validation fails (404, 403, customer blocked), clear it.
+     * @param uuid - The UUID to validate
+     * @returns {Promise<"valid"|"invalid"|"unknown">} "unknown" for network/5xx errors where the session should be preserved
+     */
+    async function validateStoredSession ( uuid )
+    {
+        if ( !uuid )
+            return "invalid";
+
+        try
+        {
+            await request.get( `/quote/${ uuid }`, { silent: true } );
+            return "valid";
+        } catch ( err )
+        {
+            if ( isCustomerBlockedError( err ) )
+            {
+                clearSession();
+                return "invalid";
+            }
+
+            // 404 = session doesn't exist, 403 = forbidden (expired/owned by different browser)
+            if ( err?.response?.status === 404 || err?.response?.status === 403 )
+            {
+                if ( QUOTE_DIAGNOSTICS_ENABLED )
+                {
+                    const reason = err?.response?.status === 404 ? 'not found' : 'forbidden';
+                    console.info( `[QuoteTracking] Clearing stale session (${ reason }). uuid=${ uuid.slice( 0, 8 ) }...` );
+                }
+                clearSession();
+                return "invalid";
+            }
+
+            // Network error or 5xx: preserve the existing session and let the caller retry later.
+            return "unknown";
+        }
+    }
+
     // ─── Start a new session ────────────────────────────────
     async function startSession ( insuranceType = null )
     {
@@ -70,31 +110,16 @@ export function useQuoteTracking ()
 
         try
         {
-            // A persisted UUID can belong to an expired/abandoned session or
-            // predate browser-token ownership. Validate it synchronously here
-            // so a fast click cannot race the app-level boot validation.
+            // Check if a persisted UUID is still valid before using it.
+            // This prevents sending heartbeats to expired/invalid sessions.
             if ( sessionUUID.value )
             {
-                try
+                const validation = await validateStoredSession( sessionUUID.value );
+                if ( validation === "valid" || validation === "unknown" )
                 {
-                    await request.get( `/quote/${ sessionUUID.value }`, { silent: true } );
                     return sessionUUID.value;
-                } catch ( err )
-                {
-                    if ( isCustomerBlockedError( err ) )
-                    {
-                        clearSession();
-                        return null;
-                    }
-
-                    if ( err?.response?.status === 404 || err?.response?.status === 403 )
-                    {
-                        clearSession();
-                    } else
-                    {
-                        return sessionUUID.value;
-                    }
                 }
+                // If invalid, validateStoredSession already cleared sessionUUID.value
             }
 
             const res = await request.post( "/quote/start", {
@@ -184,6 +209,7 @@ export function useQuoteTracking ()
             {
                 // Session may be stale/inaccessible (not found or forbidden)
                 // -> stop noisy retries and clear local session state.
+                // Silently clear on 404/403 to avoid console noise during normal session lifecycle.
                 if ( isCustomerBlockedError( err ) )
                 {
                     stopHeartbeat();
@@ -193,13 +219,17 @@ export function useQuoteTracking ()
 
                 if ( err.response?.status === 404 || err.response?.status === 403 )
                 {
-                    if ( err.response?.status === 403 ) {
+                    if ( QUOTE_DIAGNOSTICS_ENABLED && err.response?.status === 403 ) {
                         logClearOnForbiddenOnce( sessionUUID.value, "heartbeat" );
                     }
 
                     stopHeartbeat();
                     clearSession();
+                    return;
                 }
+
+                // Network/5xx errors: silently skip this heartbeat, will retry next interval
+                // Avoid logging noisy transient errors to console
             }
         }, HEARTBEAT_INTERVAL );
     }

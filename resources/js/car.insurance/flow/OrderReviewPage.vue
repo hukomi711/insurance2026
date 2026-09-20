@@ -18,28 +18,36 @@
         </div>
 
         <!-- Main Content -->
-        <div class="box py-6 sm:py-8">
-            <div class="max-w-2xl mx-auto space-y-5">
+        <div class="box py-4 sm:py-6 md:py-8">
+            <div class="max-w-2xl mx-auto space-y-4 sm:space-y-5 md:space-y-6">
 
-                <!-- Signature Status -->
-                <div v-if="signatureStatus"
-                    class="rounded-xl border px-4 py-3 text-sm"
-                    :class="signatureStatus.valid ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'">
-                    <div class="flex items-center gap-2 font-semibold">
-                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <!-- Signature Status - Interactive Button -->
+                <button v-if="signatureStatus"
+                    :disabled="!canProceedToPayment"
+                    :aria-label="signatureStatus.valid ? 'تم التحقق من السعر - انقر للمتابعة للدفع' : 'تعذّر التحقق من السعر'"
+                    @click="proceedToPayment"
+                    class="w-full rounded-xl border px-4 py-4 sm:py-5 text-sm sm:text-base transition-all hover:shadow-lg active:scale-98"
+                    :class="signatureStatus.valid
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 active:bg-emerald-150 cursor-pointer'
+                        : 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100 hover:border-red-300 opacity-50 cursor-not-allowed'">
+                    <div class="flex items-center gap-2.5 font-bold">
+                        <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        {{ signatureStatusTitle }}
+                        <span>{{ signatureStatusTitle }}</span>
+                        <svg v-if="canProceedToPayment" class="size-5 shrink-0 ms-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
                     </div>
-                    <p class="mt-1">{{ signatureStatusMessage }}</p>
-                </div>
+                    <p class="mt-2 text-xs sm:text-sm opacity-90">{{ signatureStatusMessage }}</p>
+                </button>
 
                 <!-- ═══ Policy Data Card ═══ -->
-                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                    <div class="bg-primary/5 px-4 sm:px-5 py-3 border-b border-primary/10">
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-primary/5 px-4 sm:px-5 py-3 sm:py-4 border-b border-primary/10">
                         <h2 class="text-sm sm:text-base font-bold text-primary flex items-center gap-2">
-                            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
@@ -47,7 +55,7 @@
                             بيانات وثيقة التأمين
                         </h2>
                     </div>
-                    <div class="p-4 sm:p-5 space-y-3">
+                    <div class="p-4 sm:p-5 space-y-3 sm:space-y-4">
                         <!-- Company + Plan -->
                         <div class="flex items-center gap-3 pb-3 border-b border-slate-100">
                             <div v-if="companyLogo"
@@ -77,10 +85,10 @@
                 </div>
 
                 <!-- ═══ Vehicle Info Card ═══ -->
-                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                    <div class="bg-slate-50 px-4 sm:px-5 py-3 border-b border-slate-100">
+                <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-slate-50 px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100">
                         <h2 class="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
-                            <svg class="size-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            <svg class="size-5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                 aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                     d="M8 17h.01M16 17h.01M3 11l1.5-5A2 2 0 016.4 4h11.2a2 2 0 011.9 1.4L21 11M3 11v6a1 1 0 001 1h1a2 2 0 004 0h6a2 2 0 004 0h1a1 1 0 001-1v-6M3 11h18" />
@@ -88,7 +96,7 @@
                             بيانات المركبة
                         </h2>
                     </div>
-                    <div v-if="vehicleRows.length" class="p-4 sm:p-5 space-y-2.5">
+                    <div v-if="vehicleRows.length" class="p-4 sm:p-5 space-y-3 sm:space-y-4">
                         <div v-for="item in vehicleRows" :key="item.label"
                             class="flex items-center justify-between text-sm">
                             <span class="text-slate-500">{{ item.label }}</span>
@@ -101,10 +109,10 @@
                 </div>
 
                 <!-- ═══ Price Summary Card ═══ -->
-                <div class="bg-white rounded-2xl border-2 border-primary overflow-hidden">
-                    <div class="bg-primary/5 px-4 sm:px-5 py-3 border-b border-primary/10">
+                <div class="bg-white rounded-2xl border-2 border-primary overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                    <div class="bg-primary/5 px-4 sm:px-5 py-3 sm:py-4 border-b border-primary/10">
                         <h2 class="text-sm sm:text-base font-bold text-primary flex items-center gap-2">
-                            <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            <svg class="size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
@@ -112,7 +120,7 @@
                             ملخص عرض السعر
                         </h2>
                     </div>
-                    <div class="p-4 sm:p-5 space-y-3">
+                    <div class="p-4 sm:p-5 space-y-3 sm:space-y-4">
                         <!-- Original Price (before 20% discount) -->
                         <div v-if="hasDiscount" class="flex items-center justify-between text-sm">
                             <span class="text-slate-500">سعر الوثيقة الأساسي</span>
@@ -216,21 +224,25 @@
 
                 <!-- ═══ Pay Button ═══ -->
                 <button
-                    :disabled="!canProceedToPayment"
-                    class="w-full h-14 rounded-2xl bg-primary text-white font-bold text-base transition-colors inline-flex items-center justify-center gap-2.5 shadow-lg shadow-primary/20"
-                    :class="canProceedToPayment ? 'hover:bg-primary-dark active:bg-primary-darker cursor-pointer' : 'opacity-50 cursor-not-allowed'"
+                    :disabled="!canProceedToPayment || isProcessingPayment"
+                    :aria-label="`الانتقال للدفع - ${formatDecimal(totalPrice)} ريال سعودي`"
+                    :aria-busy="isProcessingPayment"
+                    class="w-full h-14 sm:h-16 rounded-2xl bg-primary text-white font-bold text-base sm:text-lg transition-all inline-flex items-center justify-center gap-2.5 shadow-lg shadow-primary/20 active:scale-98"
+                    :class="(canProceedToPayment && !isProcessingPayment) ? 'hover:bg-primary-dark active:bg-primary-darker cursor-pointer' : 'opacity-50 cursor-not-allowed'"
                     @click="proceedToPayment">
-                    <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    <svg v-if="!isProcessingPayment" class="size-5 sm:size-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round"
                             d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
                     </svg>
-                    الانتقال للدفع — {{ formatDecimal( totalPrice ) }} ر.س
+                    <svg v-else class="size-5 sm:size-6 shrink-0 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none" />
+                        <path stroke="currentColor" stroke-width="2" d="M12 2a10 10 0 0 1 10 10" stroke-dasharray="15.7" stroke-dashoffset="15.7" />
+                    </svg>
+                    <span class="flex-1 text-center">{{ isProcessingPayment ? 'جاري معالجة الطلب...' : 'الانتقال للدفع' }}</span>
+                    <span v-if="!isProcessingPayment" class="font-extrabold ltr-nums inline-flex items-center gap-1 whitespace-nowrap">{{ formatDecimal( totalPrice ) }} <SarIcon className="size-4" /></span>
                 </button>
-
-                <p v-if="!canProceedToPayment" class="text-center text-xs text-red-600">
-                    لا يمكن المتابعة للدفع حالياً — يرجى تحديث العروض واختيار عرض جديد.
-                </p>
 
                 <!-- Security note -->
                 <p class="text-center text-xs text-muted flex items-center justify-center gap-1.5">
@@ -278,6 +290,12 @@ const { getQuote, verify: verifySignaturePacket, getSignaturePacket } = usePrici
  * @type {import('vue').Ref<{ valid: boolean; remainingSeconds: number } | null>}
  */
 const signatureStatus = ref( null );
+
+/**
+ * Payment processing state (prevents double-clicks)
+ * @type {import('vue').Ref<boolean>}
+ */
+const isProcessingPayment = ref( false );
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 // SECTION 4 - COMPUTED: PLAN SELECTION
@@ -558,44 +576,59 @@ function formatDecimal( num ) {
  * Verifies signature validity and handles payment data persistence
  * On invalid signature: redirects to compare page
  * On valid signature: enriches plan with pricing data and navigates to checkout
+ * Prevents double-clicks with isProcessingPayment flag
  *
  * @async
  * @returns {void}
  */
-function proceedToPayment() {
-    // Verify pricing signature (checks expiry and tampering)
-    signatureStatus.value = verifySignaturePacket();
+async function proceedToPayment() {
+    // Prevent double-clicks/rapid submissions
+    if ( isProcessingPayment.value ) return;
 
-    // Redirect if signature invalid or expired
-    if ( !signatureStatus.value?.valid ) {
-        router.replace( { name: 'compare' } );
-        return;
+    // Set loading state
+    isProcessingPayment.value = true;
+
+    try {
+        // Verify pricing signature (checks expiry and tampering)
+        signatureStatus.value = verifySignaturePacket();
+
+        // Redirect if signature invalid or expired
+        if ( !signatureStatus.value?.valid ) {
+            router.replace( { name: 'compare' } );
+            return;
+        }
+
+        // Get signed pricing packet from composable memory
+        const signaturePacket = getSignaturePacket();
+        if ( !signaturePacket ) {
+            router.replace( { name: 'compare' } );
+            return;
+        }
+
+        // Enrich selected plan with calculated pricing for checkout page
+        const paymentData = {
+            ...selectedPlanData.value,
+            originalPrice: originalPrice.value,
+            discountAmount: discountAmount.value,
+            addonsTotal: addonsTotal.value,
+            subtotalBeforeVAT: subtotalBeforeVAT.value,
+            vatAmount: vatAmount.value,
+            totalPrice: totalPrice.value,
+            pricingSignature: signaturePacket.signature,
+            pricingTimestamp: signaturePacket.timestamp,
+        };
+
+        // Persist enriched plan to store for checkout page access
+        insuranceStore.setSelectedPlan( paymentData );
+
+        // Add small delay for UX feedback (ensures spinner visible)
+        await new Promise( resolve => setTimeout( resolve, 300 ) );
+
+        // Navigate to checkout page
+        router.push( { name: 'checkout' } );
+    } finally {
+        // Reset loading state (in case of error or redirect)
+        isProcessingPayment.value = false;
     }
-
-    // Get signed pricing packet from composable memory
-    const signaturePacket = getSignaturePacket();
-    if ( !signaturePacket ) {
-        router.replace( { name: 'compare' } );
-        return;
-    }
-
-    // Enrich selected plan with calculated pricing for checkout page
-    const paymentData = {
-        ...selectedPlanData.value,
-        originalPrice: originalPrice.value,
-        discountAmount: discountAmount.value,
-        addonsTotal: addonsTotal.value,
-        subtotalBeforeVAT: subtotalBeforeVAT.value,
-        vatAmount: vatAmount.value,
-        totalPrice: totalPrice.value,
-        pricingSignature: signaturePacket.signature,
-        pricingTimestamp: signaturePacket.timestamp,
-    };
-
-    // Persist enriched plan to store for checkout page access
-    insuranceStore.setSelectedPlan( paymentData );
-
-    // Navigate to checkout page
-    router.push( { name: 'checkout' } );
 }
 </script>

@@ -109,29 +109,6 @@
                             </p>
                         </div>
 
-                        <!-- Consent Notice -->
-                        <div class="rounded-lg p-4 border"
-                            :class="errors.acceptConsent ? 'bg-red-50 border-red-300' : 'bg-slate-50 border-slate-200'">
-                            <label class="flex items-start gap-3 cursor-pointer">
-                                <input id="basic-accept-consent" v-model="form.acceptConsent" type="checkbox"
-                                    class="mt-1 h-4 w-4 accent-blue-600"
-                                    :aria-invalid="errors.acceptConsent ? 'true' : 'false'"
-                                    aria-describedby="basic-consent-error" />
-                                <span class="text-sm text-slate-700 leading-relaxed font-medium">
-                                    أوافق على منح تأمينكم الحق في الاستعلام عن بياناتي وبيانات مركبتي من الجهات المعنية
-                                    لأجل إصدار التسعيرة، وأقر بالموافقة على
-                                    <router-link :to="{ name: 'terms' }" target="_blank" rel="noopener noreferrer"
-                                        class="text-primary underline font-semibold">الشروط والأحكام</router-link>
-                                    و
-                                    <router-link :to="{ name: 'privacy' }" target="_blank" rel="noopener noreferrer"
-                                        class="text-primary underline font-semibold">سياسة الخصوصية</router-link>.
-                                </span>
-                            </label>
-                            <p v-if="errors.acceptConsent" id="basic-consent-error" class="text-red-500 text-xs mt-2">
-                                {{ errors.acceptConsent }}
-                            </p>
-                        </div>
-
                         <!-- Navigation — Desktop -->
                         <div class="hidden md:flex items-center justify-between mt-8">
                             <router-link :to="{ name: 'motorapp' }"
@@ -232,14 +209,12 @@ const form = reactive( {
     identityNumber: '',
     sequenceNumber: '',
     nationality: '',
-    acceptConsent: false,
 } );
 
 const errors = reactive( {
     identityNumber: '',
     sequenceNumber: '',
     nationality: '',
-    acceptConsent: '',
 } );
 
 // Nationalities list
@@ -347,7 +322,6 @@ onMounted( () => {
             form.identityNumber = data.identityNumber || '';
             form.sequenceNumber = data.sequenceNumber || '';
             form.nationality = data.nationality || '';
-            form.acceptConsent = Boolean( data.acceptConsent );
             if ( !isResident.value ) form.nationality = '';
         } catch { /* ignore */ }
     }
@@ -406,16 +380,6 @@ function validateNationality() {
     return true;
 }
 
-function validateConsent() {
-    if ( !form.acceptConsent ) {
-        errors.acceptConsent = 'يجب الموافقة على الشروط والأحكام وسياسة الخصوصية';
-        return false;
-    }
-
-    errors.acceptConsent = '';
-    return true;
-}
-
 function clearFormError() {
     if ( formError.value ) formError.value = '';
 }
@@ -429,12 +393,8 @@ function scrollToFirstFieldError() {
     } );
 }
 
-watch( () => [ form.nationality, form.acceptConsent ], () => {
+watch( () => form.nationality, () => {
     clearFormError();
-
-    if ( form.acceptConsent && errors.acceptConsent ) {
-        errors.acceptConsent = '';
-    }
 } );
 
 // Submit
@@ -442,9 +402,8 @@ async function handleSubmit() {
     const isIdentityValid = validateIdentity();
     const isSequenceValid = validateSequence();
     const isNationalityValid = validateNationality();
-    const isConsentValid = validateConsent();
 
-    if ( !isIdentityValid || !isSequenceValid || !isNationalityValid || !isConsentValid ) {
+    if ( !isIdentityValid || !isSequenceValid || !isNationalityValid ) {
         formError.value = 'يوجد بيانات غير صحيحة أو حقول مطلوبة';
         scrollToFirstFieldError();
         return;
@@ -458,7 +417,6 @@ async function handleSubmit() {
         identityNumber: form.identityNumber,
         sequenceNumber: form.sequenceNumber,
         nationality: isResident.value ? form.nationality : null,
-        acceptConsent: form.acceptConsent,
     } ) );
 
     // Track customer in backend

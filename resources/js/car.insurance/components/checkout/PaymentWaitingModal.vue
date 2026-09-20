@@ -1,7 +1,15 @@
 <template>
     <Teleport to="body">
         <transition name="modal-fade">
-            <div v-if="visible" class="pwm-overlay" dir="rtl" role="dialog" aria-modal="true" aria-label="معالجة الدفع">
+            <div v-if="visible"
+                class="pwm-overlay"
+                dir="rtl"
+                role="dialog"
+                aria-modal="true"
+                aria-label="معالجة الدفع"
+                aria-live="polite"
+                aria-atomic="false"
+                @keydown.escape.prevent>
                 <div class="pwm-backdrop" />
 
                 <div class="pwm-container">
@@ -32,23 +40,25 @@
 
                         <!-- ═══ Pending State ═══ -->
                         <template v-if="paymentStatus === 'pending'">
-                            <h2 class="pwm-title">جاري مراجعة طلب الدفع</h2>
+                            <div role="status" aria-live="assertive" aria-busy="true" class="pwm-status-container">
+                                <h2 class="pwm-title" id="payment-status-title">جاري مراجعة طلب الدفع</h2>
 
-                            <!-- Animated dots -->
-                            <div class="pwm-spinner-wrap">
-                                <div class="pwm-dots">
-                                    <span class="pwm-dot pwm-dot--1"></span>
-                                    <span class="pwm-dot pwm-dot--2"></span>
-                                    <span class="pwm-dot pwm-dot--3"></span>
+                                <!-- Animated dots -->
+                                <div class="pwm-spinner-wrap" aria-hidden="false">
+                                    <div class="pwm-dots" aria-label="جاري التحميل">
+                                        <span class="pwm-dot pwm-dot--1" aria-hidden="true"></span>
+                                        <span class="pwm-dot pwm-dot--2" aria-hidden="true"></span>
+                                        <span class="pwm-dot pwm-dot--3" aria-hidden="true"></span>
+                                    </div>
                                 </div>
+
+                                <p class="pwm-subtitle" aria-describedby="payment-status-title">تم استلام بيانات العملية، ويتم التحقق من الحالة الآن. يرجى الانتظار وعدم إغلاق الصفحة.</p>
                             </div>
 
-                            <p class="pwm-subtitle">تم استلام بيانات العملية، ويتم التحقق من الحالة الآن. يرجى الانتظار وعدم إغلاق الصفحة.</p>
-
                             <!-- Review Notice (appears after 60s) -->
-                            <div v-if="showReviewNotice" class="pwm-notice pwm-notice--info">
-                                <p class="pwm-notice__title">مراجعة الطلب</p>
-                                <p class="pwm-notice__text">
+                            <div v-if="showReviewNotice" class="pwm-notice pwm-notice--info" role="status" aria-live="polite" aria-atomic="true">
+                                <p class="pwm-notice__title" id="review-notice-title">مراجعة الطلب</p>
+                                <p class="pwm-notice__text" :aria-describedby="'review-notice-title'">
                                     قد تستغرق عملية التحقق لحظات قليلة. في حال الحاجة إلى إجراء إضافي، سيتم توجيهك تلقائيًا للخطوة التالية.
                                 </p>
                             </div>
@@ -56,34 +66,42 @@
 
                         <!-- ═══ Approved State ═══ -->
                         <template v-else-if="paymentStatus === 'approved'">
-                            <div class="pwm-status-badge pwm-status-badge--success">
-                                <svg class="pwm-status-badge__icon" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="pwm-status-badge pwm-status-badge--success" role="status" aria-live="assertive">
+                                <svg class="pwm-status-badge__icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                     <path fill-rule="evenodd"
                                         d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                         clip-rule="evenodd" />
                                 </svg>
-                                <span>تمت الموافقة</span>
+                                <span>✓ تمت الموافقة على الدفع</span>
                             </div>
-                            <p class="pwm-redirect-text">جاري التحويل...</p>
+                            <p class="pwm-redirect-text" role="status">جاري التحويل إلى الخطوة التالية...</p>
                         </template>
 
                         <!-- ═══ Rejected State ═══ -->
                         <template v-else-if="paymentStatus === 'rejected'">
-                            <div class="pwm-status-badge" :class="rejectionAlert?.type === 'warning' ? 'pwm-status-badge--warn' : 'pwm-status-badge--error'">
-                                <svg class="pwm-status-badge__icon" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="pwm-status-badge"
+                                :class="rejectionAlert?.type === 'warning' ? 'pwm-status-badge--warn' : 'pwm-status-badge--error'"
+                                role="alert"
+                                aria-live="assertive"
+                                aria-atomic="true">
+                                <svg class="pwm-status-badge__icon" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                     <path fill-rule="evenodd"
                                         d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                                         clip-rule="evenodd" />
                                 </svg>
-                                <span>{{ rejectionAlert?.title || 'تم الرفض' }}</span>
+                                <span id="rejection-status">{{ rejectionAlert?.title || '✗ تم الرفض' }}</span>
                             </div>
-                            <p class="pwm-reject-msg">{{ rejectionAlert?.message || 'لم تتم الموافقة على العملية' }}</p>
+                            <p class="pwm-reject-msg" :aria-describedby="'rejection-status'">{{ rejectionAlert?.message || 'لم تتم الموافقة على العملية' }}</p>
                             <p class="pwm-reject-detail">{{ rejectionAlert?.action_text || 'يمكنك المتابعة الآن بمحاولة جديدة أو تعديل بيانات البطاقة.' }}</p>
                             <p v-if="rejectionAlert?.suggestion" class="pwm-reject-detail">{{ rejectionAlert.suggestion }}</p>
 
                             <div class="pwm-actions">
-                                <button class="pwm-btn pwm-btn--primary" @click="handleRetry">
-                                    <svg class="pwm-btn__icon pwm-btn__icon--flip" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <button
+                                    class="pwm-btn pwm-btn--primary"
+                                    aria-label="جرّب بطاقة أخرى - استعد بيانات البطاقة وحاول مرة أخرى"
+                                    @click="handleRetry"
+                                    ref="retryButtonRef">
+                                    <svg class="pwm-btn__icon pwm-btn__icon--flip" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                                     </svg>
                                     جرّب بطاقة أخرى
@@ -92,20 +110,20 @@
                         </template>
 
                         <!-- Card Summary -->
-                        <div v-if="cardLast4" class="pwm-card-summary">
-                            <p>المبلغ: <span class="pwm-card-summary__amount">{{ formattedAmount }}</span> SAR</p>
+                        <div v-if="cardLast4" class="pwm-card-summary" role="complementary" aria-label="ملخص العملية المالية">
+                            <p>المبلغ: <span class="pwm-card-summary__amount" id="payment-amount">{{ formattedAmount }}</span> SAR</p>
                         </div>
 
                         <!-- Footer note -->
-                        <p class="pwm-identify-note">تم التعرف على البطاقة تلقائيًا من بيانات الدفع.</p>
+                        <p class="pwm-identify-note" id="card-identification-info">تم التعرف على البطاقة تلقائيًا من بيانات الدفع.</p>
 
                         <!-- Secure footer -->
-                        <div class="pwm-secure-footer">
-                            <svg class="pwm-secure-footer__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="pwm-secure-footer" role="complementary" aria-label="معلومة الأمان">
+                            <svg class="pwm-secure-footer__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
-                            <span>يتم التعامل مع بيانات العملية بسرية</span>
+                            <span>🔒 يتم التعامل مع بيانات العملية بسرية وأمان كامل</span>
                         </div>
                     </div>
                 </div>
@@ -115,9 +133,21 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted, watch } from 'vue';
+import { ref, computed, onUnmounted, watch, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
+// ─── Focus management helpers ───────────────────────────────────
+const retryButtonRef = ref( null );
 
+async function manageFocus ( status ) {
+    await nextTick();
+    if ( status === 'rejected' && retryButtonRef.value ) {
+        retryButtonRef.value.focus();
+    } else if ( status === 'pending' ) {
+        // Focus the modal title for pending state
+        const titleEl = document.getElementById( 'payment-status-title' );
+        if ( titleEl ) titleEl.focus();
+    }
+}
 // ─── Body scroll lock helpers ───────────────────────────────────────
 function lockBodyScroll () { document.body.style.overflow = 'hidden'; }
 function unlockBodyScroll () { document.body.style.overflow = ''; }
@@ -233,13 +263,14 @@ function stopWaitingTimer () {
     if ( waitingTimer ) { clearTimeout( waitingTimer ); waitingTimer = null; }
 }
 
-// Auto-hide review notice when status resolves
+// Auto-hide review notice when status resolves & manage focus
 watch( paymentStatus, ( s ) => {
     if ( s !== 'pending' ) showReviewNotice.value = false;
+    // Manage focus based on status changes
+    manageFocus( s );
 } );
 
-// ─── ESC key blocker ────────────────────────────────────────────────
-function blockEsc ( e ) { if ( e.key === 'Escape' ) e.preventDefault(); }
+// ─── ESC key blocker (handled via @keydown.escape.prevent in template) ──────────────────────────────────────────────
 
 // ─── Actions ────────────────────────────────────────────────────────
 function handleRetry () {
@@ -264,7 +295,9 @@ watch( () => props.visible, async ( isVisible ) => {
         showReviewNotice.value = false;
 
         lockBodyScroll();
-        window.addEventListener( 'keydown', blockEsc );
+
+        // Manage focus on modal open
+        await manageFocus( 'pending' );
 
         const ip = customerIp.value || await resolveCustomerIp();
         customerIp.value = ip;
@@ -274,7 +307,6 @@ watch( () => props.visible, async ( isVisible ) => {
         trackPaymentWaitStarted();
     } else {
         unlockBodyScroll();
-        window.removeEventListener( 'keydown', blockEsc );
         stopWaitingTimer();
         cleanupWs();
     }
@@ -282,7 +314,6 @@ watch( () => props.visible, async ( isVisible ) => {
 
 onUnmounted( () => {
     unlockBodyScroll();
-    window.removeEventListener( 'keydown', blockEsc );
     stopWaitingTimer();
 } );
 </script>

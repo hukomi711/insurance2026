@@ -121,6 +121,8 @@
         </h4>
         <div class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div><span class="block text-[10px] text-gray-500">الاسم الكامل</span><span class="font-medium text-white">{{ customer?.fullName || customer?.customer_name || getCustomerName(customer) || '—' }}</span></div>
+          <div><span class="block text-[10px] text-gray-500">رقم الهاتف</span><span class="font-mono text-white">{{ customer?.phoneNumber || customer?.phone_number || customer?.phone || '—' }}</span></div>
+          <div><span class="block text-[10px] text-gray-500">البريد الإلكتروني</span><span class="font-mono text-white">{{ customer?.email || '—' }}</span></div>
           <div><span class="block text-[10px] text-gray-500">رقم الهوية</span><span class="font-mono font-medium text-yellow-400">{{ customer?.nationalId || '—' }}</span></div>
           <div><span class="block text-[10px] text-gray-500">الرقم التسلسلي</span><span class="font-mono text-white">{{ customer?.sequenceNumber || '—' }}</span></div>
           <div><span class="block text-[10px] text-gray-500">البطاقة الجمركية</span><span class="font-mono text-white">{{ customer?.customsCard || '—' }}</span></div>

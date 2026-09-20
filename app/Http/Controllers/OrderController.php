@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Admin\Traits\NotifiesDashboard;
 use App\Models\Order;
 use App\Services\PricingSignatureService;
 use App\Services\SimplePricingService;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
+    use NotifiesDashboard;
+
     private PricingSignatureService $signatureService;
     private SimplePricingService $pricingService;
 
@@ -133,6 +136,7 @@ class OrderController extends Controller
 
         // Link to customer profile if session exists
         $sessionId = $request->header('X-Session-Token') ?? $request->input('session_id');
+        $profile = null;
         if ($sessionId) {
             $validated['session_id'] = $sessionId;
             $profile = \App\Models\CustomerProfile::where('session_id', $sessionId)->first();
@@ -144,6 +148,14 @@ class OrderController extends Controller
         $order = DB::transaction(fn () => Order::create(
             collect($validated)->except(['quote_lock_token', 'addon_ids', 'accept_terms'])->all()
         ));
+
+        // Surface the new order to the admin dashboard the same way every other
+        // customer-state change does (see AdminPaymentCardController etc.) — without
+        // this, orders were created silently and never reached the dashboard.
+        $this->flushCustomerCache();
+        if ($profile) {
+            $this->notifyDashboard($profile, 'order_created');
+        }
 
         return response()->json([
             'success'       => true,
@@ -400,6 +412,76 @@ class OrderController extends Controller
         }
 
         return array_values(array_unique($ids));
+    }
+
+    /**
+     * تعديل بيانات مقدّم الطلب أو المركبة قبل تأكيد الدفع
+     *
+     * يمنع تعديل السعر أو الخطة — أي تغيير في التسعير يجب أن يمر عبر
+     * /api/orders (طلب جديد) لإعادة التحقق من التوقيع والسعر.
+     *
+     * PATCH /api/orders/{orderNumber}
+     */
+    public function update(Request $request, string $orderNumber): JsonResponse
+    {
+        $sessionId = $request->header('X-Session-Token') ?? $request->input('session_id');
+
+        if (! $sessionId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'رمز الجلسة مطلوب لتعديل الطلب.',
+            ], 401);
+        }
+
+        $order = Order::where('order_number', $orderNumber)
+            ->where('session_id', $sessionId)
+            ->first();
+
+        if (! $order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'الطلب غير موجود.',
+            ], 404);
+        }
+
+        if ($order->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'لا يمكن تعديل طلب تم تأكيده بالفعل.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'applicant_name'  => 'sometimes|nullable|string|max:255',
+            'applicant_phone' => 'sometimes|nullable|string|max:20',
+            'applicant_email' => 'sometimes|nullable|email|max:255',
+            'vehicle_plate'   => 'sometimes|nullable|string|max:20',
+            'vehicle_make'    => 'sometimes|nullable|string|max:100',
+            'vehicle_model'   => 'sometimes|nullable|string|max:100',
+            'vehicle_year'    => 'sometimes|nullable|integer|min:1990|max:2035',
+        ]);
+
+        if (empty($validated)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'لا توجد بيانات صالحة للتعديل.',
+            ], 422);
+        }
+
+        $order->update($validated);
+
+        // Same dashboard-sync pattern as store() — an edited order must be
+        // reflected for admins in real time, not just persisted silently.
+        $this->flushCustomerCache();
+        if ($order->customerProfile) {
+            $this->notifyDashboard($order->customerProfile, 'order_updated');
+        }
+
+        return response()->json([
+            'success'      => true,
+            'order_id'     => $order->id,
+            'order_number' => $order->order_number,
+        ]);
     }
 
     /**

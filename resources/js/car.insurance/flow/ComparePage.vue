@@ -73,17 +73,6 @@
                         </TabsList>
                     </TabsRoot>
 
-                    <!-- NCD Discount Banner -->
-                    <div class="flex gap-2 items-center justify-between cursor-pointer rounded-lg p-4 mb-4 hover:opacity-80 transition-opacity bg-green-600 text-white">
-                        <div class="flex gap-2 items-center">
-                            <img :src="IMAGES.ncdBannerImg" alt="ncd-discount-clap" class="max-w-full w-5 h-5" loading="lazy" width="20" height="20" />
-                            <span class="text-sm font-medium">مبروك عليك خصم يبدأ من 10% نتيجة قيادتك الآمنة + خصم تأميني 20%</span>
-                        </div>
-                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-
                     <!-- Coverage Limit & Update Button -->
                     <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 sm:gap-3 mb-4">
                         <div :class="showCoverageLimit ? 'sm:col-span-9' : 'hidden'">
@@ -101,21 +90,6 @@
                                     حد التغطية لمركبتك
                                 </label>
                             </div>
-                        </div>
-                        <div class="sm:col-span-3">
-                            <button :disabled="isUpdatingQuotes" class="w-full min-h-13 sm:min-h-14 px-4 sm:px-6 typ-t3 font-bold rounded-lg bg-primary text-white
-                                       hover:bg-primary-dark active:bg-primary-darker disabled:bg-slate-400
-                                       disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center cursor-pointer"
-                                @click="updateQuoteOptions">
-                                <svg v-if="isUpdatingQuotes" class="animate-spin size-5" viewBox="0 0 24 24"
-                                    fill="none" aria-hidden="true">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                        stroke-width="4" />
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                </svg>
-                                <span v-else>تحديث</span>
-                            </button>
                         </div>
                     </div>
 

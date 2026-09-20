@@ -77,7 +77,7 @@ describe( 'quotes API fallback policy', () =>
         const result = await getQuotes( formData, sourcePlans );
 
         expect( result.plans ).toHaveLength( 1 );
-        expect( result.plans[ 0 ].annualPrice ).toBe( 749 );
+        expect( result.plans[ 0 ].annualPrice ).toBe( 649 );
         expect( result.plans[ 0 ].signature ).toBeNull();
     } );
 
@@ -90,7 +90,7 @@ describe( 'quotes API fallback policy', () =>
             const result = await getQuotes( formData, sourcePlans );
 
             expect( result.plans ).toHaveLength( 1 );
-            expect( result.plans[ 0 ].annualPrice ).toBe( 749 );
+            expect( result.plans[ 0 ].annualPrice ).toBe( 649 );
         }
     );
 
@@ -105,7 +105,7 @@ describe( 'quotes API fallback policy', () =>
         const result = await getQuotes( formData, thirdPartyPlans );
 
         expect( result.plans ).toHaveLength( 1 );
-        expect( result.plans[ 0 ].annualPrice ).toBe( 499 );
+        expect( result.plans[ 0 ].annualPrice ).toBe( 399 );
     } );
 
     it( 'does not hide an unrelated programming error', async () =>

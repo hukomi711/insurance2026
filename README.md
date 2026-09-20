@@ -254,4 +254,3 @@ To reduce abuse risk and security exposure, keep these baseline references curre
 ## License
 
 Proprietary — All rights reserved.
-# insurance2026

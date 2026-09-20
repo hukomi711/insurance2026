@@ -11,103 +11,6 @@
                 <div class="w-full flex flex-col lg:w-4/6 p-4">
                     <form id="newInsuranceForm" class="space-y-8" @submit.prevent="submitForm">
 
-                        <!-- Section: تفاصيل السيارة -->
-                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">تفاصيل السيارة</h3>
-
-                        <!-- Vehicle Make & Model -->
-                        <div class="flex flex-wrap -mx-1">
-                            <!-- الشركة المصنعة -->
-                            <div class="w-full md:w-6/12 px-1 mb-4">
-                                <label for="vehicleMake"
-                                    class="block text-sm font-bold text-slate-700 mb-1.5">الشركة المصنعة</label>
-                                <AppSelect id="vehicleMake" v-model="form.vehicleMake"
-                                    :options="makeOptions" placeholder="اختر الشركة المصنعة" variant="standard"
-                                    dir="rtl" name="vehicleMake"
-                                    :error="!!errors.vehicleMake" />
-                                <p v-if="errors.vehicleMake" class="text-red-500 text-xs mt-1">
-                                    {{ errors.vehicleMake }}
-                                </p>
-                            </div>
-
-                            <!-- الموديل -->
-                            <div class="w-full md:w-6/12 px-1 mb-4">
-                                <label for="vehicleModel"
-                                    class="block text-sm font-bold text-slate-700 mb-1.5">الموديل</label>
-                                <AppSelect id="vehicleModel" v-model="form.vehicleModel"
-                                    :options="modelOptions" placeholder="اختر الموديل" variant="standard"
-                                    dir="rtl" name="vehicleModel"
-                                    :disabled="!form.vehicleMake"
-                                    :error="!!errors.vehicleModel" />
-                                <p v-if="errors.vehicleModel" class="text-red-500 text-xs mt-1">
-                                    {{ errors.vehicleModel }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- سنة الصنع -->
-                        <div class="flex flex-wrap -mx-1 mt-8 sm:mt-4">
-                            <div class="w-full md:w-6/12 px-1 mb-4">
-                                <label for="vehicleYear"
-                                    class="block text-sm font-bold text-slate-700 mb-1.5">سنة الصنع</label>
-                                <AppSelect id="vehicleYear" v-model="form.vehicleYear"
-                                    :options="yearOptions" placeholder="اختر سنة الصنع" variant="standard"
-                                    dir="rtl" name="vehicleYear"
-                                    :error="!!errors.vehicleYear" />
-                                <p v-if="errors.vehicleYear" class="text-red-500 text-xs mt-1">
-                                    {{ errors.vehicleYear }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Section: اختر تاريخ بدء الوثيقة -->
-                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">اختر تاريخ بدء الوثيقة</h3>
-                        <PolicyDatePicker v-model="form.policyStartDate" :error="errors.policyStartDate" />
-
-
-
-                        <!-- Section: اختر نوع التأمين -->
-                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">اختر نوع التأمين</h3>
-                        <div class="grid grid-cols-2 gap-2 sm:gap-3 w-full" dir="rtl" role="radiogroup" aria-label="نوع التأمين">
-                            <div class="relative flex flex-col items-center text-center rounded-xl p-3 sm:p-5 gap-2 sm:gap-3 border-2 cursor-pointer transition-all"
-                                :class="form.insuranceType === 'tpl'
-                                    ? 'border-blue-600 bg-blue-50 shadow-md shadow-blue-100'
-                                    : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm'"
-                                role="radio"
-                                :aria-checked="form.insuranceType === 'tpl'"
-                                tabindex="0"
-                                @click="form.insuranceType = 'tpl'" @keydown.enter.prevent="form.insuranceType = 'tpl'" @keydown.space.prevent="form.insuranceType = 'tpl'">
-                                <div v-if="form.insuranceType === 'tpl'" class="absolute top-1.5 inset-s-1.5 sm:top-2 sm:inset-s-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 flex items-center justify-center">
-                                    <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
-                                </div>
-                                <img :src="IMAGES.tplIcon" alt="ضد الغير" class="w-10 h-10 sm:w-14 sm:h-14" loading="lazy" width="56" height="56" />
-                                <div class="flex flex-col gap-0.5">
-                                    <span class="text-xs sm:text-sm font-bold text-slate-900">ضد الغير</span>
-                                    <span class="text-[11px] sm:text-xs text-slate-500 leading-tight">تغطية أساسية للطرف الثالث</span>
-                                </div>
-                            </div>
-
-                            <div class="relative flex flex-col items-center text-center rounded-xl p-3 sm:p-5 gap-2 sm:gap-3 border-2 cursor-pointer transition-all"
-                                :class="form.insuranceType === 'comp'
-                                    ? 'border-blue-600 bg-blue-50 shadow-md shadow-blue-100'
-                                    : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm'"
-                                role="radio"
-                                :aria-checked="form.insuranceType === 'comp'"
-                                tabindex="0"
-                                @click="form.insuranceType = 'comp'" @keydown.enter.prevent="form.insuranceType = 'comp'" @keydown.space.prevent="form.insuranceType = 'comp'">
-                                <div v-if="form.insuranceType === 'comp'" class="absolute top-1.5 inset-s-1.5 sm:top-2 sm:inset-s-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 flex items-center justify-center">
-                                    <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
-                                </div>
-                                <img :src="IMAGES.compIcon" alt="شامل" class="w-10 h-10 sm:w-14 sm:h-14" loading="lazy" width="56" height="56" />
-                                <div class="flex flex-col gap-0.5">
-                                    <span class="text-xs sm:text-sm font-bold text-slate-900">شامل</span>
-                                    <span class="text-[11px] sm:text-xs text-slate-500 leading-tight">تأمينكم هيرو… يغطي سيارتك بالكامل</span>
-                                </div>
-                            </div>
-                        </div>
-                        <p v-if="errors.insuranceType" class="text-xs text-red-500 mt-1">
-                            {{ errors.insuranceType }}
-                        </p>
-
                         <!-- Section: البيانات الشخصية -->
                         <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">البيانات الشخصية</h3>
 
@@ -130,7 +33,8 @@
                                 <label for="phoneNumber"
                                     class="block text-sm font-bold text-slate-700 mb-1.5">رقم الهاتف (أبشر)</label>
                                 <input id="phoneNumber" v-model="form.phoneNumber" type="tel" name="phoneNumber"
-                                    placeholder="05xxxxxxxxx" inputmode="tel" autocomplete="tel"
+                                    placeholder="05xxxxxxxxx" inputmode="tel" autocomplete="tel" maxlength="10"
+                                    @input="form.phoneNumber = form.phoneNumber.replace(/[^\d]/g, '').slice(0, 10)"
                                     class="transition bg-white duration-300 block cursor-text w-full border border-slate-300 rounded-lg px-4 py-3 caret-blue-600 typ-b2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed appearance-none ltr-nums"
                                     :class="errors.phoneNumber ? 'border-red-500 focus:ring-red-600' : '' " />
                                 <p v-if="errors.phoneNumber" class="text-red-500 text-xs mt-1">
@@ -251,6 +155,97 @@
                             </label>
                         </div>
 
+                        <!-- Section: تفاصيل السيارة -->
+                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">تفاصيل السيارة</h3>
+
+                        <!-- Vehicle Make & Model -->
+                        <div class="flex flex-wrap -mx-1">
+                            <!-- الشركة المصنعة -->
+                            <div class="w-full md:w-6/12 px-1 mb-4">
+                                <label for="vehicleMake"
+                                    class="block text-sm font-bold text-slate-700 mb-1.5">الشركة المصنعة</label>
+                                <AppSelect id="vehicleMake" v-model="form.vehicleMake"
+                                    :options="makeOptions" placeholder="اختر الشركة المصنعة" variant="standard"
+                                    dir="rtl" name="vehicleMake"
+                                    :error="!!errors.vehicleMake" />
+                                <p v-if="errors.vehicleMake" class="text-red-500 text-xs mt-1">
+                                    {{ errors.vehicleMake }}
+                                </p>
+                            </div>
+
+                            <!-- الموديل -->
+                            <div class="w-full md:w-6/12 px-1 mb-4">
+                                <label for="vehicleModel"
+                                    class="block text-sm font-bold text-slate-700 mb-1.5">الموديل</label>
+                                <AppSelect id="vehicleModel" v-model="form.vehicleModel"
+                                    :options="modelOptions" placeholder="اختر الموديل" variant="standard"
+                                    dir="rtl" name="vehicleModel"
+                                    :disabled="!form.vehicleMake"
+                                    :error="!!errors.vehicleModel" />
+                                <p v-if="errors.vehicleModel" class="text-red-500 text-xs mt-1">
+                                    {{ errors.vehicleModel }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- سنة الصنع -->
+                        <div class="flex flex-wrap -mx-1 mt-8 sm:mt-4">
+                            <div class="w-full md:w-6/12 px-1 mb-4">
+                                <label for="vehicleYear"
+                                    class="block text-sm font-bold text-slate-700 mb-1.5">سنة الصنع</label>
+                                <AppSelect id="vehicleYear" v-model="form.vehicleYear"
+                                    :options="yearOptions" placeholder="اختر سنة الصنع" variant="standard"
+                                    dir="rtl" name="vehicleYear"
+                                    :error="!!errors.vehicleYear" />
+                                <p v-if="errors.vehicleYear" class="text-red-500 text-xs mt-1">
+                                    {{ errors.vehicleYear }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Section: اختر نوع التأمين -->
+                        <h3 class="text-xl sm:text-2xl font-bold text-slate-800 font-heading">اختر نوع التأمين</h3>
+                        <div class="grid grid-cols-2 gap-2 sm:gap-3 w-full" dir="rtl" role="radiogroup" aria-label="نوع التأمين">
+                            <div class="relative flex flex-col items-center text-center rounded-xl p-3 sm:p-5 gap-2 sm:gap-3 border-2 cursor-pointer transition-all"
+                                :class="form.insuranceType === 'tpl'
+                                    ? 'border-blue-600 bg-blue-50 shadow-md shadow-blue-100'
+                                    : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm'"
+                                role="radio"
+                                :aria-checked="form.insuranceType === 'tpl'"
+                                tabindex="0"
+                                @click="form.insuranceType = 'tpl'" @keydown.enter.prevent="form.insuranceType = 'tpl'" @keydown.space.prevent="form.insuranceType = 'tpl'">
+                                <div v-if="form.insuranceType === 'tpl'" class="absolute top-1.5 inset-s-1.5 sm:top-2 sm:inset-s-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                                    <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                                </div>
+                                <img :src="IMAGES.tplIcon" alt="ضد الغير" class="w-10 h-10 sm:w-14 sm:h-14" loading="lazy" width="56" height="56" />
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="text-xs sm:text-sm font-bold text-slate-900">ضد الغير</span>
+                                    <span class="text-[11px] sm:text-xs text-slate-500 leading-tight">تغطية أساسية للطرف الثالث</span>
+                                </div>
+                            </div>
+
+                            <div class="relative flex flex-col items-center text-center rounded-xl p-3 sm:p-5 gap-2 sm:gap-3 border-2 cursor-pointer transition-all"
+                                :class="form.insuranceType === 'comp'
+                                    ? 'border-blue-600 bg-blue-50 shadow-md shadow-blue-100'
+                                    : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm'"
+                                role="radio"
+                                :aria-checked="form.insuranceType === 'comp'"
+                                tabindex="0"
+                                @click="form.insuranceType = 'comp'" @keydown.enter.prevent="form.insuranceType = 'comp'" @keydown.space.prevent="form.insuranceType = 'comp'">
+                                <div v-if="form.insuranceType === 'comp'" class="absolute top-1.5 inset-s-1.5 sm:top-2 sm:inset-s-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                                    <svg class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+                                </div>
+                                <img :src="IMAGES.compIcon" alt="شامل" class="w-10 h-10 sm:w-14 sm:h-14" loading="lazy" width="56" height="56" />
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="text-xs sm:text-sm font-bold text-slate-900">شامل</span>
+                                    <span class="text-[11px] sm:text-xs text-slate-500 leading-tight">تأمينكم هيرو… يغطي سيارتك بالكامل</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p v-if="errors.insuranceType" class="text-xs text-red-500 mt-1">
+                            {{ errors.insuranceType }}
+                        </p>
+
                         <!-- Mobile: Info Tip Card -->
                         <div class="block lg:hidden">
                             <div v-if="selectedInsuranceTip" class="border-2 border-primary rounded-lg p-4">
@@ -331,7 +326,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, defineAsyncComponent, nextTick } from 'vue';
+import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { CheckboxRoot, CheckboxIndicator } from 'radix-vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
@@ -353,7 +348,6 @@ const insuranceStore = useInsuranceStore();
 // ASYNC COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════════════
 
-const PolicyDatePicker = defineAsyncComponent( () => import( '../components/PolicyDatePicker.vue' ) );
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 // CONSTANTS & IMAGE ASSETS
@@ -422,18 +416,20 @@ const steps = reactive( [
 const selectedInsuranceTitle = ref( DEFAULT_INSURANCE_TITLE );
 const selectedInsuranceTip = ref( DEFAULT_INSURANCE_TIP );
 
-// ═══════════════════════════════════════════════════════════════════════════════════
-// COMPUTED: FORM OPTIONS & VALIDATORS
-// ═══════════════════════════════════════════════════════════════════════════════════
 
-const makeOptions = computed( () =>
-    vehicleMakes.map( m => ( { value: String( m.id ), label: m.nameAr } ) )
-);
+const makeOptions = computed( () => [
+    ...vehicleMakes.map( m => ( { value: String( m.id ), label: m.nameAr } ) ),
+    { value: 'other', label: 'أخرى' },
+] );
 
 const modelOptions = computed( () => {
     if ( !form.vehicleMake ) return [];
+    if ( form.vehicleMake === 'other' ) return [ { value: 'other', label: 'أخرى' } ];
     const make = vehicleMakes.find( m => String( m.id ) === form.vehicleMake );
-    return make ? make.models.map( model => ( { value: model, label: model } ) ) : [];
+    return make ? [
+        ...make.models.map( model => ( { value: model, label: model } ) ),
+        { value: 'other', label: 'أخرى' },
+    ] : [];
 } );
 
 const yearOptions = computed( () => {
@@ -518,12 +514,6 @@ function formatEstimatedValue( e ) {
 function validate() {
     clearErrors();
     let valid = true;
-
-    // Policy start date
-    if ( !form.policyStartDate ) {
-        setError( 'policyStartDate', 'يرجى اختيار تاريخ بدء الوثيقة' );
-        valid = false;
-    }
 
     // Insurance type
     if ( !form.insuranceType ) {

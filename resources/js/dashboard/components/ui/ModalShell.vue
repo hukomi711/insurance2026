@@ -5,7 +5,7 @@
         v-if="open"
         class="fixed inset-0 z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-4"
         :dir="dir"
-        data-admin-theme="dark"
+        :data-admin-theme="liveTheme"
         @click.self="$emit('close')"
       >
         <!-- Backdrop -->
@@ -81,6 +81,12 @@
 
 <script setup>
 import { computed, onBeforeUnmount, watch } from 'vue';
+import { useTheme } from '../../composables/useTheme';
+
+// Modals are teleported to <body>, escaping this component's own theme
+// prop scope — follow the dashboard-wide toggle instead of a fixed value
+// so a modal never looks dark while the rest of the UI is in light mode.
+const { theme: liveTheme } = useTheme();
 
 const props = defineProps({
   /** Controls visibility */

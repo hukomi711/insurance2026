@@ -36,7 +36,7 @@
         </thead>
         <tbody class="divide-y divide-gray-100 bg-white">
           <tr
-            v-for="(customer, index) in customers"
+            v-for="(customer, index) in tableRows"
             :id="`customer-row-${customer.id}`"
             :key="customer.id"
             :class="[
@@ -49,7 +49,7 @@
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <button
                 type="button"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                class="admin-icon-btn inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
                 title="حذف بيانات العميل من النظام"
                 aria-label="حذف بيانات العميل من النظام بشكل دائم"
                 @click="$emit('delete-card', customer.id)"
@@ -62,7 +62,7 @@
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <div class="flex items-center justify-center gap-2">
                 <button
-                  class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+                  class="admin-icon-btn inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
                   title="المزيد من التفاصيل"
                   aria-label="المزيد من التفاصيل"
                   @click="openInfoModal(customer)"
@@ -96,13 +96,10 @@
                 <button
                   :ref="(el) => setButtonRef(customer.id, el)"
                   data-journey-trigger
-                  class="inline-flex w-40 items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                  class="admin-icon-btn inline-flex w-40 items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 transition-colors"
                   @click="toggleJourneyDropdown(customer.id, $event)"
                 >
-                  <span class="truncate">{{
-                    getPageName(customer.journey?.current_page || customer.current_page) ||
-                    'غير محدد'
-                  }}</span>
+                  <span class="truncate">{{ customer._ui.pageLabel || 'غير محدد' }}</span>
                   <i class="fa-solid fa-chevron-down w-4 h-4 ms-1 shrink-0" aria-hidden="true"></i>
                 </button>
               </div>
@@ -113,23 +110,23 @@
               <button
                 class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-200"
                 :class="
-                  !hasPaymentData(customer)
+                  !customer._ui.payment.has
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : hasNewPaymentData(customer)
+                    : customer._ui.payment.isNew
                       ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 animate-pulse hover:bg-emerald-600'
                       : 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100 hover:bg-blue-100'
                 "
                 :title="
-                  !hasPaymentData(customer)
+                  !customer._ui.payment.has
                     ? 'لا توجد بيانات'
-                    : hasNewPaymentData(customer)
+                    : customer._ui.payment.isNew
                       ? 'بيانات جديدة - انقر للعرض'
                       : 'تم العرض'
                 "
                 @click="openPaymentModal(customer)"
               >
-                <template v-if="hasPaymentData(customer)">
-                  <span v-if="!hasNewPaymentData(customer)" class="text-blue-500">👁</span>
+                <template v-if="customer._ui.payment.has">
+                  <span v-if="!customer._ui.payment.isNew" class="text-blue-500">👁</span>
                   <span v-else class="h-2 w-2 rounded-full bg-white animate-ping"></span>
                 </template>
                 <span v-else class="text-gray-400">—</span>
@@ -142,23 +139,23 @@
               <button
                 class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-200"
                 :class="
-                  !hasInsuranceData(customer)
+                  !customer._ui.insurance.has
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : hasNewInsuranceData(customer)
+                    : customer._ui.insurance.isNew
                       ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 animate-pulse hover:bg-emerald-600'
                       : 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100 hover:bg-blue-100'
                 "
                 :title="
-                  !hasInsuranceData(customer)
+                  !customer._ui.insurance.has
                     ? 'لا توجد بيانات'
-                    : hasNewInsuranceData(customer)
+                    : customer._ui.insurance.isNew
                       ? 'بيانات جديدة - انقر للعرض'
                       : 'تم العرض'
                 "
                 @click="openInsuranceDataModal(customer)"
               >
-                <template v-if="hasInsuranceData(customer)">
-                  <span v-if="!hasNewInsuranceData(customer)" class="text-blue-500">👁</span>
+                <template v-if="customer._ui.insurance.has">
+                  <span v-if="!customer._ui.insurance.isNew" class="text-blue-500">👁</span>
                   <span v-else class="h-2 w-2 rounded-full bg-white animate-ping"></span>
                 </template>
                 <span v-else class="text-gray-400">—</span>
@@ -169,7 +166,7 @@
             <!-- الاسم -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <div class="flex flex-col items-center gap-1">
-                <span class="font-semibold text-gray-800">{{ getCustomerName(customer) || '\u2014' }}</span>
+                <span class="font-semibold text-gray-800">{{ customer._ui.displayName || '\u2014' }}</span>
                 <span
                   v-if="customer.is_blocked"
                   class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700 ring-1 ring-inset ring-red-200"
@@ -186,23 +183,23 @@
               <button
                 class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-200"
                 :class="
-                  !hasVehicleData(customer)
+                  !customer._ui.vehicle.has
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : hasNewVehicleQuoteData(customer)
+                    : customer._ui.vehicle.isNew
                       ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 animate-pulse hover:bg-emerald-600'
                       : 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100 hover:bg-blue-100'
                 "
                 :title="
-                  !hasVehicleData(customer)
+                  !customer._ui.vehicle.has
                     ? 'لا توجد بيانات'
-                    : hasNewVehicleQuoteData(customer)
+                    : customer._ui.vehicle.isNew
                       ? 'بيانات جديدة - انقر للعرض'
                       : 'تم العرض'
                 "
                 @click="openVehicleQuoteModal(customer)"
               >
-                <template v-if="hasVehicleData(customer)">
-                  <span v-if="!hasNewVehicleQuoteData(customer)" class="text-blue-500">👁</span>
+                <template v-if="customer._ui.vehicle.has">
+                  <span v-if="!customer._ui.vehicle.isNew" class="text-blue-500">👁</span>
                   <span v-else class="h-2 w-2 rounded-full bg-white animate-ping"></span>
                 </template>
                 <span v-else class="text-gray-400">—</span>
@@ -216,17 +213,17 @@
             <!-- الموقع -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <div
-                v-if="getDisplayCity(customer) || getDisplayCountry(customer)"
+                v-if="customer._ui.displayCity || customer._ui.displayCountry"
                 class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium"
-                :class="isSaudi(getDisplayCountry(customer))
+                :class="customer._ui.isSaudiCountry
                     ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200'
                     : 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200'
                 "
-                :title="(getDisplayCity(customer) || '') + ', ' + (getDisplayCountry(customer) || '')"
+                :title="(customer._ui.displayCity || '') + ', ' + (customer._ui.displayCountry || '')"
               >
-                <span>{{ getCountryFlag(getDisplayCountry(customer)) }}</span>
+                <span>{{ customer._ui.countryFlag }}</span>
                 <span class="max-w-16 truncate">{{
-                  getDisplayCity(customer) || getDisplayCountry(customer) || '—'
+                  customer._ui.displayCity || customer._ui.displayCountry || '—'
                 }}</span>
               </div>
               <span v-else class="text-gray-400 text-xs">—</span>
@@ -234,8 +231,8 @@
 
             <!-- المنطقة -->
             <td class="px-2 py-2 text-center text-xs text-gray-600 whitespace-nowrap">
-              <span class="max-w-20 truncate inline-block" :title="getDisplayRegion(customer) || ''">
-                {{ getDisplayRegion(customer) || '—' }}
+              <span class="max-w-20 truncate inline-block" :title="customer._ui.displayRegion || ''">
+                {{ customer._ui.displayRegion || '—' }}
               </span>
             </td>
 
@@ -244,7 +241,7 @@
 
             <!-- آخر نشاط -->
             <td class="px-2 py-2 text-center text-xs text-gray-500 whitespace-nowrap" :title="customer.last_activity_at">
-              {{ formatRelativeTime(customer.last_activity_at) }}
+              {{ customer._ui.relativeActivity }}
             </td>
 
             <!-- الحالة -->
@@ -252,11 +249,11 @@
               <span
                 class="inline-block h-3 w-3 rounded-full"
                 :class="
-                  isCustomerOnline(customer)
+                  customer._ui.online
                     ? 'animate-pulse bg-emerald-500 shadow-lg shadow-emerald-500/50'
                     : 'bg-gray-300'
                 "
-                :title="isCustomerOnline(customer) ? 'نشط' : 'غير نشط'"
+                :title="customer._ui.online ? 'نشط' : 'غير نشط'"
               >
               </span>
             </td>
@@ -471,8 +468,11 @@ function isCustomerOnline ( customer ) {
     const lastActivity = customer?.last_activity_at || customer?.last_activity;
     if ( !lastActivity ) return Boolean( customer?.is_active );
 
+    // Fallback path only (primary path above uses a skew-free backend-computed
+    // value) — small buffer for minor client/server clock skew, not full drift.
+    const CLOCK_SKEW_TOLERANCE_MS = 10_000;
     const diff = Date.now() - new Date( lastActivity ).getTime();
-    return diff >= -ONLINE_WINDOW_MS && diff <= ONLINE_WINDOW_MS;
+    return diff >= -CLOCK_SKEW_TOLERANCE_MS && diff <= ONLINE_WINDOW_MS;
 }
 
 // ── Payment Modal (composable) ──────────────────────────────────
@@ -507,7 +507,6 @@ const activeTab = ref('home');
 // ── Vehicle Quote Modal ─────────────────────────────────────────
 const showVQModal = ref(false);
 const selectedVQCustomer = ref(null);
-const isVQModalReady = ref(false);
 const activeVQTab = ref('insurance');
 
 const _getVehicleQuoteFieldsCount = (customer) => {
@@ -531,11 +530,9 @@ const hasNewVehicleQuoteData = (customer) => {
 };
 
 const openVehicleQuoteModal = (customer) => {
-  isVQModalReady.value = false;
   selectedVQCustomer.value = structuredClone(customer);
   requestAnimationFrame(() => {
     showVQModal.value = true;
-    vqReadyTimer = setTimeout(() => { isVQModalReady.value = true; }, 50);
   });
   if (customer.ip) {
     // ✅ Emit modal-opened to parent — parent handles mark-viewed + suppression
@@ -547,7 +544,6 @@ const closeVQModal = () => {
   const _closingId = selectedVQCustomer.value?.id;
   const _closingIp = selectedVQCustomer.value?.ip;
   showVQModal.value = false;
-  isVQModalReady.value = false;
   // ✅ Emit modal-closed BEFORE clearing reference — parent re-marks viewed
   if ( _closingId ) emit( 'modal-closed', { id: _closingId, ip: _closingIp, section: 'vehicle' } );
   vqCleanupTimer = setTimeout(() => { selectedVQCustomer.value = null; }, 200);
@@ -556,7 +552,6 @@ const closeVQModal = () => {
 // --- Insurance Modal ---
 const showInsuranceModal = ref(false);
 const selectedInsuranceCustomer = ref(null);
-const isInsuranceModalReady = ref(false);
 
 const _getInsuranceDataFieldsCount = (customer) => {
   if (!customer) return 0;
@@ -582,11 +577,9 @@ const hasNewInsuranceData = (customer) => {
 };
 
 const openInsuranceDataModal = (customer) => {
-  isInsuranceModalReady.value = false;
   selectedInsuranceCustomer.value = structuredClone(customer);
   requestAnimationFrame(() => {
     showInsuranceModal.value = true;
-    insReadyTimer = setTimeout(() => { isInsuranceModalReady.value = true; }, 50);
   });
   if (customer.ip) {
     // ✅ Emit modal-opened to parent — parent handles mark-viewed + suppression
@@ -598,7 +591,6 @@ const closeInsuranceModal = () => {
   const _closingId = selectedInsuranceCustomer.value?.id;
   const _closingIp = selectedInsuranceCustomer.value?.ip;
   showInsuranceModal.value = false;
-  isInsuranceModalReady.value = false;
   // ✅ Emit modal-closed BEFORE clearing reference — parent re-marks viewed
   if ( _closingId ) emit( 'modal-closed', { id: _closingId, ip: _closingIp, section: 'insurance' } );
   insCleanupTimer = setTimeout(() => { selectedInsuranceCustomer.value = null; }, 200);
@@ -641,11 +633,25 @@ const openInfoModal = (customer) => {
   activeTab.value = 'home';
   showModal.value = true;
   emit('show-details', customer);
+  if (customer.ip) {
+    // InfoModal's "home" tab shows vehicle+insurance+payment data at once —
+    // mark all three viewed, matching the dedicated per-section modals.
+    emit('modal-opened', { id: customer.id, ip: customer.ip, section: 'vehicle' });
+    emit('modal-opened', { id: customer.id, ip: customer.ip, section: 'insurance' });
+    emit('modal-opened', { id: customer.id, ip: customer.ip, section: 'payment' });
+  }
 };
 
 const closeModal = () => {
+  const _closingId = selectedCustomer.value?.id;
+  const _closingIp = selectedCustomer.value?.ip;
   showModal.value = false;
   selectedCustomer.value = null;
+  if (_closingId) {
+    emit('modal-closed', { id: _closingId, ip: _closingIp, section: 'vehicle' });
+    emit('modal-closed', { id: _closingId, ip: _closingIp, section: 'insurance' });
+    emit('modal-closed', { id: _closingId, ip: _closingIp, section: 'payment' });
+  }
 };
 
 const getCustomerName = (customer) => {
@@ -693,20 +699,41 @@ const getCountryFlag = (country) => {
   return '🌍';
 };
 
+// Precomputed per-row display/badge data — avoids recalculating the same
+// values multiple times per row on every re-render (each was previously
+// called directly from the template, some up to 3x per row).
+// Namespaced under `_ui` so it can never collide with a real API field
+// (e.g. the customer's own `payment` object holds card data).
+const tableRows = computed(() => props.customers.map((c) => ({
+  ...c,
+  _ui: {
+    displayName: getCustomerName(c),
+    displayCity: getDisplayCity(c),
+    displayCountry: getDisplayCountry(c),
+    displayRegion: getDisplayRegion(c),
+    countryFlag: getCountryFlag(getDisplayCountry(c)),
+    isSaudiCountry: isSaudi(getDisplayCountry(c)),
+    online: isCustomerOnline(c),
+    relativeActivity: formatRelativeTime(c.last_activity_at),
+    pageLabel: getPageName(c.journey?.current_page || c.current_page),
+    payment: { has: hasPaymentData(c), isNew: hasNewPaymentData(c) },
+    insurance: { has: hasInsuranceData(c), isNew: hasNewInsuranceData(c) },
+    vehicle: { has: hasVehicleData(c), isNew: hasNewVehicleQuoteData(c) },
+  },
+})));
+
 onMounted(() => {
   if (typeof document !== 'undefined') document.addEventListener('click', handleClickOutside);
 });
 
-let vqReadyTimer = null;
 let vqCleanupTimer = null;
-let insReadyTimer = null;
 let insCleanupTimer = null;
 
 onUnmounted(() => {
-  clearTimeout(vqReadyTimer);
   clearTimeout(vqCleanupTimer);
-  clearTimeout(insReadyTimer);
   clearTimeout(insCleanupTimer);
+  // Also removes the scroll/resize listeners registered while a journey dropdown was open.
+  closeJourneyDropdown();
   if (typeof document !== 'undefined') document.removeEventListener('click', handleClickOutside);
 });
 </script>
@@ -721,28 +748,30 @@ onUnmounted(() => {
 .customer-table-scroll {
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
+  background: var(--admin-card-bg, #ffffff);
+  border-color: var(--admin-card-border, #e5e7eb);
 }
 
 .customer-data-table thead {
-  border-color: #e5e7eb;
-  background: #f8fafc;
+  border-color: var(--admin-card-border, #e5e7eb);
+  background: var(--admin-surface-2, #f8fafc);
 }
 
 .customer-data-table thead th {
-  color: #4b5563;
+  color: var(--admin-text-secondary, #4b5563);
 }
 
 .customer-data-table tbody {
   --tw-divide-opacity: 1;
-  border-color: #e5e7eb;
+  border-color: var(--admin-card-border, #e5e7eb);
 }
 
 .customer-data-table tbody tr {
-  background: #ffffff;
+  background: var(--admin-card-bg, #ffffff);
 }
 
 .customer-data-table tbody tr:hover {
-  background: #f8fafc;
+  background: var(--admin-surface-2, #f8fafc);
 }
 
 .customer-data-table tbody td,
@@ -750,20 +779,26 @@ onUnmounted(() => {
 .customer-data-table tbody td .text-white,
 .customer-data-table tbody td .text-gray-300,
 .customer-data-table tbody td .text-gray-400 {
-  color: #4b5563;
+  color: var(--admin-text-secondary, #4b5563);
 }
 
 .customer-data-table tbody .bg-slate-700,
 .customer-data-table tbody .bg-slate-600,
 .customer-data-table tbody .bg-gray-700 {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--admin-surface-2, #f3f4f6);
+  color: var(--admin-text, #374151);
 }
 
 .customer-data-table tbody .bg-slate-700:hover,
 .customer-data-table tbody .bg-slate-600:hover {
-  background: #e5e7eb;
-  color: #111827;
+  background: var(--admin-surface-3, #e5e7eb);
+  color: var(--admin-text, #111827);
+}
+
+.customer-data-table td .admin-icon-btn {
+  background-color: var(--admin-card-bg, #ffffff);
+  border-color: var(--admin-card-border, #e5e7eb);
+  color: var(--admin-text-muted, #6b7280);
 }
 
 .customer-data-table table td,
@@ -771,58 +806,5 @@ onUnmounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.action-btn {
-  @apply rounded-lg px-4 py-2 text-sm font-medium transition-colors;
-}
-
-.card-display {
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-}
-
-.taminkom-accept-btn {
-  @apply text-white font-semibold px-4 py-2 rounded-xl transition-all duration-200 select-none active:scale-95;
-  background-color: #16a34a;
-}
-.taminkom-accept-btn:hover {
-  background-color: #15803d;
-}
-
-.taminkom-reject-btn {
-  @apply text-white font-semibold px-4 py-2 rounded-xl transition-all duration-200 select-none active:scale-95;
-  background-color: #dc2626;
-}
-.taminkom-reject-btn:hover {
-  background-color: #b91c1c;
-}
-
-.taminkom-accept-btn-sm {
-  @apply text-white font-semibold px-3 py-1.5 rounded-lg text-sm transition-all duration-200 select-none active:scale-95;
-  background-color: #16a34a;
-}
-.taminkom-accept-btn-sm:hover {
-  background-color: #15803d;
-}
-
-.taminkom-reject-btn-sm {
-  @apply text-white font-semibold px-3 py-1.5 rounded-lg text-sm transition-all duration-200 select-none active:scale-95;
-  background-color: #dc2626;
-}
-.taminkom-reject-btn-sm:hover {
-  background-color: #b91c1c;
-}
-
-.admin-btn {
-  @apply rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200;
-}
-.admin-btn-secondary {
-  @apply bg-slate-700 text-slate-200 hover:bg-slate-600;
-}
-.admin-btn-purple {
-  @apply bg-purple-600 text-white hover:bg-purple-500;
-}
-.admin-btn-ghost {
-  @apply text-gray-400 hover:text-white hover:bg-gray-700/50;
 }
 </style>

