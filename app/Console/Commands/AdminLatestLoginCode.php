@@ -24,6 +24,12 @@ class AdminLatestLoginCode extends Command
 
     public function handle(): int
     {
+        if (! app()->environment('local')) {
+            $this->error('This command is available only in the local environment.');
+
+            return self::FAILURE;
+        }
+
         $email = trim((string) ($this->argument('email') ?: config('services.admin.email', '')));
         if ($email === '') {
             $this->error('Admin email is empty. Pass {email} or set ADMIN_EMAIL.');

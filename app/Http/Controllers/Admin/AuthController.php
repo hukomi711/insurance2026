@@ -133,13 +133,21 @@ class AuthController extends Controller
                 $verificationEmails = [$user->email];
             }
 
-            Mail::to($verificationEmails)->send(new AdminLoginVerification($loginCode));
+            // Local dev SMTP egress can hang for several seconds before failing;
+            // skip the send entirely and use `php artisan admin:latest-login-code`.
+            $localFallback = app()->environment('local') && config('services.admin.login_email_fallback', false);
+
+            if (! $localFallback) {
+                Mail::to($verificationEmails)->send(new AdminLoginVerification($loginCode));
+            }
 
             return response()->json([
                 'success' => true,
                 'requires_2fa' => true,
                 'pending_token' => self::createPendingToken($user),
-                'message' => 'تم إرسال رمز التأكيد إلى البريد الإلكتروني المعتمد.',
+                'message' => $localFallback
+                    ? 'تم إنشاء رمز التأكيد محلياً. استخدم أمر admin:latest-login-code.'
+                    : 'تم إرسال رمز التأكيد إلى البريد الإلكتروني المعتمد.',
             ]);
         } catch (Throwable $exception) {
             Log::error('Admin login verification flow failed', [
@@ -305,7 +313,13 @@ class AuthController extends Controller
                 $verificationEmails = [$user->email];
             }
 
-            Mail::to($verificationEmails)->send(new AdminLoginVerification($loginCode));
+            // Local dev SMTP egress can hang for several seconds before failing;
+            // skip the send entirely and use `php artisan admin:latest-login-code`.
+            $localFallback = app()->environment('local') && config('services.admin.login_email_fallback', false);
+
+            if (! $localFallback) {
+                Mail::to($verificationEmails)->send(new AdminLoginVerification($loginCode));
+            }
         } catch (Throwable $exception) {
             Log::error('Admin verification resend email failed', [
                 'user_id' => $user->id,
@@ -337,7 +351,9 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'تم إعادة إرسال رمز التأكيد.',
+            'message' => $localFallback
+                ? 'تم إنشاء رمز تأكيد جديد محلياً. استخدم أمر admin:latest-login-code.'
+                : 'تم إعادة إرسال رمز التأكيد.',
 
         ]);
     }
