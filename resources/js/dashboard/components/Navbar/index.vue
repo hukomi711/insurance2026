@@ -44,6 +44,17 @@
                 <i class="fa-solid" :class="soundsReady ? 'fa-volume-high' : 'fa-volume-xmark'" aria-hidden="true"></i>
             </button>
 
+            <!-- User Management (admin / super_admin only) -->
+            <button v-if="userStore.canManageDashboard"
+                type="button"
+                class="admin-touch hidden lg:inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors"
+                aria-label="إدارة المستخدمين"
+                title="إدارة المستخدمين"
+                :style="{ color: 'var(--admin-text-muted)' }"
+                @click="showUserManagement = true">
+                <i class="fa-solid fa-users-gear w-5 h-5" aria-hidden="true"></i>
+            </button>
+
             <!-- Notifications -->
             <div ref="notifRef" class="relative">
                 <button class="admin-touch relative inline-flex h-10 w-10 items-center justify-center rounded-xl transition-colors"
@@ -217,6 +228,14 @@
                             <span>الإعدادات</span>
                         </button>
 
+                        <button v-if="userStore.canManageDashboard"
+                            class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition-colors hover:bg-black/5"
+                            :style="{ color: 'var(--admin-text-secondary)' }"
+                            @click="openUserManagementFromMenu">
+                            <i class="fa-solid fa-users-gear w-4 text-center text-[13px]" aria-hidden="true"></i>
+                            <span>إدارة المستخدمين</span>
+                        </button>
+
                         <button
                             class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right text-sm transition-colors hover:bg-black/5"
                             :style="{ color: 'var(--admin-text-secondary)' }"
@@ -308,6 +327,13 @@
             :notification="selectedNotification"
             @close="showNotifDetail = false"
         />
+
+        <!-- User Management Modal -->
+        <UserManagementModal
+            v-if="userStore.canManageDashboard"
+            :open="showUserManagement"
+            @close="showUserManagement = false"
+        />
     </header>
 </template>
 
@@ -322,6 +348,7 @@ import Breadcrumb from './Breadcrumb.vue';
 import UserDropdown from './UserDropdown.vue';
 import ThemeToggle from '../ui/ThemeToggle.vue';
 const NotificationDetailModal = defineAsyncComponent( () => import( '../modals/NotificationDetailModal.vue' ) );
+const UserManagementModal = defineAsyncComponent( () => import( '../modals/UserManagementModal.vue' ) );
 
 const router = useRouter();
 const route = router.currentRoute;
@@ -340,6 +367,9 @@ const moreRef = ref(null);
 // ── Notification detail modal ──
 const showNotifDetail = ref(false);
 const selectedNotification = ref(null);
+
+// ── User management modal ──
+const showUserManagement = ref(false);
 
 // ── Dashboard search ──
 const searchQuery = ref('');
@@ -409,6 +439,11 @@ async function handleSoundToggle() {
 function openSettings() {
     closeMoreMenu();
     router.push({ name: 'dashboard-settings', query: { section: 'general' } });
+}
+
+function openUserManagementFromMenu() {
+    closeMoreMenu();
+    showUserManagement.value = true;
 }
 
 function openProfile() {

@@ -23,7 +23,7 @@ class EnsureIsAdminTest extends TestCase
     public function test_admin_user_passes(): void
     {
         $user = $this->createMock(User::class);
-        $user->method('isAdmin')->willReturn(true);
+        $user->method('hasDashboardAccess')->willReturn(true);
 
         $request = Request::create('/admin/dashboard');
         $request->setUserResolver(fn () => $user);
@@ -36,7 +36,7 @@ class EnsureIsAdminTest extends TestCase
     public function test_non_admin_user_gets_403(): void
     {
         $user = $this->createMock(User::class);
-        $user->method('isAdmin')->willReturn(false);
+        $user->method('hasDashboardAccess')->willReturn(false);
 
         $request = Request::create('/admin/dashboard');
         $request->setUserResolver(fn () => $user);

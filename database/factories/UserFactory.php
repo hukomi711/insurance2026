@@ -51,4 +51,24 @@ class UserFactory extends Factory
             'role' => 'admin',
         ]);
     }
+
+    /**
+     * Create a super_admin user.
+     */
+    public function superAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'super_admin',
+        ]);
+    }
+
+    /**
+     * Create a read-only viewer user.
+     */
+    public function viewer(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'viewer',
+        ]);
+    }
 }

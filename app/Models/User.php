@@ -115,10 +115,39 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is admin
+     * Recognized dashboard roles, least to most privileged.
+     */
+    public const ROLES = ['viewer', 'admin', 'super_admin'];
+
+    /**
+     * Full dashboard write access (admin + super_admin).
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return in_array($this->role, ['admin', 'super_admin'], true);
+    }
+
+    /**
+     * Only super_admin may create or delete dashboard user accounts.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    /**
+     * Read-only dashboard role.
+     */
+    public function isViewer(): bool
+    {
+        return $this->role === 'viewer';
+    }
+
+    /**
+     * Any recognized dashboard role (admin, super_admin, or viewer).
+     */
+    public function hasDashboardAccess(): bool
+    {
+        return in_array($this->role, self::ROLES, true);
     }
 }

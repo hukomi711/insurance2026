@@ -116,8 +116,8 @@ class AuthController extends Controller
             ]);
         }
 
-        // ── Ensure user has admin role ───────────────────────────
-        if (($user->role ?? null) !== 'admin') {
+        // ── Ensure user has a recognized dashboard role ──────────
+        if (! $user->hasDashboardAccess()) {
             LoginAttempt::record($request->email, $request->ip(), $request->userAgent(), 'failed', $user->id);
             throw ValidationException::withMessages([
                 'email' => ['ليس لديك صلاحية للدخول إلى لوحة التحكم.'],
@@ -292,7 +292,7 @@ class AuthController extends Controller
         }
         $user = User::findOrFail($userId);
 
-        if (($user->role ?? null) !== 'admin') {
+        if (! $user->hasDashboardAccess()) {
             return response()->json(['success' => false, 'message' => 'غير مصرح.'], 403);
         }
 

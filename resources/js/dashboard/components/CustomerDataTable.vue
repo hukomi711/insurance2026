@@ -71,17 +71,18 @@
                 </button>
 
                 <button
+                  v-if="!isViewer"
                   type="button"
                   :title="customer.is_blocked ? 'إلغاء حظر العميل' : 'حظر العميل'"
                   :class="[
                     'inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50',
                     customer.is_blocked ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700',
                   ]"
-                  :disabled="blockingCustomerId === customer.id"
+                  :disabled="String(blockingCustomerId) === String(customer.id)"
                   @click.stop="$emit(customer.is_blocked ? 'unblock' : 'block', customer)"
                 >
                   {{
-                    blockingCustomerId === customer.id
+                    String(blockingCustomerId) === String(customer.id)
                       ? ( customer.is_blocked ? 'جاري إلغاء الحظر...' : 'جاري الحظر...' )
                       : ( customer.is_blocked ? 'إلغاء الحظر' : 'حظر' )
                   }}
@@ -298,10 +299,12 @@
             <button
               v-for="page in pages"
               :key="page.value"
-              class="flex min-h-10 w-full items-center gap-2 px-3 py-2 text-right text-sm transition-colors hover:bg-blue-50"
+              class="flex min-h-10 w-full items-center gap-2 px-3 py-2 text-right text-sm transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
               :class="
                 getActiveCustomerPage() === page.url ? 'bg-blue-600 text-white hover:bg-blue-700' : 'text-gray-700'
               "
+              :disabled="isViewer"
+              :title="isViewer ? 'لا تملك صلاحية تغيير المسار' : ''"
               @click="redirectCustomerToPage(activeJourneyDropdown, page.value)"
             >
               <i :class="'fa-solid ' + page.icon" class="w-4 h-4 text-center text-xs opacity-60 shrink-0"></i>
@@ -386,13 +389,17 @@
 </template>
 
 <script setup>
-import { ref, toRef, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
+import { ref, toRef, computed, onMounted, onUnmounted, defineAsyncComponent } from 'vue';
 const InfoModal = defineAsyncComponent( () => import( './modals/InfoModal.vue' ) );
 const BasicDataModal = defineAsyncComponent( () => import( './modals/BasicDataModal.vue' ) );
 const InsuranceDataModal = defineAsyncComponent( () => import( './modals/InsuranceDataModal.vue' ) );
 const PaymentModal = defineAsyncComponent( () => import( './modals/PaymentModal.vue' ) );
 import { usePaymentModal } from '@/dashboard/composables/usePaymentModal';
 import { useJourneyDropdown } from '@/dashboard/composables/useJourneyDropdown';
+import { useUserStore } from '@/store/modules/user';
+
+const userStore = useUserStore();
+const isViewer = computed( () => userStore.role === 'viewer' );
 
 const props = defineProps({
   customers: {

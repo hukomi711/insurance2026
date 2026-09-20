@@ -76,6 +76,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureIsAdmin::class,
+            'admin.write' => \App\Http\Middleware\EnsureCanManageDashboard::class,
             'admin.ip' => \App\Http\Middleware\AdminIpRestriction::class,
             'block.bots' => \App\Http\Middleware\BlockBotsAndCrawlers::class,
             'geo.api' => \App\Http\Middleware\ApiGeoRestriction::class,

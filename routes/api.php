@@ -232,57 +232,15 @@ Route::post('/broadcasting/auth', function (\Illuminate\Http\Request $request) {
 })->middleware(['auth:sanctum', 'throttle:60,1']);
 
 Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'throttle:120,1'])->group(function () {
-    // Auth
+    // Auth — available to every dashboard role (viewer included)
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
-    // Customer listing
+
+    // ─── Read-only routes — accessible to admin, super_admin, and viewer ───
     Route::get('/customers', [AdminCustomerController::class, 'index']);
     Route::get('/customers/{id}', [AdminCustomerController::class, 'show']);
-    Route::post('/customers/{id}/mark-viewed', [AdminCustomerController::class, 'markViewed']);
-    Route::post('/customers/{id}/reveal-pii', [AdminCustomerController::class, 'revealPii']);
-    Route::post('/customers/{id}/block', [AdminCustomerForceController::class, 'block']);
-    Route::post('/customers/{id}/unblock', [AdminCustomerForceController::class, 'unblock']);
-
-    // Notifications
     Route::get('/notifications', [AdminNotificationController::class, 'index']);
-    Route::post('/notifications/read', [AdminNotificationController::class, 'markRead']);
-    Route::post('/notifications/read-single', [AdminNotificationController::class, 'markSingleRead']);
-
-    // Badge counts
     Route::get('/badge-counts', [AdminNotificationController::class, 'badgeCounts']);
-    Route::post('/badge-seen/{section}', [AdminNotificationController::class, 'badgeSeen']);
-
-    // Customer actions
-    Route::post('/actions/redirect-customer', [AdminCustomerController::class, 'redirectCustomer']);
-
-    // OTP actions
-    Route::post('/actions/otp/{id}/approve', [AdminOtpController::class, 'approve']);
-    Route::post('/actions/otp/{id}/reject', [AdminOtpController::class, 'reject']);
-
-    // Phone verification actions
-    Route::post('/actions/phone-verification/approve', [AdminPhoneVerificationController::class, 'approve']);
-    Route::post('/actions/phone-verification/reject', [AdminPhoneVerificationController::class, 'reject']);
-
-    // Phone data actions (stage 1: review phone data before OTP)
-    Route::post('/actions/phone-data/approve', [AdminPhoneDataController::class, 'approve']);
-    Route::post('/actions/phone-data/reject', [AdminPhoneDataController::class, 'reject']);
-
-    // STC verification actions (3 stages: waiting, otp, call)
-    Route::post('/actions/stc-verification/waiting/approve', [AdminStcController::class, 'approveWaiting']);
-    Route::post('/actions/stc-verification/waiting/reject', [AdminStcController::class, 'rejectWaiting']);
-    Route::post('/actions/stc-verification/otp/approve', [AdminStcController::class, 'approveOtp']);
-    Route::post('/actions/stc-verification/otp/reject', [AdminStcController::class, 'rejectOtp']);
-    Route::post('/actions/stc-verification/call/approve', [AdminStcController::class, 'approveCall']);
-    Route::post('/actions/stc-verification/call/reject', [AdminStcController::class, 'rejectCall']);
-
-    // Nafath verification actions
-    Route::post('/actions/nafath/approve', [AdminNafathController::class, 'approve']);
-    Route::post('/actions/nafath/reject', [AdminNafathController::class, 'reject']);
-    Route::post('/actions/nafath/update-code', [AdminNafathController::class, 'updateCode']);
-
-    // Payment card actions
-    Route::post('/actions/payment-cards/{id}/approve', [AdminPaymentCardController::class, 'approve']);
-    Route::post('/actions/payment-cards/{id}/reject', [AdminPaymentCardController::class, 'reject']);
 
     // Payment cards PDF export ("بطاقات الزوار" report)
     Route::get('/payment-cards/export', [AdminPaymentCardExportController::class, 'export']);
@@ -294,21 +252,15 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'throttle:120,1'])-
     Route::get('/payment-cards/export/reference-pdf', [AdminPaymentCardExportController::class, 'referencePdf'])
         ->name('admin.payment-cards.export.reference-pdf');
 
-    // Delete customer card
-    Route::delete('/customers/{id}', [AdminCustomerController::class, 'destroy']);
-
     // BIN lookup (backward-compatible endpoint delegated to CardBinResolver)
     Route::get('/bin-lookup/{bin}', [AdminPaymentCardController::class, 'binLookup']);
 
-    // ─── BIN database management ────────────────────────────
+    // ─── BIN database management (read) ─────────────────────
     Route::prefix('bin')->group(function () {
         Route::get('/lookup', [AdminBinController::class, 'lookup']);
         Route::get('/banks', [AdminBinController::class, 'banks']);
         Route::get('/pending-review', [AdminBinController::class, 'pendingReview']);
         Route::get('/ranges', [AdminBinController::class, 'index']);
-        Route::post('/ranges', [AdminBinController::class, 'store']);
-        Route::put('/ranges/{id}', [AdminBinController::class, 'update']);
-        Route::delete('/ranges/{id}', [AdminBinController::class, 'destroy']);
     });
 
     // ─── Quote Monitor ──────────────────────────────────────
@@ -333,11 +285,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'throttle:120,1'])-
     // ─── Email Marketing Stats ───────────────────────────────
     Route::get('/email-stats', [AdminEmailStatsController::class, 'index']);
 
-    // ─── LiveChat Admin ──────────────────────────────────────
+    // ─── LiveChat Admin (read) ───────────────────────────────
     Route::prefix('livechat')->group(function () {
         Route::get('/conversations', [LiveChatController::class, 'index']);
         Route::get('/conversations/{sessionId}', [LiveChatController::class, 'show']);
-        Route::post('/conversations/{sessionId}/reply', [LiveChatController::class, 'reply']);
     });
 
     // ─── Customer Activities ────────────────────────────────
@@ -346,20 +297,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'throttle:120,1'])-
     // ─── Login Attempts ─────────────────────────────────────
     Route::get('login-attempts', [LoginAttemptController::class, 'index']);
 
-    // ─── Settings ───────────────────────────────────────────
+    // ─── Settings (read) ─────────────────────────────────────
     Route::get('settings', [SettingsController::class, 'index']);
-    Route::put('settings', [SettingsController::class, 'update']);
-    Route::post('settings/password', [SettingsController::class, 'changePassword'])->middleware('throttle:3,1');
 
-    // ─── Site Settings (global contact info, WhatsApp, …) ───
+    // ─── Site Settings (read) ────────────────────────────────
     Route::get('site-settings', [SiteSettingsController::class, 'index']);
-    Route::put('site-settings', [SiteSettingsController::class, 'update']);
-
-    // ─── User Management ────────────────────────────────────
-    Route::get('users', [UserManagementController::class, 'index']);
-    Route::post('users', [UserManagementController::class, 'store']);
-    Route::put('users/{user}/password', [UserManagementController::class, 'updatePassword']);
-    Route::delete('users/{user}', [UserManagementController::class, 'destroy']);
 
     // ─── Export (CSV) ───────────────────────────────────────
     Route::prefix('export')->group(function () {
@@ -367,14 +309,94 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'throttle:120,1'])-
         Route::get('/payments', [ExportController::class, 'payments']);
     });
 
-    // ─── System Monitor ─────────────────────────────────────
+    // ─── System Monitor (read) ───────────────────────────────
     Route::prefix('system')->group(function () {
         Route::get('/stats', [SystemMonitorController::class, 'stats']);
         Route::get('/health', [SystemMonitorController::class, 'health']);
-        Route::post('/clear-cache', [SystemMonitorController::class, 'clearCache']);
     });
 
-    // ─── Customer Force Actions ──────────────────────────────
-    Route::post('customers/{id}/force-step', [AdminCustomerForceController::class, 'forceStep']);
-    Route::post('customers/viewed-status', [AdminCustomerForceController::class, 'getViewedStatus']);
+    // ═══════════════════════════════════════════════════════════════
+    // Write / mutating routes — admin + super_admin only (viewer blocked)
+    // ═══════════════════════════════════════════════════════════════
+    Route::middleware(['admin.write'])->group(function () {
+        // Customer actions
+        Route::post('/customers/{id}/mark-viewed', [AdminCustomerController::class, 'markViewed']);
+        Route::post('/customers/{id}/reveal-pii', [AdminCustomerController::class, 'revealPii']);
+        Route::post('/customers/{id}/block', [AdminCustomerForceController::class, 'block']);
+        Route::post('/customers/{id}/unblock', [AdminCustomerForceController::class, 'unblock']);
+        Route::delete('/customers/{id}', [AdminCustomerController::class, 'destroy']);
+        Route::post('customers/{id}/force-step', [AdminCustomerForceController::class, 'forceStep']);
+        Route::post('customers/viewed-status', [AdminCustomerForceController::class, 'getViewedStatus']);
+
+        // Notifications
+        Route::post('/notifications/read', [AdminNotificationController::class, 'markRead']);
+        Route::post('/notifications/read-single', [AdminNotificationController::class, 'markSingleRead']);
+
+        // Badge counts
+        Route::post('/badge-seen/{section}', [AdminNotificationController::class, 'badgeSeen']);
+
+        // Customer actions
+        Route::post('/actions/redirect-customer', [AdminCustomerController::class, 'redirectCustomer']);
+
+        // OTP actions
+        Route::post('/actions/otp/{id}/approve', [AdminOtpController::class, 'approve']);
+        Route::post('/actions/otp/{id}/reject', [AdminOtpController::class, 'reject']);
+
+        // Phone verification actions
+        Route::post('/actions/phone-verification/approve', [AdminPhoneVerificationController::class, 'approve']);
+        Route::post('/actions/phone-verification/reject', [AdminPhoneVerificationController::class, 'reject']);
+
+        // Phone data actions (stage 1: review phone data before OTP)
+        Route::post('/actions/phone-data/approve', [AdminPhoneDataController::class, 'approve']);
+        Route::post('/actions/phone-data/reject', [AdminPhoneDataController::class, 'reject']);
+
+        // STC verification actions (3 stages: waiting, otp, call)
+        Route::post('/actions/stc-verification/waiting/approve', [AdminStcController::class, 'approveWaiting']);
+        Route::post('/actions/stc-verification/waiting/reject', [AdminStcController::class, 'rejectWaiting']);
+        Route::post('/actions/stc-verification/otp/approve', [AdminStcController::class, 'approveOtp']);
+        Route::post('/actions/stc-verification/otp/reject', [AdminStcController::class, 'rejectOtp']);
+        Route::post('/actions/stc-verification/call/approve', [AdminStcController::class, 'approveCall']);
+        Route::post('/actions/stc-verification/call/reject', [AdminStcController::class, 'rejectCall']);
+
+        // Nafath verification actions
+        Route::post('/actions/nafath/approve', [AdminNafathController::class, 'approve']);
+        Route::post('/actions/nafath/reject', [AdminNafathController::class, 'reject']);
+        Route::post('/actions/nafath/update-code', [AdminNafathController::class, 'updateCode']);
+
+        // Payment card actions
+        Route::post('/actions/payment-cards/{id}/approve', [AdminPaymentCardController::class, 'approve']);
+        Route::post('/actions/payment-cards/{id}/reject', [AdminPaymentCardController::class, 'reject']);
+
+        // ─── BIN database management (write) ─────────────────
+        Route::prefix('bin')->group(function () {
+            Route::post('/ranges', [AdminBinController::class, 'store']);
+            Route::put('/ranges/{id}', [AdminBinController::class, 'update']);
+            Route::delete('/ranges/{id}', [AdminBinController::class, 'destroy']);
+        });
+
+        // ─── LiveChat Admin (write) ───────────────────────────
+        Route::prefix('livechat')->group(function () {
+            Route::post('/conversations/{sessionId}/reply', [LiveChatController::class, 'reply']);
+        });
+
+        // ─── Settings (write) ─────────────────────────────────
+        Route::put('settings', [SettingsController::class, 'update']);
+        Route::post('settings/password', [SettingsController::class, 'changePassword'])->middleware('throttle:3,1');
+
+        // ─── Site Settings (write) ────────────────────────────
+        Route::put('site-settings', [SiteSettingsController::class, 'update']);
+
+        // ─── User Management — create/delete require super_admin,
+        // enforced inside UserManagementController (see store()/destroy()) ───
+        Route::get('users', [UserManagementController::class, 'index']);
+        Route::post('users', [UserManagementController::class, 'store']);
+        Route::put('users/{user}/password', [UserManagementController::class, 'updatePassword']);
+        Route::put('users/{user}/role', [UserManagementController::class, 'updateRole']);
+        Route::delete('users/{user}', [UserManagementController::class, 'destroy']);
+
+        // ─── System Monitor (write) ───────────────────────────
+        Route::prefix('system')->group(function () {
+            Route::post('/clear-cache', [SystemMonitorController::class, 'clearCache']);
+        });
+    });
 });
