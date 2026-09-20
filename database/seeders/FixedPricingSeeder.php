@@ -9,7 +9,7 @@ class FixedPricingSeeder extends Seeder
 {
     /**
      * Fixed pricing: 13 companies × 4 sub-types
-     * 
+     *
      * Each company has one fixed base price that applies to all sub-types.
      * The pricing is independent of vehicle value, driver profile, or any other factor.
      */
@@ -17,7 +17,7 @@ class FixedPricingSeeder extends Seeder
     {
         // Fixed base price per company (SAR, without VAT)
         $fixedPrices = [
-            1  => 499,      // تري للتأمين
+            1  => 399,      // تري للتأمين
             5  => 749,      // ملاذ للتأمين
             8  => 999,      // العناية السعودية للتأمين
             6  => 1249,     // سايكو للتأمين

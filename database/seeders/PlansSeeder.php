@@ -15,7 +15,7 @@ class PlansSeeder extends Seeder
     {
         $subTypes = ['thirdParty', 'comprehensive'];
         $fixedCompanyPrices = [
-            1  => 499,
+            1  => 399,
             2  => 1999,
             3  => 2749,
             4  => 2999,

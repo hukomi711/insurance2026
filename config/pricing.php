@@ -18,7 +18,7 @@ return [
 
     // Fixed base prices by company_id (SAR, before VAT).
     'fixed_company_prices' => [
-        1  => 499,
+        1  => 399,
         5  => 749,
         8  => 999,
         6  => 1249,

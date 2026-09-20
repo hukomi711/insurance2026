@@ -82,7 +82,7 @@ class QuoteCalculationApiTest extends TestCase
         // Second quote: third party — fixed price, no dynamic factors
         $this->assertEquals(1, $data['quotes'][1]['companyId']);
         $this->assertEquals('thirdParty', $data['quotes'][1]['subType']);
-        $this->assertEquals(499, $data['quotes'][1]['annualPrice']);
+        $this->assertEquals(399, $data['quotes'][1]['annualPrice']);
     }
 
     public function test_validation_rejects_missing_plans(): void

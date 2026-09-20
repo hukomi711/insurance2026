@@ -19,7 +19,7 @@ const PRICES_FILE = path.join(__dirname, '../resources/js/data/plans.js');
 // نفس السعر لكل من ضد الغير والشامل
 const FIXED_PRICES = {
     // companyId: price (ريال سعودي)
-    1: 499,     // تري للتأمين
+    1: 399,     // تري للتأمين
     5: 749,     // ملاذ للتأمين
     8: 999,     // العناية السعودية للتأمين
     6: 1249,    // سايكو للتأمين

@@ -14,7 +14,7 @@ export const VAT_RATE = 0.15;
  * companyId => base annual price (SAR, before VAT)
  */
 export const FIXED_COMPANY_PRICES = {
-    1: 499,
+    1: 399,
     5: 749,
     8: 999,
     6: 1249,

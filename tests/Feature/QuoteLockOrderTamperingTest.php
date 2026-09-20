@@ -98,10 +98,10 @@ class QuoteLockOrderTamperingTest extends TestCase
             ],
         ]);
 
-        // company 1 (499) + comprehensive gap (250) + deductible 1000 (0) + addons (85 + 510)
-        $this->assertEqualsWithDelta(1344.0, (float) $lock['subtotal'], 0.001);
-        $this->assertEqualsWithDelta(201.6, (float) $lock['vat_amount'], 0.001);
-        $this->assertEqualsWithDelta(1545.6, (float) $lock['total'], 0.001);
+        // company 1 (399) + comprehensive gap (250) + deductible 1000 (0) + addons (85 + 510)
+        $this->assertEqualsWithDelta(1244.0, (float) $lock['subtotal'], 0.001);
+        $this->assertEqualsWithDelta(186.6, (float) $lock['vat_amount'], 0.001);
+        $this->assertEqualsWithDelta(1430.6, (float) $lock['total'], 0.001);
 
         $snapshot = Cache::get('quote_lock:' . $lock['quote_lock_token']);
         $this->assertIsArray($snapshot);
@@ -176,16 +176,19 @@ class QuoteLockOrderTamperingTest extends TestCase
     public function test_order_accepts_matching_addon_ids_even_if_addon_prices_are_client_tampered(): void
     {
         $lock = $this->issueQuoteLock([
-            'addon_ids' => [0],
+            'addon_ids' => [0, 1],
             'addons' => [
                 ['id' => 0, 'name' => $this->addonName(0), 'price' => 777777],
+                ['id' => 1, 'name' => $this->addonName(1), 'price' => 666666],
             ],
         ]);
 
         $payload = $this->orderPayloadFromLock($lock, [
             // Keep addon_ids consistent with lock, but keep forged addon price.
+            'addon_ids' => [0, 1],
             'addons' => [
                 ['id' => 0, 'name' => $this->addonName(0), 'price' => 999999],
+                ['id' => 1, 'name' => $this->addonName(1), 'price' => 888888],
             ],
         ]);
 
