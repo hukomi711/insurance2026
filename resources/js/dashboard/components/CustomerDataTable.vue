@@ -237,7 +237,27 @@
             </td>
 
             <!-- IP -->
-            <td class="px-3 py-2 font-mono text-xs text-gray-700 whitespace-nowrap">{{ customer.ip }}</td>
+            <td class="px-3 py-2 text-center whitespace-nowrap">
+              <img
+                v-if="getCustomerFlagUrl(customer)"
+                :src="getCustomerFlagUrl(customer)"
+                :alt="getCustomerCountryCode(customer) || 'country'"
+                :title="customer.location_country || getCustomerCountryCode(customer) || customer.ip || ''"
+                class="mx-auto h-5 w-7 rounded-sm object-cover"
+                width="28"
+                height="20"
+                loading="lazy"
+                referrerpolicy="no-referrer"
+              >
+
+              <span
+                v-else
+                class="text-base"
+                :title="customer.ip || 'الدولة غير معروفة'"
+              >
+                🌐
+              </span>
+            </td>
 
             <!-- آخر نشاط -->
             <td class="px-2 py-2 text-center text-xs text-gray-500 whitespace-nowrap" :title="customer.last_activity_at">
@@ -685,6 +705,24 @@ const toIsoCode = (country) => {
   if (!country) return null;
   if (country.length === 2) return country.toUpperCase();
   return countryCodeMap[country] || null;
+};
+
+const getCustomerCountryCode = (customer) => {
+  // Primary source: ISO code saved by GeoLocationService.
+  const directCode = toIsoCode(customer?.country);
+
+  if (directCode) return directCode;
+
+  // Fallback for legacy records that stored only the country name.
+  return toIsoCode(customer?.location_country);
+};
+
+const getCustomerFlagUrl = (customer) => {
+  const code = getCustomerCountryCode(customer);
+
+  if (!code) return null;
+
+  return `https://flagsapi.com/${code}/flat/32.png`;
 };
 
 const isSaudi = (country) => toIsoCode(country) === 'SA';
