@@ -59,28 +59,28 @@
             <!-- OTP Input -->
             <div class="tds-field">
                 <label for="PaymentCode" class="tds-field__label">رمز التحقق</label>
-                <input
-                    id="PaymentCode"
-                    v-model="otpCode"
-                    type="text"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                    name="one-time-code"
-                    maxlength="6"
-                    minlength="4"
-                    enterkeyhint="done"
-                    autocapitalize="off"
-                    autocorrect="off"
-                    spellcheck="false"
-                    :disabled="isVerifying || codeExpired"
-                    placeholder="أدخل رمز التحقق"
-                    class="tds-field__input"
-                    autocomplete="one-time-code"
-                    @input="handleOtpInput"
-                    @paste="handleOtpPaste"
-                />
             </div>
-
+            <input
+            id="PaymentCode"
+            ref="otpInputRef"
+            v-model="otpCode"
+            name="one-time-code"
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            minlength="4"
+            maxlength="6"
+            autocomplete="one-time-code"
+            enterkeyhint="done"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            :disabled="isVerifying || codeExpired"
+            placeholder="أدخل رمز التحقق"
+            class="tds-field__input"
+            @input="handleOtpInput"
+            @paste="handleOtpPaste"
+            />
             <!-- Timer -->
             <div class="tds-timer" :class="{ 'tds-timer--urgent': expiryUrgent }">
                 ينتهي الرمز خلال
