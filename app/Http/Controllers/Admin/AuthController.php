@@ -157,7 +157,8 @@ class AuthController extends Controller
                 'error' => $exception->getMessage(),
             ]);
 
-            $fallbackEnabled = (bool) config('services.admin.login_email_fallback');
+            $fallbackEnabled = app()->environment('local')
+                && (bool) config('services.admin.login_email_fallback', false);
             if ($fallbackEnabled) {
                 Log::warning('Admin login SMTP fallback mode active', [
                     'user_id' => $user->id,
@@ -185,7 +186,7 @@ class AuthController extends Controller
                 'fallback_mode' => $fallbackEnabled,
                 'message' => $fallbackEnabled
                     ? 'تم إنشاء طلب التحقق، لكن البريد غير متاح حالياً. استخدم أمر admin:latest-login-code على السيرفر للحصول على الرمز.'
-                    : 'تم إنشاء طلب التحقق، لكن البريد غير متاح حالياً. يمكنك متابعة العملية باستخدام الرمز من السيرفر إذا لزم الأمر.',
+                    : 'تعذر إرسال رمز التحقق عبر البريد حالياً. يرجى المحاولة مرة أخرى لاحقاً.',
             ]);
         }
     }
@@ -328,7 +329,10 @@ class AuthController extends Controller
                 'error' => $exception->getMessage(),
             ]);
 
-            if (config('services.admin.login_email_fallback')) {
+            if (
+                app()->environment('local')
+                && config('services.admin.login_email_fallback', false)
+            ) {
                 Log::warning('Admin verification resend email fallback used', [
                     'user_id' => $user->id,
                     'code_id' => $loginCode->id,

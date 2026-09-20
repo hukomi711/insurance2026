@@ -12,6 +12,7 @@
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^2.10.1",
         "mpdf/mpdf": "^8.3",
+        "resend/resend-php": "^1.15",
         "spatie/browsershot": "^5.3"
     },
     "require-dev": {
