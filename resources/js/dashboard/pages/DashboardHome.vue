@@ -1259,22 +1259,6 @@ watch( () => route.query.view, view => {
 }, { immediate: true } );
 
 /**
- * Remove duplicate customers from list — prefer stable row id.
- * Falls back to session/IP only when the backend did not send an id.
- */
-function deduplicateByIp ( list ) {
-    const seen = new Set();
-    return list.filter( c => {
-        const key = c.id != null
-            ? `id:${ c.id }`
-            : ( c.session_id ? `session:${ c.session_id }` : `ip:${ c.ip || 'unknown' }` );
-        if ( seen.has( key ) ) return false;
-        seen.add( key );
-        return true;
-    } );
-}
-
-/**
  * Decide whether a customer row should appear in the dashboard.
  * The API now returns every real visitor/customer row; keep every non-empty row.
  */
@@ -1617,7 +1601,7 @@ const refreshCustomers = async () => {
         _lastDataHash = fingerprint;
         const guarded = applyNotificationGuards( rows );
         detectAndPlaySounds( guarded );
-        customers.value = deduplicateByIp( applyOrdering( guarded ) );
+        customers.value = applyOrdering( guarded );
         // Update pagination state from API response
         currentPage.value = data.current_page ?? 1;
         lastPage.value = data.last_page ?? 1;
@@ -1689,8 +1673,8 @@ const patchSingleCustomer = async ( customerId ) => {
             updated[ idx ] = guarded;
             customers.value = applyOrdering( updated );
         } else {
-            // New customer — prepend and deduplicate to be safe
-            customers.value = deduplicateByIp( applyOrdering( [ guarded, ...customers.value ] ) );
+            // New customer — prepend while retaining historical profile rows.
+            customers.value = applyOrdering( [ guarded, ...customers.value ] );
         }
         // The row payload does not carry the dashboard-wide aggregate. Queue
         // one coalesced refresh so WebSocket updates keep the server summary

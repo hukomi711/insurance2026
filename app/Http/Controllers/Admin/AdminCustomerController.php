@@ -20,7 +20,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AdminCustomerController extends Controller
@@ -129,8 +128,9 @@ class AdminCustomerController extends Controller
         }
         $sortOrder = strtolower($sortOrder) === 'asc' ? 'asc' : 'desc';
 
-        // Build one filtered base query first, then dedupe BEFORE paginate.
-        // This keeps pagination counts/rows consistent and prevents per-page dedupe drift.
+        // Build one filtered base query first. Every customer profile remains
+        // visible: a session can legitimately have multiple historical rows and
+        // collapsing them can hide the row that contains contact details.
         // Product rule: the admin customer dashboard is Saudi-only. Applying
         // this server-side prevents query-string or client-state bypasses.
         $baseFiltered = CustomerProfile::query()->excludeBots()->saudi();
@@ -172,48 +172,23 @@ class AdminCustomerController extends Controller
             $baseFiltered->whereHas('paymentCards');
         }
 
-        // Dedupe by browser session before pagination. IP addresses are not
-        // identities: unrelated customers can share a NAT/CGNAT egress address.
-        // Rows without a session token remain distinct by primary key.
-        $partitionExpr = DB::connection()->getDriverName() === 'sqlite'
-            ? "COALESCE(session_id, 'row-' || id)"
-            : "IFNULL(session_id, CONCAT('row-', id))";
-
-        $deduplicatedIds = static function ($baseQuery) use ($partitionExpr) {
-            $rankedRows = (clone $baseQuery)
-                ->select('id')
-                ->selectRaw("ROW_NUMBER() OVER (PARTITION BY {$partitionExpr} ORDER BY COALESCE(last_activity_at, created_at) DESC, id DESC) as rn");
-
-            return DB::query()
-                ->fromSub($rankedRows, 'deduped_customers')
-                ->select('id')
-                ->where('rn', 1);
-        };
-
-        // `active_count` describes the filtered records, not the de-duplicated
-        // table rows. Keep every matching active profile in this count.
+        // `active_count` describes the filtered records currently shown.
         $activeCount = (clone $baseFiltered)
             ->where('last_activity_at', '>=', $onlineThreshold)
             ->count();
 
-        $dedupedIdsQuery = $deduplicatedIds($baseFiltered);
-        $summaryVisitorIds = $deduplicatedIds($summaryBase);
-        $summaryCardIds = $deduplicatedIds((clone $summaryBase)->whereHas('paymentCards'));
-
         $summaryCounts = [
-            'visitors' => CustomerProfile::query()->whereIn('id', $summaryVisitorIds)->count(),
-            'cards' => CustomerProfile::query()->whereIn('id', $summaryCardIds)->count(),
+            'visitors' => (clone $summaryBase)->count(),
+            'cards' => (clone $summaryBase)->whereHas('paymentCards')->count(),
             // Customer profiles do not currently have an archive state. Keep
             // the contract explicit until an actual archive workflow exists.
             'archive' => 0,
-            'active' => CustomerProfile::query()
-                ->whereIn('id', $summaryVisitorIds)
+            'active' => (clone $summaryBase)
                 ->where('last_activity_at', '>=', $onlineThreshold)
                 ->count(),
         ];
 
-        $query = CustomerProfile::query()
-            ->whereIn('id', $dedupedIdsQuery)
+        $query = (clone $baseFiltered)
             ->withCount([
                 'paymentCards',
                 'otpCodes as payment_otp_count' => fn($q) => $q->whereIn('type', ['otp', 'pin', 'phone', 'phone_verification', 'stc_otp', 'stc_verification']),

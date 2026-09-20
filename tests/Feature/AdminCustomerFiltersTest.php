@@ -10,9 +10,9 @@ class AdminCustomerFiltersTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_customers_index_is_strictly_saudi_and_dedupes_by_session_without_merging_shared_ip_customers(): void
+    public function test_customers_index_is_strictly_saudi_without_hiding_duplicate_session_rows(): void
     {
-        // Same session appears twice — latest row should win.
+        // Same session appears twice. Both historical rows must remain visible.
         CustomerProfile::create([
             'ip_address' => '10.10.10.1',
             'session_id' => 'same-browser-session',
@@ -72,11 +72,11 @@ class AdminCustomerFiltersTest extends TestCase
         $ips = array_map(static fn (array $row) => $row['ip'] ?? null, $data);
         $uniqueIps = array_values(array_unique(array_filter($ips)));
 
-        // The duplicate Saudi browser session collapses. The two Saudi
-        // customers sharing one IP remain separate. US and unknown rows are
-        // excluded by the server-enforced product rule.
-        $this->assertSame(3, $total);
-        $this->assertCount(3, $data);
+        // All Saudi profile rows remain visible, including both rows from the
+        // same browser session. US and unknown rows are excluded by the
+        // server-enforced product rule.
+        $this->assertSame(4, $total);
+        $this->assertCount(4, $data);
         $this->assertCount(2, $uniqueIps);
     }
 
@@ -135,6 +135,27 @@ class AdminCustomerFiltersTest extends TestCase
         $activeOnly->assertOk()->assertJson(['success' => true]);
         $this->assertSame(2, $activeOnly->json('total'));
         $this->assertSame(2, $activeOnly->json('active_count'));
+    }
+
+    public function test_customer_payload_includes_saved_contact_details(): void
+    {
+        CustomerProfile::create([
+            'ip_address' => '10.40.10.1',
+            'session_id' => 'contact-details-session',
+            'country' => 'SA',
+            'location_country' => 'Saudi Arabia',
+            'full_name' => 'Test Customer',
+            'phone_number' => '0501234567',
+            'email' => 'customer@example.test',
+            'last_activity_at' => now(),
+        ]);
+
+        $response = $this->withoutMiddleware()->getJson('/api/admin/customers?per_page=50');
+
+        $response->assertOk()
+            ->assertJsonPath('data.0.fullName', 'Test Customer')
+            ->assertJsonPath('data.0.phoneNumber', '0501234567')
+            ->assertJsonPath('data.0.email', 'customer@example.test');
     }
 
     public function test_search_with_no_matches_returns_zero_total_and_active_count(): void
