@@ -72,9 +72,11 @@ RUN apk add --no-cache \
     linux-headers \
     curl \
     nodejs \
+    npm \
     chromium \
     && CHROME_BIN="$(command -v chromium-browser || command -v chromium)" \
     && [ "$CHROME_BIN" = "/usr/bin/chromium-browser" ] || ln -sf "$CHROME_BIN" /usr/bin/chromium-browser \
+    && PUPPETEER_SKIP_DOWNLOAD=true PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm install -g puppeteer \
     && apk add --no-cache --virtual .build-deps \
     icu-dev \
     libzip-dev \
