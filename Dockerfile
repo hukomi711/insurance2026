@@ -71,6 +71,10 @@ RUN apk add --no-cache \
     oniguruma \
     linux-headers \
     curl \
+    nodejs \
+    chromium \
+    && CHROME_BIN="$(command -v chromium-browser || command -v chromium)" \
+    && [ "$CHROME_BIN" = "/usr/bin/chromium-browser" ] || ln -sf "$CHROME_BIN" /usr/bin/chromium-browser \
     && apk add --no-cache --virtual .build-deps \
     icu-dev \
     libzip-dev \
