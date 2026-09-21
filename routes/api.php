@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\CustomerActivityController;
 use App\Http\Controllers\Admin\AdminEmailStatsController;
 use App\Http\Controllers\Admin\DashboardStatsController;
+use App\Http\Controllers\Admin\DataCleanupController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\LiveChatController;
 use App\Http\Controllers\Admin\LoginAttemptController;
@@ -398,6 +399,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'throttle:120,1'])-
         // ─── System Monitor (write) ───────────────────────────
         Route::prefix('system')->group(function () {
             Route::post('/clear-cache', [SystemMonitorController::class, 'clearCache']);
+            Route::post('/clear-customer-data', [DataCleanupController::class, 'clearCustomerData']);
         });
     });
 });

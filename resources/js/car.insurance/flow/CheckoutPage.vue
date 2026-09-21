@@ -503,6 +503,34 @@ onMounted( () => {
         }
     }
 
+    // Returning from OTP after a reload clears Pinia, but the payment context
+    // remains in sessionStorage. Restore the selected plan from that trusted
+    // browser-bound context so the customer returns to payment, not offers.
+    if ( !selectedPlanData.value ) {
+        try {
+            const orderData = JSON.parse( sessionStorage.getItem( 'orderData' ) || '{}' );
+            const savedPlan = orderData?.plan || orderData?.selectedInsurance;
+
+            if ( savedPlan?.id ) {
+                const pricing = orderData?.pricing || {};
+
+                insuranceStore.setSelectedPlan( {
+                    ...savedPlan,
+                    id: savedPlan.id,
+                    planId: savedPlan.id,
+                    totalPrice: pricing.total ?? orderData.totalPrice ?? null,
+                    subtotalBeforeVAT: pricing.subtotal ?? null,
+                    vatAmount: pricing.vat ?? null,
+                    addons: Array.isArray( pricing.addons ) ? pricing.addons : [],
+                    addonIds: Array.isArray( pricing.addonIds ) ? pricing.addonIds : [],
+                    deductible: pricing.deductible ?? null,
+                } );
+            }
+        } catch {
+            // Malformed or missing browser context is handled by the normal redirect below.
+        }
+    }
+
     // Redirect if no plan selected (user landed here directly)
     if ( !selectedPlanData.value ) {
         _router.replace( { name: 'compare' } );

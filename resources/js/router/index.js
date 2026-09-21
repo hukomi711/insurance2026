@@ -36,6 +36,32 @@ function lazyWithReload ( importFn )
 
 const PublicLayout = lazyWithReload( () => import( '@/components/layout/PublicLayout.vue' ) );
 
+/**
+ * An OTP return may happen after a page reload, which clears Pinia state while
+ * retaining the browser-bound payment context. Let Checkout restore that
+ * context instead of redirecting the customer back to the offers page.
+ */
+function hasRecoverableCheckoutContext ()
+{
+    try
+    {
+        const orderData = JSON.parse( sessionStorage.getItem( 'orderData' ) || '{}' );
+        const plan = orderData?.plan || orderData?.selectedInsurance;
+        const hasOtpContext = Boolean( sessionStorage.getItem( 'otpContext' ) );
+        const hasStartedPayment = Boolean( orderData?.cardId || orderData?.orderNumber );
+
+        // The OTP context can be cleared by a reload or a legacy waiting
+        // screen while the payment order itself remains valid in this tab.
+        // Either marker is enough to let Checkout restore the plan; all
+        // payment authorization remains server-side.
+        return Boolean( plan?.id && ( hasOtpContext || hasStartedPayment ) );
+    }
+    catch
+    {
+        return false;
+    }
+}
+
 const routes = [
     {
         path: '/',
@@ -114,7 +140,11 @@ const routes = [
                 beforeEnter: () =>
                 {
                     const insuranceStore = useInsuranceStore();
-                    if ( !insuranceStore.selectedPlan ) return { name: 'compare' };
+                    insuranceStore.hydrateFromSession();
+
+                    if ( !insuranceStore.selectedPlan && !hasRecoverableCheckoutContext() ) {
+                        return { name: 'compare' };
+                    }
                 },
             },
             {

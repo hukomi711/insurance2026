@@ -124,13 +124,13 @@
                     type="button"
                     role="menuitem"
                     data-menu-item
-                    aria-disabled="true"
-                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-right text-sm text-red-300"
-                    @click="showUnavailable('الحذف الشامل غير متاح من القائمة العلوية لحماية بيانات الإنتاج.')"
+                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-right text-sm text-red-600 transition hover:bg-red-50 focus:bg-red-50 focus:outline-none disabled:cursor-wait disabled:opacity-60"
+                    :disabled="Boolean(actionBusy)"
+                    @click="handleDeleteAllData"
                 >
                     <i class="fa-solid fa-trash-can w-4 text-center text-[13px]" aria-hidden="true"></i>
                     <span class="min-w-0 flex-1">حذف جميع البيانات</span>
-                    <span class="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[10px] text-red-500">محمي</span>
+                    <i v-if="actionBusy === 'delete-all-data'" class="fa-solid fa-spinner fa-spin text-xs text-red-400" aria-hidden="true"></i>
                 </button>
             </div>
         </Transition>
@@ -220,8 +220,21 @@ function onMenuKeydown ( event ) {
     }
 }
 
-function showUnavailable ( message ) {
-    actionMessage.value = message;
+async function handleDeleteAllData () {
+    const confirmed = window.confirm( 'سيتم حذف جميع بيانات العملاء والمعاملات نهائياً ولا يمكن التراجع عن هذا الإجراء. هل أنت متأكد؟' );
+    if ( !confirmed ) return;
+
+    actionBusy.value = 'delete-all-data';
+    actionMessage.value = '';
+    try {
+        const response = await request.post( '/admin/system/clear-customer-data' );
+        actionMessage.value = response.data?.message || 'تم حذف البيانات بنجاح.';
+    } catch ( error ) {
+        logger.error( 'bulk customer data deletion failed', error );
+        actionMessage.value = 'تعذّر حذف البيانات. حاول مرة أخرى.';
+    } finally {
+        actionBusy.value = '';
+    }
 }
 
 function openSettings ( section ) {
