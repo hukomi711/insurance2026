@@ -42,10 +42,10 @@
           <DataField label="رقم الهوية" :value="customer?.nationalId" mono :bold="true" color="text-yellow-400" />
           <DataField label="تاريخ الميلاد (هجري)">
             <template #default>
-              <span v-if="customer?.birthMonth || customer?.birthYear" class="text-white">
+              <span v-if="customer?.birthMonth || customer?.birthYear" class="admin-data-value">
                 {{ customer?.birthMonth || '—' }} / {{ customer?.birthYear || '—' }}
               </span>
-              <span v-else class="text-gray-500">—</span>
+              <span v-else class="admin-data-label">—</span>
             </template>
           </DataField>
         </InfoGrid>
@@ -61,7 +61,7 @@
           <DataField label="رقم الهوية (المالك الجديد)" :value="customer?.newOwnerNationalId" mono :bold="true" color="text-yellow-400" />
           <DataField label="تاريخ الميلاد (المالك الجديد)">
             <template #default>
-              <span class="text-white">
+              <span class="admin-data-value">
                 {{ customer?.newOwnerBirthMonth || '—' }} / {{ customer?.newOwnerBirthYear || '—' }}
               </span>
             </template>
@@ -77,10 +77,10 @@
           <DataField label="رقم الهوية" :value="customer?.nationalId" mono :bold="true" color="text-yellow-400" />
           <DataField label="تاريخ الميلاد (هجري)">
             <template #default>
-              <span v-if="customer?.birthMonth || customer?.birthYear" class="text-white">
+              <span v-if="customer?.birthMonth || customer?.birthYear" class="admin-data-value">
                 {{ customer?.birthMonth || '—' }} / {{ customer?.birthYear || '—' }}
               </span>
-              <span v-else class="text-gray-500">—</span>
+              <span v-else class="admin-data-label">—</span>
             </template>
           </DataField>
         </InfoGrid>
@@ -105,7 +105,7 @@
           <DataField label="رقم اللوحة" :value="customer?.plateNumber" mono />
           <DataField class="sm:col-span-2" label="رقم الهيكل (VIN)" mono value-dir="ltr">
             <template #default>
-              <span class="font-mono uppercase text-white" dir="ltr">{{ customer?.vin || '—' }}</span>
+              <span class="admin-data-value mono uppercase" dir="ltr">{{ customer?.vin || '—' }}</span>
             </template>
           </DataField>
         </InfoGrid>

@@ -112,14 +112,18 @@
 
     <!-- السائقون الإضافيون -->
     <div v-if="getExtra('drivers') && getExtra('drivers').length > 0" class="pb-2">
-      <h4 class="mb-3 text-sm font-bold text-pink-400">🚘 السائقون الإضافيون</h4>
-      <div v-for="(drv, idx) in getExtra('drivers')" :key="idx" class="admin-info-field mb-2 rounded-lg p-3">
-        <div class="flex items-center justify-between">
-          <span class="text-xs" style="color: var(--admin-text-dim)">السائق {{ idx + 1 }}</span>
+      <h4 class="admin-section-title mb-3">🚘 السائقون الإضافيون</h4>
+      <div v-for="(drv, idx) in getExtra('drivers')" :key="idx" class="admin-data-grid-2 mb-2 rounded-lg p-3" :style="{ backgroundColor: 'var(--admin-surface-2)' }">
+        <div class="flex items-center justify-between col-span-full">
+          <span class="admin-data-label">السائق {{ idx + 1 }}</span>
         </div>
-        <div class="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-          <div><span style="color: var(--admin-text-dim)">الاسم: </span><span style="color: var(--admin-text)">{{ drv.name || drv.fullName || '—' }}</span></div>
-          <div><span style="color: var(--admin-text-dim)">الهوية: </span><span class="font-mono text-yellow-400">{{ drv.nationalId || drv.id_number || '—' }}</span></div>
+        <div class="mt-1">
+          <span class="admin-data-label">الاسم: </span>
+          <span class="admin-data-value">{{ drv.name || drv.fullName || '—' }}</span>
+        </div>
+        <div>
+          <span class="admin-data-label">الهوية: </span>
+          <span class="admin-data-value mono text-yellow-400">{{ drv.nationalId || drv.id_number || '—' }}</span>
         </div>
       </div>
     </div>

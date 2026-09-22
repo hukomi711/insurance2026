@@ -72,6 +72,17 @@
         0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
     --admin-card-shadow-soft: 0 4px 12px rgb(15 23 42 / 0.05);
 
+    /* Payment Card */
+    --payment-card-bg-start: #edf9f1;
+    --payment-card-bg-end: #dfeee4;
+    --payment-card-sheen: rgba(255, 255, 255, 0.32);
+    --payment-card-sheen-strong: rgba(255, 255, 255, 0.52);
+    --payment-card-border: rgba(15, 23, 42, 0.08);
+    --payment-card-text: #122033;
+    --payment-card-muted: #5d6b82;
+    --payment-card-pill: rgba(255, 255, 255, 0.7);
+    --payment-card-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+
     /* Input */
     --admin-input-bg: #ffffff;
     --admin-input-border: #d1d5db;
@@ -155,6 +166,17 @@
         0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
     --admin-card-shadow-soft: 0 8px 18px rgb(2 6 23 / 0.22);
 
+    /* Payment Card */
+    --payment-card-bg-start: #17212f;
+    --payment-card-bg-end: #212d3d;
+    --payment-card-sheen: rgba(148, 163, 184, 0.16);
+    --payment-card-sheen-strong: rgba(255, 255, 255, 0.16);
+    --payment-card-border: rgba(148, 163, 184, 0.2);
+    --payment-card-text: #e5eefb;
+    --payment-card-muted: #a7b7d0;
+    --payment-card-pill: rgba(15, 23, 42, 0.45);
+    --payment-card-shadow: 0 18px 35px rgba(2, 6, 23, 0.42);
+
     /* Input */
     --admin-input-bg: #232936;
     --admin-input-border: #374151;
@@ -198,13 +220,13 @@
    ============================================================ */
 [data-admin-theme] {
     --admin-touch-min: 44px;
-    --admin-sidebar-width: 16rem;          /* 256px desktop expanded */
-    --admin-sidebar-rail: 4.5rem;          /* 72px collapsed rail (future) */
-    --admin-navbar-height: 4rem;           /* 64px */
-    --admin-page-padding: 1rem;            /* mobile default */
+    --admin-sidebar-width: 16rem; /* 256px desktop expanded */
+    --admin-sidebar-rail: 4.5rem; /* 72px collapsed rail (future) */
+    --admin-navbar-height: 4rem; /* 64px */
+    --admin-page-padding: 1rem; /* mobile default */
     --admin-modal-max-width: min(92vw, 52rem);
     --admin-modal-max-height: min(90vh, 80rem);
-    --admin-table-min-width: 640px;        /* fallback for dense tables */
+    --admin-table-min-width: 640px; /* fallback for dense tables */
     --admin-z-overlay: 40;
     --admin-z-drawer: 50;
     --admin-z-modal: 60;
@@ -212,16 +234,73 @@
 }
 
 @media (min-width: 768px) {
-    [data-admin-theme] { --admin-page-padding: 1.5rem; }
+    [data-admin-theme] {
+        --admin-page-padding: 1.5rem;
+    }
 }
 @media (min-width: 1024px) {
-    [data-admin-theme] { --admin-page-padding: 2rem; }
+    [data-admin-theme] {
+        --admin-page-padding: 2rem;
+    }
 }
 
 /* Touch-target helper — apply to small interactive icon buttons */
 .admin-touch {
     min-width: var(--admin-touch-min);
     min-height: var(--admin-touch-min);
+}
+
+/* Shared dashboard shell primitives */
+.admin-page-shell {
+    background: var(--admin-bg);
+    color: var(--admin-text);
+}
+
+.admin-panel-card {
+    background: linear-gradient(
+        180deg,
+        var(--admin-card-bg) 0%,
+        var(--admin-surface) 100%
+    );
+    border: 1px solid var(--admin-card-border);
+    border-radius: var(--admin-radius-lg);
+    box-shadow: var(--admin-card-shadow-soft);
+    color: var(--admin-text);
+}
+
+.admin-panel-card--soft {
+    background: linear-gradient(
+        180deg,
+        var(--admin-surface-2) 0%,
+        rgba(148, 163, 184, 0.04) 100%
+    );
+}
+
+.admin-panel-card--empty {
+    background: linear-gradient(
+        180deg,
+        var(--admin-card-bg) 0%,
+        rgba(148, 163, 184, 0.03) 100%
+    );
+}
+
+.admin-page-title {
+    color: var(--admin-text);
+    letter-spacing: -0.02em;
+}
+
+.admin-page-subtitle,
+.admin-page-meta,
+.admin-muted {
+    color: var(--admin-text-dim);
+}
+
+.admin-section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    color: var(--admin-text);
 }
 
 /* ============================================================
@@ -365,9 +444,15 @@
 
 /* ── Customer row focus highlight (deep-link from notification) ── */
 @keyframes admin-row-focus-pulse {
-    0%   { background: rgba(59, 130, 246, 0.30); }
-    50%  { background: rgba(59, 130, 246, 0.18); }
-    100% { background: rgba(59, 130, 246, 0.00); }
+    0% {
+        background: rgba(59, 130, 246, 0.3);
+    }
+    50% {
+        background: rgba(59, 130, 246, 0.18);
+    }
+    100% {
+        background: rgba(59, 130, 246, 0);
+    }
 }
 .admin-row-focus > td {
     animation: admin-row-focus-pulse 3s ease-out 1;
@@ -385,30 +470,81 @@
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.18),
         inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 /* Accent border variants — subtle glow on hover */
-.admin-glass--emerald { border-color: rgba(52, 211, 153, 0.12); }
-.admin-glass--emerald:hover { border-color: rgba(52, 211, 153, 0.25); box-shadow: 0 8px 32px rgba(52, 211, 153, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+.admin-glass--emerald {
+    border-color: rgba(52, 211, 153, 0.12);
+}
+.admin-glass--emerald:hover {
+    border-color: rgba(52, 211, 153, 0.25);
+    box-shadow:
+        0 8px 32px rgba(52, 211, 153, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
 
-.admin-glass--amber { border-color: rgba(251, 191, 36, 0.12); }
-.admin-glass--amber:hover { border-color: rgba(251, 191, 36, 0.25); box-shadow: 0 8px 32px rgba(251, 191, 36, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+.admin-glass--amber {
+    border-color: rgba(251, 191, 36, 0.12);
+}
+.admin-glass--amber:hover {
+    border-color: rgba(251, 191, 36, 0.25);
+    box-shadow:
+        0 8px 32px rgba(251, 191, 36, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
 
-.admin-glass--pink { border-color: rgba(244, 114, 182, 0.12); }
-.admin-glass--pink:hover { border-color: rgba(244, 114, 182, 0.25); box-shadow: 0 8px 32px rgba(244, 114, 182, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+.admin-glass--pink {
+    border-color: rgba(244, 114, 182, 0.12);
+}
+.admin-glass--pink:hover {
+    border-color: rgba(244, 114, 182, 0.25);
+    box-shadow:
+        0 8px 32px rgba(244, 114, 182, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
 
-.admin-glass--sky { border-color: rgba(56, 189, 248, 0.12); }
-.admin-glass--sky:hover { border-color: rgba(56, 189, 248, 0.25); box-shadow: 0 8px 32px rgba(56, 189, 248, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+.admin-glass--sky {
+    border-color: rgba(56, 189, 248, 0.12);
+}
+.admin-glass--sky:hover {
+    border-color: rgba(56, 189, 248, 0.25);
+    box-shadow:
+        0 8px 32px rgba(56, 189, 248, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
 
-.admin-glass--cyan { border-color: rgba(34, 211, 238, 0.12); }
-.admin-glass--cyan:hover { border-color: rgba(34, 211, 238, 0.25); box-shadow: 0 8px 32px rgba(34, 211, 238, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+.admin-glass--cyan {
+    border-color: rgba(34, 211, 238, 0.12);
+}
+.admin-glass--cyan:hover {
+    border-color: rgba(34, 211, 238, 0.25);
+    box-shadow:
+        0 8px 32px rgba(34, 211, 238, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
 
-.admin-glass--blue { border-color: rgba(59, 130, 246, 0.12); }
-.admin-glass--blue:hover { border-color: rgba(59, 130, 246, 0.25); box-shadow: 0 8px 32px rgba(59, 130, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+.admin-glass--blue {
+    border-color: rgba(59, 130, 246, 0.12);
+}
+.admin-glass--blue:hover {
+    border-color: rgba(59, 130, 246, 0.25);
+    box-shadow:
+        0 8px 32px rgba(59, 130, 246, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
 
-.admin-glass--purple { border-color: rgba(168, 85, 247, 0.12); }
-.admin-glass--purple:hover { border-color: rgba(168, 85, 247, 0.25); box-shadow: 0 8px 32px rgba(168, 85, 247, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04); }
+.admin-glass--purple {
+    border-color: rgba(168, 85, 247, 0.12);
+}
+.admin-glass--purple:hover {
+    border-color: rgba(168, 85, 247, 0.25);
+    box-shadow:
+        0 8px 32px rgba(168, 85, 247, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
 
 /* ── Glow Dot Indicator ── */
 .admin-dot {
@@ -418,15 +554,42 @@
     flex-shrink: 0;
     border-radius: 9999px;
 }
-.admin-dot--emerald { background: #34d399; box-shadow: 0 0 8px rgba(52, 211, 153, 0.6); }
-.admin-dot--amber   { background: #fbbf24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.6); }
-.admin-dot--pink    { background: #f472b6; box-shadow: 0 0 8px rgba(244, 114, 182, 0.6); }
-.admin-dot--sky     { background: #38bdf8; box-shadow: 0 0 8px rgba(56, 189, 248, 0.6); }
-.admin-dot--cyan    { background: #22d3ee; box-shadow: 0 0 8px rgba(34, 211, 238, 0.6); }
-.admin-dot--blue    { background: #3b82f6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); }
-.admin-dot--purple  { background: #a855f7; box-shadow: 0 0 8px rgba(168, 85, 247, 0.5); }
-.admin-dot--orange  { background: #f97316; box-shadow: 0 0 8px rgba(249, 115, 22, 0.5); }
-.admin-dot--gray    { background: #9ca3af; box-shadow: 0 0 6px rgba(156, 163, 175, 0.3); }
+.admin-dot--emerald {
+    background: #34d399;
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+}
+.admin-dot--amber {
+    background: #fbbf24;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+}
+.admin-dot--pink {
+    background: #f472b6;
+    box-shadow: 0 0 8px rgba(244, 114, 182, 0.6);
+}
+.admin-dot--sky {
+    background: #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+.admin-dot--cyan {
+    background: #22d3ee;
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+}
+.admin-dot--blue {
+    background: #3b82f6;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+.admin-dot--purple {
+    background: #a855f7;
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+}
+.admin-dot--orange {
+    background: #f97316;
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+}
+.admin-dot--gray {
+    background: #9ca3af;
+    box-shadow: 0 0 6px rgba(156, 163, 175, 0.3);
+}
 
 /* ── Code Display Box ── */
 .admin-code-box {
@@ -440,10 +603,22 @@
     background: var(--admin-surface-3);
     border: 1px solid var(--admin-border);
 }
-.admin-code-box--amber { border-color: rgba(251, 191, 36, 0.15); background: rgba(251, 191, 36, 0.05); }
-.admin-code-box--pink  { border-color: rgba(244, 114, 182, 0.15); background: rgba(244, 114, 182, 0.05); }
-.admin-code-box--sky   { border-color: rgba(56, 189, 248, 0.15); background: rgba(56, 189, 248, 0.05); }
-.admin-code-box--cyan  { border-color: rgba(34, 211, 238, 0.15); background: rgba(34, 211, 238, 0.05); }
+.admin-code-box--amber {
+    border-color: rgba(251, 191, 36, 0.15);
+    background: rgba(251, 191, 36, 0.05);
+}
+.admin-code-box--pink {
+    border-color: rgba(244, 114, 182, 0.15);
+    background: rgba(244, 114, 182, 0.05);
+}
+.admin-code-box--sky {
+    border-color: rgba(56, 189, 248, 0.15);
+    background: rgba(56, 189, 248, 0.05);
+}
+.admin-code-box--cyan {
+    border-color: rgba(34, 211, 238, 0.15);
+    background: rgba(34, 211, 238, 0.05);
+}
 
 /* ── Data Cell (for grids inside notification/info modals) ── */
 .admin-data-cell {
@@ -482,9 +657,18 @@
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
 }
-.admin-stage--purple { border-color: rgba(168, 85, 247, 0.25); background: rgba(88, 28, 135, 0.15); }
-.admin-stage--yellow { border-color: rgba(234, 179, 8, 0.25); background: rgba(113, 63, 18, 0.15); }
-.admin-stage--cyan   { border-color: rgba(34, 211, 238, 0.25); background: rgba(22, 78, 99, 0.15); }
+.admin-stage--purple {
+    border-color: rgba(168, 85, 247, 0.25);
+    background: rgba(88, 28, 135, 0.15);
+}
+.admin-stage--yellow {
+    border-color: rgba(234, 179, 8, 0.25);
+    background: rgba(113, 63, 18, 0.15);
+}
+.admin-stage--cyan {
+    border-color: rgba(34, 211, 238, 0.25);
+    background: rgba(22, 78, 99, 0.15);
+}
 
 /* ── Empty State ── */
 .admin-empty {
@@ -518,7 +702,10 @@
     backdrop-filter: blur(8px);
     transition: all var(--admin-transition);
 }
-.admin-nafath-input::placeholder { font-size: 0.875rem; color: rgba(75, 85, 99, 0.7); }
+.admin-nafath-input::placeholder {
+    font-size: 0.875rem;
+    color: rgba(75, 85, 99, 0.7);
+}
 .admin-nafath-input:focus {
     outline: none;
     border-color: rgba(34, 211, 238, 0.5);
@@ -561,5 +748,195 @@
     border-radius: 0.25rem;
     transition: color var(--admin-transition);
 }
-.admin-card-nav-btn:hover { color: var(--admin-text); background: var(--admin-surface-3); }
-.admin-card-nav-btn:disabled { opacity: 0.3; }
+.admin-card-nav-btn:hover {
+    color: var(--admin-text);
+    background: var(--admin-surface-3);
+}
+.admin-card-nav-btn:disabled {
+    opacity: 0.3;
+}
+
+/* ============================================================
+   ADMIN — Unified Typography & Spacing Standards
+   For modal headers, labels, data display, and detail pages
+============================================================ */
+
+/* Modal Label (data field key) */
+.admin-data-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--admin-text-dim);
+    transition: color var(--admin-transition);
+}
+
+/* Modal Data Value (data field value) */
+.admin-data-value {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--admin-text);
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.admin-data-value.mono {
+    font-family: "Monaco", "Courier New", monospace;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+/* Section Header in Modal */
+.admin-section-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--admin-text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--admin-card-border);
+}
+
+/* Subsection Header */
+.admin-subsection-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--admin-text-secondary);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 1.25rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Data Field Container */
+.admin-data-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.admin-data-field-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+}
+
+/* Status Label Badges */
+.admin-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--admin-radius-md);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: all var(--admin-transition);
+}
+
+.admin-status-badge--success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.admin-status-badge--error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.admin-status-badge--pending {
+    background: rgba(96, 165, 250, 0.1);
+    color: #60a5fa;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+}
+
+.admin-status-badge--warning {
+    background: rgba(251, 146, 60, 0.1);
+    color: #fb923c;
+    border: 1px solid rgba(251, 146, 60, 0.2);
+}
+
+/* Panel/Section Container */
+.admin-data-panel {
+    border: 1px solid var(--admin-card-border);
+    border-radius: var(--admin-radius-lg);
+    padding: 1.25rem;
+    background: linear-gradient(
+        180deg,
+        rgba(148, 163, 184, 0.03) 0%,
+        transparent 100%
+    );
+    transition: all var(--admin-transition);
+}
+
+.admin-data-panel:hover {
+    border-color: rgba(148, 163, 184, 0.15);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+/* Two-column layout for data grids */
+.admin-data-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+    .admin-data-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Three-column layout */
+.admin-data-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .admin-data-grid-3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .admin-data-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Modal content spacing utilities */
+.admin-modal-content-spacing {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Empty state styling */
+.admin-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    color: var(--admin-text-dim);
+    text-align: center;
+}
+
+.admin-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+}
+
+.admin-empty-text {
+    font-size: 0.875rem;
+    line-height: 1.6;
+}

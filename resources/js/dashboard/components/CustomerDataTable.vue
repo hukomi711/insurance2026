@@ -9,31 +9,31 @@
       <table class="min-w-280 w-full table-fixed text-sm md:min-w-345 xl:min-w-405">
         <thead class="admin-table-head border-b">
           <tr>
-            <th class="w-12.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">حذف</th>
-            <th class="w-27.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">المزيد</th>
-            <th class="w-42.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">المسار الحالي</th>
-            <th class="w-25 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">الدفع</th>
-            <th class="w-27.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">بيانات التأمين</th>
-            <th class="w-32.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
+            <th class="w-12.5 px-2 py-3 text-center admin-data-label whitespace-nowrap">حذف</th>
+            <th class="w-27.5 px-2 py-3 text-center admin-data-label whitespace-nowrap">المزيد</th>
+            <th class="w-42.5 px-2 py-3 text-center admin-data-label whitespace-nowrap">المسار الحالي</th>
+            <th class="w-25 px-2 py-3 text-center admin-data-label whitespace-nowrap">الدفع</th>
+            <th class="w-27.5 px-2 py-3 text-center admin-data-label whitespace-nowrap">بيانات التأمين</th>
+            <th class="w-32.5 px-2 py-3 text-center admin-data-label whitespace-nowrap">
               الاسم
             </th>
-            <th class="w-27.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">البيانات الأساسية</th>
-            <th class="w-27.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
+            <th class="w-27.5 px-2 py-3 text-center admin-data-label whitespace-nowrap">البيانات الأساسية</th>
+            <th class="w-27.5 px-2 py-3 text-center admin-data-label whitespace-nowrap">
               رقم الهوية
             </th>
-            <th class="w-22.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
+            <th class="w-22.5 px-2 py-3 text-center admin-data-label whitespace-nowrap">
               الموقع
             </th>
-            <th class="w-30 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
+            <th class="w-30 px-2 py-3 text-center admin-data-label whitespace-nowrap">
               IP
             </th>
-            <th class="w-27.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
+            <th class="w-27.5 px-2 py-3 text-center admin-data-label whitespace-nowrap">
               آخر نشاط
             </th>
-            <th class="w-12.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">
+            <th class="w-12.5 px-2 py-3 text-center admin-data-label whitespace-nowrap">
               الحالة
             </th>
-            <th class="w-22.5 px-2 py-3 text-center font-semibold text-slate-600 whitespace-nowrap">#</th>
+            <th class="w-22.5 px-2 py-3 text-center admin-data-label whitespace-nowrap">#</th>
           </tr>
         </thead>
         <tbody class="admin-table-body divide-y">
@@ -51,7 +51,7 @@
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <button
                 type="button"
-                class="admin-icon-btn inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                class="admin-action-btn admin-action-btn--delete"
                 title="حذف بيانات العميل من النظام"
                 aria-label="حذف بيانات العميل من النظام بشكل دائم"
                 @click="$emit('delete-card', customer.id)"
@@ -64,7 +64,7 @@
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <div class="flex items-center justify-center gap-2">
                 <button
-                  class="admin-icon-btn inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+                  class="admin-action-btn admin-action-btn--info"
                   title="المزيد من التفاصيل"
                   aria-label="المزيد من التفاصيل"
                   @click="openInfoModal(customer)"
@@ -77,8 +77,8 @@
                   type="button"
                   :title="customer.is_blocked ? 'إلغاء حظر العميل' : 'حظر العميل'"
                   :class="[
-                    'inline-flex items-center justify-center rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-                    customer.is_blocked ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700',
+                    'admin-action-pill',
+                    customer.is_blocked ? 'admin-action-pill--restore' : 'admin-action-pill--block',
                   ]"
                   :disabled="String(blockingCustomerId) === String(customer.id)"
                   @click.stop="$emit(customer.is_blocked ? 'unblock' : 'block', customer)"
@@ -101,7 +101,7 @@
                   :aria-controls="`journey-menu-${customer.id}`"
                   :aria-expanded="String(activeJourneyDropdown === customer.id)"
                   aria-haspopup="dialog"
-                  class="admin-icon-btn inline-flex w-40 items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                  class="admin-action-btn admin-action-btn--journey"
                   @click="toggleJourneyDropdown(customer.id, $event)"
                 >
                   <span class="truncate">{{ customer._ui.pageLabel || 'غير محدد' }}</span>
@@ -113,13 +113,13 @@
             <!-- الدفع -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <button
-                class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-200"
+                class="admin-table-cta"
                 :class="
                   !customer._ui.payment.has
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    ? 'admin-table-cta--empty'
                     : customer._ui.payment.isNew
-                      ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 animate-pulse hover:bg-emerald-600'
-                      : 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100 hover:bg-blue-100'
+                      ? 'admin-table-cta--new'
+                      : 'admin-table-cta--seen'
                 "
                 :title="
                   !customer._ui.payment.has
@@ -142,13 +142,13 @@
             <!-- بيانات التأمين -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <button
-                class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-200"
+                class="admin-table-cta"
                 :class="
                   !customer._ui.insurance.has
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    ? 'admin-table-cta--empty'
                     : customer._ui.insurance.isNew
-                      ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 animate-pulse hover:bg-emerald-600'
-                      : 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100 hover:bg-blue-100'
+                      ? 'admin-table-cta--new'
+                      : 'admin-table-cta--seen'
                 "
                 :title="
                   !customer._ui.insurance.has
@@ -171,10 +171,10 @@
             <!-- الاسم -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <div class="flex flex-col items-center gap-1">
-                <span class="font-semibold text-gray-800">{{ getCustomerName(customer) || customer?._ui?.displayName || '\u2014' }}</span>
+                <span class="admin-data-value">{{ getCustomerName(customer) || customer?._ui?.displayName || '\u2014' }}</span>
                 <span
                   v-if="customer.is_blocked"
-                  class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700 ring-1 ring-inset ring-red-200"
+                  class="admin-status-pill admin-status-pill--blocked"
                   title="هذا العميل محظور"
                 >
                   <i class="fa-solid fa-ban text-[9px]" aria-hidden="true"></i>
@@ -186,13 +186,13 @@
             <!-- البيانات الأساسية -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <button
-                class="inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium transition-all duration-200"
+                class="admin-table-cta"
                 :class="
                   !customer._ui.vehicle.has
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    ? 'admin-table-cta--empty'
                     : customer._ui.vehicle.isNew
-                      ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/30 animate-pulse hover:bg-emerald-600'
-                      : 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-100 hover:bg-blue-100'
+                      ? 'admin-table-cta--new'
+                      : 'admin-table-cta--seen'
                 "
                 :title="
                   !customer._ui.vehicle.has
@@ -213,16 +213,16 @@
             </td>
 
             <!-- رقم الهوية -->
-            <td class="px-3 py-2 font-mono text-xs text-gray-700 whitespace-nowrap">{{ customer.nationalId || '\u2014' }}</td>
+            <td class="px-3 py-2 admin-data-value mono whitespace-nowrap">{{ customer.nationalId || '\u2014' }}</td>
 
             <!-- الموقع -->
             <td class="px-3 py-2 text-center whitespace-nowrap">
               <div
                 v-if="customer._ui.displayCity || customer._ui.displayCountry"
-                class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-medium"
+                class="admin-status-pill"
                 :class="customer._ui.isSaudiCountry
-                    ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-200'
-                    : 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200'
+                    ? 'admin-status-pill--saudi'
+                    : 'admin-status-pill--intl'
                 "
                 :title="(customer._ui.displayCity || '') + ', ' + (customer._ui.displayCountry || '')"
               >
@@ -258,7 +258,7 @@
             </td>
 
             <!-- آخر نشاط -->
-            <td class="px-2 py-2 text-center text-xs text-gray-500 whitespace-nowrap" :title="customer.last_activity_at">
+            <td class="px-2 py-2 text-center admin-data-label whitespace-nowrap" :title="customer.last_activity_at">
               {{ customer._ui.relativeActivity }}
             </td>
 
@@ -791,6 +791,8 @@ onUnmounted(() => {
   scrollbar-gutter: stable;
   background: var(--admin-card-bg, #ffffff);
   border-color: var(--admin-card-border, #e5e7eb);
+  border-radius: 20px;
+  box-shadow: var(--admin-card-shadow-soft, 0 4px 12px rgba(15, 23, 42, 0.05));
 }
 
 .journey-dropdown-scroll {
@@ -801,10 +803,11 @@ onUnmounted(() => {
 .admin-table-surface {
   background: var(--admin-surface);
   border: 1px solid var(--admin-card-border);
+  overflow: hidden;
 }
 
 .admin-table-head {
-  background: var(--admin-surface-2);
+  background: linear-gradient(180deg, var(--admin-surface-2) 0%, rgba(148, 163, 184, 0.08) 100%);
   border-color: var(--admin-card-border);
   color: var(--admin-text-muted);
 }
@@ -817,10 +820,11 @@ onUnmounted(() => {
 
 .admin-table-row {
   border-color: var(--admin-card-border);
+  transition: background-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
 .admin-table-row:hover {
-  background: var(--admin-hover-accent);
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.04), rgba(37, 99, 235, 0.01));
 }
 
 .customer-data-table thead {
@@ -830,6 +834,12 @@ onUnmounted(() => {
 
 .customer-data-table thead th {
   color: var(--admin-text-secondary, #4b5563);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: transparent;
+  border-bottom: 1px solid var(--admin-card-border);
 }
 
 .customer-data-table tbody {
@@ -866,10 +876,136 @@ onUnmounted(() => {
   color: var(--admin-text, #111827);
 }
 
-.customer-data-table td .admin-icon-btn {
-  background-color: var(--admin-card-bg, #ffffff);
-  border-color: var(--admin-card-border, #e5e7eb);
+.customer-data-table .admin-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid var(--admin-card-border, #e5e7eb);
+  background: linear-gradient(180deg, var(--admin-card-bg) 0%, var(--admin-surface-2) 100%);
+  color: var(--admin-text-secondary, #4b5563);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  transition: all 180ms ease;
+}
+
+.customer-data-table .admin-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.08);
+}
+
+.customer-data-table .admin-action-btn--delete {
+  width: 2rem;
+  height: 2rem;
+}
+
+.customer-data-table .admin-action-btn--delete:hover {
+  border-color: rgba(220, 38, 38, 0.2);
+  background: linear-gradient(180deg, #fff5f5 0%, #fef2f2 100%);
+  color: #dc2626;
+}
+
+.customer-data-table .admin-action-btn--info {
+  width: 2rem;
+  height: 2rem;
+}
+
+.customer-data-table .admin-action-btn--info:hover {
+  border-color: rgba(37, 99, 235, 0.2);
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+  color: #2563eb;
+}
+
+.customer-data-table .admin-action-btn--journey {
+  width: 10rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  justify-content: space-between;
+}
+
+.customer-data-table .admin-action-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  transition: all 180ms ease;
+}
+
+.customer-data-table .admin-action-pill--block {
+  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+  color: #fff;
+  box-shadow: 0 10px 18px rgba(220, 38, 38, 0.18);
+}
+
+.customer-data-table .admin-action-pill--restore {
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  box-shadow: 0 10px 18px rgba(16, 185, 129, 0.18);
+}
+
+.customer-data-table .admin-table-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  transition: all 180ms ease;
+}
+
+.customer-data-table .admin-table-cta--seen {
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1d4ed8;
+  border: 1px solid rgba(37, 99, 235, 0.12);
+}
+
+.customer-data-table .admin-table-cta--new {
+  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  box-shadow: 0 10px 18px rgba(16, 185, 129, 0.2);
+}
+
+.customer-data-table .admin-table-cta--empty {
+  background: rgba(148, 163, 184, 0.12);
   color: var(--admin-text-muted, #6b7280);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  cursor: not-allowed;
+}
+
+.customer-data-table .admin-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.customer-data-table .admin-status-pill--blocked {
+  background: rgba(220, 38, 38, 0.1);
+  color: #b91c1c;
+  border: 1px solid rgba(220, 38, 38, 0.14);
+}
+
+.customer-data-table .admin-status-pill--saudi {
+  background: rgba(16, 185, 129, 0.1);
+  color: #047857;
+  border: 1px solid rgba(16, 185, 129, 0.14);
+}
+
+.customer-data-table .admin-status-pill--intl {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.18);
 }
 
 .customer-data-table table td,
@@ -877,5 +1013,14 @@ onUnmounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.customer-data-table tbody td {
+  padding-block: 0.7rem;
+}
+
+.customer-data-table tbody tr.admin-row-focus {
+  box-shadow: inset 3px 0 0 rgba(37, 99, 235, 0.9);
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.06), transparent 30%);
 }
 </style>
