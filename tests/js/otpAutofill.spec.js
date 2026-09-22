@@ -1,6 +1,8 @@
 import { createApp, h } from 'vue';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import OtpInput from '@/components/ui/OtpInput.vue';
 import { useWebOtp } from '@/composables/useWebOtp';
+import i18n from '@/i18n';
 
 describe( 'OTP mobile autofill support', () => {
     it( 'applies the browser SMS autofill contract to the shared OTP input', () => {
@@ -11,6 +13,8 @@ describe( 'OTP mobile autofill support', () => {
                 'onUpdate:modelValue': () => {},
             } ),
         } );
+
+        app.use( i18n );
 
         const host = document.createElement( 'div' );
         document.body.appendChild( host );
@@ -29,6 +33,12 @@ describe( 'OTP mobile autofill support', () => {
 
     it( 'uses WebOTP when the browser supports SMS code retrieval', async () => {
         const received = [];
+
+        // Mock secure context (JSDOM defaults to false)
+        Object.defineProperty( window, 'isSecureContext', {
+            configurable: true,
+            value: true,
+        } );
 
         globalThis.AbortController = class AbortController {
             constructor() { this.signal = {}; }
@@ -51,5 +61,9 @@ describe( 'OTP mobile autofill support', () => {
         await start();
 
         expect( received ).toEqual( [ '123456' ] );
+    } );
+
+    afterEach( () => {
+        vi.restoreAllMocks();
     } );
 } );
