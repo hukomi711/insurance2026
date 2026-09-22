@@ -1614,6 +1614,7 @@ const refreshCustomers = async () => {
         return true;
     } catch ( error ) {
         if ( isCanceledRefreshError( error ) ) {
+            logger.debug( '[Dashboard] refreshCustomers canceled (expected during unmount/deactivate)' );
             return true;
         }
         if ( isTransientRefreshError( error ) && customers.value.length > 0 ) {
