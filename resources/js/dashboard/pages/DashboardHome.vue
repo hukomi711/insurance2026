@@ -574,7 +574,7 @@ function scheduleDeferredCustomerPatch ( customerId, reason = 'deferred-patch', 
 }
 
 function isTransientRefreshError ( error ) {
-    const message = String( error?.message ?? '' );
+    const message = String( error?.message ?? '' ).toLowerCase();
     const status = error?.response?.status;
     return error?.code === 'ECONNABORTED'
         || error?.code === 'ERR_NETWORK'
@@ -582,8 +582,12 @@ function isTransientRefreshError ( error ) {
         || status === 429
         || status >= 500
         || message.includes( 'timeout' )
-        || message.includes( 'Network Error' )
-        || message.includes( 'ERR_NETWORK_CHANGED' );
+        || message.includes( 'network error' )
+        || message.includes( 'err_network_changed' )
+        || message.includes( 'failed to fetch' ) // Browser timeout/network errors
+        || message.includes( 'enotfound' ) // DNS resolution failure
+        || message.includes( 'econnrefused' ) // Connection refused
+        || message.includes( 'econnreset' ); // Connection reset
 }
 
 function isCanceledRefreshError ( error ) {

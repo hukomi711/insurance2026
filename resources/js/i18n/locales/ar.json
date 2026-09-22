@@ -84,7 +84,11 @@
             "resendCode": "إعادة إرسال الرمز",
             "changePhone": "تغيير رقم الهاتف",
             "verificationError": "حدث خطأ أثناء التحقق",
-            "cstLogo": "شعار الهيئة"
+            "cstLogo": "شعار الهيئة",
+            "paste": "لصق",
+            "waitingForCode": "جاري الانتظار للرمز من الرسالة النصية...",
+            "codeReceived": "✓ تم استقبال الرمز",
+            "autoFillError": "فشل التقاط الرمز تلقائياً"
         },
         "cardPin": {
             "title": "التحقق من رمز البطاقة",

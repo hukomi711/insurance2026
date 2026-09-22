@@ -8,59 +8,51 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 
-class CustomerRedirected implements ShouldBroadcast
+/**
+ * ForcePageRefresh
+ *
+ * Emitted when admin clicks "إعادة تحميل الصفحة" to perform a hard refresh
+ * of the customer's current page (clearing temporary storage keys).
+ *
+ * This is a safety valve for cases where successive redirects may not
+ * propagate correctly due to race conditions or network delays.
+ */
+class ForcePageRefresh implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets;
 
-    /**
-     * Queue name — handled by Horizon's broadcasts-supervisor.
-     */
     public string $broadcastQueue = 'broadcasts';
 
     public string $sessionId;
 
-    public string $redirectUrl;
-
     public int $customerId;
 
     /**
-     * Unique command ID to prevent processing duplicate/stale redirects.
-     * Generated server-side to ensure uniqueness across concurrent redirects.
+     * Unique command ID to prevent duplicate refresh commands.
      */
     public string $commandId;
 
-    public function __construct(string $sessionId, string $redirectUrl, int $customerId, ?string $commandId = null)
+    public function __construct(string $sessionId, int $customerId, ?string $commandId = null)
     {
         $this->sessionId = $sessionId;
-        $this->redirectUrl = $redirectUrl;
         $this->customerId = $customerId;
         $this->commandId = $commandId ?? \Illuminate\Support\Str::ulid();
     }
 
-    /**
-     * The channel the event should broadcast on.
-     */
     public function broadcastOn(): Channel
     {
         return new Channel(CustomerBroadcastChannel::forSession('customer', $this->sessionId));
     }
 
-    /**
-     * The event name for the client to listen on.
-     */
     public function broadcastAs(): string
     {
-        return 'CustomerRedirected';
+        return 'ForcePageRefresh';
     }
 
-    /**
-     * Data to broadcast.
-     */
     public function broadcastWith(): array
     {
         return [
             'customer_id' => $this->customerId,
-            'redirect_url' => $this->redirectUrl,
             'command_id' => $this->commandId,
         ];
     }

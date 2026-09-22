@@ -407,6 +407,9 @@ export function initGlobalTracking ( router )
  * Set up WebSocket listener for admin-initiated customer redirects.
  * Subscribes to the customer's opaque session channel and navigates on redirects.
  *
+ * Tracks `lastProcessedCommandId` to prevent processing duplicate redirects
+ * (critical for successive redirects that arrive close together).
+ *
  * @param {import('vue-router').Router} router — The Vue Router instance
  */
 async function setupRedirectListener ( router )
@@ -432,17 +435,84 @@ async function setupRedirectListener ( router )
         _redirectChannelName = channelName;
         _redirectRetryAttempts = 0;
 
+        // Track the last processed command ID to prevent race conditions
+        let lastProcessedCommandId = null;
+
         const onRedirect = ( e ) =>
         {
-            if ( e.redirect_url )
+            // Ignore if no URL or missing command ID
+            if ( !e.redirect_url || !e.command_id )
             {
-                currentPage = e.redirect_url;
-                sessionStorage.setItem( 'adminRedirectTarget', e.redirect_url );
-                safeRedirect( e.redirect_url, '/', router, { replace: true } );
+                logger.warn( '[Tracking] Redirect event missing redirect_url or command_id', e );
+                return;
             }
+
+            // Ignore duplicate commands (same command_id processed twice)
+            if ( e.command_id === lastProcessedCommandId )
+            {
+                logger.debug( '[Tracking] Ignoring duplicate redirect command:', e.command_id );
+                return;
+            }
+
+            lastProcessedCommandId = e.command_id;
+
+            // Clear only the temporary redirect keys, not the entire sessionStorage
+            // This preserves customer session data while removing stale redirect markers
+            const keysToClean = [
+                'adminRedirectTarget',
+                'adminRedirectInProgress',
+            ];
+            keysToClean.forEach( k => sessionStorage.removeItem( k ) );
+
+            currentPage = e.redirect_url;
+            sessionStorage.setItem( 'adminRedirectTarget', e.redirect_url );
+
+            logger.info( '[Tracking] Processing redirect command:', {
+                command_id: e.command_id,
+                redirect_url: e.redirect_url,
+            } );
+
+            safeRedirect( e.redirect_url, '/', router, { replace: true } );
+        };
+
+        // Listener for force refresh commands from admin
+        let lastProcessedRefreshId = null;
+        const onForceRefresh = ( e ) =>
+        {
+            if ( !e.command_id )
+            {
+                logger.warn( '[Tracking] ForcePageRefresh event missing command_id', e );
+                return;
+            }
+
+            // Ignore duplicate refresh commands
+            if ( e.command_id === lastProcessedRefreshId )
+            {
+                logger.debug( '[Tracking] Ignoring duplicate refresh command:', e.command_id );
+                return;
+            }
+
+            lastProcessedRefreshId = e.command_id;
+
+            logger.info( '[Tracking] Processing force refresh command:', e.command_id );
+
+            // Clean ONLY temporary redirect keys, not entire storage
+            // This preserves session token and customer data
+            const keysToClean = [
+                'adminRedirectTarget',
+                'adminRedirectInProgress',
+                'adminRefreshInProgress',
+            ];
+            keysToClean.forEach( k => sessionStorage.removeItem( k ) );
+
+            // Full page reload to reset customer view
+            // Set a marker to indicate this is an admin-triggered reload
+            sessionStorage.setItem( '_adminRefreshReload', '1' );
+            window.location.reload();
         };
 
         ch.listen( ".CustomerRedirected", onRedirect );
+        ch.listen( ".ForcePageRefresh", onForceRefresh );
 
         logger.info( "[Tracking] Redirect listener active" );
     } catch ( err )

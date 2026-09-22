@@ -1,13 +1,64 @@
 <template>
     <div class="otp" :class="[rootClasses, variant === 'dark' && 'otp--dark']">
-        <!-- Single conventional input field -->
-        <div class="otp__field" :class="fieldClass">
-            <input :id="inputId" ref="inputRef" type="text" :maxlength="maxLen" inputmode="numeric"
-                pattern="[0-9]*" autocomplete="one-time-code" name="otp-code" :disabled="disabled"
-                :value="model" :placeholder="placeholder"
-                :aria-label="`أدخل رمز التحقق المكون من ${maxLen} أرقام`" autocapitalize="off"
-                autocorrect="off" spellcheck="false" enterkeyhint="done" class="otp__input" dir="ltr"
-                @input="handleInput" @keydown="handleKeydown" @focus="isFocused = true" @blur="isFocused = false" />
+        <!-- Auto Fill Status Indicator -->
+        <transition name="fade">
+            <div v-if="showAutoFillStatus" class="otp__auto-fill-status" :class="`otp__auto-fill-status--${autoFillState}`">
+                <svg v-if="autoFillState === 'listening'" class="otp__auto-fill-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                <svg v-else-if="autoFillState === 'received'" class="otp__auto-fill-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                <svg v-else-if="autoFillState === 'error'" class="otp__auto-fill-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+                <span class="otp__auto-fill-text">{{ autoFillMessage }}</span>
+            </div>
+        </transition>
+
+        <!-- Single input field with paste button -->
+        <div class="otp__input-container">
+            <div class="otp__field" :class="fieldClass">
+                <input
+                    :id="inputId"
+                    ref="inputRef"
+                    type="text"
+                    :maxlength="maxLen"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    autocomplete="one-time-code"
+                    name="otp-code"
+                    :disabled="disabled"
+                    :value="model"
+                    :placeholder="placeholder"
+                    :aria-label="`أدخل رمز التحقق المكون من ${maxLen} أرقام`"
+                    autocapitalize="off"
+                    autocorrect="off"
+                    spellcheck="false"
+                    enterkeyhint="done"
+                    class="otp__input"
+                    dir="ltr"
+                    @input="handleInput"
+                    @keydown="handleKeydown"
+                    @focus="isFocused = true"
+                    @blur="isFocused = false"
+                />
+            </div>
+
+            <!-- Paste Button -->
+            <button
+                v-if="showPasteButton"
+                type="button"
+                class="otp__paste-btn"
+                :aria-label="`لصق رمز التحقق من الحافظة`"
+                @click="handlePaste"
+                :disabled="disabled"
+            >
+                <svg class="otp__paste-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span class="otp__paste-text">{{ t('verification.otp.paste') }}</span>
+            </button>
         </div>
 
         <!-- Error message -->
@@ -26,75 +77,82 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, useId, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useWebOtp } from '@/composables/useWebOtp';
 
 defineOptions( { inheritAttrs: false } );
 
 const props = defineProps( {
     length: { type: Number, default: 6, validator: v => [4, 5, 6, 7, 8].includes( v ) },
-    /** Optional array of accepted lengths — e.g. [4, 6] means auto-submit at 4 or 6 digits */
     acceptLengths: { type: Array, default: null },
     disabled: { type: Boolean, default: false },
     error: { type: String, default: '' },
     autoSubmit: { type: Boolean, default: false },
     variant: { type: String, default: 'light', validator: v => ['light', 'dark'].includes( v ) },
+    showAutoFillUI: { type: Boolean, default: true },
 } );
 
 const emit = defineEmits( ['submit'] );
+const { t } = useI18n();
+const inputId = useId();
 
-/** Effective max length — uses the largest acceptLength or falls back to `length` */
-const maxLen = computed( () =>
-    props.acceptLengths ? Math.max( ...props.acceptLengths ) : props.length
+const inputRef = ref( null );
+const model = ref( '' );
+const isFocused = ref( false );
+
+// WebOTP integration with callback to populate OTP when received
+const { state: webOtpState, error: webOtpError, start: startWebOtp, stop: stopWebOtp, reset: resetWebOtp } = useWebOtp(
+    (code) => {
+        model.value = code;
+    }
 );
 
-/** Set of accepted lengths for quick lookup */
-const acceptSet = computed( () =>
-    props.acceptLengths ? new Set( props.acceptLengths ) : null
-);
+const maxLen = computed( () => props.length );
+const isComplete = computed( () => model.value.length >= maxLen.value );
 
-/** Two-way v-model — strips non-digits */
-const model = defineModel( {
-    type: String,
-    default: '',
-    set ( value ) { return ( value || '' ).replace( /\D/g, '' ).slice( 0, maxLen.value ); },
+// Auto Fill state
+const autoFillState = computed( () =>
+{
+    if ( isComplete.value ) return 'complete';
+    return webOtpState.value;
 } );
 
-const inputId = `otp-${useId()}`;
-const inputRef = ref( null );
-const isFocused = ref( false );
-let hasAutoSubmitted = false;
-
-/** True when the current value matches any accepted length */
-const isComplete = computed( () =>
-    acceptSet.value
-        ? acceptSet.value.has( model.value.length )
-        : model.value.length === props.length
+const showAutoFillStatus = computed( () =>
+    props.showAutoFillUI && autoFillState.value !== 'idle' && autoFillState.value !== 'complete'
 );
 
-const placeholder = computed( () => '' );
+const autoFillMessage = computed( () =>
+{
+    switch ( autoFillState.value )
+    {
+        case 'listening': return t( 'verification.otp.waitingForCode' );
+        case 'received': return t( 'verification.otp.codeReceived' );
+        case 'error': return t( 'verification.otp.autoFillError' );
+        default: return '';
+    }
+} );
 
-const rootClasses = computed( () => ( {
-    'otp--focused': isFocused.value && !isComplete.value,
-    'otp--complete': isComplete.value && !props.error,
-    'otp--error': !!props.error,
+const showPasteButton = computed( () =>
+    !model.value && typeof navigator !== 'undefined' && navigator.clipboard
+);
+
+const placeholder = computed( () => `${ '0'.repeat( maxLen.value ) }` );
+
+const rootClasses = computed( () => ({
     'otp--disabled': props.disabled,
-} ) );
+}) );
 
-const fieldClass = computed( () => ( {
-    'otp__field--focused': isFocused.value && !isComplete.value,
+const fieldClass = computed( () => ({
+    'otp__field--focused': isFocused.value,
     'otp__field--complete': isComplete.value && !props.error,
     'otp__field--error': !!props.error,
-} ) );
+}) );
 
-// ── Auto-submit when an accepted length is reached ──
-watch( model, ( val ) =>
+let hasAutoSubmitted = false;
+
+watch( isComplete, ( val ) =>
 {
-    const isAccepted = acceptSet.value
-        ? acceptSet.value.has( val.length )
-        : val.length === props.length;
-
-    if ( !isAccepted ) { hasAutoSubmitted = false; }
-    if ( isAccepted && props.autoSubmit && !hasAutoSubmitted )
+    if ( val && props.autoSubmit && !hasAutoSubmitted )
     {
         hasAutoSubmitted = true;
         nextTick( () => emit( 'submit' ) );
@@ -116,20 +174,28 @@ function handleKeydown ( e )
     }
 }
 
+async function handlePaste ()
+{
+    try
+    {
+        const text = await navigator.clipboard.readText();
+        const digits = text.replace( /\D/g, '' ).slice( 0, maxLen.value );
+        if ( digits.length > 0 )
+        {
+            model.value = digits;
+            nextTick( () => inputRef.value?.focus() );
+        }
+    }
+    catch ( err )
+    {
+        console.warn( '[OTP Paste] Failed to read clipboard:', err );
+    }
+}
+
 function focusFirstEmpty ()
 {
     nextTick( () => inputRef.value?.focus() );
 }
-
-const { start: startWebOtp, stop: stopWebOtp } = useWebOtp( ( code ) =>
-{
-    const digits = String( code || '' ).replace( /\D/g, '' ).slice( 0, maxLen.value );
-    if ( digits.length > 0 )
-    {
-        model.value = digits;
-        nextTick( () => inputRef.value?.focus() );
-    }
-} );
 
 onMounted( () =>
 {
@@ -145,6 +211,7 @@ function clear ()
 {
     model.value = '';
     hasAutoSubmitted = false;
+    resetWebOtp();
     nextTick( () => inputRef.value?.focus() );
 }
 
@@ -157,31 +224,73 @@ defineExpose( { focusFirstEmpty, clear } );
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.375rem;
+    gap: 0.75rem;
     width: 100%;
+}
+
+/* ── Auto Fill Status Indicator ── */
+.otp__auto-fill-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    animation: slideInDown 0.3s ease;
+}
+
+.otp__auto-fill-status--listening {
+    background-color: #f0f9ff;
+    color: #0369a1;
+    border: 1px solid #0ea5e9;
+}
+
+.otp__auto-fill-status--received {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #22c55e;
+}
+
+.otp__auto-fill-status--error {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.otp__auto-fill-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.otp__auto-fill-status--received .otp__auto-fill-icon {
+    animation: none;
+}
+
+.otp__auto-fill-text {
+    line-height: 1.25;
+}
+
+/* ── Input Container (with paste button) ── */
+.otp__input-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 17rem;
 }
 
 /* ── Field wrapper ── */
 .otp__field {
-    max-width: 14rem;
-    width: 100%;
+    flex: 1;
     border-radius: 0.25rem;
     border: 1.5px solid #d1d5db;
     background: #fff;
     transition: all 0.15s ease;
     overflow: hidden;
-}
-
-@media (min-width: 480px) {
-    .otp__field {
-        max-width: 15rem;
-    }
-}
-
-@media (min-width: 640px) {
-    .otp__field {
-        max-width: 17rem;
-    }
 }
 
 /* ── Field states ── */
@@ -199,158 +308,171 @@ defineExpose( { focusFirstEmpty, clear } );
 .otp__field--error {
     border-color: #dc2626;
     background: #fef2f2;
-    animation: otp-field-shake 0.35s ease-in-out;
-}
-
-.otp--disabled .otp__field {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background: #f1f5f9;
 }
 
 /* ── Input element ── */
 .otp__input {
     width: 100%;
-    padding: 0.3125rem 0.375rem;
-    font-size: 1.0625rem;
+    padding: 0.75rem;
+    font-size: 1.25rem;
     font-weight: 600;
+    letter-spacing: 0.15em;
     text-align: center;
-    letter-spacing: 0.35em;
-    color: #1f2937;
-    background: transparent;
     border: none;
-    outline: none;
-    font-variant-numeric: tabular-nums;
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    /* >= 16px prevents iOS Safari zoom */
-}
-
-@media (min-width: 480px) {
-    .otp__input {
-        padding: 0.375rem 0.5rem;
-        font-size: 1.1875rem;
-        letter-spacing: 0.4em;
-    }
-}
-
-@media (min-width: 640px) {
-    .otp__input {
-        font-size: 1.375rem;
-        padding: 0.5rem 0.625rem;
-    }
+    background: transparent;
+    color: #111827;
+    transition: all 0.15s ease;
 }
 
 .otp__input::placeholder {
-    color: #cbd5e1;
-    letter-spacing: 0.5em;
-    font-weight: 400;
-    font-size: 1.25rem;
+    color: #d1d5db;
+}
+
+.otp__input:focus {
+    outline: none;
 }
 
 .otp__input:disabled {
+    opacity: 0.5;
     cursor: not-allowed;
 }
 
-.otp--complete .otp__input {
-    color: #1f2937;
+.otp--dark .otp__input {
+    color: #f3f4f6;
 }
 
-.otp--error .otp__input {
-    color: #b91c1c;
+.otp--dark .otp__input::placeholder {
+    color: #6b7280;
+}
+
+.otp--dark .otp__field {
+    border-color: #4b5563;
+    background: #1f2937;
+}
+
+.otp--dark .otp__field--focused {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 1.5px rgba(96, 165, 250, 0.1);
+}
+
+.otp--dark .otp__field--complete {
+    border-color: #60a5fa;
+    background: #111827;
+}
+
+/* ── Paste Button ── */
+.otp__paste-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    height: 2.5rem;
+    border-radius: 0.25rem;
+    border: 1.5px solid #e5e7eb;
+    background: #fff;
+    color: #1a5276;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.otp__paste-btn:hover:not(:disabled) {
+    background: #f3f4f6;
+    border-color: #1a5276;
+    box-shadow: 0 1px 2px rgba(26, 82, 118, 0.1);
+}
+
+.otp__paste-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.otp__paste-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.otp__paste-text {
+    display: none;
+}
+
+@media (min-width: 480px) {
+    .otp__paste-text {
+        display: inline;
+    }
+}
+
+.otp--dark .otp__paste-btn {
+    border-color: #4b5563;
+    background: #1f2937;
+    color: #60a5fa;
+}
+
+.otp--dark .otp__paste-btn:hover:not(:disabled) {
+    background: #111827;
+    border-color: #60a5fa;
+    box-shadow: 0 1px 2px rgba(96, 165, 250, 0.1);
 }
 
 /* ── Error message ── */
 .otp__error {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 0.1875rem;
-    color: #b91c1c;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    text-align: center;
+    gap: 0.5rem;
+    color: #dc2626;
+    font-size: 0.875rem;
     margin: 0;
-    padding: 0;
-    background: transparent;
-    border: none;
-    border-radius: 0;
 }
 
 .otp__error-icon {
-    width: 0.75rem;
-    height: 0.75rem;
+    width: 1.25rem;
+    height: 1.25rem;
     flex-shrink: 0;
 }
 
-/* ── Error transition ── */
-.otp-error-enter-active {
-    transition: all 0.3s ease-out;
+/* ── Animations ── */
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
-.otp-error-leave-active {
-    transition: all 0.2s ease-in;
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
-.otp-error-enter-from {
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-enter-from {
     opacity: 0;
-    transform: translateY(-8px) scale(0.95);
+    transform: translateY(-4px);
 }
+
+.fade-leave-to {
+    opacity: 0;
+    transform: translateY(4px);
+}
+
+.otp-error-enter-active,
+.otp-error-leave-active {
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.otp-error-enter-from,
 .otp-error-leave-to {
     opacity: 0;
-    transform: translateY(4px) scale(0.95);
-}
-
-@keyframes otp-field-shake {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-3px); }
-    40% { transform: translateX(3px); }
-    60% { transform: translateX(-2px); }
-    80% { transform: translateX(1px); }
-}
-
-/* ══════════════════════════════════════════
-   Dark variant (for dark backgrounds)
-   ══════════════════════════════════════════ */
-.otp--dark .otp__field {
-    border-color: rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.otp--dark .otp__field--focused {
-    border-color: rgba(255, 255, 255, 0.7);
-    background: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
-}
-
-.otp--dark .otp__field--complete {
-    border-color: #34d399;
-    background: rgba(52, 211, 153, 0.15);
-}
-
-.otp--dark .otp__field--error {
-    border-color: #ef4444;
-    background: rgba(239, 68, 68, 0.12);
-}
-
-.otp--dark .otp__input {
-    color: #ffffff;
-}
-
-.otp--dark .otp__input::placeholder {
-    color: rgba(255, 255, 255, 0.35);
-}
-
-.otp--dark.otp--complete .otp__input {
-    color: #34d399;
-}
-
-.otp--dark.otp--error .otp__input {
-    color: #fca5a5;
-}
-
-.otp--dark .otp__error {
-    color: #fca5a5;
-}
-
-.otp--dark.otp--disabled .otp__field {
-    background: rgba(255, 255, 255, 0.04);
+    transform: translateX(-4px);
 }
 </style>
-

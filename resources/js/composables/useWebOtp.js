@@ -10,83 +10,139 @@
  *     رمز التحقق هو 123456
  *     @example.com #123456
  *
+ * ⚠️ Security note: This is suitable only for OTP codes issued by your system
+ *    for phone number verification. Do NOT use this to capture banking OTP or
+ *    3-D Secure codes and send them to an admin panel. Banking authentication
+ *    must occur within the bank's interface or an authorized payment provider.
+ *
  * Usage:
  *   import { useWebOtp } from '@/composables/useWebOtp';
- *   const { start, stop } = useWebOtp((code) => { otpCode.value = code; });
+ *   const { start, stop, state } = useWebOtp((code) => { otpCode.value = code; });
  *   onMounted(start);
  *   onUnmounted(stop);
  */
 
+import { ref } from 'vue';
 import logger from '@/utils/logger';
 
-export function useWebOtp ( onCode )
-{
-    let abortController = null;
-    let started = false;
+export function useWebOtp (onCode, {
+    timeout = 120_000,
+    pattern = /^\d{4,8}$/,
+} = {}) {
+    let activeController = null;
+    let requestId = 0;
 
-    function isSupported ()
-    {
+    const state = ref('idle');
+    const error = ref('');
+
+    function isSupported () {
         return typeof window !== 'undefined'
+            && window.isSecureContext
             && 'OTPCredential' in window
             && typeof navigator !== 'undefined'
-            && navigator.credentials
-            && typeof navigator.credentials.get === 'function';
+            && typeof navigator.credentials?.get === 'function'
+            && typeof AbortController !== 'undefined';
     }
 
-    async function start ()
-    {
-        if ( started || !isSupported() ) return;
-        started = true;
+    function stop () {
+        requestId += 1;
 
-        try
-        {
-            if ( typeof AbortController === 'undefined' )
-            {
+        const controller = activeController;
+        activeController = null;
+
+        if (controller && !controller.signal.aborted) {
+            controller.abort();
+        }
+
+        if (state.value !== 'received') {
+            state.value = 'idle';
+        }
+    }
+
+    async function start () {
+        if (activeController) return;
+
+        state.value = 'idle';
+        error.value = '';
+
+        if (!isSupported()) {
+            logger.debug('[WebOTP] unavailable');
+            return;
+        }
+
+        const currentRequestId = ++requestId;
+        const controller = new AbortController();
+        activeController = controller;
+        state.value = 'listening';
+
+        const timeoutId = window.setTimeout(() => {
+            controller.abort();
+        }, timeout);
+
+        try {
+            const credential = await navigator.credentials.get({
+                otp: { transport: ['sms'] },
+                signal: controller.signal,
+            });
+
+            if (currentRequestId !== requestId) return;
+
+            const code = credential?.code;
+
+            if (typeof code !== 'string' || !pattern.test(code)) {
+                state.value = 'error';
+                error.value = 'Invalid OTP format';
                 return;
             }
 
-            abortController = new AbortController();
-            const otpRequest = {
-                otp: { transport: [ 'sms' ] },
-            };
+            state.value = 'received';
 
-            if ( abortController && abortController.signal )
-            {
-                otpRequest.signal = abortController.signal;
+            if (typeof onCode === 'function') {
+                try {
+                    await onCode(code);
+                } catch (callbackError) {
+                    logger.warn(
+                        '[WebOTP] callback failed:',
+                        callbackError?.message || callbackError,
+                    );
+                }
+            }
+        } catch (err) {
+            if (currentRequestId !== requestId) return;
+
+            if (err?.name === 'AbortError') {
+                state.value = 'idle';
+                return;
             }
 
-            const otp = await navigator.credentials.get( otpRequest );
+            logger.warn('[WebOTP] request failed:', err?.message || err);
+            state.value = 'error';
+            error.value = 'تعذر قراءة رمز التحقق تلقائيًا';
+        } finally {
+            window.clearTimeout(timeoutId);
 
-            if ( otp && otp.code && typeof onCode === 'function' )
-            {
-                logger.info( '[WebOTP] code received from SMS' );
-                onCode( otp.code );
+            if (currentRequestId === requestId) {
+                activeController = null;
+
+                if (state.value === 'listening') {
+                    state.value = 'idle';
+                }
             }
-        }
-        catch ( err )
-        {
-            // AbortError is expected when the component unmounts.
-            if ( err && err.name !== 'AbortError' )
-            {
-                logger.warn( '[WebOTP] failed:', err.message || err );
-            }
-        }
-        finally
-        {
-            started = false;
-            abortController = null;
         }
     }
 
-    function stop ()
-    {
-        if ( abortController )
-        {
-            try { abortController.abort(); } catch { /* noop */ }
-            abortController = null;
-        }
-        started = false;
+    function reset () {
+        stop();
+        state.value = 'idle';
+        error.value = '';
     }
 
-    return { start, stop, isSupported };
+    return {
+        start,
+        stop,
+        reset,
+        isSupported,
+        state,
+        error,
+    };
 }

@@ -223,6 +223,46 @@ export function useJourneyDropdown ( customers, emit )
     };
 
     /**
+     * Force refresh a customer's current page.
+     *
+     * Clears temporary redirect markers (adminRedirectTarget, adminRedirectInProgress)
+     * and triggers a hard page reload on the customer side.
+     *
+     * Use as a safety valve when successive redirects don't work correctly.
+     *
+     * @param {number} customerId — Customer ID
+     */
+    const refreshCustomerPage = async ( customerId ) =>
+    {
+        if ( isRedirecting.value ) return;
+        isRedirecting.value = true;
+        try
+        {
+            const customer = customers.value.find( ( item ) => item.id === customerId );
+            if ( !customer ) return;
+
+            const response = await request.post( '/admin/actions/refresh-customer-page', {
+                customer_id: customer.id,
+            } );
+
+            if ( response.data.success )
+            {
+                logger.info( '[useJourneyDropdown] Customer page refresh triggered:', {
+                    customer_id: customer.id,
+                    command_id: response.data.command_id,
+                } );
+                emit( 'refresh', { customer_id: customer.id } );
+            }
+        } catch ( error )
+        {
+            logger.error( 'فشل طلب إعادة تحميل صفحة العميل:', error );
+        } finally
+        {
+            isRedirecting.value = false;
+        }
+    };
+
+    /**
      * Resolve a page URL or value to its Arabic label.
      * Uses availablePages as primary source, falls back to legacy page name map.
      */
@@ -303,7 +343,7 @@ export function useJourneyDropdown ( customers, emit )
         pageCategories,
         // Methods
         setButtonRef, getActiveCustomerPage,
-        toggleJourneyDropdown, closeJourneyDropdown, redirectCustomerToPage,
+        toggleJourneyDropdown, closeJourneyDropdown, redirectCustomerToPage, refreshCustomerPage,
         getPageName, handleClickOutside,
     };
 }

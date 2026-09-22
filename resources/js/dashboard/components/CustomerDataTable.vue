@@ -6,7 +6,7 @@
       aria-label="جدول العملاء"
       tabindex="0"
     >
-      <table class="min-w-280 w-full table-fixed text-sm md:min-w-345 xl:min-w-405">
+      <table class="w-full table-auto text-xs sm:text-sm md:text-sm lg:text-sm">
         <thead class="admin-table-head border-b">
           <tr>
             <th class="w-12.5 px-2 py-3 text-center admin-data-label whitespace-nowrap">حذف</th>
@@ -88,6 +88,28 @@
                       ? ( customer.is_blocked ? 'جاري إلغاء الحظر...' : 'جاري الحظر...' )
                       : ( customer.is_blocked ? 'إلغاء الحظر' : 'حظر' )
                   }}
+                </button>
+
+                <button
+                  v-if="!isViewer"
+                  type="button"
+                  title="إعادة تحميل صفحة العميل (حالة احتياطية)"
+                  class="admin-action-pill admin-action-pill--secondary"
+                  :disabled="String(isRefreshingId) === String(customer.id)"
+                  @click.stop="refreshCustomerPage(customer.id)"
+                >
+                  <i
+                    v-if="String(isRefreshingId) === String(customer.id)"
+                    class="fa-solid fa-spinner fa-spin w-3 h-3"
+                    aria-hidden="true"
+                  ></i>
+                  <i
+                    v-else
+                    class="fa-solid fa-arrow-rotate-right w-3 h-3"
+                    aria-hidden="true"
+                  ></i>
+                  <span v-if="String(isRefreshingId) === String(customer.id)">جاري...</span>
+                  <span v-else>إعادة تحميل</span>
                 </button>
               </div>
             </td>
@@ -518,9 +540,25 @@ const {
   activeJourneyDropdown, dropdownPosition, buttonRefs: _buttonRefs, isRedirecting: _isRedirecting,
   pageCategories,
   setButtonRef, getActiveCustomerPage,
-  toggleJourneyDropdown, closeJourneyDropdown, redirectCustomerToPage,
+  toggleJourneyDropdown, closeJourneyDropdown, redirectCustomerToPage, refreshCustomerPage: _refreshCustomerPage,
   getPageName, handleClickOutside,
 } = useJourneyDropdown(customersRef, emit);
+
+// ── Refresh Customer Page State ─────────────────────────────────
+const isRefreshingId = ref(null);
+
+/**
+ * Wrapper around composable's refreshCustomerPage to track loading state.
+ */
+async function refreshCustomerPage(customerId) {
+  if (isRefreshingId.value) return;
+  isRefreshingId.value = customerId;
+  try {
+    await _refreshCustomerPage(customerId);
+  } finally {
+    isRefreshingId.value = null;
+  }
+}
 
 // ── Info Modal ──────────────────────────────────────────────────
 const showModal = ref(false);
@@ -824,7 +862,7 @@ onUnmounted(() => {
 }
 
 .admin-table-row:hover {
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.04), rgba(37, 99, 235, 0.01));
+  background: var(--admin-table-hover-bg);
 }
 
 .customer-data-table thead {
@@ -833,13 +871,15 @@ onUnmounted(() => {
 }
 
 .customer-data-table thead th {
-  color: var(--admin-text-secondary, #4b5563);
-  font-size: 11px;
+  color: var(--admin-text-secondary);
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   background: transparent;
   border-bottom: 1px solid var(--admin-card-border);
+  line-height: 1.4;
+  padding-block: 0.75rem;
 }
 
 .customer-data-table tbody {
@@ -860,7 +900,9 @@ onUnmounted(() => {
 .customer-data-table tbody td .text-white,
 .customer-data-table tbody td .text-gray-300,
 .customer-data-table tbody td .text-gray-400 {
-  color: var(--admin-text-secondary, #4b5563);
+  color: var(--admin-text-secondary);
+  line-height: 1.5;
+  word-break: break-word;
 }
 
 .customer-data-table tbody .bg-slate-700,
@@ -881,38 +923,40 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  border: 1px solid var(--admin-card-border, #e5e7eb);
+  border: 1px solid var(--admin-card-border);
   background: linear-gradient(180deg, var(--admin-card-bg) 0%, var(--admin-surface-2) 100%);
-  color: var(--admin-text-secondary, #4b5563);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  color: var(--admin-text-secondary);
+  box-shadow: var(--admin-shadow-sm);
   transition: all 180ms ease;
+  min-width: var(--admin-touch-min);
+  min-height: var(--admin-touch-min);
 }
 
 .customer-data-table .admin-action-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.08);
+  box-shadow: var(--admin-shadow-md);
 }
 
 .customer-data-table .admin-action-btn--delete {
-  width: 2rem;
-  height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
 .customer-data-table .admin-action-btn--delete:hover {
-  border-color: rgba(220, 38, 38, 0.2);
-  background: linear-gradient(180deg, #fff5f5 0%, #fef2f2 100%);
-  color: #dc2626;
+  border-color: var(--admin-btn-delete-border);
+  background: var(--admin-btn-delete-hover-bg);
+  color: var(--admin-btn-delete-text);
 }
 
 .customer-data-table .admin-action-btn--info {
-  width: 2rem;
-  height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
 .customer-data-table .admin-action-btn--info:hover {
-  border-color: rgba(37, 99, 235, 0.2);
-  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
-  color: #2563eb;
+  border-color: var(--admin-btn-info-border);
+  background: var(--admin-btn-info-bg);
+  color: var(--admin-btn-info-text);
 }
 
 .customer-data-table .admin-action-btn--journey {
@@ -928,23 +972,41 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  padding: 0.3rem 0.7rem;
-  font-size: 0.625rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   transition: all 180ms ease;
+  min-height: var(--admin-touch-min);
 }
 
 .customer-data-table .admin-action-pill--block {
-  background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+  background: var(--admin-btn-block-bg);
   color: #fff;
-  box-shadow: 0 10px 18px rgba(220, 38, 38, 0.18);
+  box-shadow: var(--admin-btn-block-shadow);
 }
 
 .customer-data-table .admin-action-pill--restore {
-  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  background: var(--admin-btn-restore-bg);
   color: #fff;
-  box-shadow: 0 10px 18px rgba(16, 185, 129, 0.18);
+  box-shadow: var(--admin-btn-restore-shadow);
+}
+
+.customer-data-table .admin-action-pill--secondary {
+  background: var(--admin-btn-secondary-bg);
+  color: #fff;
+  box-shadow: var(--admin-btn-secondary-shadow);
+  gap: 0.3rem;
+}
+
+.customer-data-table .admin-action-pill--secondary:hover:not(:disabled) {
+  background: var(--admin-btn-secondary-hover-bg);
+  box-shadow: var(--admin-btn-secondary-hover-shadow);
+}
+
+.customer-data-table .admin-action-pill--secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .customer-data-table .admin-table-cta {
@@ -953,28 +1015,30 @@ onUnmounted(() => {
   justify-content: center;
   gap: 0.375rem;
   border-radius: 10px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.7rem;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.75rem;
   font-weight: 700;
   transition: all 180ms ease;
+  min-height: var(--admin-touch-min);
+  line-height: 1.4;
 }
 
 .customer-data-table .admin-table-cta--seen {
-  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
-  color: #1d4ed8;
-  border: 1px solid rgba(37, 99, 235, 0.12);
+  background: var(--admin-cta-seen-bg);
+  color: var(--admin-cta-seen-text);
+  border: 1px solid var(--admin-cta-seen-border);
 }
 
 .customer-data-table .admin-table-cta--new {
-  background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+  background: var(--admin-cta-new-bg);
   color: #fff;
-  box-shadow: 0 10px 18px rgba(16, 185, 129, 0.2);
+  box-shadow: var(--admin-cta-new-shadow);
 }
 
 .customer-data-table .admin-table-cta--empty {
-  background: rgba(148, 163, 184, 0.12);
-  color: var(--admin-text-muted, #6b7280);
-  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: var(--admin-cta-empty-bg);
+  color: var(--admin-text-muted);
+  border: 1px solid var(--admin-cta-empty-border);
   cursor: not-allowed;
 }
 
@@ -982,30 +1046,32 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.375rem;
   border-radius: 9999px;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.625rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.04em;
+  min-height: 1.75rem;
+  line-height: 1.3;
 }
 
 .customer-data-table .admin-status-pill--blocked {
-  background: rgba(220, 38, 38, 0.1);
-  color: #b91c1c;
-  border: 1px solid rgba(220, 38, 38, 0.14);
+  background: var(--admin-pill-blocked-bg);
+  color: var(--admin-pill-blocked-text);
+  border: 1px solid var(--admin-pill-blocked-border);
 }
 
 .customer-data-table .admin-status-pill--saudi {
-  background: rgba(16, 185, 129, 0.1);
-  color: #047857;
-  border: 1px solid rgba(16, 185, 129, 0.14);
+  background: var(--admin-pill-saudi-bg);
+  color: var(--admin-pill-saudi-text);
+  border: 1px solid var(--admin-pill-saudi-border);
 }
 
 .customer-data-table .admin-status-pill--intl {
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
-  border: 1px solid rgba(245, 158, 11, 0.18);
+  background: var(--admin-pill-intl-bg);
+  color: var(--admin-pill-intl-text);
+  border: 1px solid var(--admin-pill-intl-border);
 }
 
 .customer-data-table table td,
@@ -1020,7 +1086,182 @@ onUnmounted(() => {
 }
 
 .customer-data-table tbody tr.admin-row-focus {
-  box-shadow: inset 3px 0 0 rgba(37, 99, 235, 0.9);
-  background: linear-gradient(90deg, rgba(37, 99, 235, 0.06), transparent 30%);
+  box-shadow: inset 3px 0 0 var(--admin-table-row-focus);
+  background: linear-gradient(90deg, var(--admin-table-row-focus-bg), transparent 30%);
+}
+
+/* ============================================================
+   RESPONSIVE DESIGN — Mobile, Tablet, Desktop
+   ============================================================ */
+
+/* Mobile (default - up to 640px) */
+@media (max-width: 767px) {
+  .customer-data-table table {
+    font-size: 0.75rem;
+  }
+
+  .customer-data-table thead th {
+    padding: 0.5rem 0.25rem;
+    font-size: 10px;
+  }
+
+  .customer-data-table tbody td {
+    padding: 0.5rem 0.25rem;
+  }
+
+  /* Hide less critical columns on mobile */
+  .customer-data-table thead th:nth-child(n+5),
+  .customer-data-table tbody td:nth-child(n+5) {
+    display: none;
+  }
+
+  /* Keep only: delete, more, current page, payment, status, id */
+  .customer-data-table thead th:nth-child(1),
+  .customer-data-table thead th:nth-child(2),
+  .customer-data-table thead th:nth-child(3),
+  .customer-data-table thead th:nth-child(4),
+  .customer-data-table thead th:nth-child(12),
+  .customer-data-table thead th:nth-child(13),
+  .customer-data-table tbody td:nth-child(1),
+  .customer-data-table tbody td:nth-child(2),
+  .customer-data-table tbody td:nth-child(3),
+  .customer-data-table tbody td:nth-child(4),
+  .customer-data-table tbody td:nth-child(12),
+  .customer-data-table tbody td:nth-child(13) {
+    display: table-cell;
+  }
+
+  .customer-data-table .admin-action-btn {
+    width: 2rem;
+    height: 2rem;
+    padding: 0.3rem;
+  }
+
+  .customer-data-table .admin-action-pill {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.6rem;
+  }
+
+  .customer-data-table .admin-table-cta {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.65rem;
+  }
+
+  .customer-data-table .admin-action-btn--journey {
+    width: 100%;
+    max-width: 7rem;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.65rem;
+  }
+}
+
+/* Tablet (768px to 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .customer-data-table table {
+    font-size: 0.875rem;
+  }
+
+  .customer-data-table thead th {
+    padding: 0.6rem 0.4rem;
+    font-size: 11px;
+  }
+
+  .customer-data-table tbody td {
+    padding: 0.6rem 0.4rem;
+  }
+
+  /* Hide lowest-priority columns on tablet */
+  .customer-data-table thead th:nth-child(8),
+  .customer-data-table thead th:nth-child(9),
+  .customer-data-table thead th:nth-child(10),
+  .customer-data-table tbody td:nth-child(8),
+  .customer-data-table tbody td:nth-child(9),
+  .customer-data-table tbody td:nth-child(10) {
+    display: none;
+  }
+
+  .customer-data-table .admin-action-btn {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .customer-data-table .admin-action-pill {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.625rem;
+  }
+
+  .customer-data-table .admin-table-cta {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.7rem;
+  }
+
+  .customer-data-table .admin-action-btn--journey {
+    width: 8.5rem;
+    padding: 0.45rem 0.65rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* Desktop (1024px and above) */
+@media (min-width: 1024px) {
+  .customer-data-table table {
+    font-size: 0.875rem;
+  }
+
+  .customer-data-table thead th {
+    padding: 0.75rem 0.5rem;
+    font-size: 12px;
+  }
+
+  .customer-data-table tbody td {
+    padding: 0.7rem 0.75rem;
+  }
+
+  .customer-data-table .admin-action-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .customer-data-table .admin-action-pill {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.65rem;
+  }
+
+  .customer-data-table .admin-table-cta {
+    padding: 0.55rem 0.85rem;
+    font-size: 0.75rem;
+  }
+
+  .customer-data-table .admin-action-btn--journey {
+    width: 10rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* Ultra-wide displays (1440px and above) */
+@media (min-width: 1440px) {
+  .customer-data-table table {
+    font-size: 0.9375rem;
+  }
+
+  .customer-data-table thead th {
+    padding: 0.75rem 0.65rem;
+    font-size: 13px;
+  }
+
+  .customer-data-table tbody td {
+    padding: 0.75rem 0.75rem;
+  }
+
+  .customer-data-table .admin-action-pill {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.7rem;
+  }
+
+  .customer-data-table .admin-table-cta {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.8rem;
+  }
 }
 </style>

@@ -65,6 +65,73 @@
     --admin-status-neutral-bg: #f3f4f6;
     --admin-status-neutral-text: #6b7280;
 
+    /* Table Hover & Interaction Colors */
+    --admin-table-hover-bg: linear-gradient(
+        90deg,
+        rgba(37, 99, 235, 0.04),
+        rgba(37, 99, 235, 0.01)
+    );
+    --admin-table-row-focus: rgba(37, 99, 235, 0.9);
+    --admin-table-row-focus-bg: rgba(37, 99, 235, 0.06);
+
+    /* Action Button Colors */
+    --admin-btn-delete-bg: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+    --admin-btn-delete-text: #dc2626;
+    --admin-btn-delete-hover-bg: linear-gradient(
+        180deg,
+        #fff5f5 0%,
+        #fef2f2 100%
+    );
+    --admin-btn-delete-border: rgba(220, 38, 38, 0.2);
+
+    --admin-btn-info-bg: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+    --admin-btn-info-text: #2563eb;
+    --admin-btn-info-border: rgba(37, 99, 235, 0.2);
+
+    --admin-btn-block-bg: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%);
+    --admin-btn-block-shadow: 0 10px 18px rgba(220, 38, 38, 0.18);
+
+    --admin-btn-restore-bg: linear-gradient(180deg, #10b981 0%, #059669 100%);
+    --admin-btn-restore-shadow: 0 10px 18px rgba(16, 185, 129, 0.18);
+
+    --admin-btn-secondary-bg: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+    --admin-btn-secondary-hover-bg: linear-gradient(
+        180deg,
+        #2563eb 0%,
+        #1d4ed8 100%
+    );
+    --admin-btn-secondary-shadow: 0 10px 18px rgba(59, 130, 246, 0.18);
+    --admin-btn-secondary-hover-shadow: 0 12px 24px rgba(59, 130, 246, 0.24);
+
+    /* CTA Button Colors */
+    --admin-cta-seen-bg: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+    --admin-cta-seen-text: #1d4ed8;
+    --admin-cta-seen-border: rgba(37, 99, 235, 0.12);
+
+    --admin-cta-new-bg: linear-gradient(180deg, #10b981 0%, #059669 100%);
+    --admin-cta-new-shadow: 0 10px 18px rgba(16, 185, 129, 0.2);
+
+    --admin-cta-empty-bg: rgba(148, 163, 184, 0.12);
+    --admin-cta-empty-border: rgba(148, 163, 184, 0.15);
+
+    /* Status Pill Colors */
+    --admin-pill-blocked-bg: rgba(220, 38, 38, 0.1);
+    --admin-pill-blocked-text: #b91c1c;
+    --admin-pill-blocked-border: rgba(220, 38, 38, 0.14);
+
+    --admin-pill-saudi-bg: rgba(16, 185, 129, 0.1);
+    --admin-pill-saudi-text: #047857;
+    --admin-pill-saudi-border: rgba(16, 185, 129, 0.14);
+
+    --admin-pill-intl-bg: rgba(245, 158, 11, 0.12);
+    --admin-pill-intl-text: #b45309;
+    --admin-pill-intl-border: rgba(245, 158, 11, 0.18);
+
+    /* Shadows */
+    --admin-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.03);
+    --admin-shadow-md: 0 6px 16px rgba(37, 99, 235, 0.08);
+    --admin-shadow-lg: 0 8px 20px rgba(15, 23, 42, 0.1);
+
     /* Card */
     --admin-card-bg: #ffffff;
     --admin-card-border: #e5e7eb;
@@ -158,6 +225,81 @@
     --admin-status-info-text: #60a5fa;
     --admin-status-neutral-bg: rgba(107, 114, 128, 0.2);
     --admin-status-neutral-text: #9ca3af;
+
+    /* Table Hover & Interaction Colors */
+    --admin-table-hover-bg: linear-gradient(
+        90deg,
+        rgba(59, 130, 246, 0.12),
+        rgba(59, 130, 246, 0.06)
+    );
+    --admin-table-row-focus: rgba(59, 130, 246, 0.7);
+    --admin-table-row-focus-bg: rgba(59, 130, 246, 0.12);
+
+    /* Action Button Colors */
+    --admin-btn-delete-bg: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    --admin-btn-delete-text: #f87171;
+    --admin-btn-delete-hover-bg: linear-gradient(
+        180deg,
+        rgba(239, 68, 68, 0.2) 0%,
+        rgba(220, 38, 38, 0.15) 100%
+    );
+    --admin-btn-delete-border: rgba(239, 68, 68, 0.3);
+
+    --admin-btn-info-bg: linear-gradient(
+        180deg,
+        rgba(59, 130, 246, 0.2) 0%,
+        rgba(37, 99, 235, 0.15) 100%
+    );
+    --admin-btn-info-text: #60a5fa;
+    --admin-btn-info-border: rgba(59, 130, 246, 0.3);
+
+    --admin-btn-block-bg: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    --admin-btn-block-shadow: 0 10px 24px rgba(239, 68, 68, 0.25);
+
+    --admin-btn-restore-bg: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+    --admin-btn-restore-shadow: 0 10px 24px rgba(52, 211, 153, 0.25);
+
+    --admin-btn-secondary-bg: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+    --admin-btn-secondary-hover-bg: linear-gradient(
+        180deg,
+        #3b82f6 0%,
+        #2563eb 100%
+    );
+    --admin-btn-secondary-shadow: 0 10px 24px rgba(59, 130, 246, 0.25);
+    --admin-btn-secondary-hover-shadow: 0 14px 32px rgba(59, 130, 246, 0.35);
+
+    /* CTA Button Colors */
+    --admin-cta-seen-bg: linear-gradient(
+        180deg,
+        rgba(59, 130, 246, 0.2) 0%,
+        rgba(37, 99, 235, 0.15) 100%
+    );
+    --admin-cta-seen-text: #60a5fa;
+    --admin-cta-seen-border: rgba(59, 130, 246, 0.2);
+
+    --admin-cta-new-bg: linear-gradient(180deg, #34d399 0%, #10b981 100%);
+    --admin-cta-new-shadow: 0 10px 24px rgba(52, 211, 153, 0.25);
+
+    --admin-cta-empty-bg: rgba(148, 163, 184, 0.15);
+    --admin-cta-empty-border: rgba(148, 163, 184, 0.2);
+
+    /* Status Pill Colors */
+    --admin-pill-blocked-bg: rgba(239, 68, 68, 0.15);
+    --admin-pill-blocked-text: #f87171;
+    --admin-pill-blocked-border: rgba(239, 68, 68, 0.25);
+
+    --admin-pill-saudi-bg: rgba(52, 211, 153, 0.15);
+    --admin-pill-saudi-text: #34d399;
+    --admin-pill-saudi-border: rgba(52, 211, 153, 0.25);
+
+    --admin-pill-intl-bg: rgba(251, 146, 60, 0.15);
+    --admin-pill-intl-text: #fb923c;
+    --admin-pill-intl-border: rgba(251, 146, 60, 0.25);
+
+    /* Shadows */
+    --admin-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --admin-shadow-md: 0 6px 16px rgba(59, 130, 246, 0.15);
+    --admin-shadow-lg: 0 8px 20px rgba(0, 0, 0, 0.4);
 
     /* Card */
     --admin-card-bg: #1a1f2e;

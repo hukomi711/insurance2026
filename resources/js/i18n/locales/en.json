@@ -71,7 +71,11 @@
             "resendCode": "Resend Code",
             "changePhone": "Change Phone Number",
             "verificationError": "An error occurred during verification",
-            "cstLogo": "Authority Logo"
+            "cstLogo": "Authority Logo",
+            "paste": "Paste",
+            "waitingForCode": "Waiting for code from SMS...",
+            "codeReceived": "✓ Code received",
+            "autoFillError": "Failed to auto-fill code"
         },
         "cardPin": {
             "title": "Card PIN Verification",

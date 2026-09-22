@@ -339,6 +339,7 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'admin', 'throttle:120,1'])-
 
         // Customer actions
         Route::post('/actions/redirect-customer', [AdminCustomerController::class, 'redirectCustomer']);
+        Route::post('/actions/refresh-customer-page', [AdminCustomerController::class, 'forceRefreshCustomerPage']);
 
         // OTP actions
         Route::post('/actions/otp/{id}/approve', [AdminOtpController::class, 'approve']);
