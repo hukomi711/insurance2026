@@ -198,7 +198,7 @@
 
 <script setup>
 import { ref, reactive, watch } from 'vue';
-import { ModalShell, AdminButton, SectionCard, StatusPill } from '../ui';
+import { ModalShell, AdminButton, SectionCard } from '../ui';
 import { useUserStore } from '@/store/modules/user';
 import { getUsers, createUser, updateUserRole, updateUserPassword, deleteUser } from '@/api/userManagement';
 

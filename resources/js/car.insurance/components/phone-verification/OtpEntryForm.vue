@@ -18,7 +18,8 @@
         <p class="text-gray-500 text-xs mb-1">{{ t('verification.otp.codeSentViaSms') }}</p>
         <p class="text-lg font-bold text-gray-900 font-mono" dir="ltr">{{ phoneNumber }}</p>
         <button
-          class="text-[#000062] hover:text-[#00004d] text-xs mt-1 underline"
+          type="button"
+          class="text-[#000062] hover:text-[#00004d] text-xs mt-1 underline min-h-9"
           @click="$emit('change-phone')"
         >
           {{ t('verification.otp.changePhone') }}
@@ -31,9 +32,8 @@
           ref="otpInputRef"
           v-model="otpCode"
           :length="6"
-          :disabled="processing"
-          :error="error"
-          :auto-submit="true"
+          :disabled="processing || isExpired"
+          :auto-submit="!isExpired && !processing"
           @submit="emitVerify"
         />
       </form>
@@ -49,9 +49,11 @@
       <!-- Messages -->
       <div
         v-if="error"
+        role="alert"
+        aria-live="assertive"
         class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm mb-4"
       >
-        <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
           <path
             fill-rule="evenodd"
             d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -63,9 +65,11 @@
 
       <div
         v-if="success"
+        role="status"
+        aria-live="polite"
         class="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-600 text-sm mb-4"
       >
-        <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
           <path
             fill-rule="evenodd"
             d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -78,8 +82,9 @@
       <!-- Buttons -->
       <div class="space-y-3">
         <button
+          type="button"
           :disabled="!isOtpComplete || processing || isExpired"
-          class="w-full py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2"
+          class="w-full min-h-11 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2"
           :class="
             isOtpComplete && !processing && !isExpired
               ? 'bg-[#000062] text-white hover:bg-[#00004d] shadow-sm'
@@ -95,12 +100,13 @@
         </button>
 
         <button
+          type="button"
           :disabled="!canResend || processing"
-          class="w-full py-2.5 rounded-lg font-medium text-sm transition-all border"
+          class="w-full min-h-11 py-2.5 rounded-lg font-medium text-sm transition-all border"
           :class="
-            canResend
+            canResend && !processing
               ? 'border-[#000062] text-[#000062] hover:bg-[#000062]/5'
-              : 'border-gray-200 text-gray-400'
+              : 'border-gray-200 text-gray-400 cursor-not-allowed'
           "
           @click="emitResend"
         >
@@ -120,7 +126,7 @@ import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import OtpInput from '@/components/ui/OtpInput.vue';
 
-defineProps({
+const props = defineProps({
   phoneNumber: { type: String, required: true },
   error: { type: String, default: '' },
   success: { type: String, default: '' },
@@ -139,10 +145,18 @@ const otpCode = ref('');
 const isOtpComplete = computed(() => otpCode.value.length === 6);
 
 const emitVerify = () => {
+  // Guard: prevent submission if processing, expired, or invalid
+  if (props.processing || props.isExpired || otpCode.value.length !== 6) {
+    return;
+  }
   emit('verify', otpCode.value);
 };
 
 const emitResend = () => {
+  // Guard: prevent resend if not allowed or currently processing
+  if (!props.canResend || props.processing) {
+    return;
+  }
   otpCode.value = '';
   otpInputRef.value?.clear();
   emit('resend');
@@ -161,15 +175,5 @@ defineExpose({ resetOtp, focusFirst });
 </script>
 
 <style scoped>
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
+/* Empty styles - managed via Tailwind classes */
 </style>

@@ -1,5 +1,5 @@
 <template>
-    <div class="stc-public flex min-h-[100vh] w-full flex-col" dir="rtl">
+    <div class="stc-public flex min-h-screen w-full flex-col" dir="rtl">
         <!-- Header (matches mystc) -->
         <header class="stc-main-header">
             <div class="flex items-center gap-2 lg:gap-4">

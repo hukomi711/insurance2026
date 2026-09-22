@@ -32,6 +32,9 @@
                     :value="model"
                     :placeholder="placeholder"
                     :aria-label="`أدخل رمز التحقق المكون من ${maxLen} أرقام`"
+                    :aria-invalid="!!error"
+                    :aria-describedby="error ? `${inputId}-error` : undefined"
+                    aria-live="polite"
                     autocapitalize="off"
                     autocorrect="off"
                     spellcheck="false"
@@ -51,8 +54,8 @@
                 type="button"
                 class="otp__paste-btn"
                 :aria-label="`لصق رمز التحقق من الحافظة`"
-                @click="handlePaste"
                 :disabled="disabled"
+                @click="handlePaste"
             >
                 <svg class="otp__paste-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -63,7 +66,7 @@
 
         <!-- Error message -->
         <Transition name="otp-error">
-            <p v-if="error" class="otp__error">
+            <p v-if="error" :id="`${inputId}-error`" role="alert" aria-live="assertive" class="otp__error">
                 <svg class="otp__error-icon" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd"
                         d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
@@ -79,6 +82,7 @@
 import { ref, computed, watch, nextTick, useId, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useWebOtp } from '@/composables/useWebOtp';
+import { normalizeAcceptedLengths, normalizeOtp } from '@/utils/otp';
 
 defineOptions( { inheritAttrs: false } );
 
@@ -97,28 +101,54 @@ const { t } = useI18n();
 const inputId = useId();
 
 const inputRef = ref( null );
-const model = ref( '' );
+const model = defineModel( { type: String, default: '' } );
 const isFocused = ref( false );
+const isSubmitting = ref( false );
 
 // WebOTP integration with callback to populate OTP when received
-const { state: webOtpState, error: webOtpError, start: startWebOtp, stop: stopWebOtp, reset: resetWebOtp } = useWebOtp(
+const { state: webOtpState, start: startWebOtp, stop: stopWebOtp, reset: resetWebOtp } = useWebOtp(
     (code) => {
-        model.value = code;
+        model.value = normalizeOtp( code, maxLen.value );
     }
 );
 
 const maxLen = computed( () => props.length );
-const isComplete = computed( () => model.value.length >= maxLen.value );
+
+const acceptedLengths = computed( () => {
+    return normalizeAcceptedLengths( props.acceptLengths, maxLen.value );
+} );
+
+// Watch disabled prop to stop/start WebOTP
+watch(
+    () => props.disabled,
+    ( isDisabled ) => {
+        if ( isDisabled ) {
+            stopWebOtp();
+        } else {
+            startWebOtp();
+        }
+    }
+);
+
+const isValidLength = computed( () => {
+    const length = model.value.length;
+    return acceptedLengths.value.length
+        ? acceptedLengths.value.includes( length )
+        : length === maxLen.value;
+} );
+
+const isComplete = computed( () => isValidLength.value );
 
 // Auto Fill state
 const autoFillState = computed( () =>
 {
+    if ( webOtpState.value === 'received' ) return 'received';
     if ( isComplete.value ) return 'complete';
     return webOtpState.value;
 } );
 
 const showAutoFillStatus = computed( () =>
-    props.showAutoFillUI && autoFillState.value !== 'idle' && autoFillState.value !== 'complete'
+    props.showAutoFillUI && (autoFillState.value === 'listening' || autoFillState.value === 'received' || autoFillState.value === 'error')
 );
 
 const autoFillMessage = computed( () =>
@@ -133,7 +163,7 @@ const autoFillMessage = computed( () =>
 } );
 
 const showPasteButton = computed( () =>
-    !model.value && typeof navigator !== 'undefined' && navigator.clipboard
+    !model.value && !props.disabled && typeof navigator !== 'undefined' && typeof navigator.clipboard?.readText === 'function'
 );
 
 const placeholder = computed( () => `${ '0'.repeat( maxLen.value ) }` );
@@ -148,21 +178,45 @@ const fieldClass = computed( () => ({
     'otp__field--error': !!props.error,
 }) );
 
-let hasAutoSubmitted = false;
+let hasSubmitted = false;
 
 watch( isComplete, ( val ) =>
 {
-    if ( val && props.autoSubmit && !hasAutoSubmitted )
-    {
-        hasAutoSubmitted = true;
-        nextTick( () => emit( 'submit' ) );
+    if ( val && props.autoSubmit ) {
+        submitIfReady();
+    }
+
+    if ( !val ) {
+        hasSubmitted = false;
     }
 } );
 
+function submitIfReady ()
+{
+    if ( props.disabled || !isComplete.value || isSubmitting.value || hasSubmitted ) return;
+
+    hasSubmitted = true;
+    isSubmitting.value = true;
+    nextTick( () => {
+        emit( 'submit' );
+        isSubmitting.value = false;
+    } );
+}
+
 function handleInput ( e )
 {
-    model.value = e.target.value;
-    e.target.value = model.value;
+    const input = e.currentTarget;
+    const normalized = normalizeOtp( input.value, maxLen.value );
+
+    // Only update DOM if value differs (prevents unnecessary cursor movement)
+    if ( input.value !== normalized ) {
+        input.value = normalized;
+    }
+
+    // Update model only if different (prevents redundant watchers)
+    if ( model.value !== normalized ) {
+        model.value = normalized;
+    }
 }
 
 function handleKeydown ( e )
@@ -170,7 +224,7 @@ function handleKeydown ( e )
     if ( e.key === 'Enter' && isComplete.value )
     {
         e.preventDefault();
-        emit( 'submit' );
+        submitIfReady();
     }
 }
 
@@ -178,17 +232,19 @@ async function handlePaste ()
 {
     try
     {
+        if ( typeof navigator?.clipboard?.readText !== 'function' ) return;
+
         const text = await navigator.clipboard.readText();
-        const digits = text.replace( /\D/g, '' ).slice( 0, maxLen.value );
+        const digits = normalizeOtp( text, maxLen.value );
         if ( digits.length > 0 )
         {
             model.value = digits;
             nextTick( () => inputRef.value?.focus() );
         }
     }
-    catch ( err )
+    catch
     {
-        console.warn( '[OTP Paste] Failed to read clipboard:', err );
+        // Clipboard access may be unavailable or denied.
     }
 }
 
@@ -210,8 +266,12 @@ onUnmounted( () =>
 function clear ()
 {
     model.value = '';
-    hasAutoSubmitted = false;
+    hasSubmitted = false;
+    isSubmitting.value = false;
     resetWebOtp();
+    if ( !props.disabled ) {
+        startWebOtp();
+    }
     nextTick( () => inputRef.value?.focus() );
 }
 
@@ -367,7 +427,8 @@ defineExpose( { focusFirstEmpty, clear } );
     justify-content: center;
     gap: 0.375rem;
     padding: 0.5rem 0.75rem;
-    height: 2.5rem;
+    min-height: 2.75rem;
+    min-width: 2.75rem;
     border-radius: 0.25rem;
     border: 1.5px solid #e5e7eb;
     background: #fff;
@@ -474,5 +535,14 @@ defineExpose( { focusFirstEmpty, clear } );
 .otp-error-leave-to {
     opacity: 0;
     transform: translateX(-4px);
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
 </style>

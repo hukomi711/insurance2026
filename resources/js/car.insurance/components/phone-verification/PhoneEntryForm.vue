@@ -17,7 +17,7 @@
 
     <!-- Form Body -->
     <div class="p-5 sm:p-6">
-      <form class="space-y-4" @submit.prevent="$emit('submit')">
+      <form class="space-y-4" @submit.prevent="emitSubmit">
         <!-- Carrier Selection -->
         <div>
           <label for="carrierSelect" class="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -66,7 +66,7 @@
               autocomplete="tel"
               dir="ltr"
               style="direction: ltr; text-align: left; unicode-bidi: embed"
-              class="w-full pl-[6.5rem] pr-3 py-2.5 text-sm border rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#000062]/20 focus:border-[#000062] transition-all"
+              class="w-full pl-26 pr-3 py-2.5 text-sm border rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#000062]/20 focus:border-[#000062] transition-all"
               :class="errors.phone ? 'border-red-400' : 'border-gray-300'"
               @input="onPhoneInput"
             />
@@ -95,7 +95,7 @@
           v-if="error"
           class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm"
         >
-          <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path
               fill-rule="evenodd"
               d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
@@ -129,9 +129,10 @@
 
 <script setup>
 import { useI18n } from 'vue-i18n';
+import { normalizeOtp } from '@/utils/otp';
 import HijriBirthDateInput from './HijriBirthDateInput.vue';
 
-defineProps({
+const props = defineProps({
   carriers: { type: Array, required: true },
   selectedCarrier: { type: String, default: '' },
   formData: { type: Object, required: true },
@@ -150,7 +151,22 @@ const emit = defineEmits([
 const { t } = useI18n();
 
 const onPhoneInput = (event) => {
-  const cleaned = event.target.value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 9);
-  emit('update:formData', { phone: cleaned });
+  // Normalize Arabic/Persian numerals to Latin
+  const normalized = normalizeOtp(event.target.value, 10);
+  // Remove leading zeros and limit to 9 digits
+  const cleaned = normalized.replace(/^0+/, '').slice(0, 9);
+  // Preserve other formData fields (birthDay, birthMonth, birthYear)
+  emit('update:formData', {
+    ...props.formData,
+    phone: cleaned,
+  });
+};
+
+const emitSubmit = () => {
+  // Guard: prevent submission if processing or form is invalid
+  if (props.processing || !props.isFormValid) {
+    return;
+  }
+  emit('submit');
 };
 </script>
