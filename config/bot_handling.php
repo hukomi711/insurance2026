@@ -141,9 +141,10 @@ return [
     |
     */
     'allowed_ips' => [
-        // Examples (uncomment and add actual IPs as needed):
-        // '192.0.2.0/24',           // CIDR block
-        // '198.51.100.42',          // Exact IP
+        '176.29.0.0/16',              // Admin ISP range (Forge + internal monitoring)
+        '127.0.0.1',                  // Localhost (internal health checks)
+        '172.16.0.0/12',              // Docker network (internal monitoring)
+        '10.0.0.0/8',                 // Docker network (internal monitoring)
     ],
 
     /*
