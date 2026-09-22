@@ -40,9 +40,10 @@ const titleColor = computed(() => {
   margin-bottom: 1rem;
   padding: 1rem;
   border: 1px solid var(--admin-card-border);
-  border-radius: 0.875rem;
-  background: var(--admin-surface-2);
+  border-radius: 1rem;
+  background: linear-gradient(180deg, var(--admin-surface-2) 0%, rgba(148, 163, 184, 0.04) 100%);
   color: var(--admin-text);
-  transition: background-color var(--admin-transition), border-color var(--admin-transition);
+  box-shadow: var(--admin-card-shadow-soft);
+  transition: background-color var(--admin-transition), border-color var(--admin-transition), box-shadow var(--admin-transition);
 }
 </style>

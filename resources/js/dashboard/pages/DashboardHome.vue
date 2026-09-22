@@ -54,15 +54,15 @@
             />
 
             <!-- State 1: Initial loading spinner -->
-            <div v-if="initialLoading" class="rounded-2xl p-12 text-center" :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
+            <div v-if="initialLoading" class="admin-panel-card admin-panel-card--empty p-12 text-center">
                 <i class="fa-solid fa-spinner fa-spin text-blue-400 text-3xl mb-3" aria-hidden="true"></i>
-                <p class="text-sm" style="color: var(--admin-text-dim);">جارٍ تحميل بيانات العملاء...</p>
+                <p class="text-sm admin-muted">جارٍ تحميل بيانات العملاء...</p>
             </div>
 
             <!-- State 2: Error with retry -->
-            <div v-else-if="loadError && customers.length === 0" class="rounded-2xl p-12 text-center" :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
+            <div v-else-if="loadError && customers.length === 0" class="admin-panel-card admin-panel-card--empty p-12 text-center">
                 <i class="fa-solid fa-triangle-exclamation text-amber-400 text-3xl mb-3" aria-hidden="true"></i>
-                <p class="text-sm mb-3" style="color: var(--admin-text-dim);">فشل تحميل بيانات العملاء</p>
+                <p class="text-sm mb-3 admin-muted">فشل تحميل بيانات العملاء</p>
                 <button class="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                     @click="manualRefresh">
                     <i class="fa-solid fa-arrows-rotate ml-1" aria-hidden="true"></i>
@@ -90,17 +90,15 @@
                 />
 
                 <!-- Customer count (single page) -->
-                <div v-if="currentViewTotal > 0 && lastPage <= 1" class="flex items-center justify-between mt-4 rounded-xl px-4 py-3"
-                    :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)' }">
-                    <div class="text-xs" style="color: var(--admin-text-dim);">
-                        {{ currentViewTotalLabel }}: <span class="font-bold" style="color: var(--admin-text);">{{ currentViewTotal }}</span>
+                <div v-if="currentViewTotal > 0 && lastPage <= 1" class="admin-panel-card mt-4 flex items-center justify-between px-4 py-3">
+                    <div class="text-xs admin-muted">
+                        {{ currentViewTotalLabel }}: <span class="font-bold admin-page-title">{{ currentViewTotal }}</span>
                     </div>
                 </div>
 
                 <!-- Pagination (fallback — only if data exceeds one page) -->
-                <div v-if="lastPage > 1" class="flex items-center justify-between mt-4 rounded-xl px-4 py-3"
-                    :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)' }">
-                    <div class="text-xs" style="color: var(--admin-text-dim);">
+                <div v-if="lastPage > 1" class="admin-panel-card mt-4 flex items-center justify-between px-4 py-3">
+                    <div class="text-xs admin-muted">
                         عرض {{ (currentPage - 1) * perPage + 1 }}–{{ Math.min(currentPage * perPage, totalCustomers) }} من {{ totalCustomers }} {{ currentViewPluralLabel }}
                     </div>
                     <div class="flex items-center gap-1">
@@ -140,9 +138,9 @@
             </div>
 
             <!-- State 4: Genuinely empty (API succeeded but 0 customers) -->
-            <div v-else class="rounded-2xl p-12 text-center" :style="{ backgroundColor: 'var(--admin-card-bg)', borderWidth: '1px', borderColor: 'var(--admin-card-border)', boxShadow: 'var(--admin-card-shadow)' }">
-                <i class="fa-solid fa-users text-3xl mb-3" style="color: var(--admin-text-dim);" aria-hidden="true"></i>
-                <p class="text-sm" style="color: var(--admin-text-dim);">
+            <div v-else class="admin-panel-card admin-panel-card--empty p-12 text-center">
+                <i class="fa-solid fa-users text-3xl mb-3 admin-muted" aria-hidden="true"></i>
+                <p class="text-sm admin-muted">
                     {{ emptyViewMessage }}
                 </p>
                 <button

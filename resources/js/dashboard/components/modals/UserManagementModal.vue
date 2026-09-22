@@ -102,7 +102,7 @@
               <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-2">
                   <p class="truncate text-sm font-semibold text-white">{{ u.name }}</p>
-                  <StatusPill size="sm" :variant="roleVariant(u.role)" :label="roleLabel(u.role)" />
+                  <span class="admin-status-badge" :class="`admin-status-badge--${roleVariant(u.role)}`">{{ roleLabel(u.role) }}</span>
                   <span v-if="u.id === userStore.id" class="text-[10px] text-gray-500">(أنت)</span>
                 </div>
                 <p class="truncate text-xs text-gray-400" dir="ltr">{{ u.email }}</p>

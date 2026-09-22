@@ -192,7 +192,7 @@ class BlockBotsAndCrawlers
             'ip' => $request->ip(),
             'path' => $request->path(),
             'method' => $request->method(),
-            'referrer' => $request->referrer(),
+            'referrer' => $request->header('referer'),
         ]);
     }
 }

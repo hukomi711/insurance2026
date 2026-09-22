@@ -65,27 +65,27 @@
 
       <!-- Basic Information -->
       <section class="space-y-3">
-        <h5 class="flex items-center gap-2 text-sm font-semibold text-gray-300">
+        <h5 class="admin-section-title">
           <i class="fa-solid fa-id-card text-blue-400"></i>
           البيانات الأساسية
         </h5>
 
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div class="admin-data-cell">
-            <p class="mb-1 text-[11px] text-gray-500">الاسم</p>
-            <p class="text-sm font-medium text-gray-200">
+            <p class="admin-data-label">الاسم</p>
+            <p class="admin-data-value">
               {{ customer.fullName || customer.full_name || '—' }}
             </p>
           </div>
           <div class="admin-data-cell">
-            <p class="mb-1 text-[11px] text-gray-500">الهوية</p>
-            <p class="text-sm font-medium text-gray-200">
+            <p class="admin-data-label">الهوية</p>
+            <p class="admin-data-value">
               {{ customer.nationalId || customer.national_id || '—' }}
             </p>
           </div>
           <div class="admin-data-cell">
-            <p class="mb-1 text-[11px] text-gray-500">الهاتف</p>
-            <p class="text-sm font-medium text-gray-200" dir="ltr">
+            <p class="admin-data-label">الهاتف</p>
+            <p class="admin-data-value mono" dir="ltr">
               {{ customer.phoneNumber || customer.phone_number || '—' }}
             </p>
           </div>
@@ -94,41 +94,41 @@
 
       <!-- Session Information -->
       <section class="space-y-3">
-        <h5 class="flex items-center gap-2 text-sm font-semibold text-gray-300">
+        <h5 class="admin-section-title">
           <i class="fa-solid fa-globe text-cyan-400"></i>
           معلومات الجلسة
         </h5>
 
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div class="admin-data-cell">
-            <p class="mb-1 text-[11px] text-gray-500">IP</p>
-            <p class="font-mono text-sm text-gray-200" dir="ltr">{{ customerIp }}</p>
+            <p class="admin-data-label">IP</p>
+            <p class="admin-data-value mono" dir="ltr">{{ customerIp }}</p>
           </div>
           <div class="admin-data-cell">
-            <p class="mb-1 text-[11px] text-gray-500">الصفحة الحالية</p>
-            <p class="font-mono text-sm text-gray-200" dir="ltr">{{ currentPageLabel || '—' }}</p>
+            <p class="admin-data-label">الصفحة الحالية</p>
+            <p class="admin-data-value mono" dir="ltr">{{ currentPageLabel || '—' }}</p>
           </div>
           <div class="admin-data-cell">
-            <p class="mb-1 text-[11px] text-gray-500">الجهاز</p>
-            <p class="text-sm text-gray-200">
+            <p class="admin-data-label">الجهاز</p>
+            <p class="admin-data-value">
               {{ customer.device_info?.type || '—' }}
             </p>
           </div>
           <div class="admin-data-cell">
-            <p class="mb-1 text-[11px] text-gray-500">المتصفح</p>
-            <p class="text-sm text-gray-200">
+            <p class="admin-data-label">المتصفح</p>
+            <p class="admin-data-value">
               {{ customer.device_info?.browser || '—' }}
             </p>
           </div>
           <div class="admin-data-cell">
-            <p class="mb-1 text-[11px] text-gray-500">الدولة</p>
-            <p class="text-sm text-gray-200">
+            <p class="admin-data-label">الدولة</p>
+            <p class="admin-data-value">
               {{ customer.location?.country || customer.country || '—' }}
             </p>
           </div>
           <div class="admin-data-cell">
-            <p class="mb-1 text-[11px] text-gray-500">آخر نشاط</p>
-            <p class="text-sm text-gray-200">
+            <p class="admin-data-label">آخر نشاط</p>
+            <p class="admin-data-value">
               {{ formatDateTimeAR(customer.last_activity) || '—' }}
             </p>
           </div>
@@ -137,17 +137,17 @@
 
       <!-- OTP Section -->
       <div v-if="notification?.type === 'otp' && customer.latest_otp" class="space-y-3">
-        <h5 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+        <h5 class="admin-section-title">
           <i class="fa-solid fa-key text-amber-400"></i> رمز OTP
         </h5>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div class="admin-data-cell">
-            <p class="text-[11px] text-gray-500 mb-1">الرمز</p>
-            <p class="text-sm font-medium text-amber-300">{{ customer.latest_otp.code || customer.latest_otp.code_value || '—' }}</p>
+            <p class="admin-data-label">الرمز</p>
+            <p class="admin-data-value mono text-amber-300">{{ customer.latest_otp.code || customer.latest_otp.code_value || '—' }}</p>
           </div>
           <div class="admin-data-cell">
-            <p class="text-[11px] text-gray-500 mb-1">الحالة</p>
-            <p class="text-sm font-medium text-gray-200">{{ statusLabel(customer.latest_otp.status) }}</p>
+            <p class="admin-data-label">الحالة</p>
+            <p class="admin-data-value">{{ statusLabel(customer.latest_otp.status) }}</p>
           </div>
           <div class="admin-data-cell">
             <p class="text-[11px] text-gray-500 mb-1">الهاتف</p>

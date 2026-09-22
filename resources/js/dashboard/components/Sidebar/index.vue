@@ -1,6 +1,6 @@
 <template>
     <aside
-        class="fixed inset-y-0 right-0 z-50 w-[85vw] max-w-xs sm:max-w-sm lg:w-64 transform transition-transform duration-300"
+        class="admin-sidebar fixed inset-y-0 right-0 z-50 w-[85vw] max-w-xs sm:max-w-sm lg:w-64 transform transition-transform duration-300"
         :style="{ backgroundColor: 'var(--admin-sidebar-bg)', color: 'var(--admin-sidebar-text)' }"
         :class="[
             sidebarOpened ? 'translate-x-0' : 'translate-x-full',
@@ -59,6 +59,12 @@ const menuItems = computed( () => {
 </script>
 
 <style scoped>
+.admin-sidebar {
+    border-left: 1px solid var(--admin-sidebar-border);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    background: linear-gradient(180deg, var(--admin-sidebar-bg) 0%, rgba(15, 23, 42, 0.01) 100%);
+}
+
 .admin-sidebar-link {
     color: var(--admin-sidebar-text);
 }

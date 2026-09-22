@@ -16,6 +16,14 @@ const appStore = useAppStore();
 </script>
 
 <style scoped>
-.admin-navbar-action { color: var(--admin-text-muted); }
-.admin-navbar-action:hover { color: var(--admin-text); background: var(--admin-hover); }
+.admin-navbar-action {
+    color: var(--admin-text-muted);
+    border: 1px solid transparent;
+}
+
+.admin-navbar-action:hover {
+    color: var(--admin-text);
+    background: linear-gradient(180deg, var(--admin-hover) 0%, rgba(148, 163, 184, 0.06) 100%);
+    border-color: rgba(148, 163, 184, 0.18);
+}
 </style>

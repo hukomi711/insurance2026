@@ -69,22 +69,22 @@
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span class="text-lg">💰</span>
-                  <span class="text-xs font-semibold text-emerald-400">قيمة الدفع النهائية</span>
+                  <span class="admin-section-title mb-0 border-b-0 pb-0 mt-0">قيمة الدفع النهائية</span>
                 </div>
-                <span class="text-xl font-bold text-emerald-300" dir="ltr">{{ Number(paymentAmount).toLocaleString('ar-SA') }} ر.س</span>
+                <span class="admin-data-value mono text-lg text-emerald-300" dir="ltr">{{ Number(paymentAmount).toLocaleString('ar-SA') }} ر.س</span>
               </div>
-              <div v-if="priceSummary" class="mt-3 space-y-1.5 border-t border-emerald-500/20 pt-3 text-xs">
-                <div v-if="priceSummary.base_price" class="flex justify-between text-slate-300">
-                  <span>السعر الأساسي</span>
-                  <span dir="ltr">{{ Number(priceSummary.base_price).toLocaleString('ar-SA') }} ر.س</span>
+              <div v-if="priceSummary" class="mt-3 space-y-1.5 border-t border-emerald-500/20 pt-3 text-xs admin-data-grid-2">
+                <div v-if="priceSummary.base_price" class="admin-data-field">
+                  <span class="admin-data-label">السعر الأساسي</span>
+                  <span class="admin-data-value mono text-emerald-300" dir="ltr">{{ Number(priceSummary.base_price).toLocaleString('ar-SA') }} ر.س</span>
                 </div>
-                <div v-if="priceSummary.vat" class="flex justify-between text-slate-300">
-                  <span>الضريبة (VAT)</span>
-                  <span dir="ltr">{{ Number(priceSummary.vat).toLocaleString('ar-SA') }} ر.س</span>
+                <div v-if="priceSummary.vat" class="admin-data-field">
+                  <span class="admin-data-label">الضريبة (VAT)</span>
+                  <span class="admin-data-value mono text-emerald-300" dir="ltr">{{ Number(priceSummary.vat).toLocaleString('ar-SA') }} ر.س</span>
                 </div>
-                <div v-if="priceSummary.additions_total" class="flex justify-between text-slate-300">
-                  <span>الإضافات</span>
-                  <span dir="ltr">{{ Number(priceSummary.additions_total).toLocaleString('ar-SA') }} ر.س</span>
+                <div v-if="priceSummary.additions_total" class="admin-data-field">
+                  <span class="admin-data-label">الإضافات</span>
+                  <span class="admin-data-value mono text-emerald-300" dir="ltr">{{ Number(priceSummary.additions_total).toLocaleString('ar-SA') }} ر.س</span>
                 </div>
               </div>
               <div v-if="selectedOffer?.company_name || customer?.insurance_company" class="mt-2 border-t border-emerald-500/20 pt-2">

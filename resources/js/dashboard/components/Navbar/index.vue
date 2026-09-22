@@ -1,5 +1,5 @@
 <template>
-    <header class="sticky top-0 z-10 flex h-16 items-center justify-between gap-2 px-3 transition-colors duration-200 sm:px-4 lg:px-6"
+    <header class="admin-navbar sticky top-0 z-10 flex h-16 items-center justify-between gap-2 px-3 transition-colors duration-200 sm:px-4 lg:px-6"
         :style="{
             backgroundColor: 'var(--admin-navbar-bg)',
             borderBottomWidth: '1px',
@@ -10,7 +10,7 @@
         <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 lg:gap-4">
             <Hamburger />
             <div class="hidden min-w-0 md:block lg:hidden">
-                <p class="truncate text-sm font-semibold text-gray-700">
+                <p class="admin-navbar-page-title truncate text-sm font-semibold">
                     {{ currentPageTitle }}
                 </p>
             </div>
@@ -82,11 +82,16 @@
                     leave-to-class="opacity-0 translate-y-1"
                 >
                     <div v-if="showDropdown" id="admin-notifications-panel"
-                        class="absolute left-0 top-full mt-2 w-[min(92vw,360px)] max-h-120 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 flex flex-col"
+                        class="absolute left-0 top-full mt-2 w-[min(92vw,360px)] max-h-120 rounded-xl shadow-xl border overflow-hidden z-50 flex flex-col"
+                        :style="{
+                            backgroundColor: 'var(--admin-card-bg)',
+                            borderColor: 'var(--admin-card-border)',
+                        }"
                         dir="rtl" role="dialog" aria-label="مركز الإشعارات">
                         <!-- Header -->
-                        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/80">
-                            <h3 class="text-sm font-bold text-gray-800">الإشعارات</h3>
+                        <div class="flex items-center justify-between px-4 py-3 border-b"
+                            :style="{ borderColor: 'var(--admin-card-border)', backgroundColor: 'var(--admin-surface-2)' }">
+                            <h3 class="text-sm font-bold" :style="{ color: 'var(--admin-text)' }">الإشعارات</h3>
                             <div class="flex items-center gap-2">
                                 <span v-if="notificationsStore.unreadCount > 0"
                                     class="text-xs text-red-500 font-semibold">

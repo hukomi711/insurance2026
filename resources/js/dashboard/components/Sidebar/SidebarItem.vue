@@ -69,16 +69,22 @@ watch( isActive, ( active ) => {
 .admin-sidebar-link {
     color: var(--admin-sidebar-text);
     background: transparent;
+    border: 1px solid transparent;
+    box-shadow: inset 0 0 0 0 rgba(37, 99, 235, 0);
+    transition: all 180ms ease;
 }
 
 .admin-sidebar-link:hover {
-    background: var(--admin-sidebar-hover);
+    background: linear-gradient(180deg, var(--admin-sidebar-hover) 0%, rgba(148, 163, 184, 0.06) 100%);
     color: var(--admin-sidebar-heading);
+    border-color: rgba(148, 163, 184, 0.18);
 }
 
 .admin-sidebar-link--active,
 .admin-sidebar-link--active:hover {
-    background: var(--admin-sidebar-active-bg);
+    background: linear-gradient(135deg, var(--admin-sidebar-active-bg) 0%, #1d4ed8 100%);
     color: var(--admin-sidebar-active-text);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.24);
 }
 </style>

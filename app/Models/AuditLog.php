@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -57,27 +58,27 @@ class AuditLog extends Model
     /**
      * Scopes
      */
-    public function scopeByAction($query, string $action)
+    public function scopeByAction(Builder $query, string $action)
     {
         return $query->where('action', $action);
     }
 
-    public function scopeSuccessful($query)
+    public function scopeSuccessful(Builder $query)
     {
         return $query->where('status', 'success');
     }
 
-    public function scopeFailed($query)
+    public function scopeFailed(Builder $query)
     {
         return $query->where('status', 'failure');
     }
 
-    public function scopeForUser($query, int $userId)
+    public function scopeForUser(Builder $query, int $userId)
     {
         return $query->where('user_id', $userId);
     }
 
-    public function scopeRecentFirst($query)
+    public function scopeRecentFirst(Builder $query)
     {
         return $query->orderByDesc('exported_at');
     }

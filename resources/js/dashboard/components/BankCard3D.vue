@@ -238,28 +238,75 @@ const statusPill = computed(() => {
 
 <style scoped>
 .bank-card-3d {
+  --card-bg-start: var(--payment-card-bg-start, #edf9f1);
+  --card-bg-end: var(--payment-card-bg-end, #dfeee4);
+  --card-border: var(--payment-card-border, rgba(15, 23, 42, 0.08));
+  --card-sheen: var(--payment-card-sheen, rgba(255, 255, 255, 0.32));
+  --card-sheen-strong: var(--payment-card-sheen-strong, rgba(255, 255, 255, 0.52));
+  --card-text: var(--payment-card-text, #122033);
+  --card-muted: var(--payment-card-muted, #5d6b82);
+  --card-pill: var(--payment-card-pill, rgba(255, 255, 255, 0.72));
+  --card-shadow: var(--payment-card-shadow, 0 12px 28px rgba(15, 23, 42, 0.12));
+
   width: 100%;
   max-width: 400px;
-  /* Credit card aspect ratio: 85.6mm × 53.98mm ≈ 1.586:1 */
   aspect-ratio: 1.586 / 1;
   display: flex;
   flex-direction: column;
-  border-radius: 14px;
-  padding: 14px 16px 12px;
+  border-radius: 18px;
+  padding: 15px 16px 12px;
   direction: ltr;
   font-family: "Tahoma", "Arial", sans-serif;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
-  background: #e8f3eb;
-  color: #0f172a;
+  color: var(--card-text);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
   position: relative;
   overflow: hidden;
+  isolation: isolate;
 }
 
-.bank-card-3d.brand-mada       { background: linear-gradient(180deg, #e9f5ec 0%, #d8ecdc 100%); }
-.bank-card-3d.brand-visa       { background: linear-gradient(180deg, #eef0fa 0%, #dde2f5 100%); }
-.bank-card-3d.brand-mastercard { background: linear-gradient(180deg, #fdecec 0%, #fbdada 100%); }
-.bank-card-3d.brand-amex       { background: linear-gradient(180deg, #e8eefb 0%, #d3def5 100%); }
+.bank-card-3d::before,
+.bank-card-3d::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.bank-card-3d::before {
+  background: linear-gradient(135deg, var(--card-sheen) 0%, transparent 36%, transparent 64%, var(--card-sheen-strong) 100%);
+  transform: translateX(8%);
+}
+
+.bank-card-3d::after {
+  inset: auto -18% -46% auto;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  filter: blur(8px);
+}
+
+.bank-card-3d.brand-mada {
+  background: linear-gradient(180deg, var(--payment-card-bg-start, #e9f5ec) 0%, var(--payment-card-bg-end, #d8ecdc) 100%);
+}
+.bank-card-3d.brand-visa {
+  background: linear-gradient(180deg, #eef4ff 0%, #dfeafb 100%);
+}
+.bank-card-3d.brand-mastercard {
+  background: linear-gradient(180deg, #fff1f1 0%, #ffe1e1 100%);
+}
+.bank-card-3d.brand-amex {
+  background: linear-gradient(180deg, #edf5ff 0%, #dfeeff 100%);
+}
+
+.card-top,
+.card-pan-row,
+.card-mid-row,
+.card-bottom {
+  position: relative;
+  z-index: 1;
+}
 
 .card-top {
   display: flex;
@@ -267,33 +314,198 @@ const statusPill = computed(() => {
   align-items: center;
   margin-bottom: 18px;
 }
-.bank-logo { max-height: 28px; max-width: 160px; object-fit: contain; }
-.bank-fallback { font-weight: 700; font-size: 13px; }
-.currency-pill {
-  background: #fff; border: 1px solid #cbd5e1; border-radius: 6px;
-  padding: 2px 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+
+.bank-logo {
+  max-height: 28px;
+  max-width: 170px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.08));
 }
 
-.card-pan-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.card-pan { font-size: 19px; font-weight: 700; letter-spacing: 1.5px; font-family: "Courier New", monospace; }
-.card-expiry { font-size: 13px; font-weight: 600; }
+.bank-fallback {
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--card-text);
+}
 
-.card-mid-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; }
-.card-holder { font-size: 13px; font-weight: 600; max-width: 220px; word-break: break-word; }
-.card-cvv .cvv-label { font-size: 9px; color: #94a3b8; letter-spacing: 1px; }
-.card-cvv .cvv-val { font-size: 13px; font-weight: 700; }
+.currency-pill {
+  background: var(--card-pill);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--card-text);
+  text-transform: uppercase;
+}
 
-.card-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-.flag-pill { display: inline-block; width: 22px; height: 14px; border-radius: 2px; background: #006c35; position: relative; }
-.flag-pill::after { content: ''; position: absolute; left: 3px; top: 4px; width: 16px; height: 6px; background: rgba(255, 255, 255, 0.7); }
+.card-pan-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 8px;
+}
 
-.brand-block { display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
-.mada-logo, .secondary-logo { height: 14px; }
-.visa-mark { font-family: "Arial Black", sans-serif; font-style: italic; font-weight: 900; font-size: 18px; color: #1a1f71; letter-spacing: -1px; }
-.mc-mark { position: relative; width: 36px; height: 18px; display: inline-block; }
-.mc-mark::before, .mc-mark::after { content: ''; position: absolute; top: 0; width: 18px; height: 18px; border-radius: 50%; }
-.mc-mark::before { left: 0; background: #eb001b; }
-.mc-mark::after  { left: 12px; background: #f79e1b; opacity: 0.85; mix-blend-mode: multiply; }
-.amex-mark { background: #006fcf; color: #fff; padding: 2px 6px; border-radius: 3px; font-family: "Arial Black", sans-serif; font-size: 11px; }
-.category-text { font-size: 11px; font-weight: 700; }
+.card-pan {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 1.7px;
+  font-family: "Courier New", monospace;
+  color: var(--card-text);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.card-expiry {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--card-text);
+  opacity: 0.9;
+}
+
+.card-mid-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.card-holder {
+  font-size: 12px;
+  font-weight: 700;
+  max-width: 220px;
+  word-break: break-word;
+  color: var(--card-text);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.card-cvv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 48px;
+}
+
+.card-cvv .cvv-label {
+  font-size: 8px;
+  color: var(--card-muted);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.card-cvv .cvv-val {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--card-text);
+}
+
+.card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.flag-pill {
+  display: inline-block;
+  width: 23px;
+  height: 15px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #0a5c36 0%, #0b7744 100%);
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.flag-pill::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 4px;
+  width: 15px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 1px;
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--card-text);
+}
+
+.mada-logo {
+  height: 15px;
+  filter: drop-shadow(0 1px 3px rgba(15, 23, 42, 0.08));
+}
+
+.secondary-logo {
+  height: 14px;
+  max-width: 50px;
+  object-fit: contain;
+}
+
+.visa-mark {
+  font-family: "Arial Black", sans-serif;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 18px;
+  color: #1a1f71;
+  letter-spacing: -1px;
+}
+
+.mc-mark {
+  position: relative;
+  width: 36px;
+  height: 18px;
+  display: inline-block;
+}
+
+.mc-mark::before,
+.mc-mark::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+
+.mc-mark::before {
+  left: 0;
+  background: #eb001b;
+}
+
+.mc-mark::after {
+  left: 12px;
+  background: #f79e1b;
+  opacity: 0.85;
+  mix-blend-mode: multiply;
+}
+
+.amex-mark {
+  background: #006fcf;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: "Arial Black", sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.category-text {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--card-muted);
+}
 </style>

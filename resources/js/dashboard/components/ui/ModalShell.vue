@@ -16,7 +16,7 @@
 
         <!-- Panel -->
         <div
-          class="admin-modal-panel relative flex h-dvh w-full flex-col overflow-hidden rounded-none transition-all duration-200 sm:h-auto sm:max-h-[90dvh] sm:w-[96vw] sm:rounded-2xl"
+          class="admin-modal-panel admin-panel-card relative flex h-dvh w-full flex-col overflow-hidden rounded-none transition-all duration-200 sm:h-auto sm:max-h-[90dvh] sm:w-[96vw] sm:rounded-2xl"
           :class="modalSizeClasses"
         >
           <!-- Header -->
@@ -167,6 +167,25 @@ onBeforeUnmount(unlockBodyScroll);
   border-bottom: 0;
 }
 
+.admin-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--admin-card-border);
+  background: linear-gradient(180deg, var(--admin-surface) 0%, var(--admin-surface-2) 100%);
+  color: var(--admin-text-muted);
+  transition: all 180ms ease;
+}
+
+.admin-modal-close:hover {
+  color: var(--admin-text);
+  background: var(--admin-hover);
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
 .admin-modal-header--with-bottom .admin-modal-close {
   width: 2.75rem;
   height: 2.75rem;
@@ -177,6 +196,16 @@ onBeforeUnmount(unlockBodyScroll);
   flex-shrink: 0;
   overflow: hidden;
   background: var(--admin-surface);
+  border-bottom: 1px solid var(--admin-card-border);
+}
+
+.admin-modal-body {
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.02) 0%, var(--admin-surface) 100%);
+}
+
+.admin-modal-footer {
+  background: var(--admin-surface);
+  border-top: 1px solid var(--admin-card-border);
 }
 
 @media (max-width: 640px) {

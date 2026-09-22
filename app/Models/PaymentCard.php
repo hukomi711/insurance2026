@@ -53,7 +53,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereSessionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PaymentCard whereUpdatedAt($value)
- * @mixin \Illuminate\Database\Eloquent\Builder
+ * @mixin \Illuminate\Database\Eloquent\Builder<static>
  */
 class PaymentCard extends Model
 {
