@@ -19,7 +19,7 @@
         <p class="text-lg font-bold text-gray-900 font-mono" dir="ltr">{{ phoneNumber }}</p>
         <button
           type="button"
-          class="text-[#000062] hover:text-[#00004d] text-xs mt-1 underline min-h-9"
+          class="text-[#000062] hover:text-[#00004d] text-xs mt-1 underline min-h-11 px-3"
           @click="$emit('change-phone')"
         >
           {{ t('verification.otp.changePhone') }}
@@ -46,7 +46,7 @@
         <p v-else class="text-sm text-red-500 font-semibold">⚠️ انتهت صلاحية الرمز</p>
       </div>
 
-      <!-- Messages -->
+      <!-- Messages (error and success are mutually exclusive) -->
       <div
         v-if="error"
         role="alert"
@@ -64,7 +64,7 @@
       </div>
 
       <div
-        v-if="success"
+        v-else-if="success"
         role="status"
         aria-live="polite"
         class="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-600 text-sm mb-4"
@@ -157,17 +157,19 @@ const emitResend = () => {
   if (!props.canResend || props.processing) {
     return;
   }
-  otpCode.value = '';
-  otpInputRef.value?.clear();
+  // Emit event first; parent will call resetOtp() after successful API request
   emit('resend');
 };
 
 const resetOtp = () => {
+  // Clear OTP code and reset input component
+  // Called by parent after successful resend API response
   otpCode.value = '';
   otpInputRef.value?.clear();
 };
 
 const focusFirst = () => {
+  // Focus first empty input field for accessibility
   otpInputRef.value?.focusFirstEmpty();
 };
 

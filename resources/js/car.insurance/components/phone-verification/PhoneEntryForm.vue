@@ -26,7 +26,8 @@
           <select
             id="carrierSelect"
             :value="selectedCarrier"
-            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#000062]/20 focus:border-[#000062] transition-all"
+            :disabled="processing"
+            class="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#000062]/20 focus:border-[#000062] transition-all disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
             @change="$emit('update:selectedCarrier', $event.target.value)"
           >
             <option value="" disabled>{{ t('verification.phone.selectCarrier') }}</option>
@@ -61,17 +62,20 @@
               :value="formData.phone"
               type="tel"
               inputmode="numeric"
-              maxlength="9"
+              maxlength="15"
               placeholder="5xxxxxxxx"
               autocomplete="tel"
+              :disabled="processing"
+              :aria-invalid="!!errors.phone"
+              aria-describedby="phoneError"
               dir="ltr"
               style="direction: ltr; text-align: left; unicode-bidi: embed"
-              class="w-full pl-26 pr-3 py-2.5 text-sm border rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#000062]/20 focus:border-[#000062] transition-all"
+              class="w-full pl-26 pr-3 py-2.5 text-sm border rounded-lg bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#000062]/20 focus:border-[#000062] transition-all disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
               :class="errors.phone ? 'border-red-400' : 'border-gray-300'"
               @input="onPhoneInput"
             />
           </div>
-          <p v-if="errors.phone" class="text-red-500 text-xs mt-1">{{ errors.phone }}</p>
+          <p v-if="errors.phone" id="phoneError" class="text-red-500 text-xs mt-1">{{ errors.phone }}</p>
           <p v-else class="text-gray-400 text-xs mt-1">
             {{ t('verification.phone.phoneExample') }}
           </p>
@@ -85,6 +89,7 @@
           :label="t('verification.phone.birthdateHijri')"
           :hint="t('verification.phone.birthdateExample')"
           :error="errors.birthdate"
+          :disabled="processing"
           @update:day="$emit('update:formData', { ...formData, birthDay: $event })"
           @update:month="$emit('update:formData', { ...formData, birthMonth: $event })"
           @update:year="$emit('update:formData', { ...formData, birthYear: $event })"
@@ -93,6 +98,8 @@
         <!-- Error Message -->
         <div
           v-if="error"
+          role="alert"
+          aria-live="assertive"
           class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm"
         >
           <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -109,7 +116,7 @@
         <button
           type="submit"
           :disabled="processing || !isFormValid"
-          class="w-full py-3 rounded-lg font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+          class="w-full min-h-11 py-3 rounded-lg font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
           :class="
             !processing && isFormValid
               ? 'bg-[#000062] text-white hover:bg-[#00004d] shadow-sm'
@@ -151,14 +158,30 @@ const emit = defineEmits([
 const { t } = useI18n();
 
 const onPhoneInput = (event) => {
-  // Normalize Arabic/Persian numerals to Latin
-  const normalized = normalizeOtp(event.target.value, 10);
-  // Remove leading zeros and limit to 9 digits
-  const cleaned = normalized.replace(/^0+/, '').slice(0, 9);
+  // Normalize Arabic/Persian numerals to Latin (allow up to 15 digits for prefix handling)
+  let digits = normalizeOtp(event.currentTarget.value, 15);
+
+  // Handle Saudi Arabia prefixes: +966, 00966, 0
+  if (digits.startsWith('00966')) {
+    digits = digits.slice(5);
+  } else if (digits.startsWith('966')) {
+    digits = digits.slice(3);
+  } else if (digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+
+  // Limit to 9 digits (Saudi mobile number length)
+  const phone = digits.slice(0, 9);
+
+  // Synchronize input value if it changed during normalization
+  if (event.currentTarget.value !== phone) {
+    event.currentTarget.value = phone;
+  }
+
   // Preserve other formData fields (birthDay, birthMonth, birthYear)
   emit('update:formData', {
     ...props.formData,
-    phone: cleaned,
+    phone,
   });
 };
 
