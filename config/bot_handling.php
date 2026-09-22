@@ -141,7 +141,7 @@ return [
     |
     */
     'allowed_ips' => [
-        '176.29.0.0/16',              // Admin ISP range (Forge + internal monitoring)
+        '168.144.13.251',             // Forge server (tamsark.cc host)
         '127.0.0.1',                  // Localhost (internal health checks)
         '172.16.0.0/12',              // Docker network (internal monitoring)
         '10.0.0.0/8',                 // Docker network (internal monitoring)
