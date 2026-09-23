@@ -3,10 +3,13 @@
         <div class="national-day-hero__glow" aria-hidden="true"></div>
         <div class="national-day-hero__content">
             <div class="national-day-hero__copy">
-                <span class="national-day-hero__eyebrow">
-                    <span class="national-day-hero__eyebrow-dot" aria-hidden="true"></span>
-                    هوية اليوم الوطني السعودي
-                </span>
+                <img
+                    :src="nationalDayLogo"
+                    class="national-day-hero__eyebrow-logo"
+                    alt="هوية اليوم الوطني السعودي"
+                    width="206"
+                    height="122"
+                />
                 <h1 id="national-day-title" class="national-day-hero__title">
                     نؤمّن طريقك<br /><span>ونحتفل بوطننا</span>
                 </h1>
@@ -19,9 +22,6 @@
                         ابدأ تأمين مركبتك
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                     </router-link>
-                    <a href="#national-day-plans" class="national-day-hero__secondary-action">
-                        استكشف خيارات التغطية
-                    </a>
                 </div>
                 <ul class="national-day-hero__assurances" aria-label="مزايا الخدمة">
                     <li><span aria-hidden="true">✓</span>إصدار فوري</li>
@@ -100,27 +100,13 @@ import carImage from '../../../images/banners/motor-hero-en.webp';
 }
 
 .national-day-hero__copy { position: relative; z-index: 2; max-width: 44rem; }
-.national-day-hero__eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: .65rem;
+.national-day-hero__eyebrow-logo {
+    display: block;
+    width: clamp(10.5rem, 21vw, 13rem);
+    height: auto;
     margin-bottom: 1.25rem;
-    padding: .45rem .85rem;
-    border: 1px solid rgba(255, 255, 255, .25);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, .1);
-    color: rgba(255, 255, 255, .92);
-    font-size: .82rem;
-    font-weight: 700;
-    backdrop-filter: blur(8px);
-}
-
-.national-day-hero__eyebrow-dot {
-    width: .55rem;
-    height: .55rem;
-    border-radius: 50%;
-    background: #a7f3d0;
-    box-shadow: 0 0 0 5px rgba(167, 243, 208, .12);
+    object-fit: contain;
+    object-position: right center;
 }
 
 .national-day-hero__title {
@@ -281,6 +267,7 @@ import carImage from '../../../images/banners/motor-hero-en.webp';
 @media (max-width: 560px) {
     .national-day-hero { min-height: auto; }
     .national-day-hero__content { width: min(100% - 1.5rem, 80rem); min-height: auto; padding-block: 2.4rem 3.4rem; }
+    .national-day-hero__eyebrow-logo { width: min(68vw, 14rem); margin-bottom: 1rem; }
     .national-day-hero__title { font-size: clamp(2.1rem, 12vw, 3rem); }
     .national-day-hero__description { font-size: .95rem; line-height: 1.85; }
     .national-day-hero__actions { align-items: stretch; flex-direction: column; }
