@@ -1,0 +1,298 @@
+<template>
+    <section class="national-day-hero" aria-labelledby="national-day-title">
+        <div class="national-day-hero__glow" aria-hidden="true"></div>
+        <div class="national-day-hero__content">
+            <div class="national-day-hero__copy">
+                <span class="national-day-hero__eyebrow">
+                    <span class="national-day-hero__eyebrow-dot" aria-hidden="true"></span>
+                    هوية اليوم الوطني السعودي
+                </span>
+                <h1 id="national-day-title" class="national-day-hero__title">
+                    نؤمّن طريقك<br /><span>ونحتفل بوطننا</span>
+                </h1>
+                <p class="national-day-hero__description">
+                    قارن عروض تأمين المركبات من شركات موثوقة، واختر التغطية الأنسب لك
+                    في تجربة رقمية سريعة وآمنة تليق بطموح الوطن.
+                </p>
+                <div class="national-day-hero__actions">
+                    <router-link :to="{ name: 'motorapp' }" class="national-day-hero__primary-action">
+                        ابدأ تأمين مركبتك
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                    </router-link>
+                    <a href="#national-day-plans" class="national-day-hero__secondary-action">
+                        استكشف خيارات التغطية
+                    </a>
+                </div>
+                <ul class="national-day-hero__assurances" aria-label="مزايا الخدمة">
+                    <li><span aria-hidden="true">✓</span>إصدار فوري</li>
+                    <li><span aria-hidden="true">✓</span>مقارنة شفافة</li>
+                    <li><span aria-hidden="true">✓</span>شركات مرخصة</li>
+                </ul>
+            </div>
+
+            <div class="national-day-hero__visual" aria-hidden="true">
+                <div class="national-day-hero__logo-card">
+                    <img :src="nationalDayLogo" alt="" width="206" height="122" />
+                    <span>23 سبتمبر</span>
+                </div>
+                <div class="national-day-hero__car-card">
+                    <span class="national-day-hero__car-label">معك في كل طريق</span>
+                    <img :src="carImage" alt="" width="420" height="466" />
+                </div>
+            </div>
+        </div>
+        <div class="national-day-hero__bottom-line" aria-hidden="true"></div>
+    </section>
+</template>
+
+<script setup>
+import nationalDayLogo from '../../../images/national-day/national-day-logo-white.png';
+import carImage from '../../../images/banners/motor-hero-en.webp';
+</script>
+
+<style scoped>
+.national-day-hero {
+    --nd-green: #1b8354;
+    --nd-dark: #092a1e;
+    position: relative;
+    isolation: isolate;
+    min-height: 520px;
+    overflow: hidden;
+    color: #fff;
+    background-color: var(--nd-dark);
+    background-image: linear-gradient(90deg, rgba(5, 34, 24, .94), rgba(9, 42, 30, .76) 54%, rgba(9, 42, 30, .35)), url('../../../images/national-day/hero-section.svg');
+    background-position: center;
+    background-size: cover;
+}
+
+.national-day-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(circle at 15% 25%, rgba(255, 255, 255, .1) 0 2px, transparent 3px);
+    background-size: 30px 30px;
+    mask-image: linear-gradient(to left, #000, transparent 65%);
+    opacity: .45;
+}
+
+.national-day-hero__glow {
+    position: absolute;
+    inset-inline-end: -8rem;
+    top: -12rem;
+    z-index: -1;
+    width: 38rem;
+    height: 38rem;
+    border-radius: 50%;
+    background: rgba(62, 196, 122, .18);
+    filter: blur(18px);
+}
+
+.national-day-hero__content {
+    width: min(100% - 2rem, 80rem);
+    min-height: 520px;
+    margin-inline: auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.12fr) minmax(320px, .88fr);
+    align-items: center;
+    gap: 3rem;
+    padding-block: 4.25rem 4.75rem;
+}
+
+.national-day-hero__copy { position: relative; z-index: 2; max-width: 44rem; }
+.national-day-hero__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .65rem;
+    margin-bottom: 1.25rem;
+    padding: .45rem .85rem;
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .1);
+    color: rgba(255, 255, 255, .92);
+    font-size: .82rem;
+    font-weight: 700;
+    backdrop-filter: blur(8px);
+}
+
+.national-day-hero__eyebrow-dot {
+    width: .55rem;
+    height: .55rem;
+    border-radius: 50%;
+    background: #a7f3d0;
+    box-shadow: 0 0 0 5px rgba(167, 243, 208, .12);
+}
+
+.national-day-hero__title {
+    margin: 0;
+    font-size: clamp(2.45rem, 5vw, 4.8rem);
+    line-height: 1.14;
+    font-weight: 900;
+    letter-spacing: -.045em;
+}
+
+.national-day-hero__title span { color: #b8f2cf; }
+.national-day-hero__description {
+    max-width: 42rem;
+    margin: 1.45rem 0 0;
+    color: rgba(255, 255, 255, .82);
+    font-size: clamp(1rem, 1.7vw, 1.22rem);
+    line-height: 2;
+}
+
+.national-day-hero__actions { display: flex; flex-wrap: wrap; gap: .85rem; margin-top: 1.9rem; }
+.national-day-hero__primary-action,
+.national-day-hero__secondary-action {
+    min-height: 3.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .7rem;
+    padding: .8rem 1.35rem;
+    border-radius: .75rem;
+    font-weight: 800;
+    transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.national-day-hero__primary-action {
+    background: #fff;
+    color: var(--nd-dark);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .2);
+}
+
+.national-day-hero__primary-action svg {
+    width: 1.15rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+    transform: scaleX(-1);
+}
+
+.national-day-hero__secondary-action {
+    border: 1px solid rgba(255, 255, 255, .48);
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+    backdrop-filter: blur(8px);
+}
+
+.national-day-hero__primary-action:hover,
+.national-day-hero__secondary-action:hover { transform: translateY(-2px); }
+.national-day-hero__secondary-action:hover { background: rgba(255, 255, 255, .15); }
+.national-day-hero__primary-action:focus-visible,
+.national-day-hero__secondary-action:focus-visible { outline: 3px solid #f6c453; outline-offset: 3px; }
+
+.national-day-hero__assurances {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .8rem 1.35rem;
+    margin: 1.55rem 0 0;
+    padding: 0;
+    list-style: none;
+    color: rgba(255, 255, 255, .82);
+    font-size: .83rem;
+    font-weight: 700;
+}
+
+.national-day-hero__assurances li { display: flex; align-items: center; gap: .4rem; }
+.national-day-hero__assurances span {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(184, 242, 207, .18);
+    color: #b8f2cf;
+}
+
+.national-day-hero__visual { position: relative; min-height: 390px; }
+.national-day-hero__logo-card {
+    position: absolute;
+    inset-inline-end: 0;
+    top: 0;
+    z-index: 2;
+    width: min(52%, 13.5rem);
+    padding: 1.2rem;
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 1.5rem;
+    background: rgba(255, 255, 255, .11);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, .2);
+    backdrop-filter: blur(14px);
+    transform: rotate(2deg);
+}
+
+.national-day-hero__logo-card img { width: 100%; height: auto; object-fit: contain; }
+.national-day-hero__logo-card span { display: block; margin-top: .65rem; color: rgba(255, 255, 255, .75); font-size: .78rem; text-align: center; }
+.national-day-hero__car-card {
+    position: absolute;
+    inset-inline-start: 0;
+    bottom: -2.5rem;
+    width: min(88%, 27rem);
+    min-height: 19rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .2);
+    border-radius: 2rem 2rem 0 0;
+    background: linear-gradient(145deg, rgba(255, 255, 255, .17), rgba(255, 255, 255, .04));
+    box-shadow: 0 24px 55px rgba(0, 0, 0, .24);
+    backdrop-filter: blur(8px);
+}
+
+.national-day-hero__car-card img {
+    position: absolute;
+    z-index: 1;
+    inset-inline-start: 50%;
+    bottom: -5.3rem;
+    width: 92%;
+    max-width: 26rem;
+    transform: translateX(50%);
+    filter: drop-shadow(0 16px 18px rgba(0, 0, 0, .26));
+}
+
+.national-day-hero__car-label {
+    position: absolute;
+    top: 1.25rem;
+    inset-inline-start: 1.25rem;
+    z-index: 2;
+    padding: .45rem .75rem;
+    border-radius: 999px;
+    background: rgba(9, 42, 30, .72);
+    color: #d1fae5;
+    font-size: .75rem;
+    font-weight: 800;
+}
+
+.national-day-hero__bottom-line {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: .45rem;
+    background: linear-gradient(90deg, #d4af37 0 18%, #fff 18% 21%, var(--nd-green) 21%);
+}
+
+@media (max-width: 900px) {
+    .national-day-hero__content { grid-template-columns: 1fr; gap: 1.4rem; padding-block: 3rem 4rem; }
+    .national-day-hero__visual { min-height: 315px; }
+    .national-day-hero__logo-card { width: 9rem; }
+    .national-day-hero__car-card { width: min(82%, 25rem); min-height: 16rem; }
+}
+
+@media (max-width: 560px) {
+    .national-day-hero { min-height: auto; }
+    .national-day-hero__content { width: min(100% - 1.5rem, 80rem); min-height: auto; padding-block: 2.4rem 3.4rem; }
+    .national-day-hero__title { font-size: clamp(2.1rem, 12vw, 3rem); }
+    .national-day-hero__description { font-size: .95rem; line-height: 1.85; }
+    .national-day-hero__actions { align-items: stretch; flex-direction: column; }
+    .national-day-hero__primary-action, .national-day-hero__secondary-action { width: 100%; }
+    .national-day-hero__assurances { gap: .65rem .9rem; font-size: .75rem; }
+    .national-day-hero__visual { min-height: 250px; }
+    .national-day-hero__logo-card { width: 7.5rem; padding: .8rem; border-radius: 1.1rem; }
+    .national-day-hero__car-card { min-height: 13.5rem; border-radius: 1.35rem 1.35rem 0 0; }
+    .national-day-hero__car-card img { bottom: -4.3rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .national-day-hero__primary-action, .national-day-hero__secondary-action { transition: none; }
+}
+</style>
